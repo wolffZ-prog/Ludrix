@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.39.1 — 2026-10-07
+- Corrigido: jogos que já estavam na biblioteca apareciam no aviso "jogos novos nas suas pastas" e em "Procurar jogos novos", e ao adicionar entravam de novo (duplicados). A comparação passa a considerar o executável, a pasta do jogo e pastas aninhadas; adicionar um jogo que já existe não cria entrada nova. Duplicados já existentes: Ajustes › Ferramentas › Jogos duplicados.
+- Menu do botão direito: passa a usar por padrão o menu nativo do Windows, que pode sair da janela como em qualquer programa, desenhado com as cores do tema (fundo, texto, destaque, vermelho, claro/escuro). O menu interno continua disponível em Ajustes › Aparência › opções avançadas › "Menus do botão direito".
+
 ## 2.39.0 — 2026-10-07
 - Pastas: além da pasta de jogos instalados, a biblioteca aceita outras pastas (outros discos, pastas de outros launchers) em Ajustes › Biblioteca › Pastas. "Procurar jogos novos" varre todas de uma vez; executáveis marcados como "Ignorar" não voltam a aparecer.
 - Procurar jogos novos ao abrir (ligado por padrão): alguns segundos depois de abrir, o Ludrix olha as pastas e avisa quando acha jogo fora da biblioteca, com Revisar, Ignorar e Depois. Nada é adicionado sem revisão.

@@ -1961,8 +1961,8 @@ async function renderSettings(fresh) {
       ${cfgSel('status_position', [['bottom', 'No rodapé'], ['top', 'Abaixo das categorias']], c.status_position || 'bottom')}</div>
     <div class="frow"><div class="l"><b>Relógio na barra de status</b><span>Útil com a janela sem moldura ou em tela cheia, quando a barra do Windows some</span></div>${cfgSel('clock', [['off', 'Desligado'], ['time', 'Hora'], ['datetime', 'Dia e hora']], c.clock || 'off')}</div>
     `], { adv: [`
-    ${c.native && c.frameless ? `<div class="frow"><div class="l"><b>Menus do botão direito</b><span>O menu do Windows pode passar da borda do launcher e segue o claro/escuro do tema; o do Ludrix fica dentro da janela, com ícones e as cores do tema${S.themeMenu ? ` · o tema atual pede <b style="display:inline">${S.themeMenu === 'ludrix' ? 'Menu do Ludrix' : 'Menu do Windows'}</b>` : ''}</span></div>
-      ${cfgSel('ctx_menu', [['', 'Seguir o tema'], ['windows', 'Menu do Windows'], ['ludrix', 'Menu do Ludrix']], c.ctx_menu || '')}</div>` : ''}`] }),
+    ${c.native && c.frameless ? `<div class="frow"><div class="l"><b>Menus do botão direito</b><span>O menu do Windows passa da borda da janela (como em qualquer programa) e é desenhado com as cores do tema, sem ícones; o do Ludrix fica dentro da janela, com ícones${S.themeMenu ? ` · o tema atual pede <b style="display:inline">${S.themeMenu === 'ludrix' ? 'Menu do Ludrix' : 'Menu do Windows'}</b>` : ''}</span></div>
+      ${cfgSel('ctx_menu', [['', 'Seguir o tema (padrão: Windows)'], ['windows', 'Menu do Windows'], ['ludrix', 'Menu do Ludrix']], c.ctx_menu || '')}</div>` : ''}`] }),
     navegacao: () => sec('navegacao', 'Navegação', [`
     <div class="frow"><div class="l"><b>Barra de navegação</b><span>Posição do menu principal. <b style="display:inline;font-size:12px">Seguir o tema</b> deixa o tema decidir${themeLayout ? ` (o atual pede: ${esc(LAYOUT_NAMES[themeLayout] || themeLayout)})` : ''}; qualquer outra escolha prevalece sobre o tema.</span></div>${cfgSel('layout', LAYOUTS, c.layout || '')}</div>
     <div class="frow" style="align-items:flex-start;flex-direction:column;gap:8px"><div class="l"><b>Abas</b><span>Arraste para mudar a ordem e desligue o que você não usa. O que estiver desligado continua acessível pela busca e pelo menu do logo.</span></div>
@@ -3165,18 +3165,18 @@ function ctxGameHead(g, key) {
   const meta = [g.genres && g.genres[0], g.creator || g.fr, g.kind === 'local' ? 'Instalado' : (g.sys || g.system || '')].filter(Boolean).slice(0, 2).join(' · ');
   return `<div class="ghead"><img src="/thumb/${enc(key)}?v=${g.cv || 0}" alt="" onerror="this.style.visibility='hidden'"><div><b>${esc(g.title || key)}</b>${meta ? `<span>${esc(meta)}</span>` : ''}</div></div>`;
 }
+function ctxItems(key, acts) { return acts.map(a => a.sep ? { sep: true } : { label: a.label, icon: a.icon, primary: a.primary, danger: a.danger, fn: () => ctxDo(key, a.id) }); }
 async function ctxMenu(key, x, y) {
   const g = S.byKey[key] || (S.home && S.home.games[key]) || {};
   if (ctxNativeOk()) {
     const acts = await api.get('/api/actions/' + enc(key));
-    return showCtx(acts.map(a => a.sep ? { sep: true } : { label: a.label, icon: a.icon, primary: a.primary, danger: a.danger, fn: () => ctxDo(key, a.id) }), x, y, g.title || key);
+    return showCtx(ctxItems(key, acts), x, y, g.title || key);
   }
   ctxKey = key; const m = $('#ctx');
   const gh = ctxGameHead(g, key);
   m.innerHTML = gh + `<button disabled style="color:var(--muted)">carregando…</button>`; m.classList.add('on'); placeCtx(x, y);
   const acts = await api.get('/api/actions/' + enc(key)); if (ctxKey !== key) return;
-  m.innerHTML = gh + acts.map(a => a.sep ? '<hr>' : `<button class="${a.primary ? 'primary' : ''} ${a.danger ? 'danger' : ''}" onclick="ctxDo(${jsq(key)},'${a.id}')">${I[a.icon] || ''}<span>${esc(a.label)}</span></button>`).join('');
-  placeCtx(x, y);
+  showCtxLocal(ctxItems(key, acts), x, y, '', gh); ctxKey = key;
 }
 function placeCtx(x, y) {
   const m = $('#ctx'); m.style.maxHeight = ''; const r = m.getBoundingClientRect(); const pad = 8, H = innerHeight, W = innerWidth;
@@ -3609,15 +3609,30 @@ let ctxNative = false, ctxMouse = { x: -99, y: -99 };
 document.addEventListener('mousedown', e => { ctxMouse = { x: e.clientX, y: e.clientY }; }, true);
 ['#qbox', '#tbBrand', '.tb-btns'].forEach(sel => { const el = document.querySelector(sel); if (el) el.addEventListener('mousedown', e => e.stopPropagation()); });
 document.addEventListener('contextmenu', e => { ctxMouse = { x: e.clientX, y: e.clientY }; }, true);
-function ctxMode() { return S.config.ctx_menu || S.themeMenu || 'ludrix'; }
+function ctxMode() { return S.config.ctx_menu || S.themeMenu || 'windows'; }
 function ctxNativeOk() { return !!(S.config.native && S.config.frameless && ctxMode() === 'windows' && !GP.active && !ctxNative && window.screenX !== undefined); }
-function ctxStrip(list, pre) { return list.map((it, i) => ({ id: pre + i, sep: !!it.sep, label: it.label || '', hint: it.hint || '', primary: !!it.primary, disabled: !!it.disabled, sub: it.sub ? ctxStrip(it.sub, pre + i + '.') : null })); }
+function ctxStrip(list, pre) { return list.map((it, i) => ({ id: pre + i, sep: !!it.sep, label: it.label || '', hint: it.hint || '', primary: !!it.primary, danger: !!it.danger, disabled: !!it.disabled, sub: it.sub ? ctxStrip(it.sub, pre + i + '.') : null })); }
+function cssRgb(v) {
+  const el = document.createElement('i'); el.style.cssText = `position:absolute;visibility:hidden;color:var(${v})`; document.body.appendChild(el);
+  const c = getComputedStyle(el).color; el.remove();
+  let m = c.match(/rgba?\(([\d.]+)[, ]+([\d.]+)[, ]+([\d.]+)(?:[,/ ]+([\d.]+%?))?/); if (m) return [+m[1], +m[2], +m[3], m[4] === undefined ? 1 : m[4].endsWith('%') ? parseFloat(m[4]) / 100 : +m[4]];
+  m = c.match(/color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?:\s*\/\s*([\d.]+%?))?/); if (m) return [m[1] * 255, m[2] * 255, m[3] * 255, m[4] === undefined ? 1 : m[4].endsWith('%') ? parseFloat(m[4]) / 100 : +m[4]];
+  return null;
+}
+function ctxColors() {
+  const hex = a => a ? '#' + a.map(n => Math.max(0, Math.min(255, Math.round(n))).toString(16).padStart(2, '0')).join('') : '';
+  const mix = (p, q, k) => p && q ? [0, 1, 2].map(i => p[i] * (1 - k) + q[i] * k) : null;
+  const bg0 = cssRgb('--bg') || [24, 28, 34, 1], bg = mix(bg0, cssRgb('--bg2') || bg0, (cssRgb('--bg2') || [0, 0, 0, 1])[3]);
+  const over = v => { const c = cssRgb(v); return c ? mix(bg, c, c[3]) : null; };
+  const tx = over('--text');
+  return { bg: hex(bg), text: hex(tx), muted: hex(over('--muted2') || over('--muted')), primary: hex(over('--green2')), danger: hex(over('--red')), line: hex(over('--line')), hover: hex(mix(bg, tx, 0.09)) };
+}
 async function showCtxNative(items, x, y, title) {
   ctxNative = true; ctxKey = null; $('#ctx').classList.remove('on');
   const near = Math.abs(ctxMouse.x - x) < 6 && Math.abs(ctxMouse.y - y) < 6;
   let r = null;
   try {
-    r = await api.post('/api/window', { cmd: 'ctx', items: ctxStrip(items, ''), title: title || '', at_cursor: near ? '1' : '0', x: Math.round(window.screenX + x), y: Math.round(window.screenY + y), light: document.documentElement.dataset.light || '0' });
+    r = await api.post('/api/window', { cmd: 'ctx', items: ctxStrip(items, ''), title: title || '', colors: ctxColors(), at_cursor: near ? '1' : '0', x: Math.round(window.screenX + x), y: Math.round(window.screenY + y), light: document.documentElement.dataset.light || '0' });
   } catch (e) { r = null; }
   ctxNative = false;
   if (!r || !r.ok) return false;
@@ -3631,13 +3646,13 @@ function showCtx(items, x, y, title) {
   if (ctxNativeOk()) { showCtxNative(items, x, y, title).then(ok => { if (!ok) showCtxLocal(items, x, y, title); }); return; }
   showCtxLocal(items, x, y, title);
 }
-function showCtxLocal(items, x, y, title) {
+function showCtxLocal(items, x, y, title, head) {
   const c = $('#ctx');
   const row = (it, i, pre) => it.sep ? '<hr>' : `<button class="${it.danger ? 'danger' : ''} ${it.primary ? 'primary' : ''} ${it.sub ? 'has-sub' : ''}" data-i="${pre}${i}">${I[it.icon] || ''}<span>${esc(it.label)}</span>${it.hint ? `<em>${esc(it.hint)}</em>` : ''}${it.sub ? '<svg class="car" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>' : ''}</button>`;
-  c.innerHTML = (title ? `<h5>${esc(title)}</h5>` : '') + items.map((it, i) => it.sub ? `<div class="subw">${row(it, i, '')}<div class="sub">${it.sub.map((x, k) => row(x, k, i + '.')).join('')}</div></div>` : row(it, i, '')).join('');
+  c.innerHTML = (head || '') + (title ? `<h5>${esc(title)}</h5>` : '') + items.map((it, i) => it.sub ? `<div class="subw">${row(it, i, '')}<div class="sub">${it.sub.map((x, k) => row(x, k, i + '.')).join('')}</div></div>` : row(it, i, '')).join('');
   const find = id => { const [a, b] = id.split('.'); return b === undefined ? items[+a] : items[+a].sub[+b]; };
   c.querySelectorAll('button').forEach(b => b.onclick = e => { const it = find(b.dataset.i); if (it.sub) { e.stopPropagation(); return; } c.classList.remove('on'); it.fn && it.fn(); });
-  c.querySelectorAll('.subw').forEach(w => w.addEventListener('mouseenter', () => { const sub = w.querySelector('.sub'); sub.classList.remove('left'); const r = sub.getBoundingClientRect(); if (r.right > innerWidth - 8) sub.classList.add('left'); if (r.bottom > innerHeight - 8) sub.style.top = Math.max(-r.top + 8, innerHeight - 8 - r.bottom) + 'px'; }));
+  c.querySelectorAll('.subw').forEach(w => w.addEventListener('mouseenter', () => { const sub = w.querySelector('.sub'); sub.classList.remove('left'); sub.style.top = ''; sub.style.maxHeight = ''; const wr = w.getBoundingClientRect(); let r = sub.getBoundingClientRect(); if (r.right > innerWidth - 8) sub.classList.add('left'); if (r.height > innerHeight - 16) { sub.style.maxHeight = (innerHeight - 16) + 'px'; sub.style.overflowY = 'auto'; r = sub.getBoundingClientRect(); } const want = Math.max(8, Math.min(wr.top - 6, innerHeight - 8 - r.height)); sub.style.top = (want - wr.top) + 'px'; }));
   c.classList.add('on'); placeCtx(x, y);
   setTimeout(() => document.addEventListener('click', () => c.classList.remove('on'), { once: true }), 0);
 }

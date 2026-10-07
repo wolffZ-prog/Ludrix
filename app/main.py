@@ -731,33 +731,90 @@ def main():
         from ctypes import wintypes
         from System import Func, Type
         u = ctypes.windll.user32
+        g = ctypes.windll.gdi32
         u.CreatePopupMenu.restype = ctypes.c_void_p
-        u.AppendMenuW.argtypes = (ctypes.c_void_p, ctypes.c_uint, ctypes.c_size_t, ctypes.c_wchar_p)
-        u.InsertMenuW.argtypes = (ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_size_t, ctypes.c_wchar_p)
+        u.AppendMenuW.argtypes = (ctypes.c_void_p, ctypes.c_uint, ctypes.c_size_t, ctypes.c_void_p)
+        u.InsertMenuW.argtypes = (ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_size_t, ctypes.c_void_p)
         u.SetMenuDefaultItem.argtypes = (ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint)
+        u.SetMenuInfo.argtypes = (ctypes.c_void_p, ctypes.c_void_p)
         u.TrackPopupMenuEx.argtypes = (ctypes.c_void_p, ctypes.c_uint, ctypes.c_int, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p)
         u.TrackPopupMenuEx.restype = ctypes.c_int
         u.DestroyMenu.argtypes = (ctypes.c_void_p,)
         u.SetForegroundWindow.argtypes = (ctypes.c_void_p,)
         u.PostMessageW.argtypes = (ctypes.c_void_p, ctypes.c_uint, ctypes.c_size_t, ctypes.c_ssize_t)
+        u.SetWindowLongPtrW.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_ssize_t)
+        u.SetWindowLongPtrW.restype = ctypes.c_ssize_t
+        u.CallWindowProcW.argtypes = (ctypes.c_ssize_t, ctypes.c_void_p, ctypes.c_uint, ctypes.c_size_t, ctypes.c_ssize_t)
+        u.CallWindowProcW.restype = ctypes.c_ssize_t
+        u.FillRect.argtypes = (ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p)
+        u.DrawTextW.argtypes = (ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_uint)
+        u.GetDC.restype = ctypes.c_void_p
+        u.ReleaseDC.argtypes = (ctypes.c_void_p, ctypes.c_void_p)
+        g.CreateSolidBrush.restype = ctypes.c_void_p
+        g.CreatePen.restype = ctypes.c_void_p
+        g.CreateFontW.restype = ctypes.c_void_p
+        g.CreateFontW.argtypes = (ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wintypes.DWORD, wintypes.DWORD, wintypes.DWORD, wintypes.DWORD, wintypes.DWORD, wintypes.DWORD, wintypes.DWORD, wintypes.DWORD, ctypes.c_wchar_p)
+        g.SelectObject.argtypes = (ctypes.c_void_p, ctypes.c_void_p)
+        g.SelectObject.restype = ctypes.c_void_p
+        g.DeleteObject.argtypes = (ctypes.c_void_p,)
+        g.SetBkMode.argtypes = (ctypes.c_void_p, ctypes.c_int)
+        g.SetTextColor.argtypes = (ctypes.c_void_p, wintypes.COLORREF)
+        g.RoundRect.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int)
+        g.GetTextExtentPoint32W.argtypes = (ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_int, ctypes.c_void_p)
+        g.GetStockObject.restype = ctypes.c_void_p
+
+        class MEASURE(ctypes.Structure):
+            _fields_ = [("CtlType", ctypes.c_uint), ("CtlID", ctypes.c_uint), ("itemID", ctypes.c_uint), ("itemWidth", ctypes.c_uint), ("itemHeight", ctypes.c_uint), ("itemData", ctypes.c_size_t)]
+
+        class DRAW(ctypes.Structure):
+            _fields_ = [("CtlType", ctypes.c_uint), ("CtlID", ctypes.c_uint), ("itemID", ctypes.c_uint), ("itemAction", ctypes.c_uint), ("itemState", ctypes.c_uint),
+                        ("hwndItem", ctypes.c_void_p), ("hDC", ctypes.c_void_p), ("rcItem", wintypes.RECT), ("itemData", ctypes.c_size_t)]
+
+        class MENUINFO(ctypes.Structure):
+            _fields_ = [("cbSize", wintypes.DWORD), ("fMask", wintypes.DWORD), ("dwStyle", wintypes.DWORD), ("cyMax", ctypes.c_uint), ("hbrBack", ctypes.c_void_p), ("dwContextHelpID", wintypes.DWORD), ("dwMenuData", ctypes.c_size_t)]
+
         hwnd = int(window.native.Handle.ToInt64())
+        light = str(b.get("light")) == "1"
+        cols = b.get("colors") or {}
+
+        def cref(name, dflt):
+            v = str(cols.get(name) or "").lstrip("#")
+            if len(v) != 6:
+                v = dflt
+            try:
+                return int(v[0:2], 16) | (int(v[2:4], 16) << 8) | (int(v[4:6], 16) << 16)
+            except ValueError:
+                return 0
+        C_BG = cref("bg", "f4f5f7" if light else "1b1f26")
+        C_TX = cref("text", "1a1d22" if light else "e8ebf0")
+        C_MU = cref("muted", "6b7280" if light else "8b93a1")
+        C_PR = cref("primary", "17a673" if light else "3ddc97")
+        C_DG = cref("danger", "d04545" if light else "ff6b6b")
+        C_LN = cref("line", "dcdfe4" if light else "2c323c")
+        C_HV = cref("hover", "e6e8ec" if light else "272d37")
+        try:
+            dpi = u.GetDpiForWindow(ctypes.c_void_p(hwnd)) or 96
+        except Exception:
+            dpi = 96
+        sc = dpi / 96.0
+        px = lambda n: int(round(n * sc))
+        rows = {}
         ids = {}
+        T_SEP, T_TITLE = 0xFFFF, 0xFFFE
 
         def build(items, pre):
             m = u.CreatePopupMenu()
             for i, it in enumerate(items):
                 if it.get("sep"):
-                    u.AppendMenuW(m, 0x800, 0, None)
+                    u.AppendMenuW(m, 0x800 | 0x100, 0, T_SEP)
                     continue
-                label = str(it.get("label") or "").replace("&", "&&")
-                if it.get("hint"):
-                    label += "\t" + str(it["hint"])
+                n = len(rows) + 1
+                rows[n] = {"label": str(it.get("label") or ""), "hint": str(it.get("hint") or ""), "primary": bool(it.get("primary")), "danger": bool(it.get("danger")), "disabled": bool(it.get("disabled")), "sub": bool(it.get("sub"))}
                 if it.get("sub"):
-                    u.AppendMenuW(m, 0x10, build(it["sub"], pre + str(i) + "."), label)
+                    u.AppendMenuW(m, 0x10 | 0x100, build(it["sub"], pre + str(i) + "."), n)
                     continue
-                n = len(ids) + 1
                 ids[n] = pre + str(i)
-                u.AppendMenuW(m, 0x1 if it.get("disabled") else 0, n, label)
+                u.AppendMenuW(m, 0x100 | (0x3 if it.get("disabled") else 0), n, n)
                 if it.get("primary"):
                     u.SetMenuDefaultItem(m, n, 0)
             return m
@@ -766,36 +823,125 @@ def main():
             ux = ctypes.WinDLL("uxtheme")
             mode = ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_int)((135, ux))
             flush = ctypes.WINFUNCTYPE(None)((136, ux))
-            mode(3 if str(b.get("light")) == "1" else 2)
+            mode(3 if light else 2)
             flush()
         except Exception:
             pass
-        title = str(b.get("title") or "")[:60].replace("&", "&&")
+        title = str(b.get("title") or "")[:60]
         items = list(b.get("items") or [])
         if str(b.get("at_cursor")) == "1":
             pt = wintypes.POINT()
             u.GetCursorPos(ctypes.byref(pt))
             x, y = pt.x, pt.y
         else:
-            try:
-                dpi = u.GetDpiForWindow(ctypes.c_void_p(hwnd)) or 96
-            except Exception:
-                dpi = 96
-            x, y = int(round(float(b.get("x") or 0) * dpi / 96)), int(round(float(b.get("y") or 0) * dpi / 96))
+            x, y = int(round(float(b.get("x") or 0) * sc)), int(round(float(b.get("y") or 0) * sc))
         out = {"pick": None}
+        res = {}
+
+        def measure(ms):
+            data = ms.itemData
+            if data == T_SEP:
+                ms.itemWidth, ms.itemHeight = px(40), px(9)
+                return
+            row = rows.get(data) if data != T_TITLE else {"label": title, "hint": "", "primary": False, "danger": False, "disabled": True, "sub": False}
+            if not row:
+                return
+            hdc = u.GetDC(None)
+            old = g.SelectObject(hdc, res["bold"] if row["primary"] or data == T_TITLE else res["font"])
+            sz = wintypes.SIZE()
+            g.GetTextExtentPoint32W(hdc, row["label"], len(row["label"]), ctypes.byref(sz))
+            w = sz.cx
+            if row["hint"]:
+                g.SelectObject(hdc, res["small"])
+                g.GetTextExtentPoint32W(hdc, row["hint"], len(row["hint"]), ctypes.byref(sz))
+                w += sz.cx + px(18)
+            g.SelectObject(hdc, old)
+            u.ReleaseDC(None, hdc)
+            ms.itemWidth = w + px(26) + (px(16) if row["sub"] else 0)
+            ms.itemHeight = px(26) if data == T_TITLE else px(30)
+
+        def draw(ds):
+            data = ds.itemData
+            rc = ds.rcItem
+            u.FillRect(ds.hDC, ctypes.byref(rc), res["bg"])
+            if data == T_SEP:
+                line = wintypes.RECT(rc.left + px(8), (rc.top + rc.bottom) // 2, rc.right - px(8), (rc.top + rc.bottom) // 2 + 1)
+                u.FillRect(ds.hDC, ctypes.byref(line), res["line"])
+                return
+            is_title = data == T_TITLE
+            row = rows.get(data) if not is_title else {"label": title, "hint": "", "primary": False, "danger": False, "disabled": True, "sub": False}
+            if not row:
+                return
+            sel = bool(ds.itemState & 0x1) and not row["disabled"] and not is_title
+            if sel:
+                oldb = g.SelectObject(ds.hDC, res["hover"])
+                oldp = g.SelectObject(ds.hDC, g.GetStockObject(8))
+                g.RoundRect(ds.hDC, rc.left + px(4), rc.top + px(1), rc.right - px(4), rc.bottom - px(1), px(8), px(8))
+                g.SelectObject(ds.hDC, oldb)
+                g.SelectObject(ds.hDC, oldp)
+            g.SetBkMode(ds.hDC, 1)
+            color = C_MU if (row["disabled"] or is_title) else C_DG if row["danger"] else C_PR if row["primary"] else C_TX
+            g.SetTextColor(ds.hDC, color)
+            oldf = g.SelectObject(ds.hDC, res["bold"] if row["primary"] or is_title else res["font"])
+            tr = wintypes.RECT(rc.left + px(14), rc.top, rc.right - px(12), rc.bottom)
+            u.DrawTextW(ds.hDC, row["label"], -1, ctypes.byref(tr), 0x20 | 0x4 | 0x800 | 0x8000)
+            if row["hint"]:
+                g.SelectObject(ds.hDC, res["small"])
+                g.SetTextColor(ds.hDC, C_MU)
+                hr = wintypes.RECT(rc.left + px(14), rc.top, rc.right - px(14) - (px(16) if row["sub"] else 0), rc.bottom)
+                u.DrawTextW(ds.hDC, row["hint"], -1, ctypes.byref(hr), 0x20 | 0x4 | 0x2 | 0x800)
+            g.SelectObject(ds.hDC, oldf)
+
+        WNDPROC = ctypes.WINFUNCTYPE(ctypes.c_ssize_t, ctypes.c_void_p, ctypes.c_uint, ctypes.c_size_t, ctypes.c_ssize_t)
+        state = {"old": 0}
+
+        def proc(h, msg, wp, lp):
+            try:
+                if msg == 0x2C:
+                    ms = MEASURE.from_address(lp)
+                    if ms.CtlType == 1:
+                        measure(ms)
+                        return 1
+                elif msg == 0x2B:
+                    ds = DRAW.from_address(lp)
+                    if ds.CtlType == 1:
+                        draw(ds)
+                        return 1
+            except Exception as e:
+                logging.debug("ctx draw: %s", e)
+            return u.CallWindowProcW(state["old"], h, msg, wp, lp)
+        cb = WNDPROC(proc)
 
         def run():
+            fh = -px(13)
+            res["font"] = g.CreateFontW(fh, 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe UI")
+            res["bold"] = g.CreateFontW(fh, 0, 0, 0, 600, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe UI")
+            res["small"] = g.CreateFontW(-px(11), 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe UI")
+            res["bg"] = g.CreateSolidBrush(C_BG)
+            res["hover"] = g.CreateSolidBrush(C_HV)
+            res["line"] = g.CreateSolidBrush(C_LN)
             m = build(items, "")
             if title:
-                u.InsertMenuW(m, 0, 0x400 | 0x800, 0, None)
-                u.InsertMenuW(m, 0, 0x400 | 0x1, 0, title)
+                u.InsertMenuW(m, 0, 0x400 | 0x800 | 0x100, 0, T_SEP)
+                u.InsertMenuW(m, 0, 0x400 | 0x3 | 0x100, 0, T_TITLE)
+            mi = MENUINFO()
+            mi.cbSize = ctypes.sizeof(MENUINFO)
+            mi.fMask = 0x2 | 0x10 | 0x80000000
+            mi.dwStyle = 0x80000000
+            mi.hbrBack = res["bg"]
+            u.SetMenuInfo(m, ctypes.byref(mi))
+            state["old"] = u.SetWindowLongPtrW(ctypes.c_void_p(hwnd), -4, ctypes.cast(cb, ctypes.c_void_p).value)
             try:
                 u.SetForegroundWindow(hwnd)
                 r = u.TrackPopupMenuEx(m, 0x100 | 0x2 | 0x80, x, y, hwnd, None)
                 u.PostMessageW(hwnd, 0, 0, 0)
                 out["pick"] = ids.get(int(r))
             finally:
+                u.SetWindowLongPtrW(ctypes.c_void_p(hwnd), -4, state["old"])
                 u.DestroyMenu(m)
+                for k in ("font", "bold", "small", "bg", "hover", "line"):
+                    if res.get(k):
+                        g.DeleteObject(res[k])
         try:
             window.native.Invoke(Func[Type](run))
         except Exception as e:

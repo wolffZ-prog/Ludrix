@@ -1846,15 +1846,23 @@ class Ludrix:
             return {"error": "Arquivo não encontrado"}
         title = normalize_title(title or "") or self.local_guess(str(exe))["guess"]
         key = "local:" + re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
-        if self.store.get(key):
-            key += "-" + str(int(time.time()))[-4:]
-
         target = self._shortcut_target(exe)
         run, folder = str(exe), str(exe.parent)
         if target and "://" in target:
             run, folder = target, ""
         elif target and Path(target).exists():
             run, folder = target, str(Path(target).parent)
+        norm = lambda v: os.path.normcase(os.path.normpath(str(v or "")))
+        for k, v in list(self.store.library.items()):
+            if v.get("kind") == "rom":
+                continue
+            vd = norm(v.get("dir")) if v.get("dir") else ""
+            same_dir = bool(folder and vd) and norm(folder) == vd
+            nested = bool(folder and vd) and (vd.startswith(norm(folder) + os.sep) or norm(folder).startswith(vd + os.sep))
+            if norm(v.get("exe")) == norm(run) or same_dir or (nested and normalize_title(v.get("title") or "") == title):
+                return {"ok": True, "key": k, "title": v.get("title") or title, "existing": True}
+        if self.store.get(key):
+            key += "-" + str(int(time.time()))[-4:]
         self.store.set_installed(key, dir=folder, exe=run, title=title, kind="local")
         if self.store.config.get("auto_metadata"):
             self.queue_meta(key)
@@ -2356,6 +2364,9 @@ class Ludrix:
             e = str(i.get("exe") or "").strip().lower().replace("\\", "/")
             if e:
                 by_exe.setdefault(e, []).append(k)
+            d = str(i.get("dir") or "").strip().lower().replace("\\", "/").rstrip("/")
+            if d and i.get("kind") != "rom":
+                by_exe.setdefault("dir:" + d, []).append(k)
         seen: set[str] = set()
         groups = []
         for keys in list(by_exe.values()) + list(by_title.values()):
@@ -4688,8 +4699,8 @@ class Ludrix:
 
     def _scan_new_games(self, prog=None) -> list[dict]:
         from . import scanner
-        have = {str(v.get("exe", "")).lower() for v in list(self.store.library.values())}
-        have |= set(self.store.config.get("scan_ignored") or [])
+        known = self._known_pc()
+        ignored = {str(x).lower() for x in (self.store.config.get("scan_ignored") or [])}
         out, seen = [], set()
         for d in self.game_dirs():
             if not Path(d).is_dir():
@@ -4701,13 +4712,42 @@ class Ludrix:
                 continue
             for it in items:
                 ex = it["exe"].lower()
-                if ex in have or ex in seen:
+                if ex in ignored or ex in seen or self._is_known_pc(it, known):
                     continue
                 seen.add(ex)
                 it["dup"] = False
                 it["root"] = d
                 out.append(it)
         return out
+
+    def _known_pc(self) -> tuple[set[str], set[str]]:
+        exes, dirs = set(), set()
+        for v in list(self.store.library.values()):
+            ex = str(v.get("exe") or "")
+            if ex and "://" not in ex:
+                exes.add(os.path.normcase(os.path.normpath(ex)))
+            if v.get("kind") == "rom":
+                continue
+            d = str(v.get("dir") or "")
+            if d:
+                dirs.add(os.path.normcase(os.path.normpath(d)))
+        return exes, dirs
+
+    @staticmethod
+    def _is_known_pc(it: dict, known: tuple[set[str], set[str]]) -> bool:
+        exes, dirs = known
+        ex = os.path.normcase(os.path.normpath(it.get("exe") or ""))
+        d = os.path.normcase(os.path.normpath(it.get("dir") or os.path.dirname(ex)))
+        if ex in exes or d in dirs:
+            return True
+        for a in it.get("alt_exes") or []:
+            if os.path.normcase(os.path.normpath(a)) in exes:
+                return True
+        pre = d + os.sep
+        for k in dirs:
+            if d.startswith(k + os.sep) or k.startswith(pre):
+                return True
+        return any(e.startswith(pre) for e in exes)
 
     def _auto_scan_dirs(self):
         time.sleep(25)
@@ -4762,9 +4802,9 @@ class Ludrix:
                         it["dup"] = it["rom"] in have or any(it["rom"].startswith(d.rstrip("\\/") + os.sep) for d in dirs)
                 else:
                     items = scanner.scan_windows(Path(path), prog)
-                    have = {str(v.get("exe", "")).lower() for v in list(self.store.library.values())}
+                    known = self._known_pc()
                     for it in items:
-                        it["dup"] = it["exe"].lower() in have
+                        it["dup"] = self._is_known_pc(it, known)
                 emus = self.emu.all_emulators()
                 st["result"] = {"games": items, "count": len(items), "path": path, "mode": mode,
                                 "emulators": [{"id": k, "title": v.get("title", k), "systems": v.get("systems", []), "installed": bool(self.emu.emu_exe(k))} for k, v in emus.items()]}
@@ -4802,7 +4842,7 @@ class Ludrix:
                         skipped += 1
                         continue
                     r = self.add_local_game(exe, g.get("title") or None)
-                    if not r.get("key"):
+                    if not r.get("key") or r.get("existing"):
                         skipped += 1
                         continue
                     self.store.update(r["key"], source="scan")
@@ -4929,6 +4969,8 @@ class Ludrix:
                     skipped = self._imp_skip(g, skipped, "Nenhum executável na pasta", g["dir"])
                     return added, skipped
                 r = self.add_local_game(str(exes[0]), g["title"])
+                if r.get("existing"):
+                    return added, self._imp_skip(g, skipped, "Já está na biblioteca", str(exes[0]))
                 if r.get("key"):
                     self.store.update(r["key"], playtime=g.get("playtime", 0), last_played=g.get("last_played", 0), source=g.get("source", ""), **({"year": g["year"]} if g.get("year") else {}))
                     if g.get("source") == "playnite":
@@ -4959,6 +5001,8 @@ class Ludrix:
                     r = {"key": key}
                 else:
                     r = self.add_local_game(exe, g["title"])
+                if r.get("existing"):
+                    return added, self._imp_skip(g, skipped, "Já está na biblioteca", exe)
                 if r.get("key"):
                     self.store.update(r["key"], playtime=g.get("playtime", 0), last_played=g.get("last_played", 0), source=g.get("source", ""), **({"year": g["year"]} if g.get("year") else {}))
                     if g.get("source") == "playnite":
