@@ -4,7 +4,6 @@ import ctypes
 import logging
 import sys
 import threading
-import time
 from ctypes import POINTER, Structure, c_ubyte, c_ulong, c_ulonglong, c_ushort, c_void_p
 
 log = logging.getLogger("ludrix")

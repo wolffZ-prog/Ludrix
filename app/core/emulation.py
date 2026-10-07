@@ -72,6 +72,8 @@ class EmulationManager:
         self.store = store
         self.s = session
         self.cache = cache
+        self._upd: list[dict] = []
+        self._upd_at = 0.0
         self.presets = self._load_presets()
         self._migrate_removed()
         self._scan_cache: dict[str, tuple[float, list]] = {}
@@ -226,8 +228,15 @@ class EmulationManager:
             emus[eid] = {**ec, "id": eid, "installed": bool(exe), "exe_path": str(exe) if exe else "",
                          "pointed": bool((self.store.config.get("emu_paths") or {}).get(eid)),
                          "systems": ec.get("systems") or [s for s, sc in self.presets["systems"].items() if sc.get("emulator") == eid]}
+        if any(e["installed"] for e in emus.values()) and (not self._upd_at or time.time() - self._upd_at > 12 * 3600):
+            if not getattr(self, "_upd_thread", None) or not self._upd_thread.is_alive():
+                self._upd_thread = threading.Thread(target=self.check_updates, daemon=True)
+                self._upd_thread.start()
+        for u in self._upd:
+            if u["id"] in emus:
+                emus[u["id"]]["update"] = u["latest"]
         return {"systems": systems, "emulators": emus, "bios_dir": str(paths.EMU_BIOS),
-                "games_root": str(paths.EMU_GAMES)}
+                "games_root": str(paths.EMU_GAMES), "updates": self._upd}
 
     def add_custom_emulator(self, data: dict) -> dict:
         exe = Path(data.get("exe") or "")
@@ -419,7 +428,56 @@ class EmulationManager:
             if sid != "pc":
                 (paths.EMU_GAMES / sid).mkdir(parents=True, exist_ok=True)
 
-    def install_emulator(self, emu_id: str, cb, cancel: threading.Event):
+    def _latest_release(self, cfg: dict, ttl: int = 6 * 3600) -> dict | None:
+        if cfg.get("source") not in ("github", "gitea"):
+            return None
+        api = f"{cfg['api'].rstrip('/')}/api/v1/repos/{cfg['repo']}/releases?limit=5" if cfg["source"] == "gitea" else f"https://api.github.com/repos/{cfg['repo']}/releases?per_page=5"
+        rels = self.cache.get_json(f"gh_{cfg['repo']}", api, ttl)
+        rels = [r for r in (rels or []) if not r.get("draft")]
+        if not rels:
+            return None
+        return next((r for r in rels if not r.get("prerelease")), rels[0])
+
+    @staticmethod
+    def _norm_ver(v: str) -> str:
+        return re.sub(r"^[vV]|[^0-9a-zA-Z.\-]", "", str(v or "")).strip().lower()
+
+    @staticmethod
+    def _rel_stamp(rel: dict) -> str:
+        stamps = [a.get("updated_at") or a.get("created_at") or "" for a in rel.get("assets") or []]
+        stamps.append(rel.get("published_at") or "")
+        return max(stamps) if stamps else ""
+
+    def check_updates(self, force: bool = False) -> list[dict]:
+        now = time.time()
+        if not force and self._upd_at and now - self._upd_at < 12 * 3600:
+            return self._upd
+        out = []
+        for eid, cfg in self.presets["emulators"].items():
+            info = self.store.get(f"emu:{eid}") or {}
+            cur = info.get("version") or ""
+            if not cur or not info.get("dir") or not self.emu_exe(eid) or (self.store.config.get("emu_paths") or {}).get(eid):
+                continue
+            try:
+                rel = self._latest_release(cfg, 6 * 3600 if not force else 60)
+            except Exception as e:
+                log.debug("update check %s: %s", eid, e)
+                continue
+            if not rel:
+                continue
+            latest = rel.get("tag_name") or ""
+            if not latest:
+                continue
+            if re.search(r"\d", latest) and self._norm_ver(latest) != self._norm_ver(cur):
+                out.append({"id": eid, "title": cfg.get("title", eid), "current": cur, "latest": latest, "url": rel.get("html_url", "")})
+            elif not re.search(r"\d", latest):
+                have, new = info.get("release_at") or "", self._rel_stamp(rel)
+                if have and new and new > have:
+                    out.append({"id": eid, "title": cfg.get("title", eid), "current": have[:10], "latest": new[:10], "url": rel.get("html_url", "")})
+        self._upd, self._upd_at = out, now
+        return out
+
+    def install_emulator(self, emu_id: str, cb, cancel: threading.Event, keep: bool = False):
         cfg = self.presets["emulators"][emu_id]
         dest = self.emu_dir(emu_id)
         tmp = paths.DOWNLOADS / f"emu_{emu_id}"
@@ -429,10 +487,9 @@ class EmulationManager:
             raise RuntimeError(f"{cfg['title']} não tem download automático. Baixe em {cfg.get('homepage', '')} e use 'Apontar .exe'.")
         if cfg["source"] in ("github", "gitea"):
 
-            api = f"{cfg['api'].rstrip('/')}/api/v1/repos/{cfg['repo']}/releases?limit=5" if cfg["source"] == "gitea" else f"https://api.github.com/repos/{cfg['repo']}/releases?per_page=5"
-            rels = self.cache.get_json(f"gh_{cfg['repo']}", api, 6 * 3600)
-            rels = [r for r in rels if not r.get("draft")]
-            rel = next((r for r in rels if not r.get("prerelease")), rels[0])
+            rel = self._latest_release(cfg, 60 if keep else 6 * 3600)
+            if not rel:
+                raise RuntimeError(f"Nenhuma versão publicada encontrada em {cfg['repo']}")
             assets = []
             if os.name != "nt":
 
@@ -447,16 +504,22 @@ class EmulationManager:
             a = assets[0]
             ref = FileRef(a["name"], a["browser_download_url"], int(a.get("size") or 0))
             version = rel.get("tag_name", "")
+            release_at = self._rel_stamp(rel)
         else:
             url = cfg["url"]
             ref = FileRef(url.rsplit("/", 1)[-1], url, 0)
             version = re.search(r"(\d+\.\d+(\.\d+)?|\d{4}[a-z]?)", url)
             version = version.group(1) if version else ""
+            release_at = ""
 
         archive = tmp / ref.basename
         cb(Progress("download", 0, f"Baixando {cfg['title']}..."))
         Downloader(self.s).download(ref, archive, cb, cancel)
-        if dest.exists():
+        final_dest = dest
+        if keep and dest.exists():
+            dest = tmp / "new"
+            shutil.rmtree(dest, ignore_errors=True)
+        elif dest.exists():
             shutil.rmtree(dest, ignore_errors=True)
         cb(Progress("extract", 0, "Extraindo..."))
         if archive.name.lower().endswith(".appimage"):
@@ -474,7 +537,12 @@ class EmulationManager:
         else:
             extract(archive, dest, cb, cancel)
         flatten_single_folder(dest)
+        if dest != final_dest:
+            cb(Progress("extract", 0.9, "Atualizando arquivos (configurações e saves ficam)..."))
+            shutil.copytree(dest, final_dest, dirs_exist_ok=True)
+            dest = final_dest
         shutil.rmtree(tmp, ignore_errors=True)
+        self._upd_at = 0
 
         flag = cfg.get("portable_flag")
         if flag:
@@ -486,7 +554,7 @@ class EmulationManager:
         if emu_id == "retroarch":
             self._retroarch_cores(dest, cb, cancel)
 
-        self.store.set_installed(f"emu:{emu_id}", dir=str(dest), title=cfg["title"], kind="emulator", version=version)
+        self.store.set_installed(f"emu:{emu_id}", dir=str(dest), title=cfg["title"], kind="emulator", version=version, release_at=release_at)
         cb(Progress("done", 1.0, f"{cfg['title']} {version} instalado"))
         return dest
 

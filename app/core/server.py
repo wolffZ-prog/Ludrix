@@ -245,8 +245,6 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(v.random_pick((q.get("f") or ["any"])[0], (q.get("x") or [""])[0].split(",")))
             if p == "/api/hardware":
                 return self._json(v.hardware(bool(q.get("force"))))
-            if p == "/api/win/status":
-                return self._json(v.win_status(bool(q.get("deep"))))
             if p == "/api/import/poll":
                 return self._json(v.import_poll())
             if p == "/api/redists":
@@ -318,16 +316,10 @@ class Handler(BaseHTTPRequestHandler):
                 "/api/cancel": lambda: v.cancel(b["key"], bool(b.get("pause"))),
                 "/api/queue/action": lambda: v.queue_action(b["action"], b.get("key")),
                 "/api/play": lambda: v.play(b["key"], b.get("after"), b.get("emulator"), b.get("optimize"), bool(b.get("force"))),
-                "/api/win/prepare": lambda: v.win_prepare(b.get("play")),
-                "/api/win/proton/update": lambda: v.win_update_proton(),
-                "/api/win/tricks": lambda: v.win_tricks(b.get("verbs") or [], b.get("key")),
-                "/api/win/tool": lambda: v.win_tool(b.get("tool") or "", b.get("key")),
-                "/api/win/test": lambda: v.win_test(b.get("key")),
-                "/api/win/clean": lambda: v.win_clean(),
-                "/api/win/prefix": lambda: v.win_prefix(b.get("action") or "", b.get("path") or "", b.get("key")),
                 "/api/game/emulator": lambda: v.set_game_emulator(b["key"], b.get("emulator")),
                 "/api/stop": lambda: v.stop_game(b["key"]),
                 "/api/fav": lambda: v.toggle_favorite(b["key"]),
+                "/api/hide": lambda: v.toggle_hidden(b["key"]),
                 "/api/rom/add": lambda: v.add_rom_file(b.get("path"), b.get("system"), b.get("title"), b.get("emulator"), bool(b.get("add_folder"))),
                 "/api/rom/preview": lambda: v.rom_preview(b.get("path")),
                 "/api/emulator/exe": lambda: v.emu.set_emulator_exe(b["id"], b.get("exe")),
@@ -364,6 +356,8 @@ class Handler(BaseHTTPRequestHandler):
                 "/api/open_url": lambda: v.open_url(b["url"]),
                 "/api/log/ui": lambda: (diag.ui_error(str(b.get("msg") or "")[:300], str(b.get("src") or "")[:120], int(b.get("line") or 0)), {"ok": True})[1],
                 "/api/emulator/install": lambda: v.install_emulator(b["id"]),
+                "/api/emulator/update": lambda: v.update_emulator(b["id"]),
+                "/api/emulator/check_updates": lambda: v.check_emulator_updates(),
                 "/api/emulator/remove": lambda: (v.emu.remove_emulator(b["id"]), {"ok": True})[1],
                 "/api/repos/add": lambda: (v.repos.add(b), v.reload_catalog(False), {"ok": True})[2],
                 "/api/repos/update": lambda: (v.repos.update(b["id"], b.get("patch") or {}), v.reload_catalog(False), {"ok": True})[2],
@@ -420,15 +414,11 @@ class Handler(BaseHTTPRequestHandler):
                 "/api/emulator/add_system": lambda: (v.emu.add_system_emulator(b["system"], b["id"]), {"ok": True})[1],
                 "/api/emulator/remove_system": lambda: (v.emu.remove_system_emulator(b["system"], b["id"]), {"ok": True})[1],
                 "/api/window": lambda: v.window_cmd(b.get("cmd") or b.get("action") or "", b),
-                "/api/theme/save": lambda: v.theme_save(b),
                 "/api/theme/delete": lambda: v.theme_delete(b["id"]),
                 "/api/theme/reload": lambda: v.theme_reload(b.get("theme") or ""),
                 "/api/theme/export": lambda: v.theme_export(b["id"], b.get("format", "lxtheme")),
                 "/api/theme/export_all": lambda: v.theme_export_all(b.get("format", "zip")),
-                "/api/theme/preview": lambda: v.theme_preview_set(b["id"], b.get("path")),
-                "/api/theme/snapshot": lambda: v.theme_snapshot(b["id"], b.get("data", "")),
                 "/api/theme/import": lambda: v.theme_import(b.get("path")),
-                "/api/theme/wallpaper": lambda: v.theme_wallpaper_set(b["id"], b.get("path")),
                 "/api/flash/install": lambda: v.flash_install(b.get("id")),
                 "/api/flash/remove": lambda: (v.flash.remove_game(b["id"]), {"ok": True})[1],
                 "/api/flash/add": lambda: v.flash_add(b.get("path"), b.get("title", ""), b.get("kind", "")),
@@ -448,6 +438,9 @@ class Handler(BaseHTTPRequestHandler):
                 "/api/import/pick": lambda: v.import_pick(b["id"], b.get("mode", "")),
                 "/api/import/scan": lambda: v.import_scan(b["id"], b["path"], b.get("opts") or {}),
                 "/api/folder/scan": lambda: v.folder_scan(b.get("path"), b.get("mode", "windows")),
+                "/api/dirs/add": lambda: v.game_dir_add(b.get("path")),
+                "/api/dirs/remove": lambda: v.game_dir_remove(b.get("path") or ""),
+                "/api/dirs/ignore": lambda: v.scan_ignore(b.get("exes") or []),
                 "/api/folder/apply": lambda: v.folder_apply(b.get("games") or [], b.get("mode", "windows"), b.get("opts") or {}),
                 "/api/import/apply": lambda: v.import_apply(b.get("games", [])),
                 "/api/updates/check": lambda: v.updates_check(),
@@ -463,7 +456,6 @@ class Handler(BaseHTTPRequestHandler):
                 "/api/autostart": lambda: v.set_autostart(b.get("on")),
                 "/api/backup/export": lambda: v.backup_export(b.get("dest")),
                 "/api/backup/import": lambda: v.backup_import(b.get("path")),
-                "/api/settings/unlock": lambda: v.terminal.run("/unlocksettings " + str(b.get("pin", "")), "ui"),
             }.get(p)
             if not r:
                 return self._json({"error": "not found"}, 404)

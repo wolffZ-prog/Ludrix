@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.39.0 — 2026-10-07
+- Pastas: além da pasta de jogos instalados, a biblioteca aceita outras pastas (outros discos, pastas de outros launchers) em Ajustes › Biblioteca › Pastas. "Procurar jogos novos" varre todas de uma vez; executáveis marcados como "Ignorar" não voltam a aparecer.
+- Procurar jogos novos ao abrir (ligado por padrão): alguns segundos depois de abrir, o Ludrix olha as pastas e avisa quando acha jogo fora da biblioteca, com Revisar, Ignorar e Depois. Nada é adicionado sem revisão.
+- Ocultar da biblioteca (menu do jogo): o jogo some da grade e das fileiras sem ser removido; o filtro "Ocultos" mostra e devolve.
+- Tempo de jogo também quando o jogo é aberto fora do Ludrix (Steam, atalho, .exe direto): o Ludrix reconhece o executável em execução e conta a sessão do mesmo jeito. Ajustes › Ao jogar › "Contar tempo de jogos abertos fora do Ludrix".
+- Editar detalhes do jogo › Ações: "Abrir como administrador" e comandos "Antes de abrir" e "Ao fechar" por jogo.
+- Emuladores: o Ludrix confere a cada 12 h se há versão nova dos emuladores instalados por ele (GitHub e Gitea) e mostra a tag e o botão "Atualizar" no cartão do console. A atualização substitui só os arquivos do emulador; configurações, BIOS, saves e ROMs ficam onde estão. Emuladores apontados manualmente ou "Meu próprio emulador" não são verificados.
+- Importar: novas origens Xbox (Game Pass para PC), EA app e Ubisoft Connect, com os jogos já instalados em cada uma.
+- Central Ludrix: Minecraft deixa de ter aba própria e passa a aparecer no fim de "Programas úteis" (edições encontradas no PC e dois launchers sugeridos: Prism Launcher e SKLauncher; os já instalados continuam aparecendo).
+- Removidos: camada Wine/Proton (o Ludrix é só Windows), comandos de brincadeira do terminal, bloqueio de Ajustes por PIN (`/locksettings`) e o editor de temas interno (temas são criados e editados no Ludrix Studio; o Ludrix mantém o tema "Padrão" e os temas importados).
+
 ## 2.38.0 — 2026-10-07
 - Enviar para a Steam (Ajustes › Ferramentas › Exportar biblioteca): cria os atalhos "não-Steam" (`shortcuts.vdf`) de todos os jogos com executável, com capa vertical, capa horizontal e fundo para a Steam e o Big Picture. ROMs entram com o comando do emulador. Exige a Steam fechada; faz backup do arquivo atual, atualiza só os atalhos criados pelo Ludrix e não mexe nos demais. Com mais de uma conta no PC, pergunta qual usar.
 - Exportar biblioteca também gera `playnite\LudrixImport.pext`: dois cliques nele e, no Playnite, menu Extensões › Ludrix › Importar biblioteca do Ludrix traz jogos, capas e metadados (atualiza em vez de duplicar).

@@ -76,6 +76,21 @@ LAUNCHERS = [
      "pick": "file",
      "what": "Um arquivo metadata.pegasus.txt (ou metadata.txt) de uma coleção.",
      "tip": "Cada 'collection' vira um console se o nome bater (PlayStation, SNES…)."},
+    {"id": "xbox", "name": "Xbox / PC Game Pass", "icon": "X",
+     "default": lambda: _xbox_default(),
+     "pick": "folder",
+     "what": "A pasta XboxGames (fica na raiz do disco escolhido no app Xbox, ex.: C:\\XboxGames). Cada jogo tem Content\\MicrosoftGame.config, de onde saem nome e executável.",
+     "tip": "Os jogos abrem pelo gamelaunchhelper.exe de cada pasta, que faz a verificação da assinatura Game Pass. Jogos instalados pela Microsoft Store antiga (WindowsApps) não entram."},
+    {"id": "ea", "name": "EA app", "icon": "EA",
+     "default": lambda: _env("ProgramFiles", r"C:\Program Files") / "EA Games",
+     "pick": "folder",
+     "what": "A pasta onde o EA app instala os jogos (padrão C:\\Program Files\\EA Games). O nome e o executável vêm de __Installer\\installerdata.xml de cada jogo.",
+     "tip": "O executável é aberto direto; o EA app sobe sozinho quando o jogo exige login."},
+    {"id": "ubisoft", "name": "Ubisoft Connect", "icon": "U",
+     "default": lambda: _env("ProgramFiles(x86)", r"C:\Program Files (x86)") / "Ubisoft" / "Ubisoft Game Launcher" / "games",
+     "pick": "folder",
+     "what": "A pasta games do Ubisoft Connect (padrão C:\\Program Files (x86)\\Ubisoft\\Ubisoft Game Launcher\\games). O registro do Windows é lido para achar jogos instalados em outros discos.",
+     "tip": "Os jogos ficam com 'Jogar' abrindo via uplay://launch — o Ubisoft Connect precisa estar instalado."},
     {"id": "shortcuts", "name": "Atalhos (Área de trabalho / Menu Iniciar)", "icon": "↗",
      "default": lambda: _home() / "Desktop",
      "pick": "folder",
@@ -386,6 +401,146 @@ def _pegasus(path: Path) -> list[dict]:
     return [g for g in out if g.get("exe") or g.get("rom")]
 
 
+def _drives() -> list[Path]:
+    if os.name != "nt":
+        return [Path("/")]
+    import string
+    out = []
+    for L in string.ascii_uppercase:
+        d = Path(f"{L}:\\")
+        if d.exists():
+            out.append(d)
+    return out
+
+
+def _xbox_default() -> Path:
+    for d in _drives():
+        if (d / "XboxGames").is_dir():
+            return d / "XboxGames"
+    return Path(r"C:\XboxGames")
+
+
+def _xbox(path: Path) -> list[dict]:
+    import xml.etree.ElementTree as ET
+    roots = [path] if path.is_dir() else []
+    if path.name.lower() != "xboxgames":
+        roots += [d / "XboxGames" for d in _drives() if (d / "XboxGames").is_dir() and (d / "XboxGames") != path]
+    cfgs = []
+    for r in roots:
+        cfgs += list(r.glob("*/Content/MicrosoftGame.config")) + list(r.glob("*/Content/MicrosoftGame.Config"))
+        if r.name.lower() != "xboxgames":
+            cfgs += list(r.glob("Content/MicrosoftGame.config"))
+    if not cfgs:
+        raise ValueError("Nenhum MicrosoftGame.config encontrado. Selecione a pasta XboxGames (ex.: C:\\XboxGames).")
+    out, seen = [], set()
+    for c in cfgs:
+        content = c.parent
+        if str(content).lower() in seen:
+            continue
+        seen.add(str(content).lower())
+        title, exe = content.parent.name, ""
+        try:
+            root = ET.parse(c).getroot()
+            sv = root.find(".//ShellVisuals")
+            if sv is not None and sv.get("DefaultDisplayName") and not sv.get("DefaultDisplayName", "").startswith("ms-resource"):
+                title = sv.get("DefaultDisplayName")
+            ex = root.find(".//ExecutableList/Executable")
+            if ex is not None and ex.get("Name"):
+                exe = str(content / ex.get("Name"))
+        except Exception as e:
+            log.debug("xbox config %s: %s", c, e)
+        helper = content / "gamelaunchhelper.exe"
+        if helper.exists():
+            exe = str(helper)
+        if not exe or not Path(exe).exists():
+            continue
+        out.append(_game(title, exe=exe, source="xbox", extra={"dir": str(content)}))
+    return out
+
+
+def _ea(path: Path) -> list[dict]:
+    import xml.etree.ElementTree as ET
+    if not path.is_dir():
+        raise ValueError("Selecione a pasta EA Games (ex.: C:\\Program Files\\EA Games).")
+    dirs = [path] if (path / "__Installer" / "installerdata.xml").exists() else [d for d in path.iterdir() if d.is_dir()]
+    out = []
+    for d in dirs:
+        xmlp = d / "__Installer" / "installerdata.xml"
+        title, exe = d.name, ""
+        if xmlp.exists():
+            try:
+                root = ET.parse(xmlp).getroot()
+                names = {t.get("locale", ""): (t.text or "").strip() for t in root.iter("gameTitle")}
+                title = names.get("en_US") or names.get("pt_BR") or next((v for v in names.values() if v), title)
+                for fp in root.iter("filePath"):
+                    v = (fp.text or "").strip()
+                    v = re.sub(r"^\[[^\]]*\]", "", v).lstrip("\\/")
+                    cand = d / v
+                    if v.lower().endswith(".exe") and cand.exists() and not re.search(r"installer|setup|launcher|cleanup|activation|touchup", cand.name, re.I):
+                        exe = str(cand)
+                        break
+            except Exception as e:
+                log.debug("ea xml %s: %s", xmlp, e)
+        if not exe:
+            from .installer import find_executables
+            try:
+                cands = find_executables(d)
+                exe = str(cands[0]) if cands else ""
+            except Exception:
+                exe = ""
+        if not exe:
+            continue
+        out.append(_game(title, exe=exe, source="ea", extra={"dir": str(d)}))
+    if not out:
+        raise ValueError("Nenhum jogo da EA encontrado nessa pasta.")
+    return out
+
+
+def _ubisoft(path: Path) -> list[dict]:
+    out, seen = [], set()
+    if os.name == "nt":
+        try:
+            import winreg
+            for hive, sub in ((winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs"), (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Ubisoft\Launcher\Installs")):
+                try:
+                    k = winreg.OpenKey(hive, sub)
+                except OSError:
+                    continue
+                i = 0
+                while True:
+                    try:
+                        gid = winreg.EnumKey(k, i)
+                    except OSError:
+                        break
+                    i += 1
+                    try:
+                        with winreg.OpenKey(k, gid) as gk:
+                            d = str(winreg.QueryValueEx(gk, "InstallDir")[0]).replace("/", "\\").rstrip("\\")
+                    except OSError:
+                        continue
+                    if not d or not Path(d).is_dir() or d.lower() in seen:
+                        continue
+                    seen.add(d.lower())
+                    out.append(_game(Path(d).name, exe=f"uplay://launch/{gid}/0", source="ubisoft", extra={"dir": d, "ubisoft_id": gid}))
+        except Exception as e:
+            log.debug("ubisoft reg: %s", e)
+    if path.is_dir():
+        from .installer import find_executables
+        for d in sorted(path.iterdir()):
+            if not d.is_dir() or str(d).lower() in seen:
+                continue
+            try:
+                cands = find_executables(d)
+            except Exception:
+                cands = []
+            if cands:
+                seen.add(str(d).lower())
+                out.append(_game(d.name, exe=str(cands[0]), source="ubisoft", extra={"dir": str(d)}))
+    if not out:
+        raise ValueError("Nenhum jogo da Ubisoft encontrado (registro vazio e pasta sem jogos).")
+    return out
+
+
 def _shortcuts(path: Path) -> list[dict]:
     out = []
     skip = re.compile(r"uninstall|desinstal|readme|manual|chrome|firefox|edge|word|excel|discord|spotify|steam\.exe|epicgames|setup|config|launcher\.exe$|update", re.I)
@@ -425,7 +580,7 @@ def _lnk_target(p: Path) -> str | None:
 
 
 READERS = {"playnite": _playnite, "heroic": _heroic, "steam": _steam, "epic": _epic, "gog": _gog, "esde": _esde,
-           "launchbox": _launchbox, "pegasus": _pegasus, "shortcuts": _shortcuts}
+           "launchbox": _launchbox, "pegasus": _pegasus, "shortcuts": _shortcuts, "xbox": _xbox, "ea": _ea, "ubisoft": _ubisoft}
 
 
 def scan(launcher_id: str, path: str, opts: dict | None = None) -> list[dict]:

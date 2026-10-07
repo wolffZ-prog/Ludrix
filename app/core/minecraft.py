@@ -172,7 +172,7 @@ class MinecraftManager:
             items.append({"id": it["id"], "title": it["title"], "desc": it["desc"], "group": it["group"], "winget": it.get("winget") or [],
                           "site": it["site"], "store": it.get("store"), "path": path, "installed": bool(path),
                           "kind": "store" if path.startswith("shell:") else ("jar" if path.lower().endswith(".jar") else ("flatpak" if path.startswith("flatpak:") else "exe")),
-                          "in_library": library_keys.get(it["id"], "")})
+                          "in_library": library_keys.get(it["id"], ""), "suggest": it["id"] in ("prism", "sklauncher")})
         return {"groups": GROUPS, "items": items, "windows": os.name == "nt", "java": bool(java_path())}
 
     def launch_spec(self, path: str) -> dict:

@@ -139,6 +139,7 @@ class Ludrix:
         self.integrity = {}
         self.sessions = SessionManager(self.store, on_start=self._on_game_start, on_end=self._on_game_end)
         self.sessions.on_boost = lambda pid: self.gamemode.boost_pid(pid)
+        self.sessions.start_external_watch()
         from .updates import UpdateManager
         self.updates = UpdateManager(self.store, self.repos.session)
         from .terminal import Terminal
@@ -335,6 +336,9 @@ class Ludrix:
             self.notify("warn", "Arquivos do launcher alterados", f"{n} arquivo(s) faltando ou diferente(s) do esperado. Ajustes › Sistema › Sobre › Verificar arquivos.", key="integrity", action="integrity")
 
     def _on_game_start(self, sess):
+        if sess.get("external"):
+            self._push({"type": "session_external", "key": sess["key"], "title": sess["title"]})
+            return
         if sess.get("optimize"):
             try:
                 done = self.gamemode.optimize()
@@ -355,6 +359,12 @@ class Ludrix:
             threading.Timer(1.0, lambda: self.window_hooks.get("hide", lambda: None)()).start()
 
     def _on_game_end(self, sess, elapsed):
+        if not sess.get("external"):
+            info0 = self.store.get(sess["key"]) or {}
+            if info0.get("post_cmd"):
+                exe0 = str(info0.get("exe") or "")
+                cwd0 = Path(info0["workdir"]) if info0.get("workdir") and Path(info0["workdir"]).is_dir() else (Path(exe0).parent if exe0 and os.path.isabs(exe0) else paths.ROOT)
+                threading.Thread(target=self._run_hook, args=(info0.get("post_cmd"), cwd0, False), daemon=True).start()
         self._push({"type": "session_end", "key": sess["key"], "title": sess["title"], "elapsed": elapsed,
                     "elapsed_h": human_time(elapsed), "crashed": bool(sess.get("crashed")), "rc": sess.get("rc")})
         if not sess.get("crashed") and elapsed > 60 and (self.store.get(sess["key"]) or {}).get("crash_count"):
@@ -376,7 +386,7 @@ class Ludrix:
         if self.store.config.get("save_auto_backup", True) and elapsed > 45 and not sess.get("crashed"):
             threading.Thread(target=self._auto_save_backup, args=(sess["key"],), daemon=True).start()
 
-        if sess.get("after", self.store.config.get("after_launch")) != "close":
+        if sess.get("after", self.store.config.get("after_launch")) != "close" and not sess.get("external"):
             self.window_hooks.get("show", lambda: None)()
 
     def _auto_save_backup(self, key: str):
@@ -610,6 +620,16 @@ class Ludrix:
     def _favs(self) -> set:
         return set(self.store.config.get("favorites") or [])
 
+    @property
+    def _hidden(self) -> set:
+        return set(self.store.config.get("hidden_games") or [])
+
+    def toggle_hidden(self, key: str) -> dict:
+        h = self._hidden
+        (h.discard if key in h else h.add)(key)
+        self.store.set_config(hidden_games=sorted(h))
+        return {"ok": True, "hidden": key in h}
+
     def toggle_favorite(self, key: str) -> dict:
         favs = self._favs
         (favs.discard if key in favs else favs.add)(key)
@@ -651,10 +671,16 @@ class Ludrix:
                          "playtime": info.get("playtime", 0), "last_played": info.get("last_played", 0), "added_at": info.get("installed_at", 0), "fav": k in self._favs, "cv": self._cv(k, m),
                          "source": info.get("source", ""), "store_src": info.get("store_src", ""), "play_count": info.get("play_count", 0)})
         games += roms + self._local_games()
+        hid = self._hidden
+        if hid:
+            for g in games:
+                if g["key"] in hid:
+                    g["hidden"] = True
         cats = [{"id": c["id"], "name": c["name"], "icon": c.get("icon", "")} for c in self.categories] + \
                [{"id": "other", "name": "Outros", "icon": "dots"}]
         if not self._first_payload_at:
             self._first_payload_at = time.time()
+            threading.Thread(target=self._auto_scan_dirs, daemon=True).start()
             log.info("primeira biblioteca servida %.2fs após abrir (%d itens, roms %s)", self._first_payload_at - self._t0, len(games), "pendentes" if self.emu.scan_pending() else "ok")
         return {
             **self.catalog_state, "games": games, "categories": cats, "sites_loading": self.sites_loading(), "roms_pending": self.emu.scan_pending(),
@@ -723,8 +749,6 @@ class Ludrix:
         c["safe_mode"] = bool(getattr(self, "safe_mode", False))
         c["safe_saved"] = bool(getattr(self, "safe_saved", None))
         c["rolled_back"] = getattr(self, "rolled_back", None)
-        c["settings_locked"] = bool(c.get("settings_lock"))
-        c["settings_lock"] = ""
         return c
 
     def entry(self, key: str) -> Entry | None:
@@ -1681,21 +1705,54 @@ class Ludrix:
             self.store.update(key, exe=str(exe))
         cmd = [str(exe)] + self._split_args(self._game_args(key))
         cwd = Path(info["workdir"]) if info.get("workdir") and Path(info["workdir"]).is_dir() else exe.parent
-        hint = ""
-        if os.name != "nt":
-            from . import compat, winengine
-            if compat.is_windows_binary(exe):
-                cfg = self.store.config
-                if not force and not winengine.ready(cfg) and (cfg.get("win_backend") or "auto") in ("auto", "umu"):
-                    return {"need_prepare": True, "key": key, "title": info.get("title", exe.stem), "needs": winengine.needs(cfg), "mode": winengine.mode(cfg)}
-                game = dict(info)
-                game["key"] = key
-                if not winengine.prefix_info(winengine.prefix_dir(cfg, game))["exists"]:
-                    hint = "Primeira abertura: o Proton prepara o prefixo antes do jogo aparecer (pode levar um minuto)."
-        res = self.sessions.launch(key, cmd, cwd, info.get("title", exe.stem))
-        if hint and res.get("ok"):
-            res["hint"] = hint
-        return res
+        self._run_hook(info.get("pre_cmd"), cwd, wait=True)
+        if info.get("admin") and os.name == "nt":
+            return self._launch_admin(key, exe, cmd[1:], cwd, info.get("title", exe.stem))
+        return self.sessions.launch(key, cmd, cwd, info.get("title", exe.stem))
+
+    def _run_hook(self, cmd: str | None, cwd: Path, wait: bool) -> None:
+        cmd = (cmd or "").strip()
+        if not cmd:
+            return
+        import subprocess
+        try:
+            flags = 0x08000000 if os.name == "nt" else 0
+            p = subprocess.Popen(cmd, shell=True, cwd=str(cwd), creationflags=flags)
+            if wait:
+                try:
+                    p.wait(timeout=15)
+                except subprocess.TimeoutExpired:
+                    pass
+        except Exception as e:
+            log.warning("comando do jogo falhou: %s", e)
+            self.notify("warn", "Comando antes/depois do jogo falhou", str(e))
+
+    def _launch_admin(self, key: str, exe: Path, args: list[str], cwd: Path, title: str) -> dict:
+        import ctypes
+        import subprocess
+        from ctypes import wintypes
+
+        class SEI(ctypes.Structure):
+            _fields_ = [("cbSize", wintypes.DWORD), ("fMask", ctypes.c_ulong), ("hwnd", wintypes.HWND), ("lpVerb", wintypes.LPCWSTR),
+                        ("lpFile", wintypes.LPCWSTR), ("lpParameters", wintypes.LPCWSTR), ("lpDirectory", wintypes.LPCWSTR), ("nShow", ctypes.c_int),
+                        ("hInstApp", wintypes.HINSTANCE), ("lpIDList", ctypes.c_void_p), ("lpClass", wintypes.LPCWSTR), ("hkeyClass", wintypes.HKEY),
+                        ("dwHotKey", wintypes.DWORD), ("hIcon", wintypes.HANDLE), ("hProcess", wintypes.HANDLE)]
+        sei = SEI()
+        sei.cbSize = ctypes.sizeof(SEI)
+        sei.fMask = 0x00000040 | 0x00000100
+        sei.lpVerb, sei.lpFile, sei.lpDirectory, sei.nShow = "runas", str(exe), str(cwd), 1
+        sei.lpParameters = subprocess.list2cmdline(args) if args else None
+        if not ctypes.windll.shell32.ShellExecuteExW(ctypes.byref(sei)):
+            err = ctypes.GetLastError()
+            return {"error": "Permissão de administrador negada" if err == 1223 else f"Não foi possível abrir como administrador (erro {err})"}
+        h = sei.hProcess
+        pid = int(ctypes.windll.kernel32.GetProcessId(h)) if h else 0
+        if h:
+            ctypes.windll.kernel32.CloseHandle(h)
+        if not pid:
+            self.store.update(key, last_played=time.time())
+            return {"ok": True, "tracked": False}
+        return self.sessions.launch_pid(key, pid, title)
 
     def _pick_emulator(self, key: str, sid: str, emulator: str | None):
         if emulator:
@@ -1896,28 +1953,17 @@ class Ludrix:
             "cover_src": d.get("cover_src", ""), "custom_cover": bool(d.get("custom_cover")), "cover_url": m.get("cover_url", ""),
             "hero_url": m.get("hero_url", ""), "background_file": m.get("background_file", ""), "cv": self._cv(key, m),
             "installed": bool(d.get("installed")), "dir": d.get("dir", ""), "exe": exe, "args": d.get("args", ""),
-            "workdir": info.get("workdir", ""),
+            "workdir": info.get("workdir", ""), "admin": bool(info.get("admin")), "pre_cmd": info.get("pre_cmd", ""), "post_cmd": info.get("post_cmd", ""),
             "emu": d.get("emu"), "emulator": (self.store.config.get("game_emulator") or {}).get(key, ""),
-            "fav": key in self._favs, "playtime": d.get("playtime", 0), "playtime_h": d.get("playtime_h", ""), "last_played": d.get("last_played", 0),
+            "fav": key in self._favs, "playtime_h": d.get("playtime_h", ""), "last_played": d.get("last_played", 0),
             "added_at": info.get("installed_at", 0), "version": d.get("version", ""), "repo": d.get("repo", ""), "playtime": info.get("playtime", 0), "play_count": info.get("play_count", 0),
             "others": others[:400], "native": bool(self.pick_file),
-            "win": self._edit_win(key, info, exe, is_rom),
             "sources": [x for x in (
                 {"id": "steam", "name": "Steam"}, {"id": "gog", "name": "GOG"}, {"id": "wikipedia", "name": "Wikipedia"},
                 {"id": "steamgriddb", "name": "SteamGridDB" + ("" if (self.store.config.get("sgdb_key") or "").strip() else " (precisa de chave)")},
                 {"id": "libretro", "name": "Boxart de console (libretro)"} if sysid != "pc" else None,
                 {"id": "web", "name": "Imagens da web (Google, Bing…)"}) if x],
         }
-
-    def _edit_win(self, key: str, info: dict, exe: str, is_rom: bool) -> dict | None:
-        if os.name == "nt" or is_rom or not exe or "://" in exe:
-            return None
-        from . import compat, winengine
-        if not compat.is_windows_binary(Path(exe)):
-            return None
-        game = dict(info)
-        game["key"] = key
-        return {"settings": dict(info.get("win") or {}), **winengine.game_summary(self.store.config, game)}
 
     def edit_web_covers(self, key: str, title: str, kind: str = "cover") -> dict:
         d = self.game_payload(key) or {}
@@ -2033,9 +2079,15 @@ class Ludrix:
                 self.store.update(key, **patch)
         if "args" in data:
             self.set_shortcut(key, None, str(data["args"] or ""))
-        if isinstance(data.get("win"), dict) and info and os.name != "nt":
-            from . import winengine
-            self.store.update(key, win=winengine.sanitize_game_win(data["win"]))
+        if info is not None:
+            launch = {}
+            if "admin" in data:
+                launch["admin"] = bool(data["admin"])
+            for f in ("pre_cmd", "post_cmd"):
+                if f in data:
+                    launch[f] = str(data[f] or "").strip()[:2000]
+            if launch:
+                self.store.update(key, **launch)
         if "emulator" in data and (key.startswith("rom:") or (info or {}).get("kind") == "rom"):
             self.set_game_emulator(key, data["emulator"] or None)
         if "fav" in data and bool(data["fav"]) != (key in self._favs):
@@ -2542,6 +2594,8 @@ class Ludrix:
             acts.append({"id": "install", "label": "Baixar via torrent" if only_t else "Baixar ROM" if kind == "rom" else "Baixar e instalar", "icon": "magnet" if only_t else "dl", "primary": True})
         acts.append({"id": "details", "label": "Detalhes", "icon": "info"})
         acts.append({"id": "fav", "label": "Remover dos favoritos" if key in self._favs else "Adicionar aos favoritos", "icon": "star"})
+        if installed or kind == "local" or local_rom:
+            acts.append({"id": "hide", "label": "Mostrar na biblioteca" if key in self._hidden else "Ocultar da biblioteca", "icon": "eye"})
         acts.append({"sep": True})
         if installed and g.get("dir"):
             acts.append({"id": "open_dir", "label": "Abrir pasta do jogo", "icon": "folder"})
@@ -2591,7 +2645,7 @@ class Ludrix:
 
     def home_payload(self) -> dict:
         cat = self.catalog_payload()
-        games = [g for g in cat["games"] if g.get("installed")]
+        games = [g for g in cat["games"] if g.get("installed") and not g.get("hidden")]
         broken = sum(1 for g in cat["games"] if g.get("repo") == "local" and not g.get("installed") and not g.get("mc_nolauncher"))
         live = set(self.sessions.status())
         by_key = {g["key"]: g for g in games}
@@ -2614,6 +2668,16 @@ class Ludrix:
             return {"error": "Emulador desconhecido"}
         return self._run_job(f"emu:{emu_id}", cfg["title"], "emulator",
                              lambda cb, cancel: {"dir": str(self.emu.install_emulator(emu_id, cb, cancel))}, retry={"m": "install_emulator", "a": [emu_id]})
+
+    def update_emulator(self, emu_id: str):
+        cfg = self.emu.presets["emulators"].get(emu_id)
+        if not cfg:
+            return {"error": "Emulador desconhecido"}
+        return self._run_job(f"emu:{emu_id}", f"{cfg['title']} (atualização)", "emulator",
+                             lambda cb, cancel: {"dir": str(self.emu.install_emulator(emu_id, cb, cancel, keep=True))}, retry={"m": "update_emulator", "a": [emu_id]})
+
+    def check_emulator_updates(self) -> dict:
+        return {"updates": self.emu.check_updates(force=True)}
 
     def library_check(self) -> dict:
         items = []
@@ -2921,7 +2985,7 @@ class Ludrix:
         return r
 
     def set_config(self, data: dict):
-        allowed = {k: v for k, v in data.items() if k not in ("settings_lock", "settings_locked")}
+        allowed = dict(data)
         before = dict(self.store.config)
         cfg = self.store.set_config(**allowed)
         hot = [k for k in self.RESTART_KEYS if k in data and data[k] != before.get(k)]
@@ -2943,7 +3007,7 @@ class Ludrix:
         return self.public_config() if cfg else {}
 
     def reset_config(self, keys) -> dict:
-        keys = [k for k in (keys or []) if isinstance(k, str) and k in DEFAULT_CONFIG and k not in ("settings_lock", "settings_locked", "language", "welcome_done")]
+        keys = [k for k in (keys or []) if isinstance(k, str) and k in DEFAULT_CONFIG and k not in ("language", "welcome_done")]
         if not keys:
             return {"error": "Nada para redefinir."}
         return self.set_config({k: json.loads(json.dumps(DEFAULT_CONFIG[k])) for k in keys})
@@ -4069,12 +4133,6 @@ class Ludrix:
             log.debug("mock preview %s: %s", theme_id, e)
             return None
 
-    def theme_snapshot(self, tid: str, data: str) -> dict:
-        import base64
-        if not data.startswith("data:image"):
-            return {"error": "imagem inválida"}
-        return self._theme_preview_write(tid, base64.b64decode(data.split(",", 1)[1]))
-
     def _theme_mock_preview(self, theme_id: str) -> Path | None:
         from PIL import Image, ImageDraw
         base_dark = {"bg": "#000000", "bg2": "#0a0a0a", "card": "#161616", "card2": "#222222", "text": "#ffffff", "muted": "#8a8a8a", "line2": "#2a2a2a"}
@@ -4184,17 +4242,6 @@ class Ludrix:
             draw_half(img, dr, 0, W, H, scheme)
         img.save(out, optimize=True)
         return out
-
-    def theme_preview_set(self, tid: str, path: str | None) -> dict:
-        if not tid.startswith("file:"):
-            return {"error": "Só temas personalizados"}
-        if not path:
-            if not self.pick_file:
-                return {"error": "Informe o caminho da imagem"}
-            path = self.pick_file(str(Path.home() / "Pictures"), "image")
-            if not path:
-                return {"ok": False}
-        return self._theme_preview_write(tid, Path(path).read_bytes())
 
     def _theme_preview_write(self, tid: str, raw: bytes) -> dict:
         from io import BytesIO
@@ -4393,25 +4440,6 @@ class Ludrix:
         else:
             t.pop("official", None)
         tj.write_text(json.dumps(t, ensure_ascii=False, indent=1), encoding="utf-8")
-
-    def theme_wallpaper_set(self, tid: str, path: str | None) -> dict:
-        if not tid.startswith("file:"):
-            return {"error": "Crie um tema personalizado primeiro"}
-        if not path:
-            if not self.pick_file:
-                return {"error": "Informe o caminho da imagem"}
-            path = self.pick_file(str(Path.home() / "Pictures"), "image")
-            if not path:
-                return {"ok": False}
-        d = self._theme_dir(tid[5:])
-        d.mkdir(parents=True, exist_ok=True)
-        for ext in (".jpg", ".jpeg", ".png", ".webp"):
-            (d / ("wallpaper" + ext)).unlink(missing_ok=True)
-        from PIL import Image
-        img = Image.open(path).convert("RGB")
-        img.thumbnail((2560, 1600))
-        img.save(d / "wallpaper.jpg", "JPEG", quality=82)
-        return {"ok": True}
 
     def cache_info(self) -> dict:
         return {
@@ -4614,7 +4642,101 @@ class Ludrix:
         threading.Thread(target=work, daemon=True).start()
         return {"async": True}
 
+    def game_dirs(self) -> list[str]:
+        out = [str(self.store.games_dir())]
+        for d in self.store.config.get("game_dirs") or []:
+            if d and d not in out:
+                out.append(d)
+        return out
+
+    def game_dir_add(self, path: str | None = None) -> dict:
+        if not path:
+            if not self.pick_folder:
+                return {"native": False}
+            try:
+                path = self.pick_folder(str(self.store.games_dir()))
+            except TypeError:
+                path = self.pick_folder()
+            if not path:
+                return {"ok": False}
+        p = Path(path)
+        if not p.is_dir():
+            return {"error": "Pasta não encontrada"}
+        cur = [d for d in (self.store.config.get("game_dirs") or []) if d]
+        norm = os.path.normcase(os.path.normpath(str(p)))
+        if norm == os.path.normcase(os.path.normpath(str(self.store.games_dir()))) or any(os.path.normcase(os.path.normpath(d)) == norm for d in cur):
+            return {"ok": True, "dirs": cur, "dup": True}
+        if any(norm.startswith(os.path.normcase(os.path.normpath(r)) + os.sep) for r in (str(paths.ROOT),)):
+            return {"error": "Essa pasta fica dentro do próprio Ludrix"}
+        cur.append(str(p))
+        self.store.set_config(game_dirs=cur)
+        return {"ok": True, "dirs": cur}
+
+    def game_dir_remove(self, path: str) -> dict:
+        cur = [d for d in (self.store.config.get("game_dirs") or []) if d and d != path]
+        self.store.set_config(game_dirs=cur)
+        return {"ok": True, "dirs": cur}
+
+    def scan_ignore(self, exes: list[str]) -> dict:
+        cur = list(self.store.config.get("scan_ignored") or [])
+        for e in exes or []:
+            e = str(e or "").lower()
+            if e and e not in cur:
+                cur.append(e)
+        self.store.set_config(scan_ignored=cur[-2000:])
+        return {"ok": True, "count": len(cur)}
+
+    def _scan_new_games(self, prog=None) -> list[dict]:
+        from . import scanner
+        have = {str(v.get("exe", "")).lower() for v in list(self.store.library.values())}
+        have |= set(self.store.config.get("scan_ignored") or [])
+        out, seen = [], set()
+        for d in self.game_dirs():
+            if not Path(d).is_dir():
+                continue
+            try:
+                items = scanner.scan_windows(Path(d), prog)
+            except Exception as e:
+                log.debug("scan %s: %s", d, e)
+                continue
+            for it in items:
+                ex = it["exe"].lower()
+                if ex in have or ex in seen:
+                    continue
+                seen.add(ex)
+                it["dup"] = False
+                it["root"] = d
+                out.append(it)
+        return out
+
+    def _auto_scan_dirs(self):
+        time.sleep(25)
+        try:
+            if not self.store.config.get("auto_scan_dirs", True) or not self.store.config.get("welcome_done"):
+                return
+            items = self._scan_new_games()
+            if items:
+                self._push({"type": "new_games", "count": len(items), "games": items[:300], "dirs": self.game_dirs()})
+        except Exception as e:
+            log.debug("auto scan: %s", e)
+
     def folder_scan(self, path: str | None, mode: str) -> dict:
+        if path == "*" and mode != "roms":
+            st = self._import_state = {"done": False, "msg": "Abrindo…", "result": None}
+
+            def work_all():
+                try:
+                    items = self._scan_new_games(lambda m: st.__setitem__("msg", m))
+                    emus = self.emu.all_emulators()
+                    st["result"] = {"games": items, "count": len(items), "path": " · ".join(self.game_dirs()), "mode": mode,
+                                    "emulators": [{"id": k, "title": v.get("title", k), "systems": v.get("systems", []), "installed": bool(self.emu.emu_exe(k))} for k, v in emus.items()]}
+                except Exception as e:
+                    log.exception("folder_scan all")
+                    st["result"] = {"error": str(e)}
+                finally:
+                    st["done"] = True
+            threading.Thread(target=work_all, daemon=True).start()
+            return {"async": True, "path": path}
         if not path:
             if not self.pick_folder:
                 return {"error": "Informe o caminho da pasta"}
@@ -5031,7 +5153,7 @@ class Ludrix:
     def random_pick(self, filt: str = "any", exclude: list[str] | None = None) -> dict:
         import random
         cat = self.catalog_payload()
-        games = [g for g in cat["games"] if g.get("installed")]
+        games = [g for g in cat["games"] if g.get("installed") and not g.get("hidden")]
         if filt == "unplayed":
             games = [g for g in games if not g.get("playtime")]
         elif filt == "short":
@@ -5112,79 +5234,7 @@ class Ludrix:
         except Exception as e:
             log.warning("hardware: %s", e)
             return {"error": str(e)}
-        from . import compat
-        hw = dict(hw)
-        hw["compat"] = compat.status(self.store.config)
-        return hw
-
-    def _win_game(self, key: str | None) -> dict | None:
-        if not key:
-            return None
-        info = self.store.get(key)
-        if not info:
-            return None
-        g = dict(info)
-        g["key"] = key
-        return g
-
-    def win_status(self, deep: bool = False) -> dict:
-        from . import compat
-        return compat.status(self.store.config, deep)
-
-    def win_prepare(self, then_play: str | None = None) -> dict:
-        if os.name == "nt":
-            return {"error": "Só no Linux"}
-        from . import winengine
-
-        def work(cb, cancel):
-            r = winengine.prepare(self.store.config, cb, cancel, self.repos.session)
-            if then_play:
-                r["play"] = then_play
-            return r
-        return self._run_job("win:prepare", "Motor Windows", "win", work, retry={"m": "win_prepare", "a": [then_play]})
-
-    def win_update_proton(self) -> dict:
-        from . import winengine
-        return self._run_job("win:proton", "GE-Proton (atualizar)", "win",
-                             lambda cb, cancel: {"dir": str(winengine.download_proton(cb, cancel, self.repos.session))}, retry={"m": "win_update_proton", "a": []})
-
-    def win_tricks(self, verbs: list, key: str | None = None) -> dict:
-        from . import winengine
-        verbs = [str(v).strip() for v in (verbs or []) if str(v).strip()]
-        if not verbs:
-            return {"error": "Escolha pelo menos um componente"}
-        game = self._win_game(key)
-        title = "Componentes: " + ", ".join(verbs[:3]) + ("…" if len(verbs) > 3 else "")
-        return self._run_job("win:tricks", title, "win", lambda cb, cancel: winengine.install_tricks(verbs, self.store.config, cb, cancel, game),
-                             retry={"m": "win_tricks", "a": [verbs, key]})
-
-    def win_tool(self, tool: str, key: str | None = None) -> dict:
-        from . import winengine
-        try:
-            return winengine.open_tool(tool, self.store.config, self._win_game(key))
-        except Exception as e:
-            return {"error": str(e)}
-
-    def win_test(self, key: str | None = None) -> dict:
-        from . import winengine
-        try:
-            return winengine.test(self.store.config, self._win_game(key))
-        except Exception as e:
-            return {"ok": False, "message": str(e)}
-
-    def win_clean(self) -> dict:
-        from . import winengine
-        return winengine.clean_temp(self.store.config)
-
-    def win_prefix(self, action: str, path: str = "", key: str | None = None) -> dict:
-        from . import winengine
-        if action == "set":
-            return winengine.set_prefix(lambda d: self.store.set_config(**d), path or "")
-        if action == "reset":
-            if any(k.startswith("win:") for k in self.jobs) or self.sessions.active:
-                return {"error": "Feche os jogos e espere a Fila terminar antes de apagar o prefixo."}
-            return winengine.reset_prefix(self.store.config, self._win_game(key))
-        return {"error": "ação desconhecida"}
+        return dict(hw)
 
     def shutdown(self):
         for j in self.jobs.values():

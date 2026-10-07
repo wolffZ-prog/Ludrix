@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import html
 import json
 import os
 import platform
@@ -12,7 +11,6 @@ import subprocess
 import sys
 import time
 import zipfile
-from urllib.parse import quote, unquote
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -467,7 +465,7 @@ def _dupes(t, a):
 def _config(t, a):
     from .store import DEFAULT_CONFIG
     cfg = t.n.store.config
-    hidden = {"sgdb_key", "settings_lock", "notifications", "flash_stats", "title_overrides", "game_args"}
+    hidden = {"sgdb_key", "notifications", "flash_stats", "title_overrides", "game_args"}
     if not a:
         keys = sorted(k for k in DEFAULT_CONFIG if k not in hidden)
         return "\n".join(f"{k:<24} = {json.dumps(cfg.get(k), ensure_ascii=False)[:60]}" for k in keys)
@@ -478,10 +476,6 @@ def _config(t, a):
         return {"ok": False, "text": f"Não existe a configuração \"{k}\"." + (f" Parecidas: {', '.join(m)}" if m else "")}
     if len(a) == 1:
         return f"{k} = {json.dumps('***' if k in hidden else cfg.get(k), ensure_ascii=False)}"
-    if k in ("settings_lock",):
-        return {"ok": False, "text": "Use /locksettings e /unlocksettings pra isso."}
-    if t.n.store.config.get("settings_lock"):
-        return {"ok": False, "text": "Os Ajustes estão trancados. /unlocksettings <pin> primeiro."}
     raw = " ".join(a[1:])
     cur = DEFAULT_CONFIG[k]
     try:
@@ -697,29 +691,6 @@ def _listbackups(t, a):
     return "\n".join(f"{f.name:<40} {_human(f.stat().st_size)}" for f in fs) or "Nenhum backup ainda. /forcebackup cria um."
 
 
-@cmd("locksettings", "Tranca os Ajustes com um PIN (a aba pede o PIN pra abrir)", args=[("pin", "4+ dígitos ou palavra", True)], examples=["/locksettings 2468"], group="segurança")
-def _locksettings(t, a):
-    pin = a[0]
-    if len(pin) < 4:
-        return usage(COMMANDS["locksettings"], "o PIN precisa ter pelo menos 4 caracteres")
-    if t.n.store.config.get("settings_lock"):
-        return {"ok": False, "text": "Já está trancado. /unlocksettings <pin> primeiro."}
-    t.n.store.set_config(settings_lock=hashlib.sha256(pin.encode()).hexdigest())
-    return {"text": "Ajustes trancados. Guarde o PIN — sem ele, só apagando settings_lock em data/config.json.", "ui": {"config": True}}
-
-
-@cmd("unlocksettings", "Destranca os Ajustes", args=[("pin", "o PIN usado em /locksettings", True)], examples=["/unlocksettings 2468"], group="segurança")
-def _unlocksettings(t, a):
-    cur = t.n.store.config.get("settings_lock")
-    if not cur:
-        return "Os Ajustes não estão trancados."
-    if hashlib.sha256(a[0].encode()).hexdigest() != cur:
-        time.sleep(1.0)
-        return {"ok": False, "text": "PIN errado."}
-    t.n.store.set_config(settings_lock="")
-    return {"text": "Ajustes destrancados.", "ui": {"config": True}}
-
-
 @cmd("terminalsettings", "Abre as configurações do terminal (fonte, tamanho, opacidade, cor)", group="ajuda", aliases=["tsettings"])
 def _terminalsettings(t, a):
     return {"ui": {"terminal_settings": True}, "text": ""}
@@ -767,177 +738,6 @@ def _openx(t, a):
     return {"ok": False, "text": "Só abro programas do Windows, pastas do Ludrix ou sites. Use o caminho completo de uma pasta do Ludrix."}
 
 
-@cmd("apps", "Atalhos rápidos do Windows: /apps <nome>", args=[("nome", "taskmgr | devmgmt | services | regedit | control | msconfig | dxdiag | cmd | powershell | explorer | snip | settings | sound | display | network | programs | startup", True)],
-     examples=["/apps taskmgr", "/apps dxdiag", "/apps startup"], group="windows")
-def _apps(t, a):
-    t._win_only()
-    m = {"taskmgr": "taskmgr", "devmgmt": "devmgmt.msc", "services": "services.msc", "regedit": "regedit", "control": "control", "msconfig": "msconfig",
-         "dxdiag": "dxdiag", "cmd": "cmd", "powershell": "powershell", "explorer": "explorer", "snip": "snippingtool", "settings": "ms-settings:",
-         "sound": "mmsys.cpl", "display": "ms-settings:display", "network": "ncpa.cpl", "programs": "appwiz.cpl", "startup": "ms-settings:startupapps",
-         "gamebar": "ms-settings:gaming-gamebar", "storage": "ms-settings:storagesense", "update": "ms-settings:windowsupdate", "bluetooth": "ms-settings:bluetooth"}
-    k = a[0].lower()
-    if k not in m:
-        return usage(COMMANDS["apps"], f"não conheço \"{k}\"")
-    subprocess.Popen(["cmd", "/c", "start", "", m[k]], creationflags=0x08000000)
-    return f"Abrindo {k}…"
-
-
-@cmd("processes", "Processos que mais usam CPU/RAM agora", args=[("n", "quantos (padrão 15)", False)], examples=["/processes", "/processes 30"], group="windows", aliases=["ps", "top"])
-def _processes(t, a):
-    try:
-        import psutil
-    except Exception:
-        return {"ok": False, "text": "psutil não disponível."}
-    n = int(a[0]) if a and a[0].isdigit() else 15
-    rows = []
-    for p in psutil.process_iter(["pid", "name", "memory_info"]):
-        try:
-            rows.append((p.info["memory_info"].rss if p.info["memory_info"] else 0, p.info["pid"], p.info["name"] or "?"))
-        except Exception:
-            pass
-    rows.sort(reverse=True)
-    vm = psutil.virtual_memory()
-    return f"RAM em uso: {vm.percent}% ({_human(vm.used)} de {_human(vm.total)})\n" + "\n".join(f"{pid:>7}  {_human(rss):>10}  {name}" for rss, pid, name in rows[:n])
-
-
-@cmd("killproc", "Fecha um processo pelo nome ou PID", args=[("nome|pid", "ex.: chrome.exe ou 1234", True)], examples=["/killproc chrome.exe", "/killproc 4812"], group="windows", danger=True)
-def _killproc(t, a):
-    import psutil
-    q = a[0].lower()
-    n = 0
-    for p in psutil.process_iter(["pid", "name"]):
-        try:
-            if str(p.info["pid"]) == q or (p.info["name"] or "").lower() in (q, q + ".exe"):
-                p.terminate()
-                n += 1
-        except Exception:
-            pass
-    return f"{n} processo(s) encerrado(s)." if n else {"ok": False, "text": "Nenhum processo com esse nome/PID."}
-
-
-@cmd("disk", "Espaço livre nos discos", group="windows", aliases=["df", "disks"])
-def _disk(t, a):
-    out = []
-    try:
-        import psutil
-        for part in psutil.disk_partitions(all=False):
-            try:
-                u = psutil.disk_usage(part.mountpoint)
-                out.append(f"{part.device:<8} {_human(u.free):>10} livres de {_human(u.total):<10} ({u.percent}% usado)")
-            except Exception:
-                pass
-    except Exception:
-        u = shutil.disk_usage(paths.ROOT)
-        out.append(f"{paths.ROOT.anchor}: {_human(u.free)} livres de {_human(u.total)}")
-    return "\n".join(out)
-
-
-@cmd("net", "Testa a internet: ping em alguns servidores e status do launcher", group="internet", aliases=["ping", "online"])
-def _net(t, a):
-    import socket
-    out = [f"Launcher acha que está {'online' if t.n.online(True) else 'OFFLINE'}."]
-    for host in ("1.1.1.1", "archive.org", "github.com"):
-        t0 = time.time()
-        try:
-            socket.create_connection((host, 443 if host != "1.1.1.1" else 53), timeout=3).close()
-            out.append(f"  {host:<14} ok  {int((time.time() - t0) * 1000)} ms")
-        except Exception as e:
-            out.append(f"  {host:<14} falhou ({type(e).__name__})")
-    return "\n".join(out)
-
-
-@cmd("myip", "Seu IP público e local", group="internet", aliases=["ip"])
-def _myip(t, a):
-    import socket
-    local = "?"
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        local = s.getsockname()[0]
-        s.close()
-    except Exception:
-        pass
-    pub = "?"
-    try:
-        pub = t.n.repos.session.get("https://api.ipify.org", timeout=6).text.strip()
-    except Exception:
-        pass
-    return f"Local: {local}\nPúblico: {pub}"
-
-
-UA_WEB = "Ludrix/1.0 (terminal)"
-
-
-def web_search(session, q: str, n: int = 6) -> list[dict]:
-    try:
-        r = session.post("https://html.duckduckgo.com/html/", data={"q": q}, timeout=15,
-                         headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " + UA_WEB, "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8"})
-        r.raise_for_status()
-    except Exception:
-        return []
-    out = []
-    for m in re.finditer(r'<a rel="nofollow" class="result__a" href="([^"]+)">(.*?)</a>.*?<a class="result__snippet"[^>]*>(.*?)</a>', r.text, re.S):
-        u = html.unescape(m.group(1))
-        mm = re.search(r"uddg=([^&]+)", u)
-        if mm:
-            u = unquote(mm.group(1))
-        out.append({"title": html.unescape(re.sub(r"<[^>]+>", "", m.group(2))).strip(), "url": u,
-                    "snippet": html.unescape(re.sub(r"<[^>]+>", "", m.group(3))).strip()})
-        if len(out) >= n:
-            break
-    return out
-
-
-def wiki_summary(session, q: str, lang: str = "pt") -> str:
-    for lg in (lang, "en"):
-        try:
-            s = session.get(f"https://{lg}.wikipedia.org/w/api.php", params={"action": "opensearch", "search": q, "limit": 1, "format": "json"},
-                            timeout=10, headers={"User-Agent": UA_WEB}).json()
-            title = (s[1] or [None])[0] if isinstance(s, list) and len(s) > 1 else None
-            if not title:
-                continue
-            r = session.get(f"https://{lg}.wikipedia.org/api/rest_v1/page/summary/{quote(title)}", timeout=10, headers={"User-Agent": UA_WEB}).json()
-            if r.get("extract"):
-                return f"{r.get('title')}: {r['extract']}\n{(r.get('content_urls') or {}).get('desktop', {}).get('page', '')}"
-        except Exception:
-            continue
-    return ""
-
-
-@cmd("web", "Pesquisa na web (DuckDuckGo) e mostra os primeiros resultados", args=[("termo", "o que procurar", True)],
-     examples=['/web "pcsx2 bios"', "/web como configurar dolphin"], group="internet", aliases=["google", "ddg"])
-def _web(t, a):
-    q = " ".join(a)
-    rs = web_search(t.n.repos.session, q)
-    if not rs:
-        return {"ok": False, "text": "Sem resultados (ou sem internet)."}
-    return "\n".join(f"{i + 1}. {r['title']}\n   {r['url']}\n   {r['snippet']}" for i, r in enumerate(rs[:6]))
-
-
-@cmd("speedtest", "Mede a velocidade de download (baixa ~10 MB de um servidor público)", group="internet")
-def _speedtest(t, a):
-    url = "https://speed.cloudflare.com/__down?bytes=10000000"
-    t0 = time.time()
-    n = 0
-    try:
-        with t.n.repos.session.get(url, stream=True, timeout=30) as r:
-            for chunk in r.iter_content(1 << 16):
-                n += len(chunk)
-                if time.time() - t0 > 12:
-                    break
-    except Exception as e:
-        return {"ok": False, "text": f"Falhou: {e}"}
-    dt = max(0.001, time.time() - t0)
-    return f"{_human(n)} em {dt:.1f} s → {n * 8 / dt / 1e6:.1f} Mbps ({_human(n / dt)}/s)"
-
-
-@cmd("wiki", "Resumo da Wikipédia sobre um jogo/assunto", args=[("termo", "ex.: Need for Speed Underground 2", True)], examples=['/wiki "Shadow of the Colossus"'], group="internet")
-def _wiki(t, a):
-    q = " ".join(a)
-    r = wiki_summary(t.n.repos.session, q)
-    return r or {"ok": False, "text": "Nada na Wikipédia (ou sem internet)."}
-
-
 @cmd("random", "Sorteia um jogo da biblioteca pra você jogar agora", args=[("filtro", "installed | rom | pc | never (nunca jogados)", False)], examples=["/random", "/random never"], group="diversão", aliases=["roll", "dice"])
 def _random(t, a):
     import random
@@ -953,35 +753,6 @@ def _random(t, a):
         return "Nada pra sortear com esse filtro."
     k, i = random.choice(lib)
     return {"text": f"🎲 {i.get('title') or k}   ( /play \"{i.get('title') or k}\" pra abrir )".replace("🎲", ">>"), "ui": {"open_game": k}}
-
-
-@cmd("uptime", "Há quanto tempo o Ludrix e o Windows estão ligados", group="diversão")
-def _uptime(t, a):
-    try:
-        import psutil
-        boot = time.time() - psutil.boot_time()
-    except Exception:
-        boot = 0
-    return f"Ludrix: {int(time.time() - t.started) // 60} min   ·   Windows: {int(boot // 3600)} h {int(boot % 3600 // 60)} min"
-
-
-@cmd("say", "Faz o Ludrix falar uma frase (voz do Windows)", args=[("texto", "o que falar", True)], examples=['/say "bom jogo"'], group="diversão")
-def _say(t, a):
-    t._win_only()
-    txt = " ".join(a)[:200].replace("'", "''").replace("`", "")
-    subprocess.Popen(["powershell", "-NoProfile", "-WindowStyle", "Hidden", "-Command",
-                      f"Add-Type -AssemblyName System.Speech; (New-Object System.Speech.Synthesis.SpeechSynthesizer).Speak('{txt}')"], creationflags=0x08000000)
-    return "Falando…"
-
-
-@cmd("matrix", "Chuva de caracteres no terminal por alguns segundos", group="diversão", hidden=False)
-def _matrix(t, a):
-    return {"ui": {"matrix": True}, "text": ""}
-
-
-@cmd("echo", "Repete o texto (útil pra testar aspas)", args=[("texto", "qualquer coisa", False)], group="diversão")
-def _echo(t, a):
-    return " ".join(a)
 
 
 @cmd("history", "Mostra os últimos comandos digitados", group="ajuda")

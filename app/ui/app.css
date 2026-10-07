@@ -2078,3 +2078,5 @@ html.busy,html.busy *{cursor:progress}
 .mghead .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.mghead .tx b{font-size:17px;font-weight:800;line-height:1.2}.mghead .tx span{font-size:12.5px;color:var(--muted)}
 .mghead .ta{display:flex;gap:6px;flex:none}
 @media (max-width:900px){.modwrap{grid-template-columns:1fr}.modgames{position:static;max-height:260px}}
+
+.dirlist{display:flex;flex-direction:column;gap:4px;margin-top:8px}.dirlist>div{display:flex;align-items:center;gap:6px}.dirlist code{font:12px ui-monospace,Consolas,monospace;background:color-mix(in srgb,var(--text) 7%,transparent);padding:3px 8px;border-radius:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:420px}.dirlist .btn.xs svg{width:14px;height:14px}

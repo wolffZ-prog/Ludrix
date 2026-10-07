@@ -30,6 +30,26 @@ def _proc_tree_alive(pid: int) -> bool:
         return False
 
 
+class _ExtProc:
+    def __init__(self, pid: int):
+        self.pid = pid
+        self.returncode = None
+
+    def poll(self):
+        if _proc_tree_alive(self.pid):
+            return None
+        self.returncode = 0
+        return 0
+
+    def terminate(self):
+        import psutil
+        psutil.Process(self.pid).terminate()
+
+    def kill(self):
+        import psutil
+        psutil.Process(self.pid).kill()
+
+
 class SessionManager:
     def __init__(self, store, on_start: Callable | None = None, on_end: Callable | None = None):
         self.store = store
@@ -40,6 +60,67 @@ class SessionManager:
         self._lock = threading.Lock()
         self.next_after: str | None = None
         self.next_optimize: bool = False
+        self._ext_seen: set[int] = set()
+        self._ext_thread = None
+
+    def start_external_watch(self):
+        if self._ext_thread or not _has_psutil():
+            return
+        self._ext_thread = threading.Thread(target=self._external_loop, daemon=True)
+        self._ext_thread.start()
+
+    def _exe_map(self) -> dict[str, str]:
+        m = {}
+        for key, info in list(self.store.library.items()):
+            if info.get("kind") in ("emulator", "tool", "redist", "optional") or not info.get("installed", True):
+                continue
+            exe = str(info.get("exe") or "")
+            if not exe or "://" in exe or not os.path.isabs(exe) or exe.lower().endswith((".lnk", ".url", ".bat", ".cmd")):
+                continue
+            m.setdefault(os.path.normcase(os.path.normpath(exe)), key)
+        return m
+
+    def _external_loop(self):
+        import psutil
+        time.sleep(20)
+        while True:
+            try:
+                if self.store.config.get("track_external", True):
+                    m = self._exe_map()
+                    if m:
+                        live = {s["pid"] for s in self.active.values()} | {s["proc"].pid for s in self.active.values()}
+                        for p in psutil.process_iter(["pid", "exe", "create_time"]):
+                            try:
+                                exe = p.info["exe"]
+                                if not exe:
+                                    continue
+                                key = m.get(os.path.normcase(os.path.normpath(exe)))
+                                if not key or key in self.active or p.pid in live or p.pid in self._ext_seen:
+                                    continue
+                                self._adopt(key, p.pid, float(p.info["create_time"] or time.time()))
+                            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                                pass
+                self._ext_seen = {pid for pid in self._ext_seen if psutil.pid_exists(pid)}
+            except Exception:
+                log.debug("external watch", exc_info=True)
+            time.sleep(15)
+
+    def _adopt(self, key: str, pid: int, started: float):
+        info = self.store.get(key) or {}
+        self._ext_seen.add(pid)
+        sess = {"key": key, "title": info.get("title") or key, "pid": pid, "proc": _ExtProc(pid), "started": max(started, time.time() - 120), "after": "none",
+                "optimize": False, "external": True}
+        with self._lock:
+            if key in self.active:
+                return
+            self.active[key] = sess
+        self.store.update(key, last_played=sess["started"])
+        threading.Thread(target=self._watch, args=(sess,), daemon=True).start()
+        if self.on_start:
+            try:
+                self.on_start(sess)
+            except Exception:
+                log.exception("on_start")
 
     def launch(self, key: str, cmd: list[str], cwd: str | Path, title: str) -> dict:
         try:
@@ -48,12 +129,7 @@ class SessionManager:
                 kw["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
             else:
                 from . import compat
-                game = dict(self.store.get(key) or {})
-                game.setdefault("key", key)
-                cmd, env, warn = compat.wrap(cmd, self.store.config, game)
-                if warn:
-                    return {"error": compat.missing_message(warn)}
-                kw["env"] = {**compat.base_env(), **(env or {})}
+                cmd, _, _ = compat.wrap(cmd)
             proc = subprocess.Popen(cmd, cwd=str(cwd), **kw)
         except OSError as e:
 
@@ -81,6 +157,22 @@ class SessionManager:
                 log.exception("on_start")
         return {"ok": True, "tracked": True, "pid": proc.pid}
 
+    def launch_pid(self, key: str, pid: int, title: str) -> dict:
+        sess = {"key": key, "title": title, "pid": pid, "proc": _ExtProc(pid), "started": time.time(), "after": self.next_after,
+                "optimize": self.next_optimize, "elevated": True}
+        self.next_after = None
+        self.next_optimize = False
+        with self._lock:
+            self.active[key] = sess
+        self.store.update(key, last_played=sess["started"])
+        threading.Thread(target=self._watch, args=(sess,), daemon=True).start()
+        if self.on_start:
+            try:
+                self.on_start(sess)
+            except Exception:
+                log.exception("on_start")
+        return {"ok": True, "tracked": True, "pid": pid}
+
     def _watch(self, sess: dict):
         proc: subprocess.Popen = sess["proc"]
         key = sess["key"]
@@ -91,7 +183,7 @@ class SessionManager:
 
         elapsed = time.time() - sess["started"]
         sess["rc"] = proc.returncode
-        if elapsed < 20 and not sess.get("killed") and _has_psutil():
+        if elapsed < 20 and not sess.get("killed") and not sess.get("external") and _has_psutil():
             child = self._find_child(sess)
             if child:
                 sess["pid"] = child
@@ -149,7 +241,7 @@ class SessionManager:
         with self._lock:
             self.active.pop(key, None)
 
-        sess["crashed"] = (now - sess["started"] < 15 and not sess.get("killed") and sess.get("pid") == sess["proc"].pid
+        sess["crashed"] = (not sess.get("external") and now - sess["started"] < 15 and not sess.get("killed") and sess.get("pid") == sess["proc"].pid
                            and (sess.get("rc") not in (0, None) or now - sess["started"] < 4))
         if self.on_end:
             try:
@@ -202,7 +294,7 @@ class SessionManager:
         return {"ok": True, "title": s["title"]}
 
     def status(self) -> dict:
-        return {k: {"title": s["title"], "since": s["started"], "elapsed": time.time() - s["started"]}
+        return {k: {"title": s["title"], "since": s["started"], "elapsed": time.time() - s["started"], "external": bool(s.get("external"))}
                 for k, s in self.active.items()}
 
 
