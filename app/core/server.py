@@ -164,6 +164,10 @@ class Handler(BaseHTTPRequestHandler):
                 t = (paths.UI / p[4:]).resolve()
                 return self._file(t) if paths.UI.resolve() in t.parents else self._send(403, b"", "text/plain")
             if p == "/api/catalog":
+                if not Handler.booted:
+                    Handler.booted = True
+                    v.ui_booted = True
+                    diag.boot_ok()
                 if q.get("refresh"):
                     v.reload_catalog(force=True)
                     time.sleep(0.3)

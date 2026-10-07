@@ -47,6 +47,13 @@ SKIP_DIRS = {"__pycache__", ".pytest_cache", "node_modules", "cache"}
 SKIP_EXT = {".pyc", ".pyo", ".log"}
 
 
+def _needs_full() -> bool:
+    try:
+        return bool(json.loads(VERSION_FILE.read_text(encoding="utf-8")).get("needs_full"))
+    except Exception:
+        return False
+
+
 def version() -> str:
     return json.loads(VERSION_FILE.read_text(encoding="utf-8"))["version"]
 
@@ -172,6 +179,7 @@ def cmd_sign(files: list[str]):
 
 def cmd_bump(v: str):
     d = json.loads(VERSION_FILE.read_text(encoding="utf-8"))
+    d.pop("needs_full", None)
     d["version"], d["date"] = v, date.today().isoformat()
     d["changelog"] = changelog_for(v)
     VERSION_FILE.write_text(json.dumps(d, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -479,10 +487,7 @@ def cmd_src():
         add_tree(z, APP, "Ludrix-src/app")
         z.writestr(f"Ludrix-src/app/{integrity.MANIFEST}", integrity_json())
         add_tree(z, ROOT / "tools", "Ludrix-src/tools")
-        for d in ("docs", ".github"):
-            if (ROOT / d).is_dir():
-                add_tree(z, ROOT / d, f"Ludrix-src/{d}")
-        for f in ("run.bat", "build.bat", "publicar.bat", "git-setup.bat", "lancar.bat", "requirements.txt", "README.md", "README.en.md", "CHANGELOG.md", "LICENSE", "SECURITY.md", "CONTRIBUTING.md", ".gitignore"):
+        for f in ("run.bat", "build.bat", "requirements.txt", "README.md", "README.en.md", "CHANGELOG.md", "LICENSE"):
             if (ROOT / f).exists():
                 zi = zipfile.ZipInfo.from_file(ROOT / f, f"Ludrix-src/{f}")
                 zi.compress_type = zipfile.ZIP_DEFLATED
@@ -773,7 +778,7 @@ def cmd_selftest(folder: Path | None = None):
     return False
 
 
-USAGE = "Ferramenta de build/empacotamento do Ludrix.\n\n  python tools/build.py version               imprime a versão de app/version.json\n  python tools/build.py check                 confere código, catálogos, interface e sobe o servidor interno num teste rápido\n  python tools/build.py selftest              roda release/<v>/Ludrix/Ludrix.exe --selftest (o exe abre, serve a interface e passa no diagnóstico)\n  python tools/build.py bump 1.0.0            grava a versão em app/version.json\n  python tools/build.py exe                   PyInstaller: Ludrix.exe + LudrixConsole.exe (runtime) + updater.exe → build/exe; embute o WebView2   [Windows]\n  python tools/build.py webview2              baixa e prepara o WebView2 Fixed Version (tools/webview2.json) → build/webview2/<v>; --webview2-completo pula a dieta\n  python tools/build.py zip                   release/<v>/Ludrix/ + release/<v>/Ludrix-<v>.zip  (programa pronto)\n  python tools/build.py src                   release/<v>/Ludrix-<v>-src.zip  (código-fonte pra compilar com build.bat)\n  python tools/build.py patch [--min 1.0.0]   release/<v>/ludrix-<v>-patch.lxup   (só app/ — patch de funções)\n  python tools/build.py full                  release/<v>/ludrix-<v>-full.lxup    (app/ + runtime + exes — nova versão)\n  python tools/build.py feed [url-base]       release/<v>/ludrix-updates.json     (feed pro \"Checar atualizações\"; padrão = GitHub wolffZ-prog/Ludrix)\n  python tools/build.py publish               cria a release v<v> no GitHub com o .lxup + feed (usa o gh; sem ele, imprime o passo a passo)\n  python tools/build.py keygen                cria a chave de assinatura (%USERPROFILE%\\.ludrix\\ludrix-sign.key) e grava a pública em app/lxsign.py\n  python tools/build.py sign <arquivo...>     assina .lxup/.lxtheme/.zip com a chave (src/patch/full já saem assinados)\n  python tools/build.py all [--min X] [url] [--keep-tmp]   check + exe (se Windows) + zip + selftest do exe + src + patch + full + feed; apaga build/tmp no fim\n\nPastas do código-fonte:\n  app/ (programa)  tools/ (este build)  build/ (temporários e exes compilados)  release/<versão>/ (o que sai do build)\n\nPasta final do programa (release/<v>/Ludrix/):\n  Ludrix.exe  LudrixConsole.exe  updater.exe  runtime/ (Python + bibliotecas + webview2/ embutido)  app/ (código, interface, catálogos)\n  Ao abrir, o programa cria só: data/ (ajustes, biblioteca, cache, atualizações, ferramentas)  games/  emulation/  downloads/  themes/\n\nO changelog de cada versão vem do CHANGELOG.md (seção \"## <versão>\")."
+USAGE = "Ferramenta de build/empacotamento do Ludrix.\n\n  python tools/build.py version               imprime a versão de app/version.json\n  python tools/build.py check                 confere código, catálogos, interface e sobe o servidor interno num teste rápido\n  python tools/build.py selftest              roda release/<v>/Ludrix/Ludrix.exe --selftest (o exe abre, serve a interface e passa no diagnóstico)\n  python tools/build.py bump 1.0.0            grava a versão em app/version.json\n  python tools/build.py exe                   PyInstaller: Ludrix.exe + LudrixConsole.exe (runtime) + updater.exe → build/exe; embute o WebView2   [Windows]\n  python tools/build.py webview2              baixa e prepara o WebView2 Fixed Version (tools/webview2.json) → build/webview2/<v>; --webview2-completo pula a dieta\n  python tools/build.py zip                   release/<v>/Ludrix/ + release/<v>/Ludrix-<v>.zip  (programa pronto)\n  python tools/build.py src                   release/<v>/Ludrix-<v>-src.zip  (código-fonte pra compilar com build.bat)\n  python tools/build.py patch [--min 1.0.0]   release/<v>/ludrix-<v>-patch.lxup   (só app/ — patch de funções)\n  python tools/build.py full                  release/<v>/ludrix-<v>-full.lxup    (app/ + runtime + exes — nova versão)\n  python tools/build.py feed [url-base]       release/<v>/ludrix-updates.json     (feed pro \"Checar atualizações\"; padrão = GitHub wolffZ-prog/Ludrix)\n  python tools/build.py publish               cria a release v<v> no GitHub com o .lxup + feed (usa o gh; sem ele, imprime o passo a passo)\n  python tools/build.py keygen                cria a chave de assinatura (%USERPROFILE%\\.ludrix\\ludrix-sign.key) e grava a pública em app/lxsign.py\n  python tools/build.py sign <arquivo...>     assina .lxup/.lxtheme/.zip com a chave (src/patch/full já saem assinados)\n  python tools/build.py all [--min X] [--full] [url] [--keep-tmp]   check + exe (se Windows) + zip + selftest do exe + src + patch + feed (+ full com --full ou \"needs_full\": true em app/version.json); apaga build/tmp no fim\n\nPastas do código-fonte:\n  app/ (programa)  tools/ (este build)  build/ (temporários e exes compilados)  release/<versão>/ (o que sai do build)\n\nPasta final do programa (release/<v>/Ludrix/):\n  Ludrix.exe  LudrixConsole.exe  updater.exe  runtime/ (Python + bibliotecas + webview2/ embutido)  app/ (código, interface, catálogos)\n  Ao abrir, o programa cria só: data/ (ajustes, biblioteca, cache, atualizações, ferramentas)  games/  emulation/  downloads/  themes/\n\nO changelog de cada versão vem do CHANGELOG.md (seção \"## <versão>\")."
 
 
 def main(argv: list[str]):
@@ -822,7 +827,10 @@ def main(argv: list[str]):
             raise SystemExit(3)
         cmd_src()
         cmd_patch(opt("--min"))
-        cmd_full()
+        if "--full" in rest or _needs_full():
+            cmd_full()
+        else:
+            print("full: pulado (só é gerado quando o runtime muda: --full ou \"needs_full\": true em app/version.json)")
         url = next((a for a in rest if a.startswith("http")), None)
         cmd_feed(url or FEED_BASE)
         if "--keep-tmp" not in rest:
@@ -830,7 +838,7 @@ def main(argv: list[str]):
         print("\npronto:", _rel())
         print("  Ludrix\\            programa final (copie essa pasta)")
         print("  Ludrix-<v>.zip     mesma pasta zipada")
-        print("  Ludrix-<v>-src.zip codigo-fonte;  ludrix-<v>-patch.lxup / -full.lxup  pacotes de atualizacao")
+        print("  Ludrix-<v>-src.zip codigo-fonte;  ludrix-<v>-patch.lxup pacote de atualizacao (-full.lxup so quando o runtime muda)")
         print("build\\exe guarda os executaveis compilados (apague se quiser recompilar do zero).")
     else:
         print("comando desconhecido:", cmd)

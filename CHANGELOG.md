@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.36.3 — 2026-10-07
+- Corrigido de vez o retorno indevido de versão: a abertura passa a ser marcada como boa na primeira requisição da biblioteca (a 2.36.2 marcava num pedido que a interface normalmente não faz na abertura, então fechar cedo ainda contava como falha).
+- `lancar.bat`: o código sobe para o GitHub antes da release, assim o "Source code" automático da release corresponde à versão publicada.
+- `Ludrix-<v>-src.zip` passa a conter só o código: `app/`, `tools/`, `run.bat`, `build.bat`, `requirements.txt`, README, CHANGELOG e LICENSE. Scripts de publicação, `docs/` e `.github/` ficam fora do pacote (continuam no repositório).
+- Build: o pacote `ludrix-<v>-full.lxup` (runtime inteiro) deixa de ser gerado em toda versão; só sai quando o runtime muda (`"needs_full": true` em `app/version.json` ou `build.py all --full`). O patch continua sendo o caminho normal de atualização.
+
 ## 2.36.2 — 2026-10-07
 - Corrigido: fechar o Ludrix nos primeiros 10 segundos depois de abrir contava como "não conseguiu abrir", e na segunda vez a atualização era desfeita sozinha (a 2.36.1 voltava para a 2.36.0). A abertura passa a ser considerada boa assim que a interface carrega, e uma saída normal nunca conta como falha.
 
