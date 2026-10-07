@@ -86,6 +86,39 @@ class WebImageSearch:
         out.sort(key=self._score, reverse=True)
         return out[:limit]
 
+    def search_wide(self, title: str, system: str = "pc", limit: int = 24) -> list[dict]:
+        q = re.sub(r"\(.*?\)|\[.*?\]", "", title or "").strip()
+        if not q:
+            return []
+        sysw = SYS_WORD.get(system or "pc", "")
+        toks = _tokens(q)
+        out: list[dict] = []
+        seen: set[str] = set()
+        for query in (f"{q} {sysw} wallpaper".strip(), f"{q} {sysw} screenshot".strip()):
+            for engine in (self._google, self._bing, self._yandex):
+                try:
+                    hits = engine(query)
+                except Exception as e:
+                    log.debug("websearch %s: %s", engine.__name__, e)
+                    hits = []
+                for h in hits:
+                    u = h.get("url") or ""
+                    w, hh = h.get("w") or 0, h.get("h") or 0
+                    if not u.startswith("http") or u in seen or not w or not hh:
+                        continue
+                    if not (1.3 <= w / hh <= 2.6) or w < 800:
+                        continue
+                    if _is_product_photo(h) or not self._relevant(h, toks, False):
+                        continue
+                    seen.add(u)
+                    out.append(h)
+                if len(out) >= limit:
+                    break
+            if len(out) >= 8:
+                break
+        out.sort(key=lambda h: (h.get("w") or 0) * (h.get("h") or 0), reverse=True)
+        return out[:limit]
+
     def best_cover(self, title: str, system: str = "pc") -> dict | None:
         for h in self.search(title, system, limit=12, strict=True):
             w, hh = h.get("w") or 0, h.get("h") or 0

@@ -15,6 +15,27 @@ FILE = paths.DATA / "instance.json"
 MUTEX = {"window": "Local\\LudrixLauncher-SingleInstance", "console": "Local\\LudrixConsole-SingleInstance"}
 
 
+def mutex_name(mode: str) -> str:
+    import hashlib
+    tag = hashlib.sha1(str(paths.ROOT.resolve()).lower().encode("utf-8", "replace")).hexdigest()[:12]
+    return MUTEX.get(mode, MUTEX["window"]) + "-" + tag
+
+
+def wake(mode: str = "window") -> bool:
+    cur = read()
+    if not cur or cur.get("mode") != mode or not pid_alive(int(cur.get("pid") or 0)) or not cur.get("port"):
+        return False
+    try:
+        import urllib.request
+        req = urllib.request.Request(f"http://127.0.0.1:{cur['port']}/api/window", data=json.dumps({"cmd": "show"}).encode("utf-8"),
+                                     headers={"Content-Type": "application/json", "X-Ludrix-Token": cur.get("token") or ""}, method="POST")
+        with urllib.request.urlopen(req, timeout=4) as r:
+            return r.status == 200 and bool(json.loads(r.read().decode("utf-8") or "{}").get("ok"))
+    except Exception as e:
+        log.debug("instance wake: %s", e)
+        return False
+
+
 def write(mode: str, port: int, token: str = ""):
     try:
         paths.DATA.mkdir(parents=True, exist_ok=True)

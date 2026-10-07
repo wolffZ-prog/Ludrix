@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import subprocess
 import re
@@ -13,6 +14,8 @@ from pathlib import Path
 import requests
 
 from . import paths
+
+log = logging.getLogger("ludrix.emu")
 from .titles import normalize_title
 from .installer import Progress, Downloader, extract, flatten_single_folder, safe_extractall
 from .repos import FileRef
@@ -73,7 +76,8 @@ class EmulationManager:
         self._migrate_removed()
         self._scan_cache: dict[str, tuple[float, list]] = {}
         self._scan_lock = threading.Lock()
-        self.SCAN_TTL = 15.0
+        self._scan_running: set[str] = set()
+        self.SCAN_TTL = 120.0
 
     REMOVED = {"ryujinx": "eden", "sudachi": "eden"}
 
@@ -318,15 +322,46 @@ class EmulationManager:
         self.store.set_config(rom_files=lst)
         self.invalidate_scan()
 
-    def scan_system(self, sid: str) -> list[dict]:
+    def scan_system(self, sid: str, wait: bool = True) -> list[dict]:
         with self._scan_lock:
             hit = self._scan_cache.get(sid)
             if hit and time.time() - hit[0] < self.SCAN_TTL:
                 return hit[1]
-        out = self._scan_system_uncached(sid)
+            if not wait:
+                if sid not in self._scan_running:
+                    self._scan_running.add(sid)
+                    threading.Thread(target=self._scan_bg, args=(sid,), daemon=True, name="romscan").start()
+                return hit[1] if hit else []
+            self._scan_running.add(sid)
+        try:
+            t0 = time.time()
+            out = self._scan_system_uncached(sid)
+            if time.time() - t0 > 0.5:
+                log.info("roms %s: %d em %.1fs", sid, len(out), time.time() - t0)
+        finally:
+            with self._scan_lock:
+                self._scan_running.discard(sid)
         with self._scan_lock:
             self._scan_cache[sid] = (time.time(), out)
         return out
+
+    def _scan_bg(self, sid: str):
+        try:
+            t0 = time.time()
+            out = self._scan_system_uncached(sid)
+            if time.time() - t0 > 0.5:
+                log.info("roms %s: %d em %.1fs", sid, len(out), time.time() - t0)
+            with self._scan_lock:
+                self._scan_cache[sid] = (time.time(), out)
+        except Exception as e:
+            log.debug("romscan %s: %s", sid, e)
+        finally:
+            with self._scan_lock:
+                self._scan_running.discard(sid)
+
+    def scan_pending(self) -> bool:
+        with self._scan_lock:
+            return bool(self._scan_running)
 
     def _scan_system_uncached(self, sid: str) -> list[dict]:
         sc = self.presets["systems"].get(sid)
@@ -372,11 +407,11 @@ class EmulationManager:
                         "size": f.stat().st_size, "kind": "rom"})
         return out
 
-    def scan_all(self) -> list[dict]:
+    def scan_all(self, wait: bool = True) -> list[dict]:
         out = []
         for sid in self.presets["systems"]:
             if sid != "pc":
-                out += self.scan_system(sid)
+                out += self.scan_system(sid, wait)
         return out
 
     def ensure_game_dirs(self):

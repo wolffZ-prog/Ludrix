@@ -114,7 +114,8 @@ def _strip_wiki(v: str) -> list[str]:
 def _infobox(wikitext: str) -> dict:
     out = {}
     for key in ("genre", "developer", "publisher", "released", "modes", "platforms", "series", "engine"):
-        m = re.search(r"^\s*\|\s*" + key + r"\s*=\s*(.+?)(?=^\s*\|\s*\w+\s*=|^\s*\}\})", wikitext, re.M | re.S)
+        pat = r"platforms?" if key == "platforms" else key + r"s?"
+        m = re.search(r"^\s*\|\s*" + pat + r"\s*=\s*(.+?)(?=^\s*\|\s*\w+\s*=|^\s*\}\})", wikitext, re.M | re.S)
         if m:
             out[key] = _strip_wiki(m.group(1))
     m = re.search(r"^\s*\|\s*released?\s*=(.*?)(?=^\s*\|\s*[a-z_ ]+=|^\s*\}\})", wikitext, re.M | re.S | re.I)
@@ -222,10 +223,13 @@ class MetadataService:
         meta["query"] = q
 
         sgdb_key = (self.store.config.get("sgdb_key") or "").strip()
+        wmeta: dict = {"source": [], "system": system}
         jobs = []
         if steam_appid and self.covers:
             jobs.append(("steam_error", lambda: self.covers.steam_by_appid(meta, steam_appid)))
-        jobs.append(("wiki_error", lambda: self._wikipedia(meta, q, year, system)))
+        if self.covers:
+            jobs.append(("cover_error", lambda: self.covers.resolve(meta, q, system, year)))
+        jobs.append(("wiki_error", lambda: self._wikipedia(wmeta, q, year, system)))
         if sgdb_key:
             jobs.append(("sgdb_error", lambda: self._sgdb(meta, q, sgdb_key)))
         from concurrent.futures import ThreadPoolExecutor
@@ -235,20 +239,22 @@ class MetadataService:
                     fut.result()
                 except Exception as e:
                     meta[errk] = str(e)
+        if meta.get("grid") and system == "pc" and meta.get("cover_src") not in ("steam", "gog"):
+            meta["cover_url"], meta["cover_src"] = meta["grid"], "steamgriddb"
+        if wmeta.get("wiki_title"):
+            for k, v in wmeta.items():
+                if k in ("source", "system"):
+                    continue
+                if not meta.get(k):
+                    meta[k] = v
+            meta["source"].append("wikipedia")
+        if wmeta.get("wiki_rejected"):
+            meta["wiki_rejected"] = wmeta["wiki_rejected"]
         if "pt" in (self.store.config.get("language") or "pt-BR").lower():
             try:
                 self._wiki_pt_summary(meta)
             except Exception:
                 pass
-        if meta.get("grid") and system == "pc":
-            meta["cover_url"], meta["cover_src"] = meta["grid"], "steamgriddb"
-        if self.covers and not meta.get("cover_url"):
-            try:
-                self.covers.resolve(meta, q, system, year)
-            except Exception as e:
-                meta["cover_error"] = str(e)
-        if not meta.get("cover_url") and meta.get("wiki_image"):
-            meta["cover_url"], meta["cover_src"] = meta["wiki_image"], "wikipedia"
         if not meta.get("cover_url") and self.web and self.store.config.get("web_covers", True):
 
             try:
@@ -260,6 +266,8 @@ class MetadataService:
                 meta["cover_url"], meta["cover_src"] = hit["url"], "web"
                 meta["web_page"] = hit.get("page", "")
                 meta.setdefault("source", []).append("web")
+        if not meta.get("cover_url") and meta.get("wiki_image"):
+            meta["cover_url"], meta["cover_src"] = meta["wiki_image"], "wikipedia"
         if system == "pc" and self.covers and not meta.get("shots"):
             try:
                 self.covers.steam_extras(meta, q, year)
@@ -618,24 +626,26 @@ class MetadataService:
                 s += 1.5
             return -s
         ranked = sorted(hits, key=score)
-        first_snapshot = None
-        for best in ranked[:3]:
+        unknown = None
+        for best in ranked[:4]:
             page = best["title"]
             if not canonical_ok(q, base(page), 0.5):
                 continue
-            box = self._wiki_page(meta, best, base(page))
+            tmp: dict = {}
+            box = self._wiki_page(tmp, best, base(page))
             ok = platform_matches(system, box.get("platforms", []))
-            if ok is False and system != "pc" and first_snapshot is None:
-
+            if ok is False:
                 meta.setdefault("wiki_rejected", []).append(page)
-                first_snapshot = {k: meta.get(k) for k in ("wiki_title", "summary", "wiki_url", "wiki_image", "genres", "developer", "publisher", "modes", "platforms", "series", "year")}
                 continue
-            if first_snapshot is not None and ok is not True:
-                meta.update(first_snapshot)
+            if ok is None:
+                if unknown is None:
+                    unknown = tmp
+                continue
+            meta.update(tmp)
             meta["source"].append("wikipedia")
             return
-        if first_snapshot is not None:
-            meta.update(first_snapshot)
+        if unknown is not None:
+            meta.update(unknown)
             meta["source"].append("wikipedia")
 
     def _wiki_pt_summary(self, meta: dict):

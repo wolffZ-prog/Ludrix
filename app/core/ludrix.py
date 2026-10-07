@@ -148,7 +148,11 @@ class Ludrix:
         if not self.store.config.get("keep_archive"):
             self.pool.submit(self.clean_downloads)
         self._boot = {"done": False, "i": 0, "n": 0, "step": "", "errors": [], "started": False}
+        self._t0 = time.time()
+        self._first_payload_at = 0.0
+        self._exists_cache: dict[str, tuple[float, bool]] = {}
         self.pool.submit(self.bootstrap_run)
+        self.pool.submit(lambda: self.emu.scan_all(True))
         self.reload_catalog(force=False)
         if self.store.config.get("update_auto_check"):
             self.pool.submit(self._auto_check_updates)
@@ -442,6 +446,7 @@ class Ludrix:
         gen = self._catalog_gen = getattr(self, "_catalog_gen", 0) + 1
 
         def work():
+            t0 = time.time()
             new: dict[str, Entry] = {}
             errors = {}
             provs = self.repos.enabled_providers()
@@ -472,6 +477,7 @@ class Ludrix:
                 except Exception:
                     pass
             self.catalog_state = {"loading": False, "errors": errors}
+            log.info("catálogo: %d itens de %d fontes em %.1fs", len(new), len(provs), time.time() - t0)
             self.act("")
             try:
                 self.minecraft_autoadd()
@@ -574,7 +580,7 @@ class Ludrix:
             out.append({
                 "key": key, "repo": "local", "title": info.get("title", key), "kind": "local", "system": info.get("system") or "pc",
                 "creator": (m or {}).get("developer") or info.get("creator", ""), "year": (m or {}).get("year") or info.get("year", ""), "size": 0,
-                "genres": ((m or {}).get("genres") or info.get("genres") or [])[:3], "installed": Path(info.get("exe", "")).exists() or "://" in str(info.get("exe", "")) or str(info.get("exe", "")).startswith(("shell:", "flatpak:")) or bool(info.get("mc") == "java" and not info.get("exe") and info.get("dir") and Path(info["dir"]).is_dir()), "job": False,
+                "genres": ((m or {}).get("genres") or info.get("genres") or [])[:3], "installed": self._exists_cached(info.get("exe", "")) or "://" in str(info.get("exe", "")) or str(info.get("exe", "")).startswith(("shell:", "flatpak:")) or bool(info.get("mc") == "java" and not info.get("exe") and info.get("dir") and Path(info["dir"]).is_dir()), "job": False,
                 "mc": info.get("mc", ""), "mc_nolauncher": bool(info.get("mc") == "java" and not info.get("exe")),
                 "has_meta": bool(m), "thumb_ok": self.images.has_thumb(key), "torrent": False,
                 "playtime": info.get("playtime", 0), "last_played": info.get("last_played", 0),
@@ -585,6 +591,19 @@ class Ludrix:
             fake = Entry(key=g["key"], repo="local", id=g["key"], title=g["title"], kind="local", genres=g["genres"])
             g["cats"] = self._category_of(fake, self.meta.get(g["key"]))
         return out
+
+    def _exists_cached(self, path: str) -> bool:
+        if not path:
+            return False
+        now = time.time()
+        hit = self._exists_cache.get(path)
+        if hit and now - hit[0] < 20:
+            return hit[1]
+        ok = Path(path).exists()
+        if len(self._exists_cache) > 5000:
+            self._exists_cache.clear()
+        self._exists_cache[path] = (now, ok)
+        return ok
 
     @property
     def _favs(self) -> set:
@@ -606,7 +625,7 @@ class Ludrix:
         owned = {str(i.get("exe")) for _, i in lib if i.get("kind") == "rom" and i.get("exe")}
         owned_keys = {k for k, _ in lib if k.startswith("rom:")}
 
-        roms = [r for r in self.emu.scan_all() if r["path"] not in owned or r["key"] in owned_keys]
+        roms = [r for r in self.emu.scan_all(wait=False) if r["path"] not in owned or r["key"] in owned_keys]
         for r in roms:
             info = self.store.get(r["key"]) or {}
             m = self.meta.get(r["key"])
@@ -633,8 +652,11 @@ class Ludrix:
         games += roms + self._local_games()
         cats = [{"id": c["id"], "name": c["name"], "icon": c.get("icon", "")} for c in self.categories] + \
                [{"id": "other", "name": "Outros", "icon": "dots"}]
+        if not self._first_payload_at:
+            self._first_payload_at = time.time()
+            log.info("primeira biblioteca servida %.2fs após abrir (%d itens, roms %s)", self._first_payload_at - self._t0, len(games), "pendentes" if self.emu.scan_pending() else "ok")
         return {
-            **self.catalog_state, "games": games, "categories": cats, "sites_loading": self.sites_loading(),
+            **self.catalog_state, "games": games, "categories": cats, "sites_loading": self.sites_loading(), "roms_pending": self.emu.scan_pending(),
             "repos": [{"id": r["id"], "name": r["name"], "enabled": r["enabled"], "kind": r.get("kind", "pc"),
                        "hidden": bool(r.get("hidden_in_library"))} for r in self.repos.list()],
             "systems": {k: v["name"] for k, v in self.emu.presets["systems"].items()},
@@ -833,6 +855,8 @@ class Ludrix:
     def _meta_cover_url(self, m: dict | None, thumb: bool) -> str:
         if not m:
             return ""
+        if m.get("cover_src") == "manual" and m.get("cover_url"):
+            return m["cover_url"]
         if thumb and m.get("grid_thumb"):
             return m["grid_thumb"]
         return m.get("cover_url") or m.get("grid") or m.get("wiki_image", "")
@@ -852,7 +876,8 @@ class Ludrix:
         m = self.meta.get(key)
         if e:
             prov = self.repos.providers.get(e.repo)
-            url = (prov.thumb_url(e) if prov else e.thumb) or self._meta_cover_url(m, True)
+            manual = m.get("cover_url") if m and m.get("cover_src") == "manual" else ""
+            url = manual or (prov.thumb_url(e) if prov else e.thumb) or self._meta_cover_url(m, True)
             p = self.images.thumb(key, url)
             if not p and m and e.cover and e.cover != url:
                 p = self.images.thumb(key, e.cover)
@@ -877,7 +902,7 @@ class Ludrix:
                 self.files_for(e)
             except Exception:
                 pass
-            url = (m or {}).get("grid") or (m or {}).get("cover_url") or e.cover or (m or {}).get("wiki_image", "")
+            url = self._meta_cover_url(m, False) or e.cover
             c = self.images.cover(key, url)
             if c and not self.images.cached_thumb(key):
                 self._thumb_bg(key)
@@ -1893,10 +1918,13 @@ class Ludrix:
         game["key"] = key
         return {"settings": dict(info.get("win") or {}), **winengine.game_summary(self.store.config, game)}
 
-    def edit_web_covers(self, key: str, title: str) -> dict:
+    def edit_web_covers(self, key: str, title: str, kind: str = "cover") -> dict:
         d = self.game_payload(key) or {}
         try:
-            hits = self.meta.web.search(title or d.get("title", ""), d.get("system") or "pc", limit=24)
+            if kind == "hero":
+                hits = self.meta.web.search_wide(title or d.get("title", ""), d.get("system") or "pc", limit=24)
+            else:
+                hits = self.meta.web.search(title or d.get("title", ""), d.get("system") or "pc", limit=24)
         except Exception as e:
             return {"error": str(e)}
         if not hits:
@@ -1937,12 +1965,24 @@ class Ludrix:
             fields["genres"] = list(g or [])[:8]
         if "links" in data:
             fields["links"] = [{"name": str(l.get("name") or "").strip()[:40], "url": str(l.get("url") or "").strip()} for l in (data["links"] or []) if str(l.get("url") or "").strip()]
+        prev_meta = self.meta.get(key) or {}
         if "cover_url" in data:
             fields["cover_url"] = str(data["cover_url"] or "").strip()
             fields["cover_src"] = "manual" if fields["cover_url"] else ""
+            if fields["cover_url"] and (fields["cover_url"] != (prev_meta.get("user") or {}).get("cover_url") or not self.covers.custom_path(key)):
+                r = self.covers.fetch_custom(key, fields["cover_url"], "cover", str(data.get("cover_page") or ""))
+                if r.get("error"):
+                    return {"error": r["error"]}
+                self.images.invalidate(key)
         if "hero_url" in data:
             fields["hero_url"] = str(data["hero_url"] or "").strip()
-        if "background_file" in data:
+            if fields["hero_url"] and fields["hero_url"] != (prev_meta.get("user") or {}).get("hero_url"):
+                r = self.covers.fetch_custom(key, fields["hero_url"], "hero", str(data.get("hero_page") or ""))
+                if r.get("error"):
+                    return {"error": r["error"]}
+                fields["background_file"] = r["path"]
+                self.images.invalidate("hero:" + key)
+        if "background_file" in data and "background_file" not in fields:
             fields["background_file"] = str(data["background_file"] or "").strip()
         if fields:
             before = self.meta.get(key) or {}

@@ -122,6 +122,50 @@ class CoverService:
             p.unlink(missing_ok=True)
         self._names_t = 0.0
 
+    def fetch_custom(self, key: str, url: str, kind: str = "cover", referer: str = "") -> dict:
+        import io
+        import tempfile
+        from PIL import Image
+        if not url.lower().startswith(("http://", "https://")):
+            return {"error": "O link da imagem precisa começar com http"}
+        from .websearch import HEADERS
+        hdr = dict(HEADERS)
+        if referer:
+            hdr["Referer"] = referer
+        data = b""
+        for h in (hdr, {k: v for k, v in hdr.items() if k != "Referer"}, dict(hdr, Referer=url.split("/", 3)[0] + "//" + url.split("/", 3)[2] + "/")):
+            try:
+                r = self.s.get(url, headers=h, timeout=25, stream=True)
+                if r.ok:
+                    data = r.raw.read(25 * 1024 * 1024, decode_content=True)
+                    if data:
+                        break
+            except Exception:
+                data = b""
+        if not data:
+            return {"error": "Não consegui baixar essa imagem (o site não deixa). Escolha outra."}
+        try:
+            img = Image.open(io.BytesIO(data))
+            img.load()
+        except Exception:
+            return {"error": "O link não aponta para uma imagem (PNG, JPG ou WEBP)"}
+        if kind == "hero":
+            self.custom_dir.mkdir(parents=True, exist_ok=True)
+            dest = self.custom_dir / (re.sub(r"[^a-zA-Z0-9_.-]", "_", key)[:120] + "_hero.jpg")
+            if img.mode != "RGB":
+                img = img.convert("RGB")
+            if img.width > 1920:
+                img = img.resize((1920, int(img.height * 1920 / img.width)), Image.LANCZOS)
+            img.save(dest, "JPEG", quality=88)
+            return {"ok": True, "path": str(dest)}
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tf:
+            img.save(tf, "PNG")
+            tmp = tf.name
+        try:
+            return self.set_custom(key, tmp)
+        finally:
+            Path(tmp).unlink(missing_ok=True)
+
     def resolve(self, meta: dict, title: str, system: str = "pc", year: str = "") -> dict:
         q = re.sub(r"\(.*?\)|\[.*?\]", "", title).strip()
         system = system or "pc"
@@ -133,17 +177,6 @@ class CoverService:
                     fn(meta, q, year)
                 except Exception as e:
                     meta[fn.__name__.strip("_") + "_error"] = str(e)
-            if not meta.get("cover_url") and meta.get("wiki_image"):
-                meta["cover_url"], meta["cover_src"] = meta["wiki_image"], "wikipedia"
-            if not meta.get("cover_url"):
-
-                for sysid in ("xbox", "x360", "ps3", "dc"):
-                    try:
-                        self._libretro(meta, q, sysid, min_score=0.96)
-                    except Exception:
-                        pass
-                    if meta.get("cover_url"):
-                        break
         else:
             try:
                 self._libretro(meta, q, system)
@@ -151,8 +184,6 @@ class CoverService:
                 meta["libretro_error"] = str(e)
             if not meta.get("cover_url") and meta.get("grid"):
                 meta["cover_url"], meta["cover_src"] = meta["grid"], "steamgriddb"
-            if not meta.get("cover_url") and meta.get("wiki_image"):
-                meta["cover_url"], meta["cover_src"] = meta["wiki_image"], "wikipedia"
             if not meta.get("cover_url") and system in ("switch", "ps3", "x360", "wiiu", "ps4"):
 
                 try:

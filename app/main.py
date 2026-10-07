@@ -258,9 +258,12 @@ def _single_instance() -> bool:
         try:
             import ctypes
             k32 = ctypes.windll.kernel32
-            _MUTEX = k32.CreateMutexW(None, False, "Local\\LudrixLauncher-SingleInstance")
+            from core import instance as _inst
+            _MUTEX = k32.CreateMutexW(None, False, _inst.mutex_name("window"))
             if k32.GetLastError() == 183:
-                ctypes.windll.user32.MessageBoxW(None, "O Ludrix já está aberto.\n\nProcure a janela dele (ou o ícone perto do relógio) — não dá pra abrir dois ao mesmo tempo.",
+                if _inst.wake("window"):
+                    return False
+                ctypes.windll.user32.MessageBoxW(None, "O Ludrix desta pasta já está aberto.\n\nProcure a janela dele (ou o ícone perto do relógio) — não dá pra abrir dois ao mesmo tempo.",
                                                  "Ludrix já está em execução", 0x10 | 0x40000)
                 return False
         except Exception as e:
@@ -335,6 +338,8 @@ def main():
         runpy.run_path(str(c), run_name="__main__")
         return
     setup_logging()
+    import time as _time
+    _t_boot = _time.time()
     window_mode = "--web" not in sys.argv and "--selftest" not in sys.argv
     if window_mode:
         _update_guard()
@@ -368,6 +373,7 @@ def main():
     from core import diag
     selftest = "--selftest" in sys.argv
     ludrix = Ludrix()
+    logging.getLogger("ludrix").info("núcleo pronto em %.2fs", _time.time() - _t_boot)
     if safe:
         ludrix.safe_mode = True
         ludrix.safe_saved = diag.enter_safe_mode(ludrix.store)
@@ -404,6 +410,7 @@ def main():
     import webview
     _pin_webview2(webview)
     _, port = serve(ludrix, host="127.0.0.1", port=0)
+    logging.getLogger("ludrix").info("servidor no ar em %.2fs", _time.time() - _t_boot)
     instance.write("window", port, server_token())
 
     frameless = bool(ludrix.store.config.get("frameless", True)) and sys.platform == "win32"

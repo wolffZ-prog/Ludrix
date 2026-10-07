@@ -462,6 +462,7 @@ async function loadCatalog(refresh) {
   setGames(d.games || []);
   S.games.forEach(g => { if (g.job && !S.jobs[g.key]) S.jobs[g.key] = { stage: 'download', fraction: 0, detail: '' }; });
   if (d.loading) { renderView(); setTimeout(() => loadCatalog(false), 900); return; }
+  if (d.roms_pending && !S._romPoll) { S._romPoll = setTimeout(() => { S._romPoll = 0; loadCatalog(false); }, 1500); }
   if (!S._sortInit) { S._sortInit = true; if (S.config.sort_by && SORTS.some(x => x[0] === S.config.sort_by)) { S.sort = S.config.sort_by; renderSortBtn(); } }
   S.loaded = true; splashOff(); { const n = S.games.filter(g => g.installed).length; document.title = n ? `LudrixHub — ${pl(n, 'jogo', 'jogos')}` : 'LudrixHub'; applyQPlaceholder(); }
   if (!S.config.welcome_done && !S._welcomed) { S._welcomed = true; setTimeout(firstRun, 400); }
@@ -1330,9 +1331,9 @@ function edRender() {
         <span class="gsub">${i.custom_cover ? 'imagem sua' : i.cover_src ? 'de ' + esc({ steam: 'Steam', gog: 'GOG', wikipedia: 'Wikipedia', libretro: 'boxart', steamgriddb: 'SteamGridDB', manual: 'link seu', web: 'imagens da web' }[i.cover_src] || i.cover_src) : 'sem capa'}</span>
         <div class="row">${i.native ? `<button class="btn s xs" onclick="edPickCover()">${I.image} Escolher imagem…</button>` : ''}<button class="btn s xs" onclick="edWebCovers()" title="Procura imagens com o nome do jogo no Google Imagens, Bing e Yandex e deixa você escolher a capa">${I.search} Procurar capa na web…</button>${i.custom_cover ? `<button class="btn s xs" onclick="resetCover(ED.key).then(()=>editGame(ED.key,'midia'))">${I.refresh} Remover a minha</button>` : ''}</div>
         <label class="gr"><span>ou link da imagem</span>${inp('cover_url', 'https://…/capa.jpg')}</label></div>
-      <div class="gmi"><b>Fundo (hero)</b><div class="gmimg hero"><img src="/hero/${enc(i.key)}?v=${cv}" onerror="this.style.opacity=.15"></div>
+      <div class="gmi"><b>Fundo (hero)</b><div class="gmimg hero"><img src="${f.hero_url && f.hero_url !== (i.user.includes('hero_url') ? i.hero_url : '') ? esc(f.hero_url) : `/hero/${enc(i.key)}?v=${cv}`}" referrerpolicy="no-referrer" onerror="if(ED.heroThumb&&this.src!==ED.heroThumb){this.src=ED.heroThumb}else{this.style.opacity=.15}"></div>
         <span class="gsub">aparece atrás da página do jogo e no palco</span>
-        <div class="row">${i.native ? `<button class="btn s xs" onclick="edPick('image','background_file')">${I.image} Escolher imagem…</button>` : ''}${f.background_file ? `<button class="btn s xs" onclick="edSet('background_file','');edRender()">${I.x} Tirar</button>` : ''}</div>
+        <div class="row">${i.native ? `<button class="btn s xs" onclick="edPick('image','background_file')">${I.image} Escolher imagem…</button>` : ''}<button class="btn s xs" onclick="edWebCovers('hero')" title="Procura imagens largas (wallpaper, screenshot) com o nome do jogo e deixa você escolher o fundo">${I.search} Procurar fundo na web…</button>${f.background_file || f.hero_url ? `<button class="btn s xs" onclick="edSet('background_file','');edSet('hero_url','');edRender()">${I.x} Tirar</button>` : ''}</div>
         <label class="gr"><span>${f.background_file ? 'arquivo: ' + esc(f.background_file.split(/[\\/]/).pop()) : 'ou link da imagem'}</span>${inp('hero_url', 'https://…/fundo.jpg')}</label></div>
     </div><p class="ghelp">Imagens suas ficam na pasta data${SEP()}covers do Ludrix e nunca são trocadas pela busca automática. Se colar um link, ele é baixado uma vez e guardado.</p>`;
   } else if (ED.tab === 'links') {
@@ -1415,7 +1416,7 @@ async function edSave() {
   const send = async refetch => {
     const r = await api.post('/api/edit/save', { key: ED.key, data: { ...f, refetch } });
     if (r.error) { toast('err', 'Não foi possível salvar', r.error); return false; }
-    toast('ok', 'Salvo', refetch ? 'Buscando capa e informações com o novo nome…' : '');
+    toast('ok', 'Salvo', refetch ? 'Buscando capa e informações com o novo nome…' : (f.cover_url || f.hero_url ? 'Imagem baixada e guardada com o jogo.' : ''));
     await loadCatalog(false); if (S.det && S.det.key === ED.key) openGame(ED.key);
   };
   if (renamed && !i.copied_from && !i.user.length) {
@@ -1451,18 +1452,20 @@ async function edProbe(source) {
 function edReopen(tab, msg) {
   setTimeout(() => { modal({ title: 'Editar detalhes do jogo', wide: true, html: `<div class="ged"><div class="tabs" id="edTabs"></div><div class="gedb" id="edBody"></div></div>`, ok: 'Salvar', cancel: 'Cancelar', extra: 'Baixar metadados…', onExtra: () => edProbeMenu(), onOk: () => edSave() }); $('#modalBox').classList.add('ged-box'); ED.tab = tab || ED.tab; edRender(); if (msg) toast('ok', msg, 'Confira e clique em Salvar.'); }, 50);
 }
-async function edWebCovers() {
-  modal({ title: 'Procurando na web…', text: `Imagens para "${ED.form.title}" no Google Imagens, Bing e Yandex.`, noOk: true, noCancel: true });
-  const r = await api.post('/api/edit/webcovers', { key: ED.key, title: ED.form.title });
+async function edWebCovers(kind) {
+  kind = kind === 'hero' ? 'hero' : 'cover';
+  modal({ title: 'Procurando na web…', text: `${kind === 'hero' ? 'Imagens largas' : 'Capas'} para "${ED.form.title}" no Google Imagens, Bing e Yandex.`, noOk: true, noCancel: true });
+  const r = await api.post('/api/edit/webcovers', { key: ED.key, title: ED.form.title, kind });
   if (r.error) return modal({ title: 'Nada encontrado', text: r.error, noOk: true, cancel: 'Voltar', onCancel: () => edReopen('midia') });
-  ED.web = r.hits; ED.webThumb = '';
-  modal({ title: 'Escolha a capa', text: 'Clique na imagem que quer usar como capa. A imagem original é baixada e guardada com o jogo.', wide: true, noOk: true, cancel: 'Voltar', onCancel: () => edReopen('midia'),
-    html: `<div class="gweb">${r.hits.map((h, n) => `<button class="gwc" onclick="edWebPick(${n})" title="${esc(h.title || '')}${h.w ? ' · ' + h.w + '×' + h.h : ''}"><img src="${esc(h.thumb || h.url)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.style.display='none'"><span>${h.w ? h.w + '×' + h.h : ''}</span></button>`).join('')}</div>` });
+  ED.web = r.hits; ED.webKind = kind; ED.webThumb = '';
+  modal({ title: kind === 'hero' ? 'Escolha o fundo' : 'Escolha a capa', text: `Clique na imagem. Ela é baixada ao salvar e fica guardada com o jogo${kind === 'hero' ? ' (fundo da página do jogo e do palco)' : ''}.`, wide: true, noOk: true, cancel: 'Voltar', onCancel: () => edReopen('midia'),
+    html: `<div class="gweb${kind === 'hero' ? ' wide' : ''}">${r.hits.map((h, n) => `<button class="gwc" onclick="edWebPick(${n})" title="${esc(h.title || '')}${h.w ? ' · ' + h.w + '×' + h.h : ''}"><img src="${esc(h.thumb || h.url)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.style.display='none'"><span>${h.w ? h.w + '×' + h.h : ''}</span></button>`).join('')}</div>` });
   $('#modalBox').classList.add('ged-box');
 }
 function edWebPick(n) {
   const h = (ED.web || [])[n]; if (!h) return;
-  ED.form.cover_url = h.url;
+  if (ED.webKind === 'hero') { ED.form.hero_url = h.url; ED.form.hero_page = h.page || ''; ED.heroThumb = h.thumb || ''; edReopen('midia', 'Fundo escolhido'); return; }
+  ED.form.cover_url = h.url; ED.form.cover_page = h.page || '';
   ED.webThumb = h.thumb || '';
   edReopen('midia', 'Capa escolhida');
 }

@@ -31,9 +31,12 @@ def _single_instance() -> bool:
         try:
             import ctypes
             k32 = ctypes.windll.kernel32
-            _MUTEX = k32.CreateMutexW(None, False, "Local\\LudrixConsole-SingleInstance")
+            from core import instance as _inst
+            _MUTEX = k32.CreateMutexW(None, False, _inst.mutex_name("console"))
             if k32.GetLastError() == 183:
-                ctypes.windll.user32.MessageBoxW(None, "O Modo Console já está aberto.", APP_NAME, 0x10 | 0x40000)
+                if _inst.wake("console"):
+                    return False
+                ctypes.windll.user32.MessageBoxW(None, "O Modo Console desta pasta já está aberto.", APP_NAME, 0x10 | 0x40000)
                 return False
         except Exception as e:
             logging.getLogger("console").debug("mutex: %s", e)

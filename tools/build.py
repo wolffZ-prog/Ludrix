@@ -586,6 +586,33 @@ def cmd_publish():
         raise SystemExit(5)
 
 
+def _feed_url(base_url: str, ver: str, name: str) -> str:
+    if base_url.rstrip("/") == FEED_BASE:
+        return f"https://github.com/{FEED_REPO}/releases/download/v{ver}/{name}"
+    return base_url.rstrip("/") + "/" + name
+
+
+def _feed_previous(base_url: str) -> list[dict]:
+    if base_url.rstrip("/") != FEED_BASE:
+        return []
+    try:
+        import urllib.request
+        req = urllib.request.Request(FEED_BASE + "/ludrix-updates.json", headers={"User-Agent": "ludrix-build", "Cache-Control": "no-cache"})
+        with urllib.request.urlopen(req, timeout=15) as r:
+            data = json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        print("feed: sem feed anterior pra herdar (" + str(e)[:60] + ")")
+        return []
+    out = []
+    for it in list(data.get("all") or []):
+        if not isinstance(it, dict) or not it.get("version") or not it.get("url"):
+            continue
+        name = str(it["url"]).rsplit("/", 1)[-1]
+        it["url"] = _feed_url(base_url, it["version"], name)
+        out.append(it)
+    return out
+
+
 def cmd_feed(base_url: str):
     v = version()
     items = []
@@ -594,16 +621,24 @@ def cmd_feed(base_url: str):
         if p.exists():
             with zipfile.ZipFile(p) as z:
                 m = json.loads(z.read("manifest.json"))
-            items.append({"version": v, "kind": kind, "url": base_url.rstrip("/") + "/" + p.name, "sha256": sha256_of(p),
+            items.append({"version": v, "kind": kind, "url": _feed_url(base_url, v, p.name), "sha256": sha256_of(p),
                           "size": p.stat().st_size, "min_version": m.get("min_version", ""), "title": m.get("title"),
                           "changelog": m.get("changelog", ""), "date": m.get("date")})
     if not items:
         print("feed: nenhum .lxup em", _rel(), "pra listar")
         return
     latest = next((i for i in items if i["kind"] == "patch"), items[0])
+    seen = {(i["version"], i["kind"]) for i in items}
+    older = [i for i in _feed_previous(base_url) if (i["version"], i.get("kind")) not in seen and _vt(i["version"]) < _vt(v)]
+    older.sort(key=lambda i: _vt(i["version"]), reverse=True)
+    items += older[:12]
     out = REL / "ludrix-updates.json"
     out.write_text(json.dumps({"latest": latest, "all": items}, ensure_ascii=False, indent=1), encoding="utf-8")
-    print("feed:", out)
+    print("feed:", out, f"({len(items)} pacote(s) listados)")
+
+
+def _vt(v: str):
+    return tuple(int(x) for x in re.findall(r"\d+", str(v or "0"))[:3]) or (0,)
 
 
 def cmd_check():
@@ -738,7 +773,7 @@ def cmd_selftest(folder: Path | None = None):
     return False
 
 
-USAGE = "Ferramenta de build/empacotamento do Ludrix.\n\n  python tools/build.py check                 confere código, catálogos, interface e sobe o servidor interno num teste rápido\n  python tools/build.py selftest              roda release/<v>/Ludrix/Ludrix.exe --selftest (o exe abre, serve a interface e passa no diagnóstico)\n  python tools/build.py bump 1.0.0            grava a versão em app/version.json\n  python tools/build.py exe                   PyInstaller: Ludrix.exe + LudrixConsole.exe (runtime) + updater.exe → build/exe; embute o WebView2   [Windows]\n  python tools/build.py webview2              baixa e prepara o WebView2 Fixed Version (tools/webview2.json) → build/webview2/<v>; --webview2-completo pula a dieta\n  python tools/build.py zip                   release/<v>/Ludrix/ + release/<v>/Ludrix-<v>.zip  (programa pronto)\n  python tools/build.py src                   release/<v>/Ludrix-<v>-src.zip  (código-fonte pra compilar com build.bat)\n  python tools/build.py patch [--min 1.0.0]   release/<v>/ludrix-<v>-patch.lxup   (só app/ — patch de funções)\n  python tools/build.py full                  release/<v>/ludrix-<v>-full.lxup    (app/ + runtime + exes — nova versão)\n  python tools/build.py feed [url-base]       release/<v>/ludrix-updates.json     (feed pro \"Checar atualizações\"; padrão = GitHub wolffZ-prog/Ludrix)\n  python tools/build.py publish               cria a release v<v> no GitHub com o .lxup + feed (usa o gh; sem ele, imprime o passo a passo)\n  python tools/build.py keygen                cria a chave de assinatura (%USERPROFILE%\\.ludrix\\ludrix-sign.key) e grava a pública em app/lxsign.py\n  python tools/build.py sign <arquivo...>     assina .lxup/.lxtheme/.zip com a chave (src/patch/full já saem assinados)\n  python tools/build.py all [--min X] [url] [--keep-tmp]   check + exe (se Windows) + zip + selftest do exe + src + patch + full + feed; apaga build/tmp no fim\n\nPastas do código-fonte:\n  app/ (programa)  tools/ (este build)  build/ (temporários e exes compilados)  release/<versão>/ (o que sai do build)\n\nPasta final do programa (release/<v>/Ludrix/):\n  Ludrix.exe  LudrixConsole.exe  updater.exe  runtime/ (Python + bibliotecas + webview2/ embutido)  app/ (código, interface, catálogos)\n  Ao abrir, o programa cria só: data/ (ajustes, biblioteca, cache, atualizações, ferramentas)  games/  emulation/  downloads/  themes/\n\nO changelog de cada versão vem do CHANGELOG.md (seção \"## <versão>\")."
+USAGE = "Ferramenta de build/empacotamento do Ludrix.\n\n  python tools/build.py version               imprime a versão de app/version.json\n  python tools/build.py check                 confere código, catálogos, interface e sobe o servidor interno num teste rápido\n  python tools/build.py selftest              roda release/<v>/Ludrix/Ludrix.exe --selftest (o exe abre, serve a interface e passa no diagnóstico)\n  python tools/build.py bump 1.0.0            grava a versão em app/version.json\n  python tools/build.py exe                   PyInstaller: Ludrix.exe + LudrixConsole.exe (runtime) + updater.exe → build/exe; embute o WebView2   [Windows]\n  python tools/build.py webview2              baixa e prepara o WebView2 Fixed Version (tools/webview2.json) → build/webview2/<v>; --webview2-completo pula a dieta\n  python tools/build.py zip                   release/<v>/Ludrix/ + release/<v>/Ludrix-<v>.zip  (programa pronto)\n  python tools/build.py src                   release/<v>/Ludrix-<v>-src.zip  (código-fonte pra compilar com build.bat)\n  python tools/build.py patch [--min 1.0.0]   release/<v>/ludrix-<v>-patch.lxup   (só app/ — patch de funções)\n  python tools/build.py full                  release/<v>/ludrix-<v>-full.lxup    (app/ + runtime + exes — nova versão)\n  python tools/build.py feed [url-base]       release/<v>/ludrix-updates.json     (feed pro \"Checar atualizações\"; padrão = GitHub wolffZ-prog/Ludrix)\n  python tools/build.py publish               cria a release v<v> no GitHub com o .lxup + feed (usa o gh; sem ele, imprime o passo a passo)\n  python tools/build.py keygen                cria a chave de assinatura (%USERPROFILE%\\.ludrix\\ludrix-sign.key) e grava a pública em app/lxsign.py\n  python tools/build.py sign <arquivo...>     assina .lxup/.lxtheme/.zip com a chave (src/patch/full já saem assinados)\n  python tools/build.py all [--min X] [url] [--keep-tmp]   check + exe (se Windows) + zip + selftest do exe + src + patch + full + feed; apaga build/tmp no fim\n\nPastas do código-fonte:\n  app/ (programa)  tools/ (este build)  build/ (temporários e exes compilados)  release/<versão>/ (o que sai do build)\n\nPasta final do programa (release/<v>/Ludrix/):\n  Ludrix.exe  LudrixConsole.exe  updater.exe  runtime/ (Python + bibliotecas + webview2/ embutido)  app/ (código, interface, catálogos)\n  Ao abrir, o programa cria só: data/ (ajustes, biblioteca, cache, atualizações, ferramentas)  games/  emulation/  downloads/  themes/\n\nO changelog de cada versão vem do CHANGELOG.md (seção \"## <versão>\")."
 
 
 def main(argv: list[str]):
@@ -747,7 +782,9 @@ def main(argv: list[str]):
         return
     cmd, rest = argv[0], argv[1:]
     opt = lambda name: rest[rest.index(name) + 1] if name in rest and rest.index(name) + 1 < len(rest) else None
-    if cmd == "check":
+    if cmd == "version":
+        print(version())
+    elif cmd == "check":
         cmd_check()
     elif cmd == "bump":
         cmd_bump(rest[0])

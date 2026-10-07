@@ -333,8 +333,8 @@ body.compact .card .sub{display:none}
 
 .modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);z-index:50;opacity:0;pointer-events:none;transition:.2s}
 .modal.on{opacity:1;pointer-events:auto}
-.modal .box{width:460px;max-width:92vw;max-height:88vh;overflow:auto;background:var(--bg2);border:1px solid var(--line2);border-radius:18px;padding:22px;box-shadow:var(--shadow);transform:scale(.96);transition:.2s}
-.modal.on .box{transform:none}
+.modal .box{width:460px;max-width:92vw;max-height:88vh;overflow:auto;background:var(--bg2);border:1px solid var(--line2);border-radius:18px;padding:22px;box-shadow:var(--shadow);transform:translateY(8px) scale(.97);transition:transform .24s cubic-bezier(.2,.8,.2,1),opacity .2s;opacity:.6}
+.modal.on .box{transform:none;opacity:1}
 .modal h3{font-size:17px;margin-bottom:8px}
 .modal p{color:var(--muted);font-size:13px;line-height:1.5;white-space:pre-wrap}
 .modal .box:has(.dlbox){width:420px}
@@ -1290,6 +1290,8 @@ body[data-layout=top] .rb.on::after{background:var(--accent)}
 .gweb{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));grid-auto-rows:max-content;gap:12px;flex:1;min-height:0;max-height:470px;overflow:auto;padding:4px 2px;margin-top:8px;align-content:start}
 .gwc{position:relative;height:172px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:color-mix(in srgb,var(--text) 5%,transparent);padding:0;cursor:pointer;transition:transform .12s,box-shadow .12s}
 .gwc img{width:100%;height:100%;object-fit:cover;display:block}
+.gweb.wide{grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.gweb.wide .gwc{height:118px}
 .gwc span{position:absolute;left:0;right:0;bottom:0;font-size:10px;padding:3px 6px;background:rgba(0,0,0,.55);color:#fff;text-align:left}
 .gwc:hover{transform:translateY(-2px);box-shadow:0 0 0 2px var(--accent)}
 .gpf label{display:grid;grid-template-columns:auto 120px 1fr;gap:8px;align-items:start;font-size:12.5px;padding:6px 8px;border-radius:8px;background:color-mix(in srgb,var(--text) 4%,transparent)}

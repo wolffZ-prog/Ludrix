@@ -304,7 +304,7 @@ def _extract_py7zr(archive: Path, target: Path, cb: ProgressCb, cancel: threadin
 _BAD_EXE = re.compile(
     r"(unins|setup|install|redist|vcredist|dxsetup|dxwebsetup|directx|dotnet|physx|"
     r"crash|report|handler|launcher_helper|unitycrash|eac|easyanticheat|battleye|"
-    r"updater|patcher|config|settings|benchmark|editor|server|uploader|7z|winrar|touchup|register|activation)",
+    r"updater|updatelauncher|autoupdate|patcher|config|settings|benchmark|editor|server|uploader|7z|winrar|touchup|register|activation|trainer|cheat|keygen)",
     re.I,
 )
 
@@ -315,6 +315,68 @@ def _is_elf(p: Path) -> bool:
             return f.read(4) == b"\x7fELF"
     except OSError:
         return False
+
+
+_SFX_MARKS = (b"Inno Setup", b"Nullsoft", b"NullsoftInst", b"7-Zip SFX", b"7zS", b"WinRAR SFX", b"RarSFX", b"InstallShield", b"Wise Installation",
+              b"Smart Install Maker", b"CreateInstall", b"Setup Factory", b"Advanced Installer", b"InstallAware", b"Actual Installer", b"Clickteam Install")
+_TAG_RE = re.compile(r"[\(\[\{].+?[\)\]\}]")
+
+
+def pe_info(p: Path) -> dict:
+    out = {"installer": False, "console": False, "overlay": 0.0}
+    try:
+        size = p.stat().st_size
+        with open(p, "rb") as f:
+            head = f.read(4096)
+            if head[:2] != b"MZ" or len(head) < 0x40:
+                return out
+            off = int.from_bytes(head[0x3C:0x40], "little")
+            if off + 0x100 > len(head):
+                f.seek(0)
+                head = f.read(off + 0x200)
+            if head[off:off + 4] != b"PE\0\0":
+                return out
+            nsec = int.from_bytes(head[off + 6:off + 8], "little")
+            opt = int.from_bytes(head[off + 20:off + 22], "little")
+            out["console"] = int.from_bytes(head[off + 0x5C:off + 0x5E], "little") == 3
+            sec = off + 24 + opt
+            end = 0
+            for i in range(min(nsec, 32)):
+                b = sec + i * 40
+                if b + 40 > len(head):
+                    f.seek(b)
+                    row = f.read(40)
+                else:
+                    row = head[b:b + 40]
+                if len(row) < 40:
+                    break
+                raw = int.from_bytes(row[16:20], "little") + int.from_bytes(row[20:24], "little")
+                end = max(end, raw)
+            if end and size > end:
+                out["overlay"] = (size - end) / size
+            f.seek(0)
+            chunk = f.read(min(size, 1 << 20))
+            if size > (1 << 20):
+                f.seek(max(0, size - (256 << 10)))
+                chunk += f.read(256 << 10)
+            out["installer"] = any(m in chunk for m in _SFX_MARKS)
+    except OSError:
+        pass
+    return out
+
+
+def _mtimes(folder: Path) -> float:
+    ts = []
+    try:
+        for p in folder.iterdir():
+            if p.is_file() and p.suffix.lower() in (".dll", ".exe", ".bin", ".dat", ".pak", ".big", ".bik", ".ini"):
+                ts.append(p.stat().st_mtime)
+                if len(ts) >= 60:
+                    break
+    except OSError:
+        pass
+    ts.sort()
+    return ts[len(ts) // 2] if ts else 0.0
 
 
 def find_executables(folder: Path, title: str = "") -> list[Path]:
@@ -328,6 +390,7 @@ def find_executables(folder: Path, title: str = "") -> list[Path]:
     if not exes:
         return []
     words = [w for w in re.findall(r"[a-z0-9]+", title.lower()) if len(w) > 2]
+    median = {}
 
     def score(p: Path) -> tuple:
         n = p.stem.lower()
@@ -336,8 +399,12 @@ def find_executables(folder: Path, title: str = "") -> list[Path]:
             s += 40
         if _BAD_EXE.search(n):
             s -= 100
+        if _TAG_RE.search(p.stem):
+            s -= 40
         if any(w in n for w in words):
             s += 30
+        elif len(n) >= 3 and any(w.startswith(n) or n.startswith(w) for w in words):
+            s += 18
         if "launcher" in n:
             s += 10
         if "game" in n or "play" in n:
@@ -345,12 +412,38 @@ def find_executables(folder: Path, title: str = "") -> list[Path]:
         depth = len(p.relative_to(folder).parts)
         s -= depth * 3
         try:
-            size = p.stat().st_size
+            st = p.stat()
+            size = st.st_size
+            med = median.setdefault(p.parent, _mtimes(p.parent))
+            if med and st.st_mtime - med > 400 * 86400:
+                s -= 25
         except OSError:
             size = 0
         return (-s, -size)
 
-    return sorted(exes, key=score)
+    ranked = sorted(exes, key=score)
+    if p_suffix_exe(ranked):
+        top = ranked[:10]
+        adj = []
+        for p in top:
+            info = pe_info(p)
+            pen = 0
+            if info["installer"]:
+                pen += 150
+            elif info["overlay"] > 0.5 and _TAG_RE.search(p.stem):
+                pen += 40
+            if info["console"]:
+                pen += 20
+            adj.append((pen, p))
+        if any(pen for pen, _ in adj):
+            base = {p: i for i, p in enumerate(top)}
+            top = [p for _, p in sorted(adj, key=lambda t: (t[0], base[t[1]]))]
+            ranked = top + ranked[10:]
+    return ranked
+
+
+def p_suffix_exe(paths: list[Path]) -> bool:
+    return bool(paths) and paths[0].suffix.lower() == ".exe"
 
 
 _SETUP_RE = re.compile(r"^(setup|install|installer|setup_[^/\\]*|[^/\\]*setup)\.exe$", re.I)

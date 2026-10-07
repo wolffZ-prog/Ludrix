@@ -3,9 +3,7 @@ REM ===== Ludrix - lanca a versao atual: build + release no GitHub + codigo no G
 setlocal
 cd /d "%~dp0"
 if not exist tools\build.py ( echo Rode dentro da pasta do codigo-fonte. & pause & exit /b 1 )
-for /f "usebackq tokens=2 delims=:," %%v in (`findstr /i "\"version\"" app\version.json`) do set "VER=%%~v"
-set "VER=%VER:"=%"
-set "VER=%VER: =%"
+for /f "delims=" %%v in ('python tools\build.py version') do set "VER=%%v"
 echo.
 echo  Lancar Ludrix %VER%
 echo   1. build.bat      (compila e empacota)

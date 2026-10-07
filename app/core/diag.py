@@ -221,7 +221,7 @@ def report(ludrix, api_ok: bool | None = None) -> dict:
     if bk:
         add("backups", "Cópias da biblioteca", True, f"{len(bk)} cópia" + ("s" if len(bk) != 1 else "") + " · última em " + time.strftime("%d/%m/%Y %H:%M", time.localtime(bk[-1].stat().st_mtime)))
     else:
-        add("backups", "Cópias da biblioteca", bool(lib) is False, "nenhuma cópia ainda — a primeira é feita ao abrir o launcher", warn=bool(lib))
+        add("backups", "Cópias da biblioteca", True, "nenhuma cópia ainda — a primeira é feita ao abrir o launcher", warn=bool(lib))
     cfg = store.config
     add("ui", "Interface", not UI_ERRORS, f"tema {cfg.get('theme', 'system')} · navegação {cfg.get('nav_pos', 'left')} · animações {cfg.get('animations', 'full')}" + (f" · {len(UI_ERRORS)} erro(s) de interface nesta sessão" if UI_ERRORS else ""), warn=bool(UI_ERRORS))
     try:

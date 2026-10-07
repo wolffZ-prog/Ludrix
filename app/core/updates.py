@@ -144,11 +144,19 @@ class UpdateManager:
             try:
                 r = self.session.get(feed, timeout=12, headers={"Cache-Control": "no-cache"})
                 r.raise_for_status()
-                latest = (r.json() or {}).get("latest") or {}
-                v = parse_version(latest.get("version"))
-                if latest.get("url") and v > cur and (not best or v > parse_version(best["version"])):
-                    if not latest.get("min_version") or parse_version(latest["min_version"]) <= cur or latest.get("kind") == "full":
-                        self.remote = latest
+                data = r.json() or {}
+                pick = None
+                for it in [data.get("latest") or {}] + list(data.get("all") or []):
+                    if not isinstance(it, dict) or not it.get("url"):
+                        continue
+                    v = parse_version(it.get("version"))
+                    if v <= cur or (pick and v <= parse_version(pick["version"])):
+                        continue
+                    if it.get("min_version") and parse_version(it["min_version"]) > cur and it.get("kind") != "full":
+                        continue
+                    pick = it
+                if pick and (not best or parse_version(pick["version"]) > parse_version(best["version"])):
+                    self.remote = pick
             except Exception as e:
                 self.state["error"] = f"Não consegui consultar o endereço de atualizações ({e})"
                 log.warning("feed: %s", e)

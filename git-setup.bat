@@ -16,9 +16,7 @@ where git >nul 2>nul || (
 )
 
 set "VER="
-for /f "usebackq tokens=2 delims=:," %%v in (`findstr /i "\"version\"" app\version.json`) do set "VER=%%~v"
-set "VER=%VER:"=%"
-set "VER=%VER: =%"
+for /f "delims=" %%v in ('python tools\build.py version') do set "VER=%%v"
 if "%VER%"=="" set "VER=dev"
 
 echo.
@@ -49,6 +47,14 @@ if not exist ".git" (
 
 git remote get-url origin >nul 2>nul && (git remote set-url origin "%URL%") || (git remote add origin "%URL%")
 echo  [2/5] remoto: origin = %URL%
+if "%FIRST%"=="1" (
+  git fetch -q origin main >nul 2>nul && (
+    git reset -q origin/main >nul 2>nul
+    git branch -q --set-upstream-to=origin/main main >nul 2>nul
+    set "FIRST=0"
+    echo        historico do GitHub recuperado: este envio continua de onde parou
+  )
+)
 
 git add -A
 git ls-files --cached | findstr /i /r "\.key$ ^chave/ ^data/ ^release/ ^build/ integrity\.json pyc\.json" >nul && (
@@ -63,8 +69,10 @@ echo  [3/5] arquivos conferidos: nenhuma chave ou pasta privada
 git diff --cached --quiet && (
   echo  [4/5] nada novo para commitar
 ) || (
-  if "%FIRST%"=="1" (git commit -q -m "Ludrix %VER%") else (git commit -q -m "Ludrix %VER%")
-  echo  [4/5] commit: Ludrix %VER%
+  set "MSG=Ludrix %VER%"
+  git ls-remote --tags origin "v%VER%" 2>nul | findstr /c:"v%VER%" >nul && set "MSG=Ludrix %VER% (ajustes)"
+  git commit -q -m "!MSG!"
+  echo  [4/5] commit: !MSG!
 )
 
 if "%FIRST%"=="1" (
@@ -88,20 +96,20 @@ if errorlevel 1 (
 )
 echo  [5/5] enviado para https://github.com/%REPO%
 
-where gh >nul 2>nul && (
-  gh auth status >nul 2>nul && (
-    gh repo edit %REPO% --description "LudrixHub - launcher de jogos portatil para Windows: biblioteca, Store por fontes, emuladores, temas e Modo Console" --homepage "https://github.com/%REPO%/releases/latest" --enable-issues --enable-wiki=false >nul 2>nul
-    gh repo edit %REPO% --add-topic game-launcher --add-topic windows --add-topic python --add-topic emulation --add-topic webview2 --add-topic portable --add-topic launcher --add-topic games >nul 2>nul
-    echo  descricao e topicos do repositorio atualizados
+if not exist ".git\ludrix-pagina-pronta" (
+  where gh >nul 2>nul && (
+    gh auth status >nul 2>nul && (
+      gh repo edit %REPO% --description "LudrixHub - launcher de jogos portatil para Windows: biblioteca, Store por fontes, emuladores, temas e Modo Console" --homepage "https://github.com/%REPO%/releases/latest" --enable-issues --enable-wiki=false >nul 2>nul
+      gh repo edit %REPO% --add-topic game-launcher --add-topic windows --add-topic python --add-topic emulation --add-topic webview2 --add-topic portable --add-topic launcher --add-topic games >nul 2>nul
+      echo  descricao e topicos do repositorio definidos
+    )
   )
+  echo.
+  echo  Uma vez so, no site: Settings -^> General -^> Social preview -^> Upload  docs\img\social-preview.png
+  echo pronto> ".git\ludrix-pagina-pronta"
 )
 
 echo.
 echo  Pronto: https://github.com/%REPO%
-echo.
-echo  Falta so uma coisa manual ^(uma vez^): Settings -^> General -^> Social preview -^> Upload
-echo  e escolha  docs\img\social-preview.png  ^(e a imagem que aparece quando alguem cola o link^).
-echo.
-echo  Nas proximas versoes: build.bat  ->  publicar.bat  ->  git-setup.bat ^(este^) para subir o codigo.
 echo.
 pause

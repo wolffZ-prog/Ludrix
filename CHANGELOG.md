@@ -1,6 +1,16 @@
 # Changelog
 
-## 2.35.0 — em desenvolvimento
+## 2.36.0 — 2026-10-07
+- Detecção do executável: regra genérica para qualquer jogo. Executáveis com marca de site/repack, instaladores, desinstaladores, crash handlers e utilitários perdem prioridade para o executável do jogo; quando continua ambíguo, o Ludrix pergunta.
+- Capa, fundo e metadados escolhidos pelo usuário não são mais substituídos: a busca automática roda uma única vez por jogo e depois só completa o que estiver vazio.
+- Detalhes → Mídia: escolha de capa e de fundo (hero) por busca na web, com pré-visualização em grade e salvamento direto.
+- Metadados por plataforma: jogo de PC busca em Steam/GOG; ROM busca na base do console correspondente (Libretro/SteamGridDB). A Wikipédia deixou de ser fonte principal e só entra quando o artigo cita a plataforma certa.
+- Abertura mais rápida: a varredura de ROMs não trava mais a biblioteca (roda em segundo plano e a lista é servida assim que estiver pronta; antes a varredura repetia a cada 15 s), verificação de executáveis em cache e tempos de cada etapa registrados em `data/ludrix.log` (núcleo, servidor, catálogo, ROMs, primeira biblioteca). Janela de diálogo com entrada mais suave.
+- Duas cópias do Ludrix em pastas diferentes podem ficar abertas ao mesmo tempo (a trava de instância única passa a ser por pasta). Abrir o Ludrix de novo enquanto ele está na bandeja traz a janela de volta em vez de mostrar aviso.
+- Atualizações: o launcher considera todos os pacotes listados no endereço de atualizações e instala o mais novo que se aplica à versão instalada (antes só olhava o último; se ele exigisse uma versão intermediária, nada aparecia). O feed gerado herda os pacotes anteriores com endereços fixos por versão.
+
+## 2.35.0 — 2026-10-07
+- Diagnóstico: biblioteca sem cópia de segurança ainda aparece como aviso, não como falha (impedia o teste automático do build).
 - Endereço de atualizações passa a ser `github.com/wolffZ-prog/Ludrix` (o repositório foi renomeado; o endereço antigo continua redirecionando).
 - Tela de abertura: barra de progresso real, versão e os passos do carregamento (interface, configurações, biblioteca, tema). Com "Reduzir movimento" tudo aparece de uma vez.
 - Listas `.json` (`ludrix-pack/1`) aceitam `"github": "dono/repositorio"` por jogo: o Ludrix busca a versão mais recente da release na hora, sem endereço fixo. Campos opcionais `asset` (regex do arquivo), `requires_rom`, `exe`.

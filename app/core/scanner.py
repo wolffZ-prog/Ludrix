@@ -16,7 +16,7 @@ INNER_DIRS = re.compile(r"^(bin|binaries|win64|win32|x64|x86|game|engine|data|co
 
 NOT_GAME = re.compile(r"(^|[\W_])(unins\w*|setup|install\w*|vc_?redist\w*|vcredist\w*|dxsetup|dxwebsetup|directx\w*|dotnet\w*|ndp\d+|physx\w*|oalinst|"
                       r"crash\w*|report\w*|bugsplat|errorreport|unitycrashhandler\w*|ue4prereqsetup\w*|uecrashreporter|easyanticheat\w*|eac_\w*|"
-                      r"battleye\w*|beservice|updater|patcher|autoupdate|launcher_helper|7z\w*|winrar|unrar|touchup|register\w*|activat\w*|"
+                      r"battleye\w*|beservice|updater|updatelauncher|patcher|autoupdate|launcher_helper|trainer|keygen|7z\w*|winrar|unrar|touchup|register\w*|activat\w*|"
                       r"cleanup|benchmark|editor|server|dedicated\w*|uploader|steamerrorreporter|steam\w*service|gameoverlayui|"
                       r"python\w*|java\w*|node|ffmpeg|dxdiag|cmd|powershell|msiexec|regsvr32|rundll32)([\W_]|$)", re.I)
 MIN_GAME_EXE = 300 * 1024
