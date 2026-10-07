@@ -200,7 +200,8 @@ function applyFrame() {
   frameT = setTimeout(() => {
     const bg = cssVar('--bg'), text = cssVar('--text'), dark = document.documentElement.dataset.light !== '1', rgb = hexRgb(bg);
     const border = rgb ? rgbToHex(shade(rgb, dark ? 30 : -30)) : bg;
-    const body = { cmd: 'frame', mode: S.config.frame_mode || 'theme', corners: S.config.frame_corners || '', bg, text, border, dark };
+    let colors = null; try { colors = ctxColors(); } catch (e) { colors = null; }
+    const body = { cmd: 'frame', mode: S.config.frame_mode || 'theme', corners: S.config.frame_corners || '', bg, text, border, dark, colors };
     const sig = JSON.stringify(body); if (sig === frameLast) return; frameLast = sig;
     api.post('/api/window', body);
   }, 300);
@@ -2196,7 +2197,7 @@ function updatesHtml() {
   let card = '';
   if (!u) card = `<p class="mut">Consultando…</p>`;
   else if (ready) card = `<div class="updcard on"><div class="l"><b>v${esc(av.version)}${av.title && !/^(patch|ludrix) /i.test(av.title) ? ' · ' + esc(av.title) : ''}</b><span>${kind(av.kind)}${av.date ? ' · ' + esc(av.date) : ''}${av.size ? ' · ' + fmt(av.size) : ''} · verificada, pronta para instalar</span></div>${chlogHtml(notesBetween(av, cur.version))}</div>`;
-  else if (remote) card = `<div class="updcard on"><div class="l"><b>v${esc(rem.version)}</b><span>${kind(rem.kind)}${rem.date ? ' · ' + esc(rem.date) : ''} · ${job ? 'baixando… ' + Math.round((job.fraction || 0) * 100) + '%' : 'disponível para download'}</span></div>${rem.changelog ? chlogHtml(notesBetween(rem, cur.version)) : ''}${job ? progHtml(job, 'update') : ''}</div>`;
+  else if (remote) card = `<div class="updcard on"><div class="l"><b>v${esc(rem.version)}</b><span>${kind(rem.kind)}${rem.date ? ' · ' + esc(rem.date) : ''}${rem.size ? ' · ' + fmt(rem.size) : ''} · ${job ? 'baixando… ' + Math.round((job.fraction || 0) * 100) + '%' : 'disponível para download'}</span></div>${rem.changelog ? chlogHtml(notesBetween(rem, cur.version)) : ''}${job ? progHtml(job, 'update') : ''}</div>`;
   else card = `<div class="updcard"><div class="l"><b>Você está na versão mais recente</b><span>${st.error ? esc(st.error) : 'Nenhuma novidade por enquanto'}${when ? ' · checado às ' + when : ''}</span></div></div>`;
   const applyLabel = remote ? 'Baixar' : 'Instalar';
   const canApply = ready || (remote && !job);
@@ -3170,7 +3171,8 @@ async function ctxMenu(key, x, y) {
   const g = S.byKey[key] || (S.home && S.home.games[key]) || {};
   if (ctxNativeOk()) {
     const acts = await api.get('/api/actions/' + enc(key));
-    return showCtx(ctxItems(key, acts), x, y, g.title || key);
+    const meta = [g.genres && g.genres[0], g.creator || g.fr, g.kind === 'local' ? 'Instalado' : (g.sys || g.system || '')].filter(Boolean).slice(0, 2).join(' · ');
+    return showCtx(ctxItems(key, acts), x, y, g.title || key, { key, title: g.title || key, sub: meta, html: ctxGameHead(g, key) });
   }
   ctxKey = key; const m = $('#ctx');
   const gh = ctxGameHead(g, key);
@@ -3611,7 +3613,35 @@ document.addEventListener('mousedown', e => { ctxMouse = { x: e.clientX, y: e.cl
 document.addEventListener('contextmenu', e => { ctxMouse = { x: e.clientX, y: e.clientY }; }, true);
 function ctxMode() { return S.config.ctx_menu || S.themeMenu || 'windows'; }
 function ctxNativeOk() { return !!(S.config.native && S.config.frameless && ctxMode() === 'windows' && !GP.active && !ctxNative && window.screenX !== undefined); }
-function ctxStrip(list, pre) { return list.map((it, i) => ({ id: pre + i, sep: !!it.sep, label: it.label || '', hint: it.hint || '', primary: !!it.primary, danger: !!it.danger, disabled: !!it.disabled, sub: it.sub ? ctxStrip(it.sub, pre + i + '.') : null })); }
+const ctxIconCache = new Map();
+async function ctxIcon(name, color) {
+  const svg = I[name]; if (!svg || !color) return null;
+  const s = Math.round(16 * (window.devicePixelRatio || 1));
+  const k = name + '|' + color + '|' + s;
+  if (ctxIconCache.has(k)) return ctxIconCache.get(k);
+  const src = svg.replace(/currentColor/g, color).replace('<svg ', `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" `);
+  const img = new Image();
+  const ok = await new Promise(res => { img.onload = () => res(true); img.onerror = () => res(false); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src); });
+  let v = null;
+  if (ok) {
+    const c = document.createElement('canvas'); c.width = c.height = s; const g = c.getContext('2d'); g.drawImage(img, 0, 0, s, s);
+    const d = g.getImageData(0, 0, s, s).data; const out = new Uint8Array(d.length);
+    for (let i = 0; i < d.length; i += 4) { const a = d[i + 3]; out[i] = Math.round(d[i + 2] * a / 255); out[i + 1] = Math.round(d[i + 1] * a / 255); out[i + 2] = Math.round(d[i] * a / 255); out[i + 3] = a; }
+    let bin = ''; for (let i = 0; i < out.length; i += 0x8000) bin += String.fromCharCode.apply(null, out.subarray(i, i + 0x8000));
+    v = { w: s, data: btoa(bin) };
+  }
+  ctxIconCache.set(k, v); return v;
+}
+async function ctxStrip(list, pre, colors) {
+  const out = [];
+  for (let i = 0; i < list.length; i++) {
+    const it = list[i];
+    const color = it.danger ? colors.danger : it.primary ? colors.primary : colors.muted;
+    out.push({ id: pre + i, sep: !!it.sep, label: it.label || '', hint: it.hint || '', primary: !!it.primary, danger: !!it.danger, disabled: !!it.disabled,
+      icon: it.icon && !it.sep ? await ctxIcon(it.icon, color) : null, sub: it.sub ? await ctxStrip(it.sub, pre + i + '.', colors) : null });
+  }
+  return out;
+}
 function cssRgb(v) {
   const el = document.createElement('i'); el.style.cssText = `position:absolute;visibility:hidden;color:var(${v})`; document.body.appendChild(el);
   const c = getComputedStyle(el).color; el.remove();
@@ -3627,12 +3657,14 @@ function ctxColors() {
   const tx = over('--text');
   return { bg: hex(bg), text: hex(tx), muted: hex(over('--muted2') || over('--muted')), primary: hex(over('--green2')), danger: hex(over('--red')), line: hex(over('--line')), hover: hex(mix(bg, tx, 0.09)) };
 }
-async function showCtxNative(items, x, y, title) {
+async function showCtxNative(items, x, y, title, head) {
   ctxNative = true; ctxKey = null; $('#ctx').classList.remove('on');
   const near = Math.abs(ctxMouse.x - x) < 6 && Math.abs(ctxMouse.y - y) < 6;
   let r = null;
   try {
-    r = await api.post('/api/window', { cmd: 'ctx', items: ctxStrip(items, ''), title: title || '', colors: ctxColors(), at_cursor: near ? '1' : '0', x: Math.round(window.screenX + x), y: Math.round(window.screenY + y), light: document.documentElement.dataset.light || '0' });
+    const colors = ctxColors();
+    const stripped = await ctxStrip(items, '', colors);
+    r = await api.post('/api/window', { cmd: 'ctx', items: stripped, title: head ? '' : (title || ''), head: head || null, colors, at_cursor: near ? '1' : '0', x: Math.round(window.screenX + x), y: Math.round(window.screenY + y), light: document.documentElement.dataset.light || '0' });
   } catch (e) { r = null; }
   ctxNative = false;
   if (!r || !r.ok) return false;
@@ -3642,9 +3674,9 @@ async function showCtxNative(items, x, y, title) {
   }
   return true;
 }
-function showCtx(items, x, y, title) {
-  if (ctxNativeOk()) { showCtxNative(items, x, y, title).then(ok => { if (!ok) showCtxLocal(items, x, y, title); }); return; }
-  showCtxLocal(items, x, y, title);
+function showCtx(items, x, y, title, head) {
+  if (ctxNativeOk()) { showCtxNative(items, x, y, title, head).then(ok => { if (!ok) showCtxLocal(items, x, y, title, head && head.html); }); return; }
+  showCtxLocal(items, x, y, title, head && head.html);
 }
 function showCtxLocal(items, x, y, title, head) {
   const c = $('#ctx');
@@ -3976,7 +4008,7 @@ async function importWizard() {
 function importPick(id) {
   const l = IMP.list.find(x => x.id === id); IMP.cur = l;
   const html = `<div class="impstep"><div class="impwhat"><b>O que selecionar</b><p>${esc(l.what)}</p>${l.tip ? `<p class="tip">${I.info || ''} ${esc(l.tip)}</p>` : ''}${l.detected ? `<p class="tip">O seletor abre em: <span class="code">${esc(l.default_path)}</span></p>` : ''}</div>
-    ${id === 'playnite' ? `<label class="mchk" style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px"><input type="checkbox" id="impHidden" ${S.config.import_hidden ? 'checked' : ''}> Incluir jogos marcados como ocultos no Playnite</label>` : ''}
+    ${id === 'playnite' ? `<label class="mchk" style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px"><input type="checkbox" id="impHidden" ${S.config.import_hidden ? 'checked' : ''}> Incluir jogos marcados como ocultos no Playnite (entram ocultos aqui também)</label>` : ''}
     ${S.config.native ? '' : '<label class="ml">Caminho (modo navegador)</label><input class="mi" id="impPath" placeholder="' + esc(l.default_path) + '">'}</div>`;
   modal({ title: `Importar do ${l.name}`, html, ok: S.config.native ? (l.pick === 'file' ? 'Selecionar arquivo…' : 'Selecionar pasta…') : 'Ler', extra: '← Voltar', onExtra: importWizard, wide: true, onOk: async () => {
     let path;
@@ -3993,12 +4025,12 @@ async function importScan(id, path) {
   let r = await api.post('/api/import/scan', { id, path, opts: IMP.opts || {} });
   if (r.async) { while (true) { await new Promise(res => setTimeout(res, 500)); if (IMP.cancel) return; r = await api.get('/api/import/poll'); if (r.done) break; const m = $('#impMsg'); if (m) m.textContent = r.msg || '…'; } }
   if (r.error) return modal({ title: 'Não deu certo', text: r.error, ok: 'Tentar de novo', extra: '← Voltar', onExtra: importWizard, onOk: () => importPick(id) });
-  IMP.games = r.games;
+  IMP.games = r.games; IMP.dropped = r.dropped || [];
   if (!r.games.length) return modal({ title: 'Nada encontrado', text: 'Nenhum jogo nesse local. Confira a dica do que selecionar.', ok: 'Tentar de novo', extra: '← Voltar', onExtra: importWizard, onOk: () => importPick(id) });
   const sysPill = g => g.kind === 'emulator' ? `<span class="pill ac">emulador${g.systems && g.systems.length ? ' · ' + g.systems.map(x => S.systems[x] || x).join(', ') : ''}</span>` : `<span class="pill">${g.system && g.system !== 'pc' ? esc(S.systems[g.system] || g.system) : (g.rom_dir ? '<span style="color:var(--amber)">console?</span>' : 'PC')}</span>`;
   const row = (g, i) => `<label class="impg ${g.dup ? 'dup' : ''}"><input type="checkbox" data-i="${i}" ${g.dup ? '' : 'checked'}>${g.cover_file ? `<img class="impcov" src="/api/import/cover?p=${enc(g.cover_file)}" loading="lazy" alt="">` : g.kind === 'emulator' ? `<span class="impcov ic">${I.gamepad}</span>` : g.rom_dir ? `<span class="impcov ic">${I.folder}</span>` : '<span class="impcov ic"></span>'}<div class="t"><b>${esc(g.title)}</b><small>${g.rom_dir ? 'pasta de ROMs · ' + esc(g.rom_dir) : esc(g.exe || g.rom || g.emu_dir || g.dir || '')}${g.emulator && !g.kind ? ` · via ${esc(g.emulator)}` : ''}</small></div>${sysPill(g)}${g.playtime > 60 ? `<span class="pill">${Math.round(g.playtime / 3600) || '<1'} h</span>` : ''}${g.favorite ? '<span class="pill ac">★</span>' : ''}${g.hidden ? '<span class="pill" title="Marcado como oculto no Playnite">oculto</span>' : ''}${g.missing ? '<span class="pill warn" title="O arquivo não foi encontrado neste PC">arquivo ausente</span>' : ''}${g.dup ? '<span class="pill warn">já tem</span>' : ''}</label>`;
   const nE = r.games.filter(g => g.kind === 'emulator').length, nD = r.games.filter(g => g.rom_dir).length, nG = r.games.length - nE - nD;
-  const html = `<div class="imphead"><span>${pl(nG, 'jogo', 'jogos')}${nE ? ` · ${pl(nE, 'emulador', 'emuladores')}` : ''}${nD ? ` · ${pl(nD, 'pasta', 'pastas')} de ROMs` : ''} · ${r.games.filter(g => g.dup).length} já ${r.games.filter(g => g.dup).length === 1 ? 'configurado' : 'configurados'}</span><span style="flex:1"></span><input class="mi" id="impQ" placeholder="Filtrar…" style="width:150px;height:30px;margin:0" oninput="impFilter(this.value)"><select class="mi" style="width:auto;height:30px;margin:0" onchange="impSort(this.value)" title="Ordem da lista"><option value="az">A–Z</option><option value="play">Mais jogados</option><option value="new">Novos primeiro</option></select><button class="btn s sm" onclick="document.querySelectorAll('.impg input').forEach(c=>c.checked=true);impCount()">Marcar todos</button><button class="btn s sm" onclick="document.querySelectorAll('.impg input').forEach(c=>c.checked=!c.closest('.impg').classList.contains('dup'));impCount()" title="Marca só o que ainda não está na biblioteca">Só novos</button><button class="btn s sm" onclick="document.querySelectorAll('.impg input').forEach(c=>c.checked=!c.checked);impCount()" title="Troca marcados por desmarcados">Inverter</button><button class="btn s sm" onclick="document.querySelectorAll('.impg input').forEach(c=>c.checked=false);impCount()">Desmarcar</button></div><div class="impgames" onchange="impCount()">${r.games.map(row).join('')}</div>`;
+  const html = `<div class="imphead"><span>${pl(nG, 'jogo', 'jogos')}${nE ? ` · ${pl(nE, 'emulador', 'emuladores')}` : ''}${nD ? ` · ${pl(nD, 'pasta', 'pastas')} de ROMs` : ''} · ${r.games.filter(g => g.dup).length} já ${r.games.filter(g => g.dup).length === 1 ? 'configurado' : 'configurados'}${IMP.dropped.length ? ` · <span title="${esc(IMP.dropped.slice(0, 40).map(i => i.title + ' — ' + i.why).join('\n'))}" style="color:var(--amber)">${IMP.dropped.length} ${IMP.dropped.length === 1 ? 'ficou' : 'ficaram'} de fora (lista no final)</span>` : ''}</span><span style="flex:1"></span><input class="mi" id="impQ" placeholder="Filtrar…" style="width:150px;height:30px;margin:0" oninput="impFilter(this.value)"><select class="mi" style="width:auto;height:30px;margin:0" onchange="impSort(this.value)" title="Ordem da lista"><option value="az">A–Z</option><option value="play">Mais jogados</option><option value="new">Novos primeiro</option></select><button class="btn s sm" onclick="document.querySelectorAll('.impg input').forEach(c=>c.checked=true);impCount()">Marcar todos</button><button class="btn s sm" onclick="document.querySelectorAll('.impg input').forEach(c=>c.checked=!c.closest('.impg').classList.contains('dup'));impCount()" title="Marca só o que ainda não está na biblioteca">Só novos</button><button class="btn s sm" onclick="document.querySelectorAll('.impg input').forEach(c=>c.checked=!c.checked);impCount()" title="Troca marcados por desmarcados">Inverter</button><button class="btn s sm" onclick="document.querySelectorAll('.impg input').forEach(c=>c.checked=false);impCount()">Desmarcar</button></div><div class="impgames" onchange="impCount()">${r.games.map(row).join('')}</div>`;
   setTimeout(impCount, 30);
   modal({ title: `Importar do ${IMP.cur.name}`, html, ok: 'Importar selecionados', extra: '← Voltar', onExtra: () => importPick(id), wide: true, onOk: async () => {
     const sel = [...document.querySelectorAll('.impg input:checked')].map(c => IMP.games[+c.dataset.i]);
@@ -4011,6 +4043,7 @@ async function importScan(id, path) {
       $('#modal').classList.remove('on');
     }
     if (a.error) return toast('err', 'Importar', a.error);
+    if ((IMP.dropped || []).length) { a.skipped_items = [...(a.skipped_items || []), ...IMP.dropped]; a.skipped = (a.skipped || 0) + IMP.dropped.length; }
     if (a.skipped && (a.skipped_items || []).length) importSummary(a); else toast('ok', 'Importação concluída', `${pl(a.added, 'adicionado', 'adicionados')}${a.skipped ? ' · ' + pl(a.skipped, 'ignorado', 'ignorados') : ''}`, [{ label: 'Ver adicionados', fn: () => flagOnly('added') }, { label: 'OK', fn: () => {} }]);
     TH.err.clear(); TH.tries = {}; S.home = null;
     S.view = ''; setView('home'); await loadCatalog(false);

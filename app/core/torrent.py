@@ -14,10 +14,30 @@ from .hosts import Session
 
 from . import paths
 
-try:
-    import libtorrent as lt
-except Exception:
-    lt = None
+lt = None
+_LT = {"tried": False}
+
+
+def lt_present() -> bool:
+    if lt is not None:
+        return True
+    try:
+        import importlib.util
+        return importlib.util.find_spec("libtorrent") is not None
+    except Exception:
+        return False
+
+
+def _load_lt():
+    global lt
+    if lt is None and not _LT["tried"]:
+        _LT["tried"] = True
+        try:
+            import libtorrent
+            lt = libtorrent
+        except Exception as e:
+            log.debug("libtorrent: %s", e)
+    return lt
 
 from .installer import CancelledError, Progress, human_size
 
@@ -61,11 +81,11 @@ def ensure_aria2(session=None) -> Path | None:
 
 
 def available() -> bool:
-    return lt is not None or aria2_path() is not None or os.name == "nt"
+    return lt_present() or aria2_path() is not None or os.name == "nt"
 
 
 def engine() -> str:
-    return "libtorrent" if lt is not None else ("aria2" if (aria2_path() or os.name == "nt") else "none")
+    return "libtorrent" if lt_present() else ("aria2" if (aria2_path() or os.name == "nt") else "none")
 
 
 class TorrentClient:
@@ -75,7 +95,7 @@ class TorrentClient:
     def __init__(self, store):
         self.store = store
         self.session = None
-        if lt:
+        if _load_lt():
             self.session = lt.session({
                 "listen_interfaces": "0.0.0.0:6881,[::]:6881",
                 "enable_dht": True, "enable_lsd": True, "enable_upnp": True, "enable_natpmp": True,
@@ -110,7 +130,7 @@ class TorrentClient:
     def download(self, source: str, dest_dir: Path, cb: Callable[[Progress], None],
                  cancel: threading.Event, http_session=None) -> Path:
         dest_dir.mkdir(parents=True, exist_ok=True)
-        if not lt:
+        if not _load_lt():
             return self._download_aria2(source, dest_dir, cb, cancel, http_session)
         params = lt.add_torrent_params()
         if source.startswith("magnet:"):

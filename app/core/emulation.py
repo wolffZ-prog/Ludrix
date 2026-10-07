@@ -109,10 +109,10 @@ class EmulationManager:
 
     def invalidate_scan(self, sid: str | None = None):
         with self._scan_lock:
-            if sid:
-                self._scan_cache.pop(sid, None)
-            else:
-                self._scan_cache.clear()
+            for k in ([sid] if sid else list(self._scan_cache)):
+                hit = self._scan_cache.get(k)
+                if hit:
+                    self._scan_cache[k] = (0.0, hit[1])
 
     def _load_presets(self) -> dict:
         p = paths.PRESETS / "emulators.json"

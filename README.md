@@ -44,7 +44,7 @@
 
 Última versão: **[Releases](https://github.com/wolffZ-prog/Ludrix/releases/latest)**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
-Requisitos: Windows 10 ou 11, 64 bits. O WebView2 vem embutido no pacote. Nada de conta, login ou cadastro.
+Requisitos: Windows 10 ou 11, 64 bits. Usa o WebView2 Runtime do Windows (já vem no sistema; se faltar, o Ludrix instala sozinho na primeira abertura). Nada de conta, login ou cadastro.
 
 ## O que ele faz
 
@@ -137,7 +137,7 @@ python app\main.py --web 8000 :: modo navegador, pra desenvolver
 build.bat                    :: gera release\<versão>\Ludrix\ + zips + .lxup
 ```
 
-Precisa de Python 3.11 a 3.14 e Windows. `build.bat` confere o código, compila `Ludrix.exe`, `LudrixConsole.exe` e `updater.exe`, embute o WebView2 Fixed Version e empacota tudo. Veja [docs/COMPILAR.md](docs/COMPILAR.md).
+Precisa de Python 3.11 a 3.14 e Windows. `build.bat` confere o código, compila `Ludrix.exe`, `LudrixConsole.exe` e `updater.exe`, empacota tudo (o WebView2 não é embutido; `--com-webview2` embute o Fixed Version). Veja [docs/COMPILAR.md](docs/COMPILAR.md).
 
 Estrutura:
 

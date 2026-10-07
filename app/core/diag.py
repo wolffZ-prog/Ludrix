@@ -158,6 +158,31 @@ def ui_error(msg: str, src: str = "", line: int = 0):
     logging.getLogger("ludrix").warning("UI: %s", txt)
 
 
+def memory_usage() -> dict:
+    try:
+        import psutil
+    except Exception:
+        return {}
+    try:
+        me = psutil.Process()
+        mi = me.memory_info()
+        own = int(getattr(mi, "private", mi.rss))
+        web = other = 0
+        for c in me.children(recursive=True):
+            try:
+                ci = c.memory_info()
+                n = int(getattr(ci, "private", ci.rss))
+                if "webview2" in c.name().lower() or "msedge" in c.name().lower():
+                    web += n
+                else:
+                    other += n
+            except Exception:
+                continue
+        return {"own": own, "web": web, "other": other, "total": own + web + other}
+    except Exception:
+        return {}
+
+
 def report(ludrix, api_ok: bool | None = None) -> dict:
     from .installer import find_7z
     from . import torrent
@@ -192,11 +217,17 @@ def report(ludrix, api_ok: bool | None = None) -> dict:
         add("webview", "Motor da janela", True, "GTK/Qt (Linux)")
     if api_ok is not None:
         add("api", "Servidor interno", api_ok, "respondendo" if api_ok else "não respondeu")
+    mem = memory_usage()
+    if mem:
+        parts_m = [f"Ludrix {human(mem['own'])}", f"interface (WebView2) {human(mem['web'])}"]
+        if mem["other"]:
+            parts_m.append(f"outros processos {human(mem['other'])}")
+        add("mem", "Memória em uso", mem["total"] < 700 * 1024 ** 2, " · ".join(parts_m) + f" · total {human(mem['total'])}", warn=mem["total"] >= 700 * 1024 ** 2)
     sz = find_7z()
     add("7z", "7-Zip", True, sz or "não encontrado — extração de .7z fica lenta (py7zr)", warn=not sz)
     ar = torrent.aria2_path()
     add("aria2c", "aria2c", True, str(ar) if ar else "não encontrado — baixa automaticamente quando um torrent for necessário", warn=not ar)
-    add("libtorrent", "libtorrent", True, "presente" if torrent.lt is not None else "ausente (motor reserva: aria2c)", warn=torrent.lt is None)
+    add("libtorrent", "libtorrent", True, "presente" if torrent.lt_present() else "ausente (motor reserva: aria2c)", warn=torrent.lt is None)
     lib = store.library
     missing = 0
     for e in lib.values():

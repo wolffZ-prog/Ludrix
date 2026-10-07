@@ -177,10 +177,16 @@ def playnite_emu_of(name: str) -> str:
     return playnite.emu_of(name)
 
 
+def playnite_dropped() -> list[dict]:
+    from . import playnite
+    return list(playnite.DROPPED)
+
+
 def _playnite(path: Path) -> list[dict]:
     from . import playnite
     playnite.PROGRESS = PROGRESS
     playnite.EXT_GUESS = EXT_GUESS
+    playnite.DROPPED.clear()
     if path.suffix.lower() == ".json":
         raise ValueError("A importação por .json foi aposentada. Use o backup do Playnite: no Playnite, Arquivo → Backup de dados → gera um .zip; selecione esse .zip aqui.")
     return playnite.read(path)

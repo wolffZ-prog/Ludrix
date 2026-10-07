@@ -18,7 +18,7 @@
 | `ludrix-<version>-patch.lxup` | Update package. Ludrix downloads and applies it from **Settings → System → Check for updates**; dropping the file on the window also works. |
 | `Ludrix-<version>-src.zip` | Source of the same version, builds with `build.bat`. |
 
-Latest: **[Releases](https://github.com/wolffZ-prog/Ludrix/releases/latest)**. Requirements: Windows 10/11 64-bit. WebView2 is bundled. No account, no login.
+Latest: **[Releases](https://github.com/wolffZ-prog/Ludrix/releases/latest)**. Requirements: Windows 10/11 64-bit. Uses the Windows WebView2 Runtime (already on the system; installed automatically on first run if missing). No account, no login.
 
 ## Features
 

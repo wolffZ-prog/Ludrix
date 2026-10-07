@@ -192,7 +192,7 @@ def setup_logging():
 
 class Tray:
 
-    def __init__(self, on_show, on_quit, items=None, dark=None):
+    def __init__(self, on_show, on_quit, items=None, dark=None, popup=None):
         self.icon = None
         self.on_show, self.on_quit = on_show, on_quit
         self.items, self.dark = items, dark
@@ -201,6 +201,8 @@ class Tray:
             from PIL import Image
             img = Image.open(_icon_png()).convert("RGBA").resize((64, 64))
             self.icon = pystray.Icon("ludrix-launcher", img, APP_NAME, pystray.Menu(self._build))
+            if sys.platform == "win32" and popup:
+                self._hook(popup)
             threading.Thread(target=self.icon.run, daemon=True).start()
             if sys.platform != "win32":
 
@@ -208,6 +210,22 @@ class Tray:
                 threading.Thread(target=self._check_docked, daemon=True).start()
         except Exception as e:
             logging.warning("tray indisponível: %s", e)
+
+    def _hook(self, popup):
+        handlers = getattr(self.icon, "_message_handlers", None)
+        if not isinstance(handlers, dict):
+            return
+        orig = handlers.get(0x40B)
+
+        def on_notify(wparam, lparam):
+            if lparam == 0x205:
+                try:
+                    if popup(self.icon):
+                        return None
+                except Exception as e:
+                    logging.warning("menu da bandeja: %s", e)
+            return orig(wparam, lparam) if orig else None
+        handlers[0x40B] = on_notify
 
     def _theme(self):
         if sys.platform != "win32":
@@ -458,6 +476,40 @@ def main():
 
     state = {"hidden": start_hidden, "quitting": False}
 
+    def _core_webview():
+        try:
+            br = getattr(window.native, "browser", None)
+            wv = getattr(br, "web_view", None)
+            return getattr(wv, "CoreWebView2", None)
+        except Exception:
+            return None
+
+    def _mem_mode(low: bool):
+        if sys.platform != "win32":
+            return
+
+        def _apply():
+            try:
+                core = _core_webview()
+                if core is not None:
+                    from Microsoft.Web.WebView2.Core import CoreWebView2MemoryUsageTargetLevel as L
+                    core.MemoryUsageTargetLevel = L.Low if low else L.Normal
+            except Exception as e:
+                logging.getLogger("ludrix").debug("mem mode: %s", e)
+            if low:
+                try:
+                    import ctypes
+                    import gc
+                    gc.collect()
+                    ctypes.windll.kernel32.SetProcessWorkingSetSize(ctypes.c_void_p(-1), ctypes.c_size_t(-1), ctypes.c_size_t(-1))
+                except Exception:
+                    pass
+        try:
+            from System import Func, Type
+            window.native.Invoke(Func[Type](_apply))
+        except Exception:
+            _apply()
+
     def show():
         try:
             window.show()
@@ -466,6 +518,7 @@ def main():
             if sys.platform == "win32":
                 _bring_to_front()
                 _fix_min_box()
+            _mem_mode(False)
         except Exception:
             pass
 
@@ -474,6 +527,7 @@ def main():
             try:
                 window.hide()
                 state["hidden"] = True
+                threading.Timer(1.0, _mem_mode, args=(True,)).start()
                 if msg is None:
                     msg = ("Minimizado na bandeja. O tempo de jogo continua sendo contado." if ludrix.sessions.active
                            else "O Ludrix continua na bandeja, perto do relógio. Clique no ícone pra abrir de novo.")
@@ -727,11 +781,15 @@ def main():
     def ctx_open(b: dict):
         if sys.platform != "win32" or not frameless:
             return {"ok": False}
+        return ctx_popup(b, int(window.native.Handle.ToInt64()), True)
+
+    def ctx_popup(b: dict, hwnd: int, invoke: bool, fg_hwnd: int = 0):
+        import base64
         import ctypes
         from ctypes import wintypes
-        from System import Func, Type
         u = ctypes.windll.user32
         g = ctypes.windll.gdi32
+        mi32 = ctypes.windll.msimg32
         u.CreatePopupMenu.restype = ctypes.c_void_p
         u.AppendMenuW.argtypes = (ctypes.c_void_p, ctypes.c_uint, ctypes.c_size_t, ctypes.c_void_p)
         u.InsertMenuW.argtypes = (ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_size_t, ctypes.c_void_p)
@@ -751,17 +809,22 @@ def main():
         u.GetDC.restype = ctypes.c_void_p
         u.ReleaseDC.argtypes = (ctypes.c_void_p, ctypes.c_void_p)
         g.CreateSolidBrush.restype = ctypes.c_void_p
-        g.CreatePen.restype = ctypes.c_void_p
         g.CreateFontW.restype = ctypes.c_void_p
         g.CreateFontW.argtypes = (ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wintypes.DWORD, wintypes.DWORD, wintypes.DWORD, wintypes.DWORD, wintypes.DWORD, wintypes.DWORD, wintypes.DWORD, wintypes.DWORD, ctypes.c_wchar_p)
         g.SelectObject.argtypes = (ctypes.c_void_p, ctypes.c_void_p)
         g.SelectObject.restype = ctypes.c_void_p
         g.DeleteObject.argtypes = (ctypes.c_void_p,)
+        g.DeleteDC.argtypes = (ctypes.c_void_p,)
+        g.CreateCompatibleDC.argtypes = (ctypes.c_void_p,)
+        g.CreateCompatibleDC.restype = ctypes.c_void_p
+        g.CreateDIBSection.argtypes = (ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.POINTER(ctypes.c_void_p), ctypes.c_void_p, wintypes.DWORD)
+        g.CreateDIBSection.restype = ctypes.c_void_p
         g.SetBkMode.argtypes = (ctypes.c_void_p, ctypes.c_int)
         g.SetTextColor.argtypes = (ctypes.c_void_p, wintypes.COLORREF)
         g.RoundRect.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int)
         g.GetTextExtentPoint32W.argtypes = (ctypes.c_void_p, ctypes.c_wchar_p, ctypes.c_int, ctypes.c_void_p)
         g.GetStockObject.restype = ctypes.c_void_p
+        mi32.AlphaBlend.argtypes = (ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_void_p, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, wintypes.DWORD)
 
         class MEASURE(ctypes.Structure):
             _fields_ = [("CtlType", ctypes.c_uint), ("CtlID", ctypes.c_uint), ("itemID", ctypes.c_uint), ("itemWidth", ctypes.c_uint), ("itemHeight", ctypes.c_uint), ("itemData", ctypes.c_size_t)]
@@ -773,34 +836,112 @@ def main():
         class MENUINFO(ctypes.Structure):
             _fields_ = [("cbSize", wintypes.DWORD), ("fMask", wintypes.DWORD), ("dwStyle", wintypes.DWORD), ("cyMax", ctypes.c_uint), ("hbrBack", ctypes.c_void_p), ("dwContextHelpID", wintypes.DWORD), ("dwMenuData", ctypes.c_size_t)]
 
-        hwnd = int(window.native.Handle.ToInt64())
+        class BMIH(ctypes.Structure):
+            _fields_ = [("biSize", wintypes.DWORD), ("biWidth", ctypes.c_long), ("biHeight", ctypes.c_long), ("biPlanes", wintypes.WORD), ("biBitCount", wintypes.WORD), ("biCompression", wintypes.DWORD),
+                        ("biSizeImage", wintypes.DWORD), ("biXPelsPerMeter", ctypes.c_long), ("biYPelsPerMeter", ctypes.c_long), ("biClrUsed", wintypes.DWORD), ("biClrImportant", wintypes.DWORD)]
+
         light = str(b.get("light")) == "1"
         cols = b.get("colors") or {}
 
-        def cref(name, dflt):
+        def rgb(name, dflt):
             v = str(cols.get(name) or "").lstrip("#")
             if len(v) != 6:
                 v = dflt
             try:
-                return int(v[0:2], 16) | (int(v[2:4], 16) << 8) | (int(v[4:6], 16) << 16)
+                return int(v[0:2], 16), int(v[2:4], 16), int(v[4:6], 16)
             except ValueError:
-                return 0
-        C_BG = cref("bg", "f4f5f7" if light else "1b1f26")
-        C_TX = cref("text", "1a1d22" if light else "e8ebf0")
-        C_MU = cref("muted", "6b7280" if light else "8b93a1")
-        C_PR = cref("primary", "17a673" if light else "3ddc97")
-        C_DG = cref("danger", "d04545" if light else "ff6b6b")
-        C_LN = cref("line", "dcdfe4" if light else "2c323c")
-        C_HV = cref("hover", "e6e8ec" if light else "272d37")
+                return 0, 0, 0
+
+        def cref(c):
+            return c[0] | (c[1] << 8) | (c[2] << 16)
+
+        def mix(a, c, k):
+            return tuple(int(round(a[i] * (1 - k) + c[i] * k)) for i in range(3))
+        BG = rgb("bg", "f4f5f7" if light else "1b1f26")
+        TX = rgb("text", "1a1d22" if light else "e8ebf0")
+        MU = rgb("muted", "6b7280" if light else "8b93a1")
+        PR = rgb("primary", "17a673" if light else "3ddc97")
+        DG = rgb("danger", "d04545" if light else "ff6b6b")
+        LN = rgb("line", "dcdfe4" if light else "2c323c")
+        HV = rgb("hover", "e6e8ec" if light else "272d37")
         try:
             dpi = u.GetDpiForWindow(ctypes.c_void_p(hwnd)) or 96
         except Exception:
             dpi = 96
         sc = dpi / 96.0
-        px = lambda n: int(round(n * sc))
+        px = lambda n: max(1, int(round(n * sc)))
         rows = {}
         ids = {}
-        T_SEP, T_TITLE = 0xFFFF, 0xFFFE
+        bitmaps = {}
+        T_SEP, T_TITLE, T_HEAD = 0xFFFF, 0xFFFE, 0xFFFD
+        head = b.get("head") if isinstance(b.get("head"), dict) else None
+        ICON = px(16)
+        PADL = px(12)
+        TEXTX = PADL + ICON + px(10)
+
+        def dib(w, h, data: bytes):
+            bmi = BMIH()
+            bmi.biSize = ctypes.sizeof(BMIH)
+            bmi.biWidth, bmi.biHeight, bmi.biPlanes, bmi.biBitCount, bmi.biCompression = w, -h, 1, 32, 0
+            bits = ctypes.c_void_p()
+            hbm = g.CreateDIBSection(None, ctypes.byref(bmi), 0, ctypes.byref(bits), None, 0)
+            if not hbm or not bits.value or len(data) < w * h * 4:
+                if hbm:
+                    g.DeleteObject(hbm)
+                return None
+            ctypes.memmove(bits, data, w * h * 4)
+            return hbm
+
+        def icon_of(it):
+            ic = it.get("icon")
+            if it.get("icon_key") and not ic:
+                k = "key:" + str(it["icon_key"])
+                if k not in bitmaps:
+                    bitmaps[k] = thumb_bitmap(str(it["icon_key"]), ICON, ICON, px(3))
+                return bitmaps[k]
+            if not isinstance(ic, dict) or not ic.get("data"):
+                return None
+            k = ic["data"][:64] + str(len(ic["data"]))
+            if k in bitmaps:
+                return bitmaps[k]
+            try:
+                w = int(ic.get("w") or 0)
+                raw = base64.b64decode(ic["data"])
+                bitmaps[k] = (dib(w, w, raw), w, w) if w > 0 else None
+            except Exception:
+                bitmaps[k] = None
+            return bitmaps[k]
+
+        def thumb_bitmap(key: str, W: int = 0, H: int = 0, rad: int = 0):
+            try:
+                from PIL import Image, ImageChops, ImageDraw
+                src = ludrix.thumb_path(key, wait=False)
+                if not src:
+                    return None
+                W, H, rad = W or px(42), H or px(56), rad or px(7)
+                im = Image.open(src).convert("RGBA")
+                k = max(W / im.width, H / im.height)
+                im = im.resize((max(W, int(im.width * k + 0.5)), max(H, int(im.height * k + 0.5))), Image.LANCZOS)
+                ox, oy = (im.width - W) // 2, (im.height - H) // 2
+                im = im.crop((ox, oy, ox + W, oy + H))
+                mask = Image.new("L", (W, H), 0)
+                ImageDraw.Draw(mask).rounded_rectangle((0, 0, W - 1, H - 1), radius=rad, fill=255)
+                r, gg, bb, a = im.split()
+                a = ImageChops.multiply(a, mask)
+                pre = Image.merge("RGBA", (ImageChops.multiply(bb, a), ImageChops.multiply(gg, a), ImageChops.multiply(r, a), a))
+                return (dib(W, H, pre.tobytes()), W, H)
+            except Exception as e:
+                logging.getLogger("ludrix").debug("ctx thumb: %s", e)
+                return None
+
+        def blit(hdc, bm, x, y):
+            if not bm or not bm[0]:
+                return
+            mdc = g.CreateCompatibleDC(hdc)
+            old = g.SelectObject(mdc, bm[0])
+            mi32.AlphaBlend(hdc, x, y, bm[1], bm[2], mdc, 0, 0, bm[1], bm[2], 0x01FF0000)
+            g.SelectObject(mdc, old)
+            g.DeleteDC(mdc)
 
         def build(items, pre):
             m = u.CreatePopupMenu()
@@ -809,7 +950,7 @@ def main():
                     u.AppendMenuW(m, 0x800 | 0x100, 0, T_SEP)
                     continue
                 n = len(rows) + 1
-                rows[n] = {"label": str(it.get("label") or ""), "hint": str(it.get("hint") or ""), "primary": bool(it.get("primary")), "danger": bool(it.get("danger")), "disabled": bool(it.get("disabled")), "sub": bool(it.get("sub"))}
+                rows[n] = {"label": str(it.get("label") or ""), "hint": str(it.get("hint") or ""), "primary": bool(it.get("primary")), "danger": bool(it.get("danger")), "disabled": bool(it.get("disabled")), "sub": bool(it.get("sub")), "icon": icon_of(it)}
                 if it.get("sub"):
                     u.AppendMenuW(m, 0x10 | 0x100, build(it["sub"], pre + str(i) + "."), n)
                     continue
@@ -838,62 +979,99 @@ def main():
         out = {"pick": None}
         res = {}
 
+        def text_w(hdc, font, text):
+            old = g.SelectObject(hdc, font)
+            sz = wintypes.SIZE()
+            g.GetTextExtentPoint32W(hdc, text, len(text), ctypes.byref(sz))
+            g.SelectObject(hdc, old)
+            return sz.cx
+
         def measure(ms):
             data = ms.itemData
             if data == T_SEP:
                 ms.itemWidth, ms.itemHeight = px(40), px(9)
                 return
-            row = rows.get(data) if data != T_TITLE else {"label": title, "hint": "", "primary": False, "danger": False, "disabled": True, "sub": False}
-            if not row:
-                return
             hdc = u.GetDC(None)
-            old = g.SelectObject(hdc, res["bold"] if row["primary"] or data == T_TITLE else res["font"])
-            sz = wintypes.SIZE()
-            g.GetTextExtentPoint32W(hdc, row["label"], len(row["label"]), ctypes.byref(sz))
-            w = sz.cx
-            if row["hint"]:
-                g.SelectObject(hdc, res["small"])
-                g.GetTextExtentPoint32W(hdc, row["hint"], len(row["hint"]), ctypes.byref(sz))
-                w += sz.cx + px(18)
+            try:
+                if data == T_HEAD:
+                    w = px(42) + px(12) + max(text_w(hdc, res["bold"], str(head.get("title") or "")[:60]), text_w(hdc, res["small"], str(head.get("sub") or "")[:60]))
+                    ms.itemWidth, ms.itemHeight = min(w + px(16), px(340)), px(72)
+                    return
+                if data == T_TITLE:
+                    ms.itemWidth, ms.itemHeight = text_w(hdc, res["bold"], title) + px(24), px(26)
+                    return
+                row = rows.get(data)
+                if not row:
+                    return
+                w = text_w(hdc, res["bold"] if row["primary"] else res["font"], row["label"])
+                if row["hint"]:
+                    w += text_w(hdc, res["small"], row["hint"]) + px(18)
+                ms.itemWidth = max(px(236), TEXTX + w + px(16) + (px(14) if row["sub"] else 0))
+                ms.itemHeight = px(32)
+            finally:
+                u.ReleaseDC(None, hdc)
+
+        def fill_round(hdc, l, t, r, bt, rad, brush):
+            oldb = g.SelectObject(hdc, brush)
+            oldp = g.SelectObject(hdc, g.GetStockObject(8))
+            g.RoundRect(hdc, l, t, r, bt, rad, rad)
+            g.SelectObject(hdc, oldb)
+            g.SelectObject(hdc, oldp)
+
+        def draw_text(hdc, font, color, text, l, t, r, bt, flags):
+            g.SetBkMode(hdc, 1)
+            g.SetTextColor(hdc, cref(color))
+            old = g.SelectObject(hdc, font)
+            rc = wintypes.RECT(l, t, r, bt)
+            u.DrawTextW(hdc, text, -1, ctypes.byref(rc), flags)
             g.SelectObject(hdc, old)
-            u.ReleaseDC(None, hdc)
-            ms.itemWidth = w + px(26) + (px(16) if row["sub"] else 0)
-            ms.itemHeight = px(26) if data == T_TITLE else px(30)
+
+        LEFT_V = 0x20 | 0x4 | 0x800 | 0x8000
+        RIGHT_V = 0x20 | 0x4 | 0x2 | 0x800
 
         def draw(ds):
             data = ds.itemData
             rc = ds.rcItem
-            u.FillRect(ds.hDC, ctypes.byref(rc), res["bg"])
+            hdc = ds.hDC
+            u.FillRect(hdc, ctypes.byref(rc), res["bg"])
             if data == T_SEP:
                 line = wintypes.RECT(rc.left + px(8), (rc.top + rc.bottom) // 2, rc.right - px(8), (rc.top + rc.bottom) // 2 + 1)
-                u.FillRect(ds.hDC, ctypes.byref(line), res["line"])
+                u.FillRect(hdc, ctypes.byref(line), res["line"])
                 return
-            is_title = data == T_TITLE
-            row = rows.get(data) if not is_title else {"label": title, "hint": "", "primary": False, "danger": False, "disabled": True, "sub": False}
+            if data == T_HEAD:
+                bm = res.get("thumb")
+                tx = rc.left + PADL
+                if bm and bm[0]:
+                    blit(hdc, bm, rc.left + PADL, rc.top + px(8))
+                    tx = rc.left + PADL + px(42) + px(12)
+                mid = (rc.top + rc.bottom) // 2
+                sub = str(head.get("sub") or "")[:60]
+                draw_text(hdc, res["bold"], TX, str(head.get("title") or "")[:60], tx, rc.top + px(8), rc.right - px(10), mid + (px(2) if sub else (rc.bottom - mid - px(8))), LEFT_V)
+                if sub:
+                    draw_text(hdc, res["small"], MU, sub, tx, mid - px(2), rc.right - px(10), rc.bottom - px(8), LEFT_V)
+                line = wintypes.RECT(rc.left + px(8), rc.bottom - 1, rc.right - px(8), rc.bottom)
+                u.FillRect(hdc, ctypes.byref(line), res["line"])
+                return
+            if data == T_TITLE:
+                draw_text(hdc, res["bold"], MU, title, rc.left + PADL, rc.top, rc.right - px(10), rc.bottom, LEFT_V)
+                return
+            row = rows.get(data)
             if not row:
                 return
-            sel = bool(ds.itemState & 0x1) and not row["disabled"] and not is_title
-            if sel:
-                oldb = g.SelectObject(ds.hDC, res["hover"])
-                oldp = g.SelectObject(ds.hDC, g.GetStockObject(8))
-                g.RoundRect(ds.hDC, rc.left + px(4), rc.top + px(1), rc.right - px(4), rc.bottom - px(1), px(8), px(8))
-                g.SelectObject(ds.hDC, oldb)
-                g.SelectObject(ds.hDC, oldp)
-            g.SetBkMode(ds.hDC, 1)
-            color = C_MU if (row["disabled"] or is_title) else C_DG if row["danger"] else C_PR if row["primary"] else C_TX
-            g.SetTextColor(ds.hDC, color)
-            oldf = g.SelectObject(ds.hDC, res["bold"] if row["primary"] or is_title else res["font"])
-            tr = wintypes.RECT(rc.left + px(14), rc.top, rc.right - px(12), rc.bottom)
-            u.DrawTextW(ds.hDC, row["label"], -1, ctypes.byref(tr), 0x20 | 0x4 | 0x800 | 0x8000)
+            sel = bool(ds.itemState & 0x1) and not row["disabled"]
+            if row["primary"]:
+                fill_round(hdc, rc.left + px(4), rc.top + px(1), rc.right - px(4), rc.bottom - px(1), px(9), res["prim_hv" if sel else "prim_bg"])
+            elif sel:
+                fill_round(hdc, rc.left + px(4), rc.top + px(1), rc.right - px(4), rc.bottom - px(1), px(9), res["hover"])
+            if row["icon"] and row["icon"][0]:
+                blit(hdc, row["icon"], rc.left + PADL, rc.top + (rc.bottom - rc.top - ICON) // 2)
+            color = MU if row["disabled"] else DG if row["danger"] else PR if row["primary"] else TX
+            draw_text(hdc, res["bold"] if row["primary"] else res["font"], color, row["label"], rc.left + TEXTX, rc.top, rc.right - px(12) - (px(14) if row["sub"] else 0), rc.bottom, LEFT_V)
             if row["hint"]:
-                g.SelectObject(ds.hDC, res["small"])
-                g.SetTextColor(ds.hDC, C_MU)
-                hr = wintypes.RECT(rc.left + px(14), rc.top, rc.right - px(14) - (px(16) if row["sub"] else 0), rc.bottom)
-                u.DrawTextW(ds.hDC, row["hint"], -1, ctypes.byref(hr), 0x20 | 0x4 | 0x2 | 0x800)
-            g.SelectObject(ds.hDC, oldf)
+                draw_text(hdc, res["small"], MU, row["hint"], rc.left + TEXTX, rc.top, rc.right - px(14) - (px(14) if row["sub"] else 0), rc.bottom, RIGHT_V)
 
         WNDPROC = ctypes.WINFUNCTYPE(ctypes.c_ssize_t, ctypes.c_void_p, ctypes.c_uint, ctypes.c_size_t, ctypes.c_ssize_t)
-        state = {"old": 0}
+        state_wp = {"old": 0}
 
         def proc(h, msg, wp, lp):
             try:
@@ -905,11 +1083,18 @@ def main():
                 elif msg == 0x2B:
                     ds = DRAW.from_address(lp)
                     if ds.CtlType == 1:
-                        draw(ds)
+                        try:
+                            draw(ds)
+                        except Exception as e:
+                            logging.getLogger("ludrix").debug("ctx draw: %s", e)
+                            row = rows.get(ds.itemData) or {}
+                            u.FillRect(ds.hDC, ctypes.byref(ds.rcItem), res["bg"])
+                            if row.get("label"):
+                                draw_text(ds.hDC, res["font"], TX, row["label"], ds.rcItem.left + TEXTX, ds.rcItem.top, ds.rcItem.right - px(12), ds.rcItem.bottom, LEFT_V)
                         return 1
             except Exception as e:
-                logging.debug("ctx draw: %s", e)
-            return u.CallWindowProcW(state["old"], h, msg, wp, lp)
+                logging.getLogger("ludrix").debug("ctx: %s", e)
+            return u.CallWindowProcW(state_wp["old"], h, msg, wp, lp)
         cb = WNDPROC(proc)
 
         def run():
@@ -917,11 +1102,17 @@ def main():
             res["font"] = g.CreateFontW(fh, 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe UI")
             res["bold"] = g.CreateFontW(fh, 0, 0, 0, 600, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe UI")
             res["small"] = g.CreateFontW(-px(11), 0, 0, 0, 400, 0, 0, 0, 1, 0, 0, 5, 0, "Segoe UI")
-            res["bg"] = g.CreateSolidBrush(C_BG)
-            res["hover"] = g.CreateSolidBrush(C_HV)
-            res["line"] = g.CreateSolidBrush(C_LN)
+            res["bg"] = g.CreateSolidBrush(cref(BG))
+            res["hover"] = g.CreateSolidBrush(cref(HV))
+            res["line"] = g.CreateSolidBrush(cref(LN))
+            res["prim_bg"] = g.CreateSolidBrush(cref(mix(BG, PR, 0.12)))
+            res["prim_hv"] = g.CreateSolidBrush(cref(mix(BG, PR, 0.24)))
+            if head and head.get("key"):
+                res["thumb"] = thumb_bitmap(str(head["key"]))
             m = build(items, "")
-            if title:
+            if head:
+                u.InsertMenuW(m, 0, 0x400 | 0x3 | 0x100, 0, T_HEAD)
+            elif title:
                 u.InsertMenuW(m, 0, 0x400 | 0x800 | 0x100, 0, T_SEP)
                 u.InsertMenuW(m, 0, 0x400 | 0x3 | 0x100, 0, T_TITLE)
             mi = MENUINFO()
@@ -930,20 +1121,29 @@ def main():
             mi.dwStyle = 0x80000000
             mi.hbrBack = res["bg"]
             u.SetMenuInfo(m, ctypes.byref(mi))
-            state["old"] = u.SetWindowLongPtrW(ctypes.c_void_p(hwnd), -4, ctypes.cast(cb, ctypes.c_void_p).value)
+            state_wp["old"] = u.SetWindowLongPtrW(ctypes.c_void_p(hwnd), -4, ctypes.cast(cb, ctypes.c_void_p).value)
             try:
-                u.SetForegroundWindow(hwnd)
-                r = u.TrackPopupMenuEx(m, 0x100 | 0x2 | 0x80, x, y, hwnd, None)
-                u.PostMessageW(hwnd, 0, 0, 0)
+                u.SetForegroundWindow(fg_hwnd or hwnd)
+                r = u.TrackPopupMenuEx(m, 0x100 | 0x2 | 0x80 | (0x8 | 0x20 if fg_hwnd else 0), x, y, hwnd, None)
+                u.PostMessageW(fg_hwnd or hwnd, 0, 0, 0)
                 out["pick"] = ids.get(int(r))
             finally:
-                u.SetWindowLongPtrW(ctypes.c_void_p(hwnd), -4, state["old"])
+                u.SetWindowLongPtrW(ctypes.c_void_p(hwnd), -4, state_wp["old"])
                 u.DestroyMenu(m)
-                for k in ("font", "bold", "small", "bg", "hover", "line"):
+                for k in ("font", "bold", "small", "bg", "hover", "line", "prim_bg", "prim_hv"):
                     if res.get(k):
                         g.DeleteObject(res[k])
+                if res.get("thumb") and res["thumb"][0]:
+                    g.DeleteObject(res["thumb"][0])
+                for bm in bitmaps.values():
+                    if bm and bm[0]:
+                        g.DeleteObject(bm[0])
         try:
-            window.native.Invoke(Func[Type](run))
+            if invoke:
+                from System import Func, Type
+                window.native.Invoke(Func[Type](run))
+            else:
+                run()
         except Exception as e:
             logging.warning("ctx: %s", e)
             return {"ok": False}
@@ -978,9 +1178,10 @@ def main():
             r, g, b = int(m.group(1)[0:2], 16), int(m.group(1)[2:4], 16), int(m.group(1)[4:6], 16)
             return r | (g << 8) | (b << 16)
         want = {k: body.get(k) for k in ("mode", "bg", "text", "border", "dark", "corners")}
-        if want == frame_last:
+        if isinstance(body.get("colors"), dict):
+            frame_last["colors"] = body["colors"]
+        if all(frame_last.get(k) == v for k, v in want.items()):
             return {}
-        frame_last.clear()
         frame_last.update(want)
         put(20, 1 if body.get("dark") else 0)
         if (body.get("mode") or "theme") == "windows":
@@ -1051,7 +1252,47 @@ def main():
         items.append({"label": "Abrir pasta do Ludrix", "fn": lambda: ludrix.open_path(str(paths.ROOT))})
         return items
 
-    tray = Tray(on_show=show, on_quit=quit_app, items=tray_items, dark=lambda: bool(frame_last.get("dark")))
+    def tray_popup(icon) -> bool:
+        if sys.platform != "win32":
+            return False
+        owner, fg = getattr(icon, "_menu_hwnd", None), getattr(icon, "_hwnd", None)
+        if not owner:
+            return False
+        specs = [{"label": "Abrir Ludrix", "fn": show, "primary": True}]
+        act = list(ludrix.sessions.active.values())
+        for s in act:
+            specs.append({"label": f"Encerrar {str(s.get('title') or '')[:40]}", "fn": tray_stop(s.get("key")), "danger": True})
+        rec = [(k, g) for k, g in ludrix.store.library.items() if isinstance(g, dict) and g.get("installed") and g.get("last_played") and g.get("kind") != "emulator" and k not in ludrix.sessions.active]
+        rec.sort(key=lambda x: -float(x[1].get("last_played") or 0))
+        if rec:
+            specs.append({"sep": True})
+            specs += [{"label": str(g.get("title") or k)[:48], "fn": tray_play(k), "icon_key": k} for k, g in rec[:10]]
+        views = [("home", "Biblioteca"), ("store", "Store"), ("emulation", "Emuladores"), ("mods", "Mods e ferramentas"), ("central", "Central"), ("flash", "Jogos rápidos"), ("downloads", "Fila"), ("settings", "Ajustes")]
+        specs.append({"sep": True})
+        specs.append({"label": "Ir para", "sub": [{"label": n, "fn": tray_view(v)} for v, n in views]})
+        n = len(ludrix.jobs)
+        if n:
+            specs.append({"label": f"Fila: {n} em andamento", "fn": tray_view("downloads")})
+        specs.append({"label": "Verificar atualizações", "fn": lambda: tray_js("checkUpdates()")})
+        specs.append({"label": "Abrir pasta do Ludrix", "fn": lambda: ludrix.open_path(str(paths.ROOT))})
+        specs.append({"sep": True})
+        specs.append({"label": "Sair", "fn": quit_app})
+        dark = frame_last.get("dark", True)
+        r = ctx_popup({"items": specs, "colors": frame_last.get("colors") or {}, "light": "0" if dark else "1", "at_cursor": "1"}, int(owner), False, int(fg or 0))
+        if not r.get("ok"):
+            return False
+        pick = r.get("pick")
+        if pick:
+            node, lst = None, specs
+            for part in str(pick).split("."):
+                node = lst[int(part)]
+                lst = node.get("sub") or []
+            fn = (node or {}).get("fn")
+            if fn:
+                threading.Thread(target=Tray._safe, args=(fn,), daemon=True).start()
+        return True
+
+    tray = Tray(on_show=show, on_quit=quit_app, items=tray_items, dark=lambda: bool(frame_last.get("dark")), popup=tray_popup)
     ludrix.window_hooks = {"frame": win_frame, "hide": hide, "show": show, "quit": quit_app, "minimize": win_min, "maximize": win_max, "close": win_close,
                           "frameless": lambda: {"frameless": frameless}, "snapshot": win_snapshot, "resize": win_resize, "fullscreen": win_fullscreen,
                           "terminal": term_open, "terminal_minimize": _term("minimize"), "terminal_maximize": term_max,
@@ -1235,10 +1476,72 @@ def _webview2_registered() -> bool:
     return bool(diag.webview2_version())
 
 
+def _ensure_webview2():
+    if sys.platform != "win32":
+        return
+    log = logging.getLogger("ludrix")
+    try:
+        emb = paths.ROOT / "runtime" / "webview2"
+        if (emb / "msedgewebview2.exe").exists() or _webview2_registered() or _webview2_folder():
+            return
+    except Exception:
+        return
+    log.warning("WebView2 Runtime ausente; instalando pelo bootstrapper da Microsoft")
+    ui = {"root": None}
+
+    def show():
+        try:
+            import tkinter as tk
+            from tkinter import ttk
+            r = tk.Tk()
+            r.title("Ludrix")
+            r.resizable(False, False)
+            r.attributes("-topmost", True)
+            w, h = 380, 110
+            x = (r.winfo_screenwidth() - w) // 2
+            y = (r.winfo_screenheight() - h) // 2
+            r.geometry(f"{w}x{h}+{x}+{y}")
+            r.configure(bg="#1b1f26")
+            tk.Label(r, text="Aguarde, últimos ajustes finais..", bg="#1b1f26", fg="#e8ebf0", font=("Segoe UI", 11)).pack(pady=(22, 10))
+            pb = ttk.Progressbar(r, mode="indeterminate", length=300)
+            pb.pack()
+            pb.start(12)
+            ui["root"] = r
+            r.mainloop()
+        except Exception as e:
+            log.debug("webview2 ui: %s", e)
+    threading.Thread(target=show, daemon=True).start()
+    try:
+        import shutil
+        import subprocess
+        import urllib.request
+        dest = paths.DATA / "tmp" / "MicrosoftEdgeWebview2Setup.exe"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        req = urllib.request.Request("https://go.microsoft.com/fwlink/p/?LinkId=2124703", headers={"User-Agent": "Ludrix"})
+        with urllib.request.urlopen(req, timeout=60) as r, open(dest, "wb") as f:
+            shutil.copyfileobj(r, f)
+        rc = subprocess.run([str(dest), "/silent", "/install"], timeout=900).returncode
+        log.info("bootstrapper WebView2 terminou com código %s", rc)
+        try:
+            dest.unlink()
+        except Exception:
+            pass
+    except Exception as e:
+        log.warning("instalação do WebView2 falhou: %s", e)
+    finally:
+        root = ui.get("root")
+        if root is not None:
+            try:
+                root.after(0, root.destroy)
+            except Exception:
+                pass
+
+
 def _pin_webview2(webview):
     if sys.platform != "win32":
         return
     log = logging.getLogger("ludrix")
+    _ensure_webview2()
     try:
         emb = paths.ROOT / "runtime" / "webview2"
         if (emb / "msedgewebview2.exe").exists():

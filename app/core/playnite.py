@@ -16,6 +16,8 @@ log = logging.getLogger("ludrix.playnite")
 
 PROGRESS = None
 INCLUDE_HIDDEN = False
+_NOT_LAUNCH = {".pdf", ".txt", ".url", ".html", ".htm", ".doc", ".docx", ".jpg", ".png", ".ini", ".cfg", ".nfo", ".rtf"}
+DROPPED: list[dict] = []
 EXT_GUESS = None
 
 ROM_EXTS = {".chd", ".iso", ".cue", ".bin", ".img", ".pbp", ".cso", ".z64", ".n64", ".v64", ".nds", ".gba", ".gb", ".gbc", ".sfc", ".smc",
@@ -491,6 +493,11 @@ def _read(src: Source) -> list[dict]:
     n = 0
     seen = set()
     stats = {"docs": 0, "hidden": 0, "no_path": 0, "missing": 0, "dup": 0}
+    DROPPED.clear()
+
+    def drop(kind: str, title: str, path: str = "", why: str = ""):
+        stats[kind] += 1
+        DROPPED.append({"title": title, "why": why, "path": path})
     for g in litedb_docs(raw):
         stats["docs"] += 1
         name = g.get("Name")
@@ -500,7 +507,7 @@ def _read(src: Source) -> list[dict]:
         if PROGRESS and n % 200 == 0:
             PROGRESS(f"Jogos… {n}")
         if g.get("Hidden") and not INCLUDE_HIDDEN:
-            stats["hidden"] += 1
+            drop("hidden", name, g.get("InstallDirectory") or "", "Oculto no Playnite (marque 'Incluir jogos ocultos' para trazer)")
             continue
         inst = g.get("InstallDirectory") or ""
         installed = bool(g.get("IsInstalled"))
@@ -535,6 +542,8 @@ def _read(src: Source) -> list[dict]:
             rom = _winpath(_join(inst, rom))
         if exe:
             exe = _winpath(exe) if "://" not in exe else exe
+        if exe and "://" not in exe and Path(exe).suffix.lower() in _NOT_LAUNCH:
+            exe = None
         if exe and Path(exe).suffix.lower() in ROM_EXTS and (sysid and sysid != "pc"):
             rom, exe = exe, None
         info = emu_info.get((emu_id, emu_pid)) or emu_info.get((emu_id, "")) if emu_id else None
@@ -547,16 +556,16 @@ def _read(src: Source) -> list[dict]:
         if not rom:
             sysid = "pc"
         if not (exe or rom or inst):
-            stats["no_path"] += 1
+            drop("no_path", name, "", "Sem pasta nem executável no Playnite (só catálogo)")
             continue
         is_url = bool(exe) and "://" in exe
         exists = is_url or bool(rom and Path(rom).exists()) or bool(exe and Path(exe).exists()) or bool(not exe and not rom and inst and Path(inst).is_dir())
         if not installed and not exists:
-            stats["missing"] += 1
+            drop("missing", name, rom or exe or inst, "Não instalado no Playnite e o caminho não existe")
             continue
         key = (name.lower(), (rom or exe or inst).lower())
         if key in seen:
-            stats["dup"] += 1
+            drop("dup", name, rom or exe or inst, "Repetido no Playnite (mesmo nome e caminho)")
             continue
         seen.add(key)
         steam_appid = ""
@@ -566,8 +575,13 @@ def _read(src: Source) -> list[dict]:
         elif _id(g.get("PluginId")) == "cb91dfc9-b977-43bf-8e70-55f46e410fab" and g.get("GameId"):
             steam_appid = str(g["GameId"])
             exe = exe or f"steam://rungameid/{steam_appid}"
-        elif not exe and not rom and g.get("GameId") and _PLUGIN_LAUNCH.get(_id(g.get("PluginId")), "xbox") != "xbox":
-            exe = _PLUGIN_LAUNCH[_id(g.get("PluginId"))].format(id=g["GameId"])
+        alt = ""
+        if not exe and not rom and g.get("GameId") and _PLUGIN_LAUNCH.get(_id(g.get("PluginId")), "xbox") != "xbox":
+            url = _PLUGIN_LAUNCH[_id(g.get("PluginId"))].format(id=g["GameId"])
+            if inst and Path(inst).is_dir():
+                alt = url
+            else:
+                exe = url
             exists = True
         pt = g.get("Playtime") or 0
         lp = g.get("LastActivity")
@@ -590,6 +604,7 @@ def _read(src: Source) -> list[dict]:
             "description": re.sub(r"<[^>]+>", "", g.get("Description") or "")[:1500], "missing": not exists,
             "links": [{"name": str(l.get("Name") or "")[:40], "url": str(l.get("Url") or "")} for l in (g.get("Links") or []) if isinstance(l, dict) and str(l.get("Url") or "").startswith("http")][:8],
             "notes": str(g.get("Notes") or "")[:2000], "hidden": bool(g.get("Hidden")), "play_count": int(g.get("PlayCount") or 0),
+            "alt_exe": alt, "added": float(g["Added"]) if isinstance(g.get("Added"), (int, float)) and 0 < g["Added"] < 10**10 else 0.0,
         })
     if PROGRESS:
         PROGRESS(f"Pronto: {len(items)} itens")

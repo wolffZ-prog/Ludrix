@@ -1199,6 +1199,8 @@ class Ludrix:
     def _push(self, ev: dict):
         with self._lock:
             self._events.append(ev)
+            if len(self._events) > 300:
+                del self._events[:-300]
 
     def act(self, text: str = "", busy: bool | None = None):
         with self._act_lock:
@@ -1834,7 +1836,7 @@ class Ludrix:
         r = self._run_job(e.key, title, "install", fn)
         return {**r, "key": e.key, "title": title}
 
-    def add_local_game(self, exe_path: str | None, title: str | None = None) -> dict:
+    def add_local_game(self, exe_path: str | None, title: str | None = None, dir_match: bool = True) -> dict:
         if not exe_path:
             if not self.pick_file:
                 return {"error": "Diálogo nativo indisponível no modo navegador — informe o caminho do .exe"}
@@ -1859,7 +1861,7 @@ class Ludrix:
             vd = norm(v.get("dir")) if v.get("dir") else ""
             same_dir = bool(folder and vd) and norm(folder) == vd
             nested = bool(folder and vd) and (vd.startswith(norm(folder) + os.sep) or norm(folder).startswith(vd + os.sep))
-            if norm(v.get("exe")) == norm(run) or same_dir or (nested and normalize_title(v.get("title") or "") == title):
+            if norm(v.get("exe")) == norm(run) or (same_dir and dir_match) or ((same_dir or nested) and normalize_title(v.get("title") or "") == title):
                 return {"ok": True, "key": k, "title": v.get("title") or title, "existing": True}
         if self.store.get(key):
             key += "-" + str(int(time.time()))[-4:]
@@ -4896,7 +4898,8 @@ class Ludrix:
                 vid = g.get("emulator") or ""
                 ep = self.store.config.get("emu_paths") or {}
                 g["dup"] = bool(vid and (ep.get(vid) or self.emu.emu_exe(vid)))
-        return {"games": games, "count": len(games)}
+        dropped = importers.playnite_dropped() if launcher_id == "playnite" else []
+        return {"games": games, "count": len(games), "dropped": dropped[:300]}
 
     def import_apply(self, games: list[dict]) -> dict:
         st = self._import_state = {"done": False, "msg": "Preparando…", "result": None}
@@ -4922,6 +4925,12 @@ class Ludrix:
             for i, g in enumerate(games):
                 added, skipped = self._import_one(g, added, skipped, prog, i, len(games))
         self.emu.invalidate_scan()
+        if any(g.get("rom") or g.get("rom_dir") for g in games):
+            prog("Atualizando lista de ROMs…")
+            try:
+                self.emu.scan_all(wait=True)
+            except Exception as ex:
+                log.debug("import rescan: %s", ex)
         self.images._thumbs.t = 0.0
         self.covers._names_t = 0.0
         self.meta.touch()
@@ -4952,32 +4961,33 @@ class Ludrix:
                     return added, skipped
                 upd = {k: g[k] for k in ("playtime", "last_played") if g.get(k)}
                 upd["source"] = g.get("source", "")
+                upd.update(self._imp_extra(g))
                 if g.get("year"):
                     upd["year"] = g["year"]
                 self.store.update(r["key"], **upd)
                 if g.get("title") and (g["title"] != r.get("title") or g.get("source") == "playnite"):
                     self._apply_title(r["key"], g["title"], locked=g.get("source") == "playnite")
-                if g.get("favorite"):
-                    self._import_fav(r["key"])
                 if g.get("emulator") and g.get("system"):
                     self._import_prefer_emulator(g["system"], g["emulator"])
                 self._import_cover(r["key"], g)
+                self._import_flags(r["key"], g)
                 added += 1
             elif not g.get("exe") and g.get("dir") and Path(g["dir"]).is_dir():
                 exes = find_executables(Path(g["dir"]), g["title"])
+                if not exes and g.get("alt_exe"):
+                    return self._import_one({**g, "exe": g["alt_exe"], "alt_exe": ""}, added, skipped, prog, i, n)
                 if not exes:
                     skipped = self._imp_skip(g, skipped, "Nenhum executável na pasta", g["dir"])
                     return added, skipped
-                r = self.add_local_game(str(exes[0]), g["title"])
+                r = self.add_local_game(str(exes[0]), g["title"], dir_match=g.get("source") != "playnite")
                 if r.get("existing"):
                     return added, self._imp_skip(g, skipped, "Já está na biblioteca", str(exes[0]))
                 if r.get("key"):
-                    self.store.update(r["key"], playtime=g.get("playtime", 0), last_played=g.get("last_played", 0), source=g.get("source", ""), **({"year": g["year"]} if g.get("year") else {}))
+                    self.store.update(r["key"], playtime=g.get("playtime", 0), last_played=g.get("last_played", 0), source=g.get("source", ""), **({"year": g["year"]} if g.get("year") else {}), **self._imp_extra(g))
                     if g.get("source") == "playnite":
                         self._apply_title(r["key"], g["title"], locked=True)
                     self._import_cover(r["key"], g)
-                    if g.get("favorite"):
-                        self._import_fav(r["key"])
+                    self._import_flags(r["key"], g)
                 added += 1
             elif g.get("exe"):
                 exe = g["exe"]
@@ -5000,11 +5010,11 @@ class Ludrix:
                         self.queue_meta(key)
                     r = {"key": key}
                 else:
-                    r = self.add_local_game(exe, g["title"])
+                    r = self.add_local_game(exe, g["title"], dir_match=g.get("source") != "playnite")
                 if r.get("existing"):
                     return added, self._imp_skip(g, skipped, "Já está na biblioteca", exe)
                 if r.get("key"):
-                    self.store.update(r["key"], playtime=g.get("playtime", 0), last_played=g.get("last_played", 0), source=g.get("source", ""), **({"year": g["year"]} if g.get("year") else {}))
+                    self.store.update(r["key"], playtime=g.get("playtime", 0), last_played=g.get("last_played", 0), source=g.get("source", ""), **({"year": g["year"]} if g.get("year") else {}), **self._imp_extra(g))
                     if g.get("source") == "playnite":
                         self._apply_title(r["key"], g["title"], locked=True)
                     if g.get("args") and "://" not in exe:
@@ -5013,6 +5023,7 @@ class Ludrix:
                     if wd and "://" not in exe and Path(wd).is_dir() and os.path.normcase(wd) != os.path.normcase(str(Path(exe).parent)):
                         self.store.update(r["key"], workdir=wd)
                     self._import_cover(r["key"], g)
+                    self._import_flags(r["key"], g)
                     added += 1
                 else:
                     skipped = self._imp_skip(g, skipped, r.get("error") or "Não foi possível adicionar", exe)
@@ -5026,8 +5037,31 @@ class Ludrix:
     def _imp_skip(self, g: dict, skipped: int, why: str, path: str = "") -> int:
         if not hasattr(self, "_imp_skipped"):
             self._imp_skipped = []
-        self._imp_skipped.append({"title": g.get("title") or "?", "why": why, "path": path or g.get("exe") or g.get("rom") or g.get("dir") or ""})
+        path = path or g.get("exe") or g.get("rom") or g.get("dir") or ""
+        self._imp_skipped.append({"title": g.get("title") or "?", "why": why, "path": path})
+        log.info("import pulou: %s — %s (%s)", g.get("title") or "?", why, path)
         return skipped + 1
+
+    @staticmethod
+    def _imp_extra(g: dict) -> dict:
+        out = {}
+        if g.get("added"):
+            out["installed_at"] = float(g["added"])
+        if g.get("play_count"):
+            out["play_count"] = int(g["play_count"])
+        return out
+
+    def _import_flags(self, key: str, g: dict):
+        if g.get("favorite"):
+            self._import_fav(key)
+        if g.get("hidden"):
+            try:
+                h = self._hidden
+                if key not in h:
+                    h.add(key)
+                    self.store.set_config(hidden_games=sorted(h))
+            except Exception as ex:
+                log.debug("import hidden: %s", ex)
 
     def _import_fav(self, key: str):
         try:
