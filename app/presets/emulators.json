@@ -1,0 +1,1117 @@
+{
+  "systems": {
+    "pc": {
+      "name": "PC (Windows)",
+      "exts": []
+    },
+    "ps1": {
+      "name": "PlayStation",
+      "exts": [
+        ".chd",
+        ".cue",
+        ".bin",
+        ".iso",
+        ".pbp",
+        ".img",
+        ".ecm"
+      ],
+      "emulator": "duckstation",
+      "args": [
+        "-fullscreen",
+        "{rom}"
+      ]
+    },
+    "ps2": {
+      "name": "PlayStation 2",
+      "exts": [
+        ".chd",
+        ".iso",
+        ".cso",
+        ".gz",
+        ".bin"
+      ],
+      "emulator": "pcsx2",
+      "args": [
+        "-fullscreen",
+        "--",
+        "{rom}"
+      ],
+      "bios": true
+    },
+    "psp": {
+      "name": "PSP",
+      "exts": [
+        ".iso",
+        ".cso",
+        ".pbp",
+        ".chd"
+      ],
+      "emulator": "ppsspp",
+      "args": [
+        "--fullscreen",
+        "{rom}"
+      ]
+    },
+    "n64": {
+      "name": "Nintendo 64",
+      "exts": [
+        ".z64",
+        ".n64",
+        ".v64"
+      ],
+      "emulator": "rmg",
+      "args": [
+        "--fullscreen",
+        "{rom}"
+      ]
+    },
+    "gc": {
+      "name": "GameCube",
+      "exts": [
+        ".iso",
+        ".rvz",
+        ".gcm",
+        ".gcz",
+        ".ciso"
+      ],
+      "emulator": "dolphin",
+      "args": [
+        "-b",
+        "-e",
+        "{rom}"
+      ]
+    },
+    "wii": {
+      "name": "Wii",
+      "exts": [
+        ".iso",
+        ".rvz",
+        ".wbfs",
+        ".wad"
+      ],
+      "emulator": "dolphin",
+      "args": [
+        "-b",
+        "-e",
+        "{rom}"
+      ]
+    },
+    "dc": {
+      "name": "Dreamcast",
+      "exts": [
+        ".chd",
+        ".gdi",
+        ".cdi",
+        ".cue"
+      ],
+      "emulator": "flycast",
+      "args": [
+        "{rom}"
+      ]
+    },
+    "xbox": {
+      "name": "Xbox",
+      "exts": [
+        ".iso",
+        ".xiso"
+      ],
+      "emulator": "xemu",
+      "args": [
+        "-full-screen",
+        "-dvd_path",
+        "{rom}"
+      ],
+      "bios": true
+    },
+    "x360": {
+      "name": "Xbox 360",
+      "exts": [
+        ".iso",
+        ".xex",
+        ".zar"
+      ],
+      "emulator": "xenia",
+      "args": [
+        "--fullscreen=true",
+        "{rom}"
+      ]
+    },
+    "gba": {
+      "name": "Game Boy Advance",
+      "exts": [
+        ".gba",
+        ".gb",
+        ".gbc"
+      ],
+      "emulator": "mgba",
+      "args": [
+        "-f",
+        "{rom}"
+      ]
+    },
+    "snes": {
+      "name": "Super Nintendo",
+      "exts": [
+        ".sfc",
+        ".smc"
+      ],
+      "emulator": "snes9x",
+      "args": [
+        "-fullscreen",
+        "{rom}"
+      ]
+    },
+    "nds": {
+      "name": "Nintendo DS",
+      "exts": [
+        ".nds"
+      ],
+      "emulator": "melonds",
+      "args": [
+        "-f",
+        "{rom}"
+      ]
+    },
+    "genesis": {
+      "name": "Mega Drive",
+      "exts": [
+        ".md",
+        ".gen",
+        ".bin",
+        ".smd"
+      ],
+      "emulator": "retroarch",
+      "core": "genesis_plus_gx"
+    },
+    "nes": {
+      "name": "NES",
+      "exts": [
+        ".nes"
+      ],
+      "emulator": "retroarch",
+      "core": "mesen"
+    },
+    "ps3": {
+      "name": "PlayStation 3",
+      "exts": [
+        ".bin"
+      ],
+      "marker": "PS3_GAME/USRDIR/EBOOT.BIN",
+      "title_up": 3,
+      "emulator": "rpcs3",
+      "bios": false
+    },
+    "wiiu": {
+      "name": "Wii U",
+      "exts": [
+        ".wua",
+        ".wud",
+        ".wux",
+        ".rpx"
+      ],
+      "emulator": "cemu"
+    },
+    "switch": {
+      "name": "Nintendo Switch",
+      "exts": [
+        ".nsp",
+        ".xci",
+        ".nro"
+      ],
+      "emulator": "eden",
+      "bios": true
+    },
+    "3ds": {
+      "name": "Nintendo 3DS",
+      "exts": [
+        ".3ds",
+        ".cci",
+        ".cxi",
+        ".3dsx"
+      ],
+      "emulator": "azahar"
+    },
+    "saturn": {
+      "name": "Sega Saturn",
+      "exts": [
+        ".chd",
+        ".cue"
+      ],
+      "emulator": "mednafen",
+      "bios": true
+    },
+    "sms": {
+      "name": "Master System / Game Gear",
+      "exts": [
+        ".sms",
+        ".gg"
+      ],
+      "emulator": "retroarch",
+      "core": "genesis_plus_gx"
+    },
+    "pce": {
+      "name": "TurboGrafx-16 / PC Engine",
+      "exts": [
+        ".pce"
+      ],
+      "emulator": "mednafen"
+    },
+    "atari2600": {
+      "name": "Atari 2600",
+      "exts": [
+        ".a26"
+      ],
+      "emulator": "stella"
+    },
+    "arcade": {
+      "name": "Arcade (MAME)",
+      "exts": [
+        ".zip",
+        ".7z"
+      ],
+      "emulator": "mame"
+    },
+    "dos": {
+      "name": "MS-DOS",
+      "exts": [
+        ".conf",
+        ".bat"
+      ],
+      "emulator": "dosbox"
+    }
+  },
+  "emulators": {
+    "duckstation": {
+      "title": "DuckStation",
+      "source": "github",
+      "repo": "stenzek/duckstation",
+      "exe": "duckstation-qt-x64-ReleaseLTCG.exe",
+      "portable_flag": "portable.txt",
+      "args": {
+        "*": [
+          "-fullscreen",
+          "{rom}"
+        ]
+      },
+      "asset": "windows-x64-release\\.zip$",
+      "systems": [
+        "ps1"
+      ]
+    },
+    "pcsx2": {
+      "title": "PCSX2",
+      "source": "github",
+      "repo": "PCSX2/pcsx2",
+      "exe": "pcsx2-qt.exe",
+      "portable_flag": "portable.ini",
+      "args": {
+        "*": [
+          "-fullscreen",
+          "--",
+          "{rom}"
+        ]
+      },
+      "asset": "windows-x64-Qt\\.7z$",
+      "systems": [
+        "ps2"
+      ]
+    },
+    "ppsspp": {
+      "title": "PPSSPP",
+      "source": "github",
+      "repo": "hrydgard/ppsspp",
+      "exe": "PPSSPPWindows64.exe",
+      "portable_flag": "memstick/",
+      "args": {
+        "*": [
+          "--fullscreen",
+          "{rom}"
+        ]
+      },
+      "asset": "Windows-x64\\.zip$",
+      "systems": [
+        "psp"
+      ]
+    },
+    "rmg": {
+      "title": "Rosalie's Mupen GUI",
+      "source": "github",
+      "repo": "Rosalie241/RMG",
+      "exe": "RMG.exe",
+      "args": {
+        "*": [
+          "--fullscreen",
+          "{rom}"
+        ]
+      },
+      "asset": "Portable-Windows64.*\\.zip$",
+      "systems": [
+        "n64"
+      ]
+    },
+    "dolphin": {
+      "title": "Dolphin",
+      "source": "url",
+      "url": "https://dl.dolphin-emu.org/releases/2506a/dolphin-2506a-x64.7z",
+      "exe": "Dolphin.exe",
+      "portable_flag": "portable.txt",
+      "description": "GameCube / Wii",
+      "args": {
+        "*": [
+          "-b",
+          "-e",
+          "{rom}"
+        ]
+      },
+      "systems": [
+        "gc",
+        "wii"
+      ]
+    },
+    "flycast": {
+      "title": "Flycast",
+      "source": "github",
+      "repo": "flyinghead/flycast",
+      "exe": "flycast.exe",
+      "args": {
+        "*": [
+          "{rom}"
+        ]
+      },
+      "asset": "win64.*\\.zip$",
+      "systems": [
+        "dc"
+      ]
+    },
+    "xemu": {
+      "title": "xemu",
+      "source": "github",
+      "repo": "xemu-project/xemu",
+      "exe": "xemu.exe",
+      "args": {
+        "*": [
+          "-full-screen",
+          "-dvd_path",
+          "{rom}"
+        ]
+      },
+      "asset": "^xemu-[0-9.]+-windows-x86_64\\.zip$",
+      "systems": [
+        "xbox"
+      ]
+    },
+    "xenia": {
+      "title": "Xenia Canary",
+      "source": "github",
+      "repo": "xenia-canary/xenia-canary",
+      "exe": "xenia_canary.exe",
+      "portable_flag": "portable.txt",
+      "args": {
+        "*": [
+          "--fullscreen=true",
+          "{rom}"
+        ]
+      },
+      "asset": "xenia_canary_windows\\.7z$",
+      "systems": [
+        "x360"
+      ]
+    },
+    "mgba": {
+      "title": "mGBA",
+      "source": "github",
+      "repo": "mgba-emu/mgba",
+      "exe": "mGBA.exe",
+      "portable_flag": "portable.ini",
+      "args": {
+        "*": [
+          "-f",
+          "{rom}"
+        ]
+      },
+      "asset": "win64\\.7z$",
+      "systems": [
+        "gba"
+      ]
+    },
+    "snes9x": {
+      "title": "Snes9x",
+      "source": "github",
+      "repo": "snes9xgit/snes9x",
+      "exe": "snes9x-x64.exe",
+      "args": {
+        "*": [
+          "-fullscreen",
+          "{rom}"
+        ]
+      },
+      "asset": "win32-x64\\.zip$",
+      "systems": [
+        "snes"
+      ]
+    },
+    "melonds": {
+      "title": "melonDS",
+      "source": "github",
+      "repo": "melonDS-emu/melonDS",
+      "exe": "melonDS.exe",
+      "args": {
+        "*": [
+          "-f",
+          "{rom}"
+        ]
+      },
+      "asset": "windows-x86_64\\.zip$",
+      "systems": [
+        "nds"
+      ]
+    },
+    "retroarch": {
+      "title": "RetroArch",
+      "source": "url",
+      "url": "https://buildbot.libretro.com/stable/1.22.2/windows/x86_64/RetroArch.7z",
+      "exe": "retroarch.exe",
+      "cores_url": "https://buildbot.libretro.com/nightly/windows/x86_64/latest/{core}_libretro.dll.zip",
+      "cores": {
+        "ps1": "swanstation",
+        "n64": "mupen64plus_next",
+        "snes": "snes9x",
+        "nes": "mesen",
+        "gba": "mgba",
+        "genesis": "genesis_plus_gx",
+        "sms": "genesis_plus_gx",
+        "nds": "melonds",
+        "psp": "ppsspp",
+        "gc": "dolphin",
+        "wii": "dolphin",
+        "dc": "flycast",
+        "arcade": "fbneo",
+        "atari2600": "stella",
+        "saturn": "mednafen_saturn",
+        "pce": "mednafen_pce",
+        "dos": "dosbox_pure",
+        "ps2": "pcsx2"
+      },
+      "systems": [
+        "ps1",
+        "n64",
+        "snes",
+        "nes",
+        "gba",
+        "genesis",
+        "sms",
+        "nds",
+        "psp",
+        "gc",
+        "wii",
+        "dc",
+        "arcade",
+        "atari2600",
+        "saturn",
+        "pce",
+        "dos",
+        "ps2"
+      ],
+      "description": "Multi-sistema (cores baixados sob demanda)"
+    },
+    "rpcs3": {
+      "title": "RPCS3",
+      "source": "github",
+      "repo": "RPCS3/rpcs3-binaries-win",
+      "asset": "win64.*\\.7z$",
+      "exe": "rpcs3.exe",
+      "portable_flag": "config/",
+      "systems": [
+        "ps3"
+      ],
+      "args": {
+        "*": [
+          "--no-gui",
+          "{rom}"
+        ]
+      },
+      "description": "PlayStation 3 (pastas com PS3_GAME/USRDIR/EBOOT.BIN)"
+    },
+    "cemu": {
+      "title": "Cemu",
+      "source": "github",
+      "repo": "cemu-project/Cemu",
+      "asset": "windows-x64\\.zip$",
+      "exe": "Cemu.exe",
+      "portable_flag": "portable/",
+      "systems": [
+        "wiiu"
+      ],
+      "args": {
+        "*": [
+          "-f",
+          "-g",
+          "{rom}"
+        ]
+      },
+      "description": "Wii U"
+    },
+    "azahar": {
+      "title": "Azahar",
+      "source": "github",
+      "repo": "azahar-emu/azahar",
+      "asset": "windows-msvc.*\\.zip$",
+      "exe": "azahar.exe",
+      "portable_flag": "user/",
+      "systems": [
+        "3ds"
+      ],
+      "args": {
+        "*": [
+          "-f",
+          "{rom}"
+        ]
+      },
+      "description": "Nintendo 3DS (sucessor do Citra/Lime3DS)"
+    },
+    "eden": {
+      "title": "Eden",
+      "source": "gitea",
+      "api": "https://git.eden-emu.dev",
+      "repo": "eden-emu/eden",
+      "homepage": "https://eden-emu.dev",
+      "exe": "eden.exe",
+      "portable_flag": "user/",
+      "systems": [
+        "switch"
+      ],
+      "args": {
+        "*": [
+          "-f",
+          "-g",
+          "{rom}"
+        ]
+      },
+      "asset": "Windows.*amd64-msvc-standard\\.zip$",
+      "description": "Switch — código aberto (fork do Yuzu), releases oficiais em git.eden-emu.dev. Precisa de prod.keys e firmware (pasta Emuladores → BIOS/keys)."
+    },
+    "mesen": {
+      "title": "Mesen 2",
+      "source": "github",
+      "repo": "SourMesen/Mesen2",
+      "asset": "Windows\\.zip$",
+      "exe": "Mesen.exe",
+      "systems": [
+        "nes",
+        "snes",
+        "gba",
+        "pce",
+        "sms"
+      ],
+      "args": {
+        "*": [
+          "--fullscreen",
+          "{rom}"
+        ]
+      },
+      "description": "NES, SNES, GB/GBA, PC Engine, Master System"
+    },
+    "ares": {
+      "title": "ares",
+      "source": "github",
+      "repo": "ares-emulator/ares",
+      "asset": "ares-windows-x64\\.zip$",
+      "exe": "ares.exe",
+      "portable_flag": "settings.bml",
+      "systems": [
+        "nes",
+        "snes",
+        "n64",
+        "gba",
+        "genesis",
+        "sms",
+        "pce",
+        "ps1",
+        "saturn",
+        "atari2600"
+      ],
+      "args": {
+        "*": [
+          "--fullscreen",
+          "{rom}"
+        ]
+      },
+      "description": "Multi-sistema focado em precisão"
+    },
+    "mednafen": {
+      "title": "Mednafen",
+      "source": "url",
+      "url": "https://mednafen.github.io/releases/files/mednafen-1.32.1-win64.zip",
+      "exe": "mednafen.exe",
+      "systems": [
+        "ps1",
+        "saturn",
+        "pce",
+        "snes",
+        "nes",
+        "gba",
+        "genesis",
+        "sms",
+        "atari2600"
+      ],
+      "args": {
+        "*": [
+          "-video.fs",
+          "1",
+          "{rom}"
+        ]
+      },
+      "description": "Multi-sistema (Saturn, PC Engine, PS1…)"
+    },
+    "mame": {
+      "title": "MAME",
+      "source": "github",
+      "repo": "mamedev/mame",
+      "asset": "_x64\\.exe$",
+      "exe": "mame.exe",
+      "systems": [
+        "arcade"
+      ],
+      "args": {
+        "*": [
+          "-skip_gameinfo",
+          "-rompath",
+          "{romdir}",
+          "{stem}"
+        ]
+      },
+      "description": "Arcade (ROMs .zip no formato MAME)"
+    },
+    "stella": {
+      "title": "Stella",
+      "source": "github",
+      "repo": "stella-emu/stella",
+      "asset": "windows\\.zip$",
+      "exe": "Stella.exe",
+      "systems": [
+        "atari2600"
+      ],
+      "args": {
+        "*": [
+          "-fullscreen",
+          "1",
+          "{rom}"
+        ]
+      },
+      "description": "Atari 2600"
+    },
+    "dosbox": {
+      "title": "DOSBox Staging",
+      "source": "github",
+      "repo": "dosbox-staging/dosbox-staging",
+      "asset": "windows-x64.*\\.zip$",
+      "exe": "dosbox.exe",
+      "systems": [
+        "dos"
+      ],
+      "args": {
+        "*": [
+          "-fullscreen",
+          "-exit",
+          "{rom}"
+        ]
+      },
+      "description": "MS-DOS (um dosbox.conf ou .bat por jogo)"
+    },
+    "simple64": {
+      "title": "simple64",
+      "source": "github",
+      "repo": "simple64/simple64",
+      "asset": "win64",
+      "exe": "simple64-gui.exe",
+      "systems": [
+        "n64"
+      ],
+      "args": {
+        "*": [
+          "--nogui",
+          "{rom}"
+        ]
+      },
+      "description": "Nintendo 64 (ParaLLEl RDP)"
+    },
+    "redream": {
+      "title": "Redream",
+      "source": "url",
+      "url": "https://redream.io/download/redream.x86_64-windows-v1.5.0-1133-g03c2ae9.zip",
+      "exe": "redream.exe",
+      "systems": [
+        "dc"
+      ],
+      "args": {
+        "*": [
+          "{rom}"
+        ]
+      },
+      "description": "Dreamcast (leve, fácil)"
+    },
+    "desmume": {
+      "title": "DeSmuME",
+      "source": "github",
+      "repo": "TASEmulators/desmume",
+      "asset": "win64\\.zip$",
+      "exe": "DeSmuME*.exe",
+      "systems": [
+        "nds"
+      ],
+      "args": {
+        "*": [
+          "{rom}"
+        ]
+      },
+      "description": "Nintendo DS — alternativa clássica ao melonDS"
+    },
+    "bsnes": {
+      "title": "bsnes",
+      "source": "github",
+      "repo": "bsnes-emu/bsnes",
+      "asset": "windows\\.zip$",
+      "exe": "bsnes.exe",
+      "systems": [
+        "snes"
+      ],
+      "args": {
+        "*": [
+          "--fullscreen",
+          "{rom}"
+        ]
+      },
+      "description": "SNES — precisão máxima"
+    },
+    "mupen64plus-gui": {
+      "title": "Project64",
+      "source": "github",
+      "repo": "project64/project64",
+      "asset": "win64.*\\.zip$|\\.zip$",
+      "exe": "Project64.exe",
+      "systems": [
+        "n64"
+      ],
+      "args": {
+        "*": [
+          "{rom}"
+        ]
+      },
+      "description": "Nintendo 64 — alternativa ao RMG"
+    },
+    "fceux": {
+      "title": "FCEUX",
+      "source": "github",
+      "repo": "TASEmulators/fceux",
+      "asset": "win64\\.zip$",
+      "exe": "fceux64.exe",
+      "systems": [
+        "nes"
+      ],
+      "args": {
+        "*": [
+          "{rom}"
+        ]
+      },
+      "description": "NES — leve e com ferramentas de TAS"
+    },
+    "blastem": {
+      "title": "BlastEm",
+      "source": "url",
+      "url": "https://www.retrodev.com/blastem/blastem-win64-0.6.2.zip",
+      "exe": "blastem.exe",
+      "systems": [
+        "genesis",
+        "sms"
+      ],
+      "args": {
+        "*": [
+          "-f",
+          "{rom}"
+        ]
+      },
+      "description": "Mega Drive / Master System — o mais preciso"
+    },
+    "kega": {
+      "title": "Kega Fusion",
+      "source": "manual",
+      "homepage": "https://segaretro.org/Kega_Fusion",
+      "exe": "Fusion.exe",
+      "systems": [
+        "genesis",
+        "sms"
+      ],
+      "args": {
+        "*": [
+          "-fullscreen",
+          "{rom}"
+        ]
+      },
+      "description": "Mega Drive / Master System / Sega CD / 32X — aponte o .exe"
+    },
+    "vba-m": {
+      "title": "VisualBoyAdvance-M",
+      "source": "github",
+      "repo": "visualboyadvance-m/visualboyadvance-m",
+      "asset": "Win-x86_64\\.zip$",
+      "exe": "visualboyadvance-m*.exe",
+      "systems": [
+        "gba"
+      ],
+      "args": {
+        "*": [
+          "-f",
+          "{rom}"
+        ]
+      },
+      "description": "GBA / GBC — alternativa ao mGBA"
+    },
+    "ppsspp-gold": {
+      "title": "PPSSPP (build própria)",
+      "source": "manual",
+      "homepage": "https://www.ppsspp.org/download/",
+      "exe": "PPSSPPWindows64.exe",
+      "systems": [
+        "psp"
+      ],
+      "args": {
+        "*": [
+          "--fullscreen",
+          "{rom}"
+        ]
+      },
+      "description": "PSP — aponte outra instalação do PPSSPP"
+    },
+    "aethersx2": {
+      "title": "PCSX2 (build própria / nightly)",
+      "source": "manual",
+      "homepage": "https://pcsx2.net/downloads",
+      "exe": "pcsx2-qt.exe",
+      "systems": [
+        "ps2"
+      ],
+      "args": {
+        "*": [
+          "-fullscreen",
+          "{rom}"
+        ]
+      },
+      "description": "PS2 — aponte um nightly ou fork do PCSX2"
+    },
+    "play": {
+      "title": "Play!",
+      "source": "manual",
+      "homepage": "https://purei.org/downloads.php",
+      "exe": "Play.exe",
+      "systems": [
+        "ps2"
+      ],
+      "args": {
+        "*": [
+          "--disc",
+          "{rom}",
+          "--fullscreen"
+        ]
+      },
+      "description": "PS2 — emulador sem BIOS (baixe o instalador e aponte o .exe)"
+    },
+    "epsxe": {
+      "title": "ePSXe",
+      "source": "manual",
+      "homepage": "https://www.epsxe.com/download.php",
+      "exe": "ePSXe.exe",
+      "systems": [
+        "ps1"
+      ],
+      "args": {
+        "*": [
+          "-nogui",
+          "-loadbin",
+          "{rom}"
+        ]
+      },
+      "description": "PS1 — clássico; aponte o .exe"
+    },
+    "cxbx": {
+      "title": "Cxbx-Reloaded",
+      "source": "github",
+      "repo": "Cxbx-Reloaded/Cxbx-Reloaded",
+      "asset": "Release-VS20\\d\\d\\.zip$|\\.zip$",
+      "exe": "cxbx.exe",
+      "systems": [
+        "xbox"
+      ],
+      "args": {
+        "*": [
+          "{rom}"
+        ]
+      },
+      "description": "Xbox original — alternativa ao xemu (roda .xbe extraídos)"
+    },
+    "xenia-master": {
+      "title": "Xenia (master)",
+      "source": "github",
+      "repo": "xenia-project/release-builds-windows",
+      "asset": "xenia_master\\.zip$",
+      "exe": "xenia.exe",
+      "portable_flag": "portable.txt",
+      "systems": [
+        "x360"
+      ],
+      "args": {
+        "*": [
+          "--fullscreen=true",
+          "{rom}"
+        ]
+      },
+      "description": "Xbox 360 — build oficial (mais estável, menos jogos que a Canary)"
+    },
+    "citra": {
+      "title": "Lime3DS / Citra (build própria)",
+      "source": "manual",
+      "homepage": "https://github.com/Lime3DS/lime3ds-archive/releases",
+      "exe": "lime3ds.exe",
+      "systems": [
+        "3ds"
+      ],
+      "args": {
+        "*": [
+          "-f",
+          "{rom}"
+        ]
+      },
+      "description": "3DS — aponte outra build (Lime3DS, PabloMK7)"
+    },
+    "yabause": {
+      "title": "Kronos",
+      "source": "github",
+      "repo": "FCare/Kronos",
+      "asset": "win64\\.zip$|\\.zip$",
+      "exe": "kronos.exe",
+      "systems": [
+        "saturn"
+      ],
+      "args": {
+        "*": [
+          "-a",
+          "-i",
+          "{rom}"
+        ]
+      },
+      "description": "Sega Saturn — alternativa ao Mednafen (usa OpenGL)"
+    },
+    "dosbox-x": {
+      "title": "DOSBox-X",
+      "source": "github",
+      "repo": "joncampbell123/dosbox-x",
+      "asset": "windows.*x64.*\\.zip$|win64.*\\.zip$",
+      "exe": "dosbox-x.exe",
+      "systems": [
+        "dos"
+      ],
+      "args": {
+        "*": [
+          "-fullscreen",
+          "-exit",
+          "{rom}"
+        ]
+      },
+      "description": "MS-DOS / Win 3.x / Win9x — mais completo que o Staging"
+    },
+    "scummvm": {
+      "title": "ScummVM",
+      "source": "url",
+      "url": "https://downloads.scummvm.org/frs/scummvm/2.9.1/scummvm-2.9.1-win32-x86_64.zip",
+      "exe": "scummvm.exe",
+      "systems": [
+        "dos"
+      ],
+      "args": {
+        "*": [
+          "-f",
+          "--auto-detect",
+          "-p",
+          "{romdir}"
+        ]
+      },
+      "description": "Aventuras point-and-click (LucasArts, Sierra…) — aponte a pasta do jogo"
+    },
+    "fbneo": {
+      "title": "FinalBurn Neo",
+      "source": "github",
+      "repo": "finalburnneo/FBNeo",
+      "asset": "windows-x86_64\\.zip$",
+      "exe": "fbneo64.exe",
+      "systems": [
+        "arcade"
+      ],
+      "args": {
+        "*": [
+          "{stem}",
+          "-w"
+        ]
+      },
+      "description": "Arcade (CPS1/2/3, Neo Geo…) — mais leve que o MAME"
+    },
+    "supermodel": {
+      "title": "Supermodel (Sega Model 3)",
+      "source": "manual",
+      "homepage": "https://supermodel3.com/Download.html",
+      "exe": "Supermodel.exe",
+      "systems": [
+        "arcade"
+      ],
+      "args": {
+        "*": [
+          "-fullscreen",
+          "{rom}"
+        ]
+      },
+      "description": "Arcade Sega Model 3 (Daytona 2, Scud Race…) — aponte o .exe"
+    },
+    "bizhawk": {
+      "title": "BizHawk",
+      "source": "github",
+      "repo": "TASEmulators/BizHawk",
+      "asset": "win-x64\\.zip$",
+      "exe": "EmuHawk.exe",
+      "systems": [
+        "nes",
+        "snes",
+        "gba",
+        "genesis",
+        "sms",
+        "n64",
+        "pce",
+        "atari2600",
+        "ps1",
+        "saturn",
+        "nds"
+      ],
+      "args": {
+        "*": [
+          "--fullscreen",
+          "{rom}"
+        ]
+      },
+      "description": "Multi-sistema com foco em precisão e TAS"
+    },
+    "citron": {
+      "title": "Citron",
+      "source": "manual",
+      "homepage": "https://citron-emu.org",
+      "exe": "citron.exe",
+      "systems": [
+        "switch"
+      ],
+      "args": {
+        "*": [
+          "-f",
+          "-g",
+          "{rom}"
+        ]
+      },
+      "description": "Switch — outro fork aberto do Yuzu; alternativa ao Eden. Baixe e aponte o .exe"
+    }
+  }
+}

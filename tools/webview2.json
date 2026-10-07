@@ -1,0 +1,44 @@
+{
+  "version": "154.0.4258.53",
+  "arch": "x64",
+  "file": "Microsoft.WebView2.FixedVersionRuntime.154.0.4258.53.x64.cab",
+  "size": 307996323,
+  "sha256": "ec12b2db6423d127fb8e1935d34e2e68abc70fe8ecb1f6162ba1c1ccc2825f6d",
+  "urls": [
+    "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/0b89c3a3-0043-4746-b39e-65830da7744d/Microsoft.WebView2.FixedVersionRuntime.154.0.4258.53.x64.cab",
+    "https://github.com/ciderapp/WebView2-Archives/releases/download/154.0.4258.53/Microsoft.WebView2.FixedVersionRuntime.154.0.4258.53.x64.cab"
+  ],
+  "catalog": "https://developer.microsoft.com/microsoft-edge/api/webview2",
+  "trim": {
+    "locales_keep": [
+      "en-US",
+      "pt-BR"
+    ],
+    "remove": [
+      "WidevineCdm",
+      "PdfPreview",
+      "mspdf.dll",
+      "dxcompiler.dll",
+      "dxil.dll",
+      "onnxruntime.dll",
+      "copilotapp.exe",
+      "mscopilot.exe",
+      "Copilot.dat",
+      "copilot_overlay_images_100_percent.pak",
+      "copilot_overlay_images_200_percent.pak",
+      "copilot_overlay_unscaled_images.pak",
+      "Installer",
+      "edge_feedback",
+      "notification_helper.exe",
+      "platform_experiences_helper.exe",
+      "elevated_tracing_service.exe",
+      "dual_engine_adapter_x64.dll",
+      "learning_tools.dll",
+      "mip_core_gn.dll",
+      "oneauth.dll",
+      "show_third_party_software_licenses.bat",
+      "EBWebView/x86",
+      "msedge_wer.dll"
+    ]
+  }
+}

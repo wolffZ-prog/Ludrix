@@ -1,0 +1,400 @@
+{
+ "_": "Dependências que jogos (principalmente antigos) precisam. 'detect' é checado no registro/arquivos do Windows; 'silent' são os argumentos de instalação sem janela. Links oficiais (Microsoft/OpenAL).",
+ "groups": [
+  {
+   "id": "vcpp",
+   "name": "Visual C++ Redistributable",
+   "desc": "Bibliotecas de runtime do Visual Studio. Quase todo jogo de PC precisa de uma versão específica — erro clássico 'MSVCP140.dll / MSVCR100.dll não encontrado'."
+  },
+  {
+   "id": "directx",
+   "name": "DirectX",
+   "desc": "Componentes antigos do DirectX 9/10/11 (d3dx9_43.dll, xinput1_3.dll, xaudio) que o Windows 10/11 NÃO traz por padrão. Jogos de 2003–2015 quase sempre precisam."
+  },
+  {
+   "id": "dotnet",
+   "name": ".NET Framework / XNA",
+   "desc": "Jogos indie (Terraria, Stardew, FEZ, Bastion) e ferramentas de mod usam .NET e XNA."
+  },
+  {
+   "id": "audio",
+   "name": "Áudio",
+   "desc": "OpenAL: usado por muitos jogos (Minecraft antigo, Amnesia, Penumbra, Doom 3 mods)."
+  },
+  {
+   "id": "physics",
+   "name": "PhysX (NVIDIA / AGEIA)",
+   "desc": "Jogos de 2006–2012 com física PhysX (Mirror's Edge, Batman Arkham, Mafia II, Infernal, The Void, Cryostasis) precisam dos motores antigos que o driver atual não traz. O Legacy cobre quase tudo; o 'v2.5.2' é o único que falta nele — Infernal e The Void não abrem sem ele."
+  }
+ ],
+ "items": [
+  {
+   "id": "vc2005_x86",
+   "group": "vcpp",
+   "title": "Visual C++ 2005 SP1",
+   "arch": "x86",
+   "size": 2710520,
+   "year": 2005,
+   "silent": [
+    "/q"
+   ],
+   "url": "https://download.microsoft.com/download/8/B/4/8B42259F-5D70-43F4-AC2E-4B208FD8D66A/vcredist_x86.EXE",
+   "detect": {
+    "file": "%WINDIR%\\WinSxS\\x86_microsoft.vc80.crt_1fc8b3b9a1e18e3b_8.0.50727.6195_none_d09154e044272b9a"
+   },
+   "detect_alt": {
+    "reg": "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{710f4c1c-cc18-4c49-8cbf-51240c89a1a2}"
+   }
+  },
+  {
+   "id": "vc2005_x64",
+   "group": "vcpp",
+   "title": "Visual C++ 2005 SP1",
+   "arch": "x64",
+   "size": 3145728,
+   "year": 2005,
+   "silent": [
+    "/q"
+   ],
+   "url": "https://download.microsoft.com/download/8/B/4/8B42259F-5D70-43F4-AC2E-4B208FD8D66A/vcredist_x64.EXE",
+   "detect": {
+    "reg": "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{ad8a2fa1-06e7-4b0d-927d-6e54b3d31028}"
+   }
+  },
+  {
+   "id": "vc2008_x86",
+   "group": "vcpp",
+   "title": "Visual C++ 2008 SP1",
+   "arch": "x86",
+   "size": 4483040,
+   "year": 2008,
+   "silent": [
+    "/q"
+   ],
+   "url": "https://download.microsoft.com/download/5/D/8/5D8C65CB-C849-4025-8E95-C3966CAFD8AE/vcredist_x86.exe",
+   "detect": {
+    "reg": "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{9BE518E6-ECC6-35A9-88E4-87755C07200F}"
+   }
+  },
+  {
+   "id": "vc2008_x64",
+   "group": "vcpp",
+   "title": "Visual C++ 2008 SP1",
+   "arch": "x64",
+   "size": 5211080,
+   "year": 2008,
+   "silent": [
+    "/q"
+   ],
+   "url": "https://download.microsoft.com/download/5/D/8/5D8C65CB-C849-4025-8E95-C3966CAFD8AE/vcredist_x64.exe",
+   "detect": {
+    "reg": "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{5FCE6D76-F5DC-37AB-B2B8-22AB8CEDB1D4}"
+   }
+  },
+  {
+   "id": "vc2010_x86",
+   "group": "vcpp",
+   "title": "Visual C++ 2010 SP1",
+   "arch": "x86",
+   "size": 8930688,
+   "year": 2010,
+   "silent": [
+    "/q",
+    "/norestart"
+   ],
+   "url": "https://download.microsoft.com/download/1/6/5/165255E7-1014-4D0A-B094-B6A430A6BFFC/vcredist_x86.exe",
+   "detect": {
+    "reg": "HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\10.0\\VC\\VCRedist\\x86",
+    "wow": true
+   }
+  },
+  {
+   "id": "vc2010_x64",
+   "group": "vcpp",
+   "title": "Visual C++ 2010 SP1",
+   "arch": "x64",
+   "size": 10285064,
+   "year": 2010,
+   "silent": [
+    "/q",
+    "/norestart"
+   ],
+   "url": "https://download.microsoft.com/download/1/6/5/165255E7-1014-4D0A-B094-B6A430A6BFFC/vcredist_x64.exe",
+   "detect": {
+    "reg": "HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\10.0\\VC\\VCRedist\\x64"
+   }
+  },
+  {
+   "id": "vc2012_x86",
+   "group": "vcpp",
+   "title": "Visual C++ 2012 Update 4",
+   "arch": "x86",
+   "size": 6554576,
+   "year": 2012,
+   "silent": [
+    "/install",
+    "/quiet",
+    "/norestart"
+   ],
+   "url": "https://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x86.exe",
+   "detect": {
+    "reg": "HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\11.0\\VC\\Runtimes\\x86",
+    "wow": true
+   }
+  },
+  {
+   "id": "vc2012_x64",
+   "group": "vcpp",
+   "title": "Visual C++ 2012 Update 4",
+   "arch": "x64",
+   "size": 7186992,
+   "year": 2012,
+   "silent": [
+    "/install",
+    "/quiet",
+    "/norestart"
+   ],
+   "url": "https://download.microsoft.com/download/1/6/B/16B06F60-3B20-4FF2-B699-5E9B7962F9AE/VSU_4/vcredist_x64.exe",
+   "detect": {
+    "reg": "HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\11.0\\VC\\Runtimes\\x64"
+   }
+  },
+  {
+   "id": "vc2013_x86",
+   "group": "vcpp",
+   "title": "Visual C++ 2013",
+   "arch": "x86",
+   "size": 6503984,
+   "year": 2013,
+   "silent": [
+    "/install",
+    "/quiet",
+    "/norestart"
+   ],
+   "url": "https://aka.ms/highdpimfc2013x86enu",
+   "detect": {
+    "reg": "HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\12.0\\VC\\Runtimes\\x86",
+    "wow": true
+   }
+  },
+  {
+   "id": "vc2013_x64",
+   "group": "vcpp",
+   "title": "Visual C++ 2013",
+   "arch": "x64",
+   "size": 7194312,
+   "year": 2013,
+   "silent": [
+    "/install",
+    "/quiet",
+    "/norestart"
+   ],
+   "url": "https://aka.ms/highdpimfc2013x64enu",
+   "detect": {
+    "reg": "HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\12.0\\VC\\Runtimes\\x64"
+   }
+  },
+  {
+   "id": "vc2022_x86",
+   "group": "vcpp",
+   "title": "Visual C++ 2015–2022",
+   "arch": "x86",
+   "size": 13900000,
+   "year": 2022,
+   "silent": [
+    "/install",
+    "/quiet",
+    "/norestart"
+   ],
+   "url": "https://aka.ms/vs/17/release/vc_redist.x86.exe",
+   "note": "Cobre 2015, 2017, 2019 e 2022 (é o mesmo runtime v14).",
+   "detect": {
+    "reg": "HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\14.0\\VC\\Runtimes\\x86",
+    "wow": true
+   }
+  },
+  {
+   "id": "vc2022_x64",
+   "group": "vcpp",
+   "title": "Visual C++ 2015–2022",
+   "arch": "x64",
+   "size": 25400000,
+   "year": 2022,
+   "silent": [
+    "/install",
+    "/quiet",
+    "/norestart"
+   ],
+   "url": "https://aka.ms/vs/17/release/vc_redist.x64.exe",
+   "note": "Cobre 2015, 2017, 2019 e 2022 (é o mesmo runtime v14).",
+   "detect": {
+    "reg": "HKLM\\SOFTWARE\\Microsoft\\VisualStudio\\14.0\\VC\\Runtimes\\x64"
+   }
+  },
+  {
+   "id": "dx9",
+   "group": "directx",
+   "title": "DirectX End-User Runtime (jun/2010)",
+   "arch": "x86/x64",
+   "size": 100000000,
+   "year": 2010,
+   "kind": "dx",
+   "url": "https://download.microsoft.com/download/8/4/A/84A35BF1-DAFE-4AE8-82AF-AD2AE20B6B14/directx_Jun2010_redist.exe",
+   "note": "Pacote completo offline (~100 MB). Instala d3dx9_24…43, d3dx10, d3dx11, xinput1_1…3, xaudio2, x3daudio. Resolve a maioria dos 'd3dx9_43.dll está faltando'.",
+   "detect": {
+    "file": "%WINDIR%\\System32\\D3DX9_43.dll"
+   }
+  },
+  {
+   "id": "xna40",
+   "group": "dotnet",
+   "title": "XNA Framework 4.0 Redistributable",
+   "arch": "x86/x64",
+   "size": 7000000,
+   "year": 2010,
+   "kind": "msi",
+   "silent": [
+    "/quiet",
+    "/norestart"
+   ],
+   "url": "https://download.microsoft.com/download/A/C/2/AC2C903B-E6E8-42C2-9FD7-BEBAC362A930/xnafx40_redist.msi",
+   "detect": {
+    "reg": "HKLM\\SOFTWARE\\Microsoft\\XNA\\Framework\\v4.0",
+    "wow": true
+   }
+  },
+  {
+   "id": "net48",
+   "group": "dotnet",
+   "title": ".NET Framework 4.8 (offline)",
+   "arch": "x86/x64",
+   "size": 118000000,
+   "year": 2019,
+   "silent": [
+    "/q",
+    "/norestart"
+   ],
+   "url": "https://go.microsoft.com/fwlink/?linkid=2088631",
+   "note": "Windows 10 1903+ e Windows 11 já vêm com 4.8. Só instale se um jogo/ferramenta pedir.",
+   "detect": {
+    "reg": "HKLM\\SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v4\\Full",
+    "value": "Release",
+    "min": 528040
+   }
+  },
+  {
+   "id": "openal",
+   "group": "audio",
+   "title": "OpenAL 1.1 (Creative)",
+   "arch": "x86/x64",
+   "size": 590434,
+   "year": 2009,
+   "kind": "zip_exe",
+   "inner": "oalinst.exe",
+   "silent": [
+    "/silent"
+   ],
+   "url": "https://openal.org/downloads/oalinst.zip",
+   "detect": {
+    "file": "%WINDIR%\\System32\\OpenAL32.dll"
+   }
+  },
+  {
+   "id": "physx_legacy",
+   "group": "physics",
+   "title": "PhysX Legacy System Software 9.13.0604",
+   "arch": "x86/x64",
+   "size": 21100000,
+   "year": 2013,
+   "kind": "msi",
+   "silent": [
+    "/qn",
+    "/norestart"
+   ],
+   "url": "https://us.download.nvidia.com/Windows/9.13.0604/PhysX-9.13.0604-SystemSoftware-Legacy.msi",
+   "note": "Motores PhysX v2.3.1 a v2.7.4 (menos o 2.5.2). Resolve 'PhysXLoader.dll' e 'PhysX not installed' em jogos de 2007–2010. Funciona em qualquer GPU (roda na CPU).",
+   "detect": {
+    "file": "%PROGRAMFILES(X86)%\\NVIDIA Corporation\\PhysX\\Engine\\v2.7.3\\PhysXCore.dll"
+   }
+  },
+  {
+   "id": "physx_252",
+   "group": "physics",
+   "title": "AGEIA PhysX v2.5.2 (System Software 9.10.0129)",
+   "arch": "x86/x64",
+   "size": 34135392,
+   "year": 2010,
+   "kind": "exe",
+   "silent": [
+    "/quiet",
+    "/norestart"
+   ],
+   "url": "https://us.download.nvidia.com/Windows/9.10.0129/PhysX_9.10.0129_SystemSoftware.exe",
+   "note": "Pacote antigo da NVIDIA que ainda inclui o motor v2.5.2 (Infernal: Hell's Vengeance, The Void, Warmonger). Instala em 'AGEIA Technologies\\v2.5.2' sem mexer no PhysX atual. Instale DEPOIS do Legacy.",
+   "detect": {
+    "reg": "HKLM\\SOFTWARE\\AGEIA Technologies\\PhysX_A32_Engines",
+    "wow": true,
+    "value": "2.5.2"
+   },
+   "detect_alt": {
+    "file": "%PROGRAMFILES(X86)%\\AGEIA Technologies\\v2.5.2\\PhysXCore.dll"
+   }
+  }
+ ],
+ "bundles": [
+  {
+   "id": "classic",
+   "title": "Jogos antigos (2003–2015)",
+   "desc": "VC++ 2005 a 2013 (x86 e x64) + DirectX jun/2010 + OpenAL + PhysX Legacy. O kit pra rodar clássicos.",
+   "items": [
+    "vc2005_x86",
+    "vc2005_x64",
+    "vc2008_x86",
+    "vc2008_x64",
+    "vc2010_x86",
+    "vc2010_x64",
+    "vc2012_x86",
+    "vc2012_x64",
+    "vc2013_x86",
+    "vc2013_x64",
+    "dx9",
+    "openal",
+    "physx_legacy"
+   ]
+  },
+  {
+   "id": "modern",
+   "title": "Jogos atuais",
+   "desc": "VC++ 2015–2022 (x86 e x64). Praticamente todo jogo de 2016 pra cá.",
+   "items": [
+    "vc2022_x86",
+    "vc2022_x64"
+   ]
+  },
+  {
+   "id": "all",
+   "title": "Tudo (PC formatado)",
+   "desc": "Todos os pacotes acima, incluindo XNA e .NET 4.8. Deixa a máquina pronta pra qualquer jogo.",
+   "items": [
+    "vc2005_x86",
+    "vc2005_x64",
+    "vc2008_x86",
+    "vc2008_x64",
+    "vc2010_x86",
+    "vc2010_x64",
+    "vc2012_x86",
+    "vc2012_x64",
+    "vc2013_x86",
+    "vc2013_x64",
+    "vc2022_x86",
+    "vc2022_x64",
+    "dx9",
+    "xna40",
+    "net48",
+    "openal",
+    "physx_legacy",
+    "physx_252"
+   ]
+  }
+ ]
+}

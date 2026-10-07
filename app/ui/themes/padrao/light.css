@@ -1,0 +1,27 @@
+:root{
+  --bg:#f2f4f7;
+  --bg2:#eaedf2;
+  --panel:#ffffff;
+  --card:#ffffff;
+  --card2:#eef0f4;
+  --line:rgba(20,28,40,.08);
+  --line2:rgba(20,28,40,.16);
+  --text:#141a24;
+  --muted:#4d5664;
+  --muted2:#8b93a0;
+  --green:#139a67;
+  --green2:#0f7a52;
+  --red:#d93a4a;
+  --amber:#b87a00;
+  --shadow:0 8px 24px -12px rgba(20,28,40,.22);
+  --glow1:transparent;
+  --glow2:transparent;
+  --glow3:transparent;
+  --ph-from:#eef0f4;
+  --ph-to:#e0e4ea;
+  --img-fade:rgba(242,244,247,.95);
+  --logo-bg:#141a24;
+  --mono:#141a24;
+  --mono2:#4d5664;
+  color-scheme:light;
+}

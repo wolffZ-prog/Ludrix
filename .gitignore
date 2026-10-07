@@ -1,0 +1,23 @@
+# Ludrix — nunca versionar
+data/
+games/
+emulation/
+downloads/
+themes/*.lxtheme
+release/
+build/
+dist/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+app/integrity.json
+app/pyc.json
+*.key
+chave/
+tools/cache/
+casca/bin/
+casca/obj/
+*.lxup
+Thumbs.db
+desktop.ini

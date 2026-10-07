@@ -1,0 +1,285 @@
+{
+ "sites": [
+  {
+   "id": "nexus",
+   "name": "Nexus Mods",
+   "url": "https://www.nexusmods.com/search/?gsearch={q}&gsearchtype=games",
+   "desc": "Maior acervo de mods de PC",
+   "match": ".*"
+  },
+  {
+   "id": "moddb",
+   "name": "ModDB",
+   "url": "https://www.moddb.com/games?filter=t&kw={q}",
+   "desc": "Mods clássicos, total conversions",
+   "match": ".*"
+  },
+  {
+   "id": "gamebanana",
+   "name": "GameBanana",
+   "url": "https://gamebanana.com/search?_sSearchString={q}",
+   "desc": "Skins, mapas, Sonic, jogos de luta",
+   "match": ".*"
+  },
+  {
+   "id": "pesuniverse",
+   "name": "PES Universe / PESGaming",
+   "url": "https://www.google.com/search?q={q}+patch+option+file+site%3Apesgaming.com+OR+site%3Apesuniverse.com",
+   "desc": "Patches e option files de PES",
+   "match": "pro evolution|efootball|pes ?20"
+  },
+  {
+   "id": "soccergaming",
+   "name": "Soccer Gaming (FIFA)",
+   "url": "https://www.google.com/search?q={q}+patch+site%3Asoccergaming.com",
+   "desc": "Patches, kits e faces de FIFA",
+   "match": "^fifa|fc 2[4-9]"
+  },
+  {
+   "id": "nfsmods",
+   "name": "NFSMods",
+   "url": "https://nfsmods.xyz/search?q={q}",
+   "desc": "Mods de Need for Speed",
+   "match": "need for speed|nfs"
+  },
+  {
+   "id": "gtainside",
+   "name": "GTAinside",
+   "url": "https://www.gtainside.com/en/search?q={q}",
+   "desc": "Mods de GTA",
+   "match": "grand theft auto|gta"
+  },
+  {
+   "id": "racedepartment",
+   "name": "OverTake (RaceDepartment)",
+   "url": "https://www.overtake.gg/search/?q={q}",
+   "desc": "Mods de corrida/simuladores",
+   "match": "f1 |grid|dirt|colin|project cars|assetto|rfactor|race driver|toca"
+  },
+  {
+   "id": "thps",
+   "name": "THPS Mods (THMods)",
+   "url": "https://thmods.com/?s={q}",
+   "desc": "Tony Hawk",
+   "match": "tony hawk|thug|thps"
+  },
+  {
+   "id": "romhacking",
+   "name": "ROMhacking (archive)",
+   "url": "https://www.romhacking.net/?page=hacks&title={q}",
+   "desc": "Hacks e traduções de ROMs",
+   "match": ".*"
+  },
+  {
+   "id": "cdromance",
+   "name": "Traduções PT-BR (Romhacking.net.br)",
+   "url": "https://www.google.com/search?q={q}+tradu%C3%A7%C3%A3o+pt-br+romhacking",
+   "desc": "Traduções brasileiras",
+   "match": ".*"
+  }
+ ],
+ "tools": [
+  {
+   "id": "frosty",
+   "title": "Frosty Mod Manager + Editor",
+   "type": "github_release",
+   "repo": "CadeEvs/FrostyToolsuite",
+   "asset": "FrostyModManager",
+   "exe": "FrostyModManager.exe",
+   "category": "EA / Frostbite",
+   "for": "FIFA 17–23, Battlefield 1/V/2042, NFS (2015+), Mass Effect Andromeda, Dragon Age Inquisition, Star Wars Battlefront",
+   "desc": "O gerenciador de mods padrão pra qualquer jogo Frostbite. O Editor (mesmo pacote) cria mods.",
+   "match": "fifa (1[7-9]|2[0-3])|battlefield (1|v|2042)|need for speed( heat| payback| unbound|™ 2015| \\(2015\\))|mass effect: andromeda|dragon age: inquisition|battlefront"
+  },
+  {
+   "id": "frostyfix",
+   "title": "FrostyFix",
+   "type": "github_release",
+   "repo": "Dyvinia/FrostyFix",
+   "asset": "FrostyFix.exe",
+   "exe": "FrostyFix.exe",
+   "category": "EA / Frostbite",
+   "for": "Jogos EA/Origin com Frosty",
+   "desc": "Corrige o EA App/Origin ignorando os mods do Frosty.",
+   "match": "fifa (1[7-9]|2[0-3])|battlefield (1|v|2042)|need for speed( heat| payback| unbound|™ 2015| \\(2015\\))|mass effect: andromeda|dragon age: inquisition|battlefront"
+  },
+  {
+   "id": "fifa-editor",
+   "title": "FIFA Editor Tool (FET)",
+   "type": "link",
+   "url": "https://fifa-infinity.com/fifa-editor-tool/",
+   "category": "EA / Frostbite",
+   "for": "FIFA 19–23, EA FC 24/25",
+   "desc": "Editor de banco de dados e mods de FIFA/FC (antigo FIFA Editor Tool).",
+   "match": "fifa (19|2[0-3])|fc 2[45]"
+  },
+  {
+   "id": "live-editor",
+   "title": "FC Live Editor / Cheat Table",
+   "type": "link",
+   "url": "https://fifa-infinity.com/category/tools/",
+   "category": "EA / Frostbite",
+   "for": "FIFA 20+ / EA FC",
+   "desc": "Edição em tempo real de elenco, dinheiro do modo carreira, etc.",
+   "match": "fifa 2[0-3]|fc 2[45]"
+  },
+  {
+   "id": "cg-file-explorer",
+   "title": "CG File Explorer / Creation Master",
+   "type": "link",
+   "url": "https://soccergaming.com/index.php?forums/fifa-editing-tools.90/",
+   "category": "EA / clássicos",
+   "for": "FIFA 05–16 (motor antigo)",
+   "desc": "Ferramentas de edição dos FIFAs antigos: faces, kits, estádios e banco de dados.",
+   "match": "fifa (0[5-9]|1[0-6])|fifa street|fifa world cup"
+  },
+  {
+   "id": "sider",
+   "title": "Sider",
+   "type": "link",
+   "url": "https://evo-web.co.uk/forums/pes-2021-editing.290/",
+   "category": "Konami / PES",
+   "for": "PES 2017–2021",
+   "desc": "Loader de mods do PES: kits, escudos, bolas e módulos Lua sem tocar nos arquivos originais.",
+   "match": "pro evolution soccer 20(1[7-9]|2[01])|efootball pes 2021"
+  },
+  {
+   "id": "kitserver",
+   "title": "Kitserver",
+   "type": "link",
+   "url": "https://kitserver.mapote.com/",
+   "category": "Konami / PES",
+   "for": "PES 4/5/6, PES 2008–2013",
+   "desc": "O clássico: kits, faces, bolas e aumento de resolução dos PES antigos.",
+   "match": "pro evolution soccer (4|5|6|20(0[8-9]|1[0-3]))|winning eleven"
+  },
+  {
+   "id": "pes-file-explorer",
+   "title": "PES File Explorer / AFS Explorer",
+   "type": "link",
+   "url": "https://www.pesgaming.com/index.php?forums/editing-tools.64/",
+   "category": "Konami / PES",
+   "for": "PES até 2013",
+   "desc": "Abre .afs/.img/.bin dos PES antigos pra trocar texturas e faces.",
+   "match": "pro evolution soccer|winning eleven"
+  },
+  {
+   "id": "cheat-engine",
+   "title": "Cheat Engine",
+   "type": "link",
+   "url": "https://www.cheatengine.org/downloads.php",
+   "category": "Genérico",
+   "for": "Qualquer jogo",
+   "desc": "Scanner de memória — trainers, tabelas .CT, velocidade do jogo. Cuidado com o instalador (desmarque ofertas).",
+   "match": ".*"
+  },
+  {
+   "id": "special-k",
+   "title": "Special K",
+   "type": "github_release",
+   "repo": "SpecialKO/SpecialK",
+   "asset": "SpecialK.7z",
+   "exe": "SKIF.exe",
+   "category": "Genérico",
+   "for": "Jogos DX9/11/12",
+   "desc": "Injeta HDR, frame limiter, correção de janela sem borda e texturas em jogos antigos.",
+   "match": ".*"
+  },
+  {
+   "id": "dgvoodoo",
+   "title": "dgVoodoo 2",
+   "type": "link",
+   "url": "http://dege.freeweb.hu/dgVoodoo2/dgVoodoo2/",
+   "category": "Compatibilidade",
+   "for": "Jogos DX1–9 / Glide",
+   "desc": "Faz jogos antigos rodarem no Windows moderno (wrapper DirectX/Glide → DX11/12).",
+   "match": ".*"
+  },
+  {
+   "id": "dxwnd",
+   "title": "DxWnd",
+   "type": "link",
+   "url": "https://sourceforge.net/projects/dxwnd/",
+   "category": "Compatibilidade",
+   "for": "Jogos antigos",
+   "desc": "Roda jogos em janela e corrige resolução/velocidade/cores de jogos de 1998–2008.",
+   "match": ".*"
+  },
+  {
+   "id": "widescreen-fixer",
+   "title": "Widescreen Fixes Pack (ThirteenAG)",
+   "type": "link",
+   "url": "https://thirteenag.github.io/wfp",
+   "category": "Compatibilidade",
+   "for": "GTA, NFS, Max Payne, Mafia, Driver…",
+   "desc": "Correções de tela larga, FOV e HUD pra dezenas de clássicos.",
+   "match": ".*"
+  },
+  {
+   "id": "mod-organizer",
+   "title": "Mod Organizer 2",
+   "type": "github_release",
+   "repo": "ModOrganizer2/modorganizer",
+   "asset": "Mod\\.Organizer-[\\d.]+\\.7z$",
+   "exe": "ModOrganizer.exe",
+   "category": "Gerenciadores",
+   "for": "Bethesda (Skyrim, Fallout), e outros",
+   "desc": "Gerenciador com pastas virtuais — não suja a pasta do jogo.",
+   "match": "skyrim|fallout|oblivion|morrowind|starfield"
+  },
+  {
+   "id": "vortex",
+   "title": "Vortex (Nexus)",
+   "type": "link",
+   "url": "https://www.nexusmods.com/about/vortex/",
+   "category": "Gerenciadores",
+   "for": "Centenas de jogos",
+   "desc": "Gerenciador oficial do Nexus Mods.",
+   "match": ".*"
+  },
+  {
+   "id": "flips",
+   "title": "Flips (patcher IPS/BPS)",
+   "type": "github_release",
+   "repo": "Alcaro/Flips",
+   "asset": "flips-windows.zip",
+   "exe": "flips.exe",
+   "category": "ROM hacks",
+   "for": "Qualquer ROM",
+   "desc": "Aplica patches .ips/.bps de hacks e traduções em ROMs.",
+   "match": ".*"
+  },
+  {
+   "id": "delta-patcher",
+   "title": "Delta Patcher (xdelta)",
+   "type": "github_release",
+   "repo": "marco-calautti/DeltaPatcher",
+   "asset": "windows_bin_x86_64.zip",
+   "exe": "DeltaPatcher.exe",
+   "category": "ROM hacks",
+   "for": "ISOs de PS1/PS2/PSP",
+   "desc": "Aplica patches .xdelta (traduções de ISO).",
+   "match": ".*"
+  },
+  {
+   "id": "reshade",
+   "title": "ReShade",
+   "type": "link",
+   "url": "https://reshade.me/",
+   "category": "Gráficos",
+   "for": "Qualquer jogo",
+   "desc": "Pós-processamento (sharpen, cores, SSAO) injetado em qualquer jogo.",
+   "match": ".*"
+  },
+  {
+   "id": "texmod",
+   "title": "TexMod / uMod",
+   "type": "link",
+   "url": "https://www.moddb.com/downloads/texmod4",
+   "category": "Gráficos",
+   "for": "Jogos DX9",
+   "desc": "Troca texturas em tempo real (base de muitos mods de PES/FIFA/NFS antigos).",
+   "match": ".*"
+  }
+ ]
+}

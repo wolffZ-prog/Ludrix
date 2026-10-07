@@ -1,0 +1,42 @@
+name: Bug
+description: Algo não funciona como deveria
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Versão do Ludrix
+      description: Ajustes → Sistema
+      placeholder: "2.34.1"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Passos
+      description: O que você fez, na ordem
+      placeholder: |
+        1. Abri a Store
+        2. Cliquei em ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: O que esperava
+  - type: textarea
+    id: actual
+    attributes:
+      label: O que aconteceu
+      description: Mensagem de erro, print, trecho de data/logs/ludrix.log
+    validations:
+      required: true
+  - type: dropdown
+    id: build
+    attributes:
+      label: Como está rodando
+      options:
+        - Ludrix.exe (pacote pronto)
+        - run.bat / python (código-fonte)
+    validations:
+      required: true

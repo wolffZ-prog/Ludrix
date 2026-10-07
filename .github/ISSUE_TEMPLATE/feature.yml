@@ -1,0 +1,18 @@
+name: Sugestão
+description: Uma função ou mudança
+labels: [sugestão]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Que problema isso resolve
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Como você imagina
+  - type: textarea
+    id: alt
+    attributes:
+      label: Alternativas que já tentou

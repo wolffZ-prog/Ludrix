@@ -1,0 +1,10 @@
+pywebview>=6.1       # WEBVIEW2_RUNTIME_PATH (janela sem depender do registro do Windows)
+pillow>=10
+requests>=2.31
+py7zr>=0.21
+pycryptodomex>=3.20   # MEGA no downloader embutido (AES-CTR); o py7zr já puxa
+psutil>=5.9
+pystray>=0.19
+pyinstaller>=6.22    # < 6.22 aborta na abertura com Python 3.14.7+ (Tcl/Tk 9: "_tcl_data not found")
+# Torrent: o build.py tenta instalar libtorrent sozinho (wheel oficial até Python 3.13). Se não der (ex.: Python 3.14),
+# o launcher usa o motor reserva aria2c.exe (baixado em bin/ no primeiro torrent) — torrent funciona do mesmo jeito.

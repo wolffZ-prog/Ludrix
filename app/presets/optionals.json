@@ -1,0 +1,37 @@
+{
+ "_": "Programas OPCIONAIS que ajudam a jogar. Instalação pelo winget (gerenciador de pacotes do Windows 10/11) com o ID do pacote; 'store' é o ID na Microsoft Store (botão 'Abrir na Store'). 'detect' = pasta/arquivo/registro pra marcar como instalado sem chamar o winget.",
+ "groups": [
+  {"id": "runtime", "name": "Bibliotecas de sistema", "desc": "Versões atuais do que quase todo jogo moderno usa. Sem elas o jogo fecha na hora ou reclama de DLL faltando."},
+  {"id": "launchers", "name": "Lojas e launchers", "desc": "Necessários para jogos comprados nessas lojas e para alguns jogos que exigem a loja aberta mesmo fora dela."},
+  {"id": "gpu", "name": "Placa de vídeo e monitoramento", "desc": "Contador de FPS, gravação e controle da GPU. Instale só o que for usar."},
+  {"id": "utils", "name": "Utilitários", "desc": "Ferramentas que ajudam no dia a dia de quem baixa e organiza jogos."}
+ ],
+ "items": [
+  {"id": "vc2022", "group": "runtime", "title": "Visual C++ 2015–2022 (x64 + x86)", "desc": "Runtime atual do Visual Studio; praticamente todo jogo de 2016 em diante.", "winget": ["Microsoft.VCRedist.2015+.x64", "Microsoft.VCRedist.2015+.x86"], "detect": {"reg": "SOFTWARE\\Microsoft\\VisualStudio\\14.0\\VC\\Runtimes\\x64"}},
+  {"id": "dotnet8", "group": "runtime", "title": ".NET Desktop Runtime 8", "desc": "Apps e jogos feitos em .NET moderno (várias ferramentas de mod também).", "winget": ["Microsoft.DotNet.DesktopRuntime.8"], "detect": {"file": "%PROGRAMFILES%\\dotnet\\shared\\Microsoft.WindowsDesktop.App"}},
+  {"id": "dotnet6", "group": "runtime", "title": ".NET Desktop Runtime 6", "desc": "Versão anterior, ainda exigida por alguns programas.", "winget": ["Microsoft.DotNet.DesktopRuntime.6"]},
+  {"id": "xna", "group": "runtime", "title": "XNA Framework 4.0", "desc": "Jogos indie clássicos (Terraria, Stardew Valley, FEZ, Bastion).", "winget": ["Microsoft.XNARedist"], "detect": {"reg": "SOFTWARE\\Microsoft\\XNA\\Framework\\v4.0", "wow": true}},
+  {"id": "directx", "group": "runtime", "title": "DirectX End-User Runtime", "desc": "Componentes antigos do DirectX 9/10/11 que o Windows não traz (d3dx9_43.dll, xinput1_3.dll).", "winget": ["Microsoft.DirectX"], "detect": {"file": "%WINDIR%\\System32\\d3dx9_43.dll"}},
+  {"id": "physx", "group": "runtime", "title": "NVIDIA PhysX (atual + legado)", "desc": "Física de jogos de 2006 a hoje. O legado cobre Mirror's Edge, Batman Arkham, Mafia II.", "winget": ["Nvidia.PhysX", "Nvidia.PhysXLegacy"], "detect": {"reg": "SOFTWARE\\NVIDIA Corporation\\PhysX"}},
+  {"id": "java", "group": "runtime", "title": "Java Runtime 8", "desc": "Minecraft Java antigo e alguns jogos e ferramentas em Java.", "winget": ["Oracle.JavaRuntimeEnvironment"], "detect": {"file": "%PROGRAMFILES%\\Java"}},
+
+  {"id": "steam", "group": "launchers", "title": "Steam", "desc": "Loja da Valve. Alguns jogos exigem o Steam aberto mesmo instalados por fora.", "winget": ["Valve.Steam"], "detect": {"reg": "SOFTWARE\\Valve\\Steam", "wow": true}},
+  {"id": "epic", "group": "launchers", "title": "Epic Games Launcher", "desc": "Loja da Epic; jogos grátis semanais.", "winget": ["EpicGames.EpicGamesLauncher"], "detect": {"file": "%PROGRAMFILES(X86)%\\Epic Games\\Launcher"}},
+  {"id": "gog", "group": "launchers", "title": "GOG Galaxy", "desc": "Loja sem DRM; junta bibliotecas de outras lojas.", "winget": ["GOG.Galaxy"], "detect": {"file": "%PROGRAMFILES(X86)%\\GOG Galaxy"}},
+  {"id": "ubisoft", "group": "launchers", "title": "Ubisoft Connect", "desc": "Obrigatório para jogos da Ubisoft (Assassin's Creed, Far Cry).", "winget": ["Ubisoft.Connect"], "detect": {"file": "%PROGRAMFILES(X86)%\\Ubisoft\\Ubisoft Game Launcher"}},
+  {"id": "ea", "group": "launchers", "title": "EA app", "desc": "Obrigatório para jogos da EA (FIFA/FC, Battlefield, The Sims).", "winget": ["ElectronicArts.EADesktop"], "detect": {"file": "%PROGRAMFILES%\\Electronic Arts\\EA Desktop"}},
+  {"id": "xbox", "group": "launchers", "title": "Xbox (Game Pass)", "desc": "App do Xbox para o Game Pass no PC. Vem da Microsoft Store.", "store": "9MV0B5HZVK9Z", "detect": {"file": "%LOCALAPPDATA%\\Packages\\Microsoft.GamingApp_8wekyb3d8bbwe"}},
+
+  {"id": "rtss", "group": "gpu", "title": "RivaTuner Statistics Server", "desc": "Contador de FPS na tela e limitador de quadros; par do Afterburner.", "winget": ["Guru3D.RTSS"], "detect": {"file": "%PROGRAMFILES(X86)%\\RivaTuner Statistics Server"}},
+  {"id": "afterburner", "group": "gpu", "title": "MSI Afterburner", "desc": "Monitorar temperatura e uso da GPU, curva de ventoinha, undervolt.", "winget": ["Guru3D.Afterburner"], "detect": {"file": "%PROGRAMFILES(X86)%\\MSI Afterburner"}},
+  {"id": "obs", "group": "gpu", "title": "OBS Studio", "desc": "Gravar e transmitir gameplay.", "winget": ["OBSProject.OBSStudio"], "detect": {"file": "%PROGRAMFILES%\\obs-studio"}},
+  {"id": "gpuz", "group": "gpu", "title": "GPU-Z", "desc": "Ver modelo, sensores e BIOS da placa de vídeo.", "winget": ["TechPowerUp.GPU-Z"]},
+  {"id": "fancontrol", "group": "gpu", "title": "FanControl", "desc": "Curvas de ventoinha do gabinete e da CPU.", "winget": ["Rem0o.FanControl"]},
+
+  {"id": "7zip", "group": "utils", "title": "7-Zip", "desc": "Abre .7z/.rar/.zip fora do Ludrix.", "winget": ["7zip.7zip"], "detect": {"file": "%PROGRAMFILES%\\7-Zip\\7z.exe"}},
+  {"id": "qbittorrent", "group": "utils", "title": "qBittorrent", "desc": "Cliente de torrent leve; o Ludrix envia links magnet para ele quando não tem torrent embutido.", "winget": ["qBittorrent.qBittorrent"], "detect": {"file": "%PROGRAMFILES%\\qBittorrent\\qbittorrent.exe"}},
+  {"id": "discord", "group": "utils", "title": "Discord", "desc": "Voz e chat com os amigos.", "winget": ["Discord.Discord"], "detect": {"file": "%LOCALAPPDATA%\\Discord"}},
+  {"id": "parsec", "group": "utils", "title": "Parsec", "desc": "Jogar em outro PC pela rede ou multiplayer local à distância.", "winget": ["Parsec.Parsec"]},
+  {"id": "powertoys", "group": "utils", "title": "PowerToys", "desc": "Utilitários da Microsoft (FancyZones, renomear em massa, PowerRename).", "winget": ["Microsoft.PowerToys"]}
+ ]
+}

@@ -1,0 +1,7 @@
+{
+  "version": "2.35.0",
+  "channel": "stable",
+  "date": "2026-10-07",
+  "name": "LudrixHub",
+  "changelog": "- Endereço de atualizações passa a ser `github.com/wolffZ-prog/Ludrix` (o repositório foi renomeado; o endereço antigo continua redirecionando).\n- Tela de abertura: barra de progresso real, versão e os passos do carregamento (interface, configurações, biblioteca, tema). Com \"Reduzir movimento\" tudo aparece de uma vez.\n- Listas `.json` (`ludrix-pack/1`) aceitam `\"github\": \"dono/repositorio\"` por jogo: o Ludrix busca a versão mais recente da release na hora, sem endereço fixo. Campos opcionais `asset` (regex do arquivo), `requires_rom`, `exe`.\n- Fontes do GitHub: ignora `.sha256`, `.sig`, `provenance.json` e, para recompilações com mais de um arquivo Windows, baixa só o pacote principal."
+}

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LudrixHub Console</title>
+<link rel="icon" href="/ui/console/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/ui/console/console.css">
+</head>
+<body data-theme="noite">
+<div id="app">
+  <section class="stage" id="stage"><div class="bg" id="stbg"></div><div class="bg2" id="stbg2"></div><div class="grad"></div></section>
+  <header class="top">
+    <div class="tl"><div class="brand" id="brand"></div><div class="chip" id="chip"></div></div>
+    <div class="tr">
+      <button class="pill dl" id="dlpill" hidden title="Ver a fila"><svg viewBox="0 0 24 24"><path d="M12 4v12m0 0 4-4m-4 4-4-4M4 20h16"/></svg><b id="dlpct"></b><span id="dltxt"></span><i id="dlbar"></i></button>
+      <div class="pill clock" id="clock"></div>
+      <div class="pill pad" id="padInd" title="Controle"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="12" rx="4"/><path d="M7 11v4M5 13h4M15 12h.01M18 14h.01"/></svg><b id="padN">0</b></div>
+      <button class="pill ib" id="exitBtn" title="Voltar para a janela"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></button>
+    </div>
+  </header>
+  <main id="main"></main>
+  <footer class="legend" id="legend">
+    <span><b class="k a">A</b>Jogar</span><span><b class="k b">B</b>Voltar</span><span><b class="k x">X</b>Opções</span><span><b class="k y">Y</b>Buscar</span><span><b class="k lb">LB</b><b class="k rb">RB</b>Abas</span><span><b class="k st">≡</b>Menu</span>
+  </footer>
+</div>
+<div class="over" id="detail"></div>
+<div class="over" id="menu"></div>
+<div class="over dlg" id="dlg"></div>
+<div class="search" id="search"><div class="sbox"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" placeholder="Buscar na biblioteca…" autocomplete="off" spellcheck="false"><kbd>Esc</kbd></div></div>
+<div class="toasts" id="toasts"></div>
+<script src="/ui/console/console.js"></script>
+</body>
+</html>

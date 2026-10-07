@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>LudrixHub — Terminal</title>
+<link rel="icon" href="/ui/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/api/theme/dark" id="themeLink">
+<style>*{box-sizing:border-box;margin:0;padding:0}
+:root{--tfont:"Cascadia Code","Cascadia Mono",Consolas,"JetBrains Mono",ui-monospace,monospace;--tsize:13px;--tfg:var(--text);--tbg:var(--bg);--topac:1;--tprompt:var(--muted)}
+html,body{height:100%;background:var(--tbg);color:var(--tfg);font:var(--tsize)/1.5 var(--tfont);overflow:hidden}
+body{display:flex;flex-direction:column;opacity:var(--topac)}
+.bar{display:flex;align-items:center;gap:10px;height:38px;padding:0 6px 0 12px;background:var(--bg2);border-bottom:1px solid var(--line);flex:none;-webkit-app-region:drag;user-select:none}
+.bar .logo{width:18px;height:18px;flex:none}
+.bar b{font:600 12.5px "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;color:var(--text)}
+.bar small{font:11px "Segoe UI",system-ui,sans-serif;color:var(--muted)}
+.bar .sp{flex:1}
+.bar button{-webkit-app-region:no-drag;height:28px;min-width:34px;padding:0 8px;border:0;background:none;color:var(--muted);font:12px "Segoe UI",system-ui,sans-serif;border-radius:7px;cursor:pointer}
+.bar button:hover{background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--text)}
+.bar button.x:hover{background:#e11d48;color:#fff}
+.bar svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+#out{flex:1;overflow-y:auto;padding:12px 16px 6px;white-space:pre-wrap;word-break:break-word;scroll-behavior:smooth}
+#out::-webkit-scrollbar{width:9px}#out::-webkit-scrollbar-thumb{background:var(--line2);border-radius:9px}
+.ln{margin:0 0 2px}
+.in{color:var(--text)}.in::before{content:"ludrix ❯ ";color:var(--tprompt);font-weight:700}
+.err{color:var(--red,#ef4444)}.usage{color:var(--amber,#f59e0b)}.sys{color:var(--muted)}.ok{color:var(--tfg)}
+.chlog{border-left:2px solid var(--line2);padding:6px 12px;margin:6px 0 10px;color:var(--text);background:color-mix(in srgb,var(--text) 3%,transparent);border-radius:0 8px 8px 0}
+.row{display:flex;align-items:center;gap:8px;padding:8px 12px 10px;border-top:1px solid var(--line);background:var(--bg2);flex:none}
+.row .p{color:var(--tprompt);font-weight:700;white-space:nowrap}
+.row input{flex:1;background:none;border:0;outline:0;color:var(--tfg);font:inherit;caret-color:var(--tfg)}
+.row input::placeholder{color:var(--muted2)}
+.hint{position:absolute;left:0;right:0;bottom:44px;max-height:40vh;overflow:auto;background:var(--panel);backdrop-filter:blur(14px);border-top:1px solid var(--line2);display:none;padding:4px 0}
+.hint.on{display:block}
+.hint div{padding:4px 16px;cursor:pointer;color:var(--muted);display:flex;gap:14px}
+.hint div b{color:var(--text);font-weight:600;min-width:180px}
+.hint div.on,.hint div:hover{background:color-mix(in srgb,var(--text) 8%,transparent);color:var(--text)}
+.wrap{position:relative;flex:1;display:flex;flex-direction:column;min-height:0}
+
+.cfg{position:absolute;inset:0;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;z-index:5}
+.cfg.on{display:flex}
+.cfg .box{width:min(520px,92vw);background:var(--bg2);border:1px solid var(--line2);border-radius:14px;padding:18px 20px;font:13px "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;color:var(--text);box-shadow:var(--shadow)}
+.cfg h3{font-size:15px;margin-bottom:12px}
+.cfg .f{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
+.cfg .f:first-of-type{border-top:0}
+.cfg .f span{color:var(--muted);font-size:12px;display:block}
+.cfg select,.cfg input[type=text]{background:var(--bg);color:var(--text);border:1px solid var(--line2);border-radius:8px;height:32px;padding:0 10px;font:inherit;min-width:180px}
+.cfg input[type=range]{width:180px;accent-color:var(--text)}
+.cfg input[type=color]{width:40px;height:30px;border:1px solid var(--line2);border-radius:8px;background:none;padding:0}
+.cfg .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.cfg button{height:32px;padding:0 14px;border-radius:8px;border:1px solid var(--line2);background:color-mix(in srgb,var(--text) 6%,transparent);color:var(--text);font:600 12.5px "Segoe UI",system-ui,sans-serif;cursor:pointer}
+.cfg button.p{background:var(--text);color:var(--bg);border-color:var(--text)}
+.mx{position:absolute;inset:0;z-index:4;background:#000;display:none}.mx.on{display:block}
+.confirm{color:var(--amber,#f59e0b)}
+.cfg .box p{color:var(--muted);line-height:1.5;margin:0 0 6px}.cfg .box p b{color:var(--text)}.cfg .acts .d{background:var(--red,#e5484d);color:#fff;border-color:transparent}
+
+.rz{position:fixed;z-index:50;-webkit-app-region:no-drag;display:none}body.frameless .rz{display:block}body.maxed .rz{display:none}
+.rz.n{top:0;left:8px;right:8px;height:4px;cursor:ns-resize}.rz.s{bottom:0;left:8px;right:8px;height:5px;cursor:ns-resize}
+.rz.w{left:0;top:8px;bottom:8px;width:4px;cursor:ew-resize}.rz.e{right:0;top:8px;bottom:8px;width:5px;cursor:ew-resize}
+.rz.nw{top:0;left:0;width:10px;height:10px;cursor:nwse-resize}.rz.se{bottom:0;right:0;width:12px;height:12px;cursor:nwse-resize}
+.rz.ne{top:0;right:0;width:10px;height:10px;cursor:nesw-resize}.rz.sw{bottom:0;left:0;width:12px;height:12px;cursor:nesw-resize}
+body.frameless{border:1px solid var(--line2)}
+</style>
+</head>
+<body>
+<div class="bar pywebview-drag-region"><svg class="logo" viewBox="0 0 128 128"><defs><clipPath id="mc"><circle cx="64" cy="64" r="50"/></clipPath><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8fb4"/><stop offset=".5" stop-color="#f6c08f"/><stop offset="1" stop-color="#6db4f5"/></linearGradient><linearGradient id="mh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff7fae"/><stop offset=".3" stop-color="#ffb37a"/><stop offset=".55" stop-color="#ffe58a"/><stop offset=".78" stop-color="#7fe6c6"/><stop offset="1" stop-color="#6fb6ff"/></linearGradient><radialGradient id="m1" cx="0.3" cy="0.28" r="0.45"><stop offset="0" stop-color="#ff79ad" stop-opacity="1"/><stop offset="1" stop-color="#ff79ad" stop-opacity="0"/></radialGradient><radialGradient id="m2" cx="0.72" cy="0.3" r="0.4"><stop offset="0" stop-color="#ffe27a" stop-opacity="1"/><stop offset="1" stop-color="#ffe27a" stop-opacity="0"/></radialGradient><radialGradient id="m3" cx="0.3" cy="0.76" r="0.42"><stop offset="0" stop-color="#5fe0c0" stop-opacity="1"/><stop offset="1" stop-color="#5fe0c0" stop-opacity="0"/></radialGradient><radialGradient id="m4" cx="0.78" cy="0.78" r="0.45"><stop offset="0" stop-color="#5ea8ff" stop-opacity="1"/><stop offset="1" stop-color="#5ea8ff" stop-opacity="0"/></radialGradient><radialGradient id="m5" cx="0.55" cy="0.55" r="0.3"><stop offset="0" stop-color="#ffffff" stop-opacity="0.55"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></radialGradient><linearGradient id="ms" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".6"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient><radialGradient id="mv" cx=".5" cy=".5" r=".5"><stop offset=".72" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".28"/></radialGradient><filter id="mbl" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="3"/></filter></defs><rect x="2" y="2" width="124" height="124" rx="28" fill="#1a1d22"/><g clip-path="url(#mc)"><rect width="128" height="128" fill="url(#mg)"/><rect width="128" height="128" fill="url(#m1)"/><rect width="128" height="128" fill="url(#m2)"/><rect width="128" height="128" fill="url(#m3)"/><rect width="128" height="128" fill="url(#m4)"/><g filter="url(#mbl)"><path d="M0 74 C 20 40, 44 36, 66 58 C 84 76, 104 70, 128 40 L128 64 C 104 92, 80 96, 60 76 C 46 62, 26 66, 0 96 Z" fill="#ff6fae" opacity=".7"/><path d="M0 38 C 24 10, 50 14, 70 34 C 86 50, 108 44, 128 16 L128 30 C 108 60, 84 66, 64 48 C 50 36, 28 36, 0 56 Z" fill="#ffe27a" opacity=".65"/><path d="M0 104 C 22 86, 48 86, 68 100 C 86 112, 108 108, 128 92 L128 112 C 106 128, 84 130, 64 116 C 48 104, 26 108, 0 122 Z" fill="#54d8ff" opacity=".6"/><path d="M30 0 C 50 24, 80 28, 128 6 L128 0 Z" fill="#7fe6c6" opacity=".6"/><path d="M0 60 C 16 56, 24 70, 40 72 C 56 74, 62 60, 80 64 C 96 68, 104 86, 128 80 L128 88 C 104 96, 94 78, 80 74 C 64 70, 58 84, 40 82 C 24 80, 16 66, 0 70 Z" fill="#fff" opacity=".45"/></g><rect width="128" height="128" fill="url(#m5)"/><ellipse cx="46" cy="34" rx="26" ry="12" fill="url(#ms)" transform="rotate(-28 46 34)"/><rect width="128" height="128" fill="url(#mv)"/></g><circle cx="64" cy="64" r="50" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width="1.5"/><path d="M33 50 Q33 42 41 42 H87 Q95 42 95 50 L99.5 73 Q100.5 84 91 84 Q84.5 84 80.5 76.5 L76.5 69 H51.5 L47.5 76.5 Q43.5 84 37 84 Q27.5 84 28.5 73 Z" fill="#1a1d22"/><rect x="48.0" y="52.5" width="4" height="13" rx="1.3333333333333333" fill="#ffd27a"/><rect x="43.5" y="57.0" width="13" height="4" rx="1.3333333333333333" fill="#ffd27a"/><circle cx="79" cy="53" r="2.6" fill="#8be0c4"/><circle cx="85" cy="59" r="2.6" fill="#6fb3f2"/><circle cx="79" cy="65" r="2.6" fill="#f3d58a"/><circle cx="73" cy="59" r="2.6" fill="#f5a07f"/></svg>
+  <b>Terminal</b><small id="ver"></small><span class="sp"></span>
+  <button title="Configurações (/terminalsettings)" onclick="openCfg()">⚙</button>
+  <button title="Limpar (Ctrl+L)" onclick="clearOut()">⌫</button>
+  <button title="Minimizar" onclick="win('minimize')"><svg viewBox="0 0 10 10"><path d="M1 5h8"/></svg></button>
+  <button title="Maximizar" onclick="win('maximize')"><svg viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" rx="1"/></svg></button>
+  <button class="x" title="Fechar (Esc)" onclick="win('close')"><svg viewBox="0 0 10 10"><path d="M2 2l6 6M8 2l-6 6"/></svg></button>
+</div>
+<div class="rz n" data-rz="n"></div><div class="rz s" data-rz="s"></div><div class="rz w" data-rz="w"></div><div class="rz e" data-rz="e"></div>
+<div class="rz nw" data-rz="nw"></div><div class="rz ne" data-rz="ne"></div><div class="rz sw" data-rz="sw"></div><div class="rz se" data-rz="se"></div>
+<div class="wrap">
+  <div id="out"></div>
+  <div class="hint" id="hint"></div>
+  <canvas class="mx" id="mx"></canvas>
+  <div class="cfg" id="cfg"><div class="box">
+    <h3>Configurações do terminal</h3>
+    <div class="f"><div>Fonte<span>Monoespaçada fica melhor</span></div><select id="cFont"><option value='"Cascadia Code","Cascadia Mono",Consolas,ui-monospace,monospace'>Cascadia / Consolas</option><option value='Consolas,ui-monospace,monospace'>Consolas</option><option value='"JetBrains Mono","Fira Code",ui-monospace,monospace'>JetBrains Mono / Fira Code</option><option value='"Courier New",monospace'>Courier New</option><option value='"Segoe UI",system-ui,sans-serif'>Segoe UI (sem serifa)</option></select></div>
+    <div class="f"><div>Tamanho<span id="cSizeL">13 px</span></div><input type="range" id="cSize" min="10" max="22" step="1"></div>
+    <div class="f"><div>Opacidade da janela<span id="cOpL">100%</span></div><input type="range" id="cOp" min="55" max="100" step="5"></div>
+    <div class="f"><div>Cor do texto<span>Vazio = cor do tema</span></div><div style="display:flex;gap:8px;align-items:center"><input type="color" id="cFg"><button onclick="$('#cFg').value='#000000';$('#cFg').dataset.clear='1'">tema</button></div></div>
+    <div class="f"><div>Cor do fundo<span>Vazio = cor do tema</span></div><div style="display:flex;gap:8px;align-items:center"><input type="color" id="cBg"><button onclick="$('#cBg').value='#000000';$('#cBg').dataset.clear='1'">tema</button></div></div>
+    <div class="f"><div>Pedir confirmação<span>Em comandos perigosos (/quit, /killproc, /importbackup…)</span></div><input type="checkbox" id="cConfirm"></div>
+    <div class="f"><div>Manter histórico<span>Setas ↑↓ lembram comandos entre sessões</span></div><input type="checkbox" id="cHist"></div>
+    <div class="acts"><button onclick="resetCfg()">Padrão</button><button onclick="$('#cfg').classList.remove('on')">Cancelar</button><button class="p" onclick="saveCfg()">Salvar</button></div>
+  </div></div>
+  <div class="cfg" id="ask"><div class="box" role="dialog" aria-modal="true">
+    <h3 id="askT">Confirmar</h3><p id="askP"></p>
+    <div class="acts"><button onclick="askDone(false)">Não fazer nada</button><button class="d" id="askOk" onclick="askDone(true)">Executar</button></div>
+  </div></div>
+</div>
+<div class="row"><span class="p">ludrix ❯</span><input id="in" placeholder="/help  —  Tab completa · ↑↓ histórico · Esc fecha" autocomplete="off" spellcheck="false" autofocus></div>
+<script>'use strict';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+const TOKEN = document.querySelector('meta[name=ludrix-token]')?.content || '';
+const post = (u, b) => fetch(u, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Ludrix-Token': TOKEN }, body: JSON.stringify(b || {}) }).then(r => r.json()).catch(e => ({ error: String(e) }));
+const get = u => fetch(u, { headers: { 'X-Ludrix-Token': TOKEN } }).then(r => r.json()).catch(() => ({}));
+const out = $('#out'), inp = $('#in');
+let CMDS = [], HIST = [], hi = -1, cfg = {}, askRes = null;
+const DEF = { font: '"Cascadia Code","Cascadia Mono",Consolas,ui-monospace,monospace', size: 13, opacity: 100, fg: '', bg: '', confirm: true, history: true };
+
+function print(text, cls) { if (text === undefined || text === null || text === '') return; const d = document.createElement('div'); d.className = 'ln ' + (cls || ''); d.textContent = text; out.appendChild(d); out.scrollTop = out.scrollHeight; }
+function printHtml(html) { const d = document.createElement('div'); d.className = 'ln'; d.innerHTML = html; out.appendChild(d); out.scrollTop = out.scrollHeight; }
+function clearOut() { out.innerHTML = ''; }
+async function win(cmd) { const r = await post('/api/window', { cmd, target: 'terminal' }); if (r && !r.native && cmd === 'close') window.close(); if (cmd === 'maximize' && r && r.max !== undefined) document.body.classList.toggle('maxed', !!r.max); }
+document.querySelectorAll('.rz').forEach(el => el.addEventListener('mousedown', e => { if (e.button !== 0) return; e.preventDefault(); post('/api/window', { cmd: 'resize', target: 'terminal', dir: el.dataset.rz }); }));
+if (window.self === window.top) fetch('/api/config').then(r => r.json()).then(c => { if (c && c.frameless !== false) document.body.classList.add('frameless'); }).catch(() => {});
+
+async function boot() {
+  const c = await get('/api/terminal/commands'); CMDS = c.commands || [];
+  const conf = await get('/api/catalog'); const C = (conf && conf.config) || {};
+  cfg = { ...DEF, ...(C.terminal_settings || {}) }; applyCfg();
+  applyTheme(C);
+  window.addEventListener('focus', async () => { const c = await get('/api/config'); if (c && c.theme !== undefined) applyTheme(c); });
+  $('#ver').textContent = 'v' + (C.version || '');
+  if (cfg.history) { HIST = c.history || []; }
+  print(`Ludrix ${C.version || ''} — terminal de debug. Digite /help pra começar.`, 'sys');
+  const u = await get('/api/updates'); if (u && u.last_result && u.last_result.changelog) { print(`Atualização ${u.last_result.ok ? 'instalada' : 'falhou'}: v${u.last_result.version}`, 'sys'); printHtml(`<div class="chlog">${esc(u.last_result.changelog)}</div>`); }
+  inp.focus();
+}
+let curTheme = 'dark';
+function applyTheme(C) {
+  let t = C.theme || 'system'; if (t === 'system') t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  if (C.accent) document.documentElement.style.setProperty('--accent', C.accent); else document.documentElement.style.removeProperty('--accent');
+  const key = t + '|' + (C.face || ''); if (key === curTheme) return; curTheme = key;
+  const old = $('#themeLink'), l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/api/theme/' + encodeURIComponent(t) + '?face=' + encodeURIComponent(C.face || ''); l.onload = () => { old && old.remove(); l.id = 'themeLink'; }; document.head.appendChild(l);
+}
+function applyCfg() {
+  const r = document.documentElement.style;
+  r.setProperty('--tfont', cfg.font || DEF.font); r.setProperty('--tsize', (cfg.size || 13) + 'px'); r.setProperty('--topac', (cfg.opacity || 100) / 100);
+  if (cfg.fg) r.setProperty('--tfg', cfg.fg); else r.removeProperty('--tfg');
+  if (cfg.bg) r.setProperty('--tbg', cfg.bg); else r.removeProperty('--tbg');
+}
+function openCfg() {
+  $('#cFont').value = cfg.font || DEF.font; $('#cSize').value = cfg.size || 13; $('#cSizeL').textContent = (cfg.size || 13) + ' px'; $('#cOp').value = cfg.opacity || 100; $('#cOpL').textContent = (cfg.opacity || 100) + '%';
+  $('#cFg').value = cfg.fg || '#000000'; $('#cFg').dataset.clear = cfg.fg ? '' : '1'; $('#cBg').value = cfg.bg || '#000000'; $('#cBg').dataset.clear = cfg.bg ? '' : '1';
+  $('#cConfirm').checked = cfg.confirm !== false; $('#cHist').checked = cfg.history !== false; $('#cfg').classList.add('on');
+}
+$('#cSize').oninput = e => $('#cSizeL').textContent = e.target.value + ' px'; $('#cOp').oninput = e => $('#cOpL').textContent = e.target.value + '%';
+$('#cFg').oninput = e => e.target.dataset.clear = ''; $('#cBg').oninput = e => e.target.dataset.clear = '';
+async function saveCfg() {
+  cfg = { font: $('#cFont').value, size: +$('#cSize').value, opacity: +$('#cOp').value, fg: $('#cFg').dataset.clear ? '' : $('#cFg').value, bg: $('#cBg').dataset.clear ? '' : $('#cBg').value, confirm: $('#cConfirm').checked, history: $('#cHist').checked };
+  applyCfg(); $('#cfg').classList.remove('on'); await post('/api/config', { terminal_settings: cfg }); print('Configurações do terminal salvas.', 'sys'); inp.focus();
+}
+async function resetCfg() { cfg = { ...DEF }; applyCfg(); $('#cfg').classList.remove('on'); await post('/api/config', { terminal_settings: {} }); print('Terminal de volta ao padrão.', 'sys'); }
+
+async function run(line) {
+  line = line.trim(); if (!line) return;
+  print(line, 'in');
+  const name = line.replace(/^\//, '').split(/\s+/)[0].toLowerCase(); const c = CMDS.find(x => x.name === name || (x.aliases || []).includes(name));
+  if (c && c.danger && cfg.confirm !== false) {
+    const ok = await ask(`/${c.name}`, `${esc(c.help)}<br><br>Rodar <b>${esc(line)}</b>?`);
+    if (!ok) { print('Cancelado.', 'sys'); return; }
+  }
+  if (!HIST.length || HIST[HIST.length - 1] !== line) HIST.push(line); hi = -1;
+  const r = await post('/api/terminal', { line });
+  if (r.error) return print('Erro: ' + r.error, 'err');
+  if (r.usage) print(r.text, 'usage'); else print(r.text, r.ok ? 'ok' : 'err');
+  if (r.ui) applyUi(r.ui);
+}
+function applyUi(ui) {
+  if (ui.clear) clearOut();
+  if (ui.terminal_settings) openCfg();
+  if (ui.matrix) matrix();
+  if (ui.config || ui.open_game || ui.velho) { try { (window.opener || window.parent).postMessage({ ludrix: ui }, '*'); } catch (e) { } post('/api/window', { cmd: 'notify_ui', ui }); }
+}
+let askAt = 0;
+function ask(title, html) { return new Promise(res => { askRes = res; askAt = performance.now(); $('#askT').textContent = title; $('#askP').innerHTML = html; $('#ask').classList.add('on'); $('#askOk').focus(); }); }
+function askDone(v) { const r = askRes; askRes = null; $('#ask').classList.remove('on'); inp.focus(); if (r) r(v); }
+document.addEventListener('keydown', e => { if (!askRes) return; if (performance.now() - askAt < 150) { e.preventDefault(); e.stopPropagation(); return; } if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); askDone(false); } else if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); askDone(true); } }, true);
+function hints() {
+  const v = inp.value; const box = $('#hint');
+  if (!v.startsWith('/') || v.includes(' ')) { box.classList.remove('on'); return []; }
+  const q = v.slice(1).toLowerCase(); const list = CMDS.filter(c => c.name.startsWith(q)).slice(0, 12);
+  if (!list.length) { box.classList.remove('on'); return []; }
+  box.innerHTML = list.map((c, i) => `<div class="${i === 0 ? 'on' : ''}" onclick="inp.value='/${c.name} ';$('#hint').classList.remove('on');inp.focus()"><b>/${esc(c.name)}</b>${esc(c.help)}</div>`).join('');
+  box.classList.add('on'); return list;
+}
+inp.addEventListener('input', hints);
+inp.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { if (askRes) return; const v = inp.value; inp.value = ''; $('#hint').classList.remove('on'); setTimeout(() => run(v), 0); }
+  else if (e.key === 'Tab') { e.preventDefault(); const l = hints(); if (l.length) { inp.value = '/' + l[0].name + ' '; $('#hint').classList.remove('on'); } }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); if (!HIST.length) return; hi = hi < 0 ? HIST.length - 1 : Math.max(0, hi - 1); inp.value = HIST[hi]; }
+  else if (e.key === 'ArrowDown') { e.preventDefault(); if (hi < 0) return; hi = hi + 1 >= HIST.length ? -1 : hi + 1; inp.value = hi < 0 ? '' : HIST[hi]; }
+  else if (e.key === 'Escape') { if ($('#hint').classList.contains('on')) $('#hint').classList.remove('on'); else if ($('#cfg').classList.contains('on')) $('#cfg').classList.remove('on'); else win('close'); }
+  else if (e.key === 'l' && e.ctrlKey) { e.preventDefault(); clearOut(); }
+});
+document.addEventListener('click', e => { if (!e.target.closest('.cfg') && !e.target.closest('.hint')) inp.focus(); });
+function matrix() {
+  const cv = $('#mx'), ctx = cv.getContext('2d'); cv.classList.add('on'); cv.width = cv.clientWidth; cv.height = cv.clientHeight;
+  const cols = Math.floor(cv.width / 14), drops = Array(cols).fill(1); const chars = 'ｱｲｳｴｵｶｷｸｹｺ0123456789LUDRIX'; const t0 = Date.now();
+  const fg = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#fff';
+  const it = setInterval(() => { ctx.fillStyle = 'rgba(0,0,0,.08)'; ctx.fillRect(0, 0, cv.width, cv.height); ctx.fillStyle = fg; ctx.font = '14px monospace';
+    drops.forEach((y, i) => { ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 14, y * 14); if (y * 14 > cv.height && Math.random() > .975) drops[i] = 0; drops[i]++; });
+    if (Date.now() - t0 > 6000) { clearInterval(it); cv.classList.remove('on'); ctx.clearRect(0, 0, cv.width, cv.height); inp.focus(); } }, 40);
+}
+boot();
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+{
+  "categories": [
+    {
+      "id": "sports",
+      "name": "Esportes",
+      "icon": "ball",
+      "match": "pro evolution|efootball|fifa|nba|mlb|wwe|madden|tony hawk|rethawed|skate|fuser"
+    },
+    {
+      "id": "racing",
+      "name": "Corrida",
+      "icon": "flag",
+      "match": "need for speed|f ?1 20|f1 race|colin mcrae|dirt|grid|toca|race driver|juiced|blur|fuel|pure|midtown|test drive|project cars|forza|horizon chase|sega rally|world racing|outrun|crazy taxi|road rash|wipeout|wheelman|the crew|lego 2k drive|fast and furious|driver|driv3r|f1"
+    },
+    {
+      "id": "shooter",
+      "name": "Tiro",
+      "icon": "target",
+      "match": "battlefield|bf:|halo|call of|007|bond|gears of war|lost planet|spec ops|syndicate|prey|turok|unreal|vietcong|area 51|operation flashpoint|no one lives forever|contract j|gunman|heretic|heavy metal|will rock|shellshock|battle: los angeles|rambo|terminator|starship troopers|aliens vs|alien trilogy|ghost recon|h.a.w.x|ace combat|starlancer|dark void|psychotoxic|deep black|you are empty|vivisector|cryostasis|pariah|damnation|dreamkiller|infernal|bad boys|fugitive hunter|project i.g.i|the punisher|wanted|gore|jericho|blood stone|quantum of solace|legends|ride to hell|afterfall|nocturne|shrak"
+    },
+    {
+      "id": "action",
+      "name": "Ação / Aventura",
+      "icon": "sword",
+      "match": "spider|x-men|x2:|marvel|batman|hulk|fantastic four|deadpool|wolverine|transformers|sleeping dogs|scarface|godfather|true crime|manhunt|dead to rights|max payne|matrix|riddick|prince|tomb|onimusha|devil may cry|ninja blade|dark souls|darksiders|kingdoms of amalur|fable|lord of the rings|conquest|war in the north|king kong|avatar|dead island|resident evil|condemned|suffering|saw|evil dead|silent hill|blair witch|dead man|mercenaries|army|wanted|jump force|street fighter|mortal kombat|dead or alive|tekken|celebrity deathmatch|tmnt|teenage mutant|ninja turtles|korra|kung fu panda|g-force|over the hedge|ratatouille|ice age|polar express|bionicle|lego star wars|sonic|banjo|bomberman|pac man|crash|tonic trouble|sheep|neverhood|oni|drakan|enter the matrix|psi-ops|armed and dangerous|dead man's hand|bedlam|john wick|peaky|prison break|dexter|house|lost:|desperate|csi|star trek|star wars|splinter cell|pirates|jurassic|ghostbusters|family guy|simpsons|back to the future|walking dead|game of thrones|guardians|minecraft|poker|angry birds|bookworm|friday the 13th|american mcgee|alice|zoo tycoon|sims|movies|black & white|paraworld|mechcommander|warcraft|space siege|lego|viva pinata|fantavision"
+    },
+    {
+      "id": "strategy",
+      "name": "Estratégia / Simulação",
+      "icon": "chess",
+      "match": "zoo tycoon|the sims|the movies|black & white|paraworld|mechcommander|warcraft|space siege|cabela|viva pinata|jurassic park: operation"
+    },
+    {
+      "id": "collection",
+      "name": "Coletâneas",
+      "icon": "box",
+      "match": "collection|classics|favorites|underrated|dreamcast"
+    },
+    {
+      "id": "recomp",
+      "name": "Recompilados",
+      "icon": "cpu",
+      "kind": "recomp"
+    },
+    {
+      "id": "emu",
+      "name": "Emulação",
+      "icon": "gamepad",
+      "kind": "rom"
+    }
+  ]
+}
