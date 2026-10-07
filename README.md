@@ -144,7 +144,6 @@ Estrutura:
 ```
 app/            programa: core/ (Python), ui/ (HTML/CSS/JS), presets/ (catálogos de emuladores, dependências, categorias)
 tools/build.py  build, empacotamento, assinatura, feed de atualização, publicação
-casca/          esboço da casca nativa em C# (.NET 8 + WebView2), opcional
 docs/           documentação
 ```
 

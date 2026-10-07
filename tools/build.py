@@ -479,7 +479,7 @@ def cmd_src():
         add_tree(z, APP, "Ludrix-src/app")
         z.writestr(f"Ludrix-src/app/{integrity.MANIFEST}", integrity_json())
         add_tree(z, ROOT / "tools", "Ludrix-src/tools")
-        for d in ("docs", ".github", "casca"):
+        for d in ("docs", ".github"):
             if (ROOT / d).is_dir():
                 add_tree(z, ROOT / d, f"Ludrix-src/{d}")
         for f in ("run.bat", "build.bat", "publicar.bat", "git-setup.bat", "lancar.bat", "requirements.txt", "README.md", "README.en.md", "CHANGELOG.md", "LICENSE", "SECURITY.md", "CONTRIBUTING.md", ".gitignore"):

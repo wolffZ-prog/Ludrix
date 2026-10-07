@@ -16,8 +16,7 @@ app/pyc.json
 *.key
 chave/
 tools/cache/
-casca/bin/
-casca/obj/
+casca/
 *.lxup
 Thumbs.db
 desktop.ini

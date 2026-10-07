@@ -451,10 +451,18 @@ def main():
             except Exception:
                 pass
 
+    def _force_exit():
+        time.sleep(6)
+        alive = [t.name for t in threading.enumerate() if t is not threading.main_thread() and not t.daemon]
+        logging.getLogger("ludrix").warning("saída forçada; threads ainda vivas: %s", ", ".join(alive) or "nenhuma")
+        logging.shutdown()
+        os._exit(0)
+
     def quit_app():
         if state["quitting"]:
             return
         state["quitting"] = True
+        threading.Thread(target=_force_exit, daemon=True, name="exit-guard").start()
         instance.clear()
         ludrix.shutdown()
         if ludrix.gamepad:
@@ -932,6 +940,9 @@ def main():
                       icon=_window_icon(), gui=_gui_backend())
     finally:
         quit_app()
+        logging.getLogger("ludrix").info("encerrado")
+        logging.shutdown()
+        os._exit(0)
 
 
 def _bring_to_front():

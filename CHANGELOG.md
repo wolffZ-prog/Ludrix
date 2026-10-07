@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.36.1 — 2026-10-07
+- Corrigido: ao sair (pela bandeja ou pelo X) o processo podia continuar em segundo plano, e a próxima abertura mostrava "O Ludrix desta pasta já está aberto". O encerramento agora é garantido: se algo ainda estiver rodando 6 s depois do pedido de saída, o Ludrix fecha mesmo assim e registra no `data/ludrix.log` o que estava segurando.
+- `casca/` (esboço em C#) removida do código-fonte e do repositório.
+
 ## 2.36.0 — 2026-10-07
 - Detecção do executável: regra genérica para qualquer jogo. Executáveis com marca de site/repack, instaladores, desinstaladores, crash handlers e utilitários perdem prioridade para o executável do jogo; quando continua ambíguo, o Ludrix pergunta.
 - Capa, fundo e metadados escolhidos pelo usuário não são mais substituídos: a busca automática roda uma única vez por jogo e depois só completa o que estiver vazio.
