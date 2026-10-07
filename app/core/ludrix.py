@@ -150,6 +150,7 @@ class Ludrix:
         self._boot = {"done": False, "i": 0, "n": 0, "step": "", "errors": [], "started": False}
         self._t0 = time.time()
         self._first_payload_at = 0.0
+        self.ui_booted = False
         self._exists_cache: dict[str, tuple[float, bool]] = {}
         self.pool.submit(self.bootstrap_run)
         self.pool.submit(lambda: self.emu.scan_all(True))

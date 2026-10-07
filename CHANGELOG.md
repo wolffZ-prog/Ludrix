@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.36.2 — 2026-10-07
+- Corrigido: fechar o Ludrix nos primeiros 10 segundos depois de abrir contava como "não conseguiu abrir", e na segunda vez a atualização era desfeita sozinha (a 2.36.1 voltava para a 2.36.0). A abertura passa a ser considerada boa assim que a interface carrega, e uma saída normal nunca conta como falha.
+
 ## 2.36.1 — 2026-10-07
 - Corrigido: ao sair (pela bandeja ou pelo X) o processo podia continuar em segundo plano, e a próxima abertura mostrava "O Ludrix desta pasta já está aberto". O encerramento agora é garantido: se algo ainda estiver rodando 6 s depois do pedido de saída, o Ludrix fecha mesmo assim e registra no `data/ludrix.log` o que estava segurando.
 - `casca/` (esboço em C#) removida do código-fonte e do repositório.

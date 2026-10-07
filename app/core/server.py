@@ -266,7 +266,8 @@ class Handler(BaseHTTPRequestHandler):
             if p == "/api/config":
                 if not Handler.booted:
                     Handler.booted = True
-                    threading.Timer(10.0, diag.boot_ok).start()
+                    v.ui_booted = True
+                    diag.boot_ok()
                 return self._json(v.public_config())
             if p == "/api/diag":
                 return self._json(diag.report(v))

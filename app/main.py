@@ -463,6 +463,8 @@ def main():
             return
         state["quitting"] = True
         threading.Thread(target=_force_exit, daemon=True, name="exit-guard").start()
+        if getattr(ludrix, "ui_booted", False):
+            paths.boot_ok()
         instance.clear()
         ludrix.shutdown()
         if ludrix.gamepad:
