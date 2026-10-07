@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.37.0 — 2026-10-07
+- Biblioteca: painel lateral de filtros (botão Filtros) com o conjunto completo: situação, origem, categoria, gênero, desenvolvedora, ano, última vez que jogou, data em que foi adicionado, tempo jogado e tamanho. Cada grupo mostra a contagem, tem busca própria e aceita várias marcações; os filtros ativos aparecem como chips acima da grade. Combinações podem ser salvas e reaplicadas em "Filtros salvos". O painel vale também para a Store.
+- Ajustes: títulos de seção maiores, opções em cartões com nomes em destaque e descrições mais legíveis; abas da lateral maiores.
+- "Opções avançadas" virou um cartão próprio na lateral de Ajustes, com descrição; ao ligar, a tela rola até o primeiro bloco avançado da aba (ou avisa quando a aba não tem nenhum).
+- Mods e ferramentas refeitos: Meus mods com lista de jogos (os que têm mods primeiro, com busca) e painel do jogo escolhido; Ferramentas em cartões por categoria com chips de filtro (Todas, Instaladas, categoria) e indicação Portátil/Site; Sites de mods em cartões.
+- Jogos não reconhecidos pelas fontes de metadados passam a gerar um único aviso agrupado, com lista para corrigir cada um, em vez de um aviso por jogo.
+
 ## 2.36.3 — 2026-10-07
 - Corrigido de vez o retorno indevido de versão: a abertura passa a ser marcada como boa na primeira requisição da biblioteca (a 2.36.2 marcava num pedido que a interface normalmente não faz na abertura, então fechar cedo ainda contava como falha).
 - `lancar.bat`: o código sobe para o GitHub antes da release, assim o "Source code" automático da release corresponde à versão publicada.

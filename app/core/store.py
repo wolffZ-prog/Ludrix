@@ -85,6 +85,8 @@ DEFAULT_CONFIG = {
     "home_spot_style": "auto",
     "clock": "off",
     "settings_adv": False,
+    "filter_panel": False,
+    "filter_presets": [],
     "card_playtime": False,
     "warn_missing": True,
     "last_lib_check": 0,

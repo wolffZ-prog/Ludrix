@@ -57,7 +57,7 @@ const enc = s => encodeURIComponent(s);
 const fmtTime = sec => { sec = Math.floor(sec || 0); if (sec < 60) return '0 min'; const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60); return h ? `${h} h ${String(m).padStart(2, '0')} min` : `${m} min`; };
 const ago = ts => { if (!ts) return ''; const d = (Date.now() / 1000 - ts); if (d < 3600) return 'há ' + Math.max(1, Math.floor(d / 60)) + ' min'; if (d < 86400) return 'há ' + Math.floor(d / 3600) + ' h'; if (d < 172800) return 'ontem'; return 'há ' + Math.floor(d / 86400) + ' dias'; };
 
-const S = { sel: new Set(), games: [], byKey: {}, cats: [], repos: [], systems: {}, config: {}, view: 'home', cat: 'all', q: '', stageKey: '', sort: 'az', flt: { cats: new Set(), sys: new Set(), flags: new Set(), repos: new Set(), src: new Set() }, home: null, tab: { store: 'games', mods: 'tools', emulation: 'emulators', central: 'overview' }, mods: null,
+const S = { sel: new Set(), games: [], byKey: {}, cats: [], repos: [], systems: {}, config: {}, view: 'home', cat: 'all', q: '', stageKey: '', sort: 'az', flt: { cats: new Set(), sys: new Set(), flags: new Set(), repos: new Set(), src: new Set(), genres: new Set(), devs: new Set(), years: new Set(), lastp: new Set(), added: new Set(), ptime: new Set(), size: new Set() }, _fopen: {}, _fq: {}, _fall: {}, home: null, tab: { store: 'games', mods: 'tools', emulation: 'emulators', central: 'overview' }, mods: null,
             jobs: {}, current: null, hero: [], heroIdx: 0, heroT: null, torrent: false, emu: null, themes: [] };
 
 const FR = [
@@ -567,6 +567,10 @@ function visible() {
     if (hasCats && !(g.cats || []).some(c => f.cats.has(c))) return false;
     if (hasSys && !f.sys.has(g.system || 'pc')) return false;
     if (hasRepos && !f.repos.has(g.repo)) return false;
+    if (f.genres.size && !(g.genres || []).some(x => f.genres.has(x))) return false;
+    if (f.devs.size && !f.devs.has(g.creator || '')) return false;
+    if (f.years.size && !f.years.has(String(g.year || ''))) return false;
+    for (const k of BUCKET_KINDS) if (f[k].size && !f[k].has(bucketOf[k](g))) return false;
     for (const t of flags) if (!t(g)) return false;
     return true;
   });
@@ -586,15 +590,19 @@ function visible() {
 function poolStats() {
   const key = S.view + '|' + S.tab.store + '|' + (S.emuSys || '') + '|' + (S.config.store_hide_installed !== false) + '|' + Object.keys(S.jobs).length;
   if (S._poolKey === key && S._pool) return S._pool;
-  const counts = {}, scount = {}, fcount = {}, rcount = {}, ocount = {}; let n = 0;
+  const counts = {}, scount = {}, fcount = {}, rcount = {}, ocount = {}, gcount = {}, dcount = {}, ycount = {}, bcount = { lastp: {}, added: {}, ptime: {}, size: {} }; let n = 0;
   const flagIds = FLAGS.map(f => f[0]); for (const id of flagIds) fcount[id] = 0;
+  const inc = (o, k) => { if (k) o[k] = (o[k] || 0) + 1; };
   for (const g of S.games) {
     if (!inView(g)) continue; n++;
     if (g.cats) for (const c of g.cats) counts[c] = (counts[c] || 0) + 1;
     const sy = g.system || 'pc'; scount[sy] = (scount[sy] || 0) + 1; if (g.repo) rcount[g.repo] = (rcount[g.repo] || 0) + 1; const og = originOf(g); if (og) ocount[og] = (ocount[og] || 0) + 1;
+    if (g.genres) for (const x of g.genres) inc(gcount, x);
+    inc(dcount, g.creator || ''); inc(ycount, String(g.year || ''));
+    for (const k of BUCKET_KINDS) inc(bcount[k], bucketOf[k](g));
     for (const id of flagIds) if (FLAG_TEST[id](g)) fcount[id]++;
   }
-  S._poolKey = key; return S._pool = { n, counts, scount, fcount, rcount, ocount };
+  S._poolKey = key; return S._pool = { n, counts, scount, fcount, rcount, ocount, gcount, dcount, ycount, bcount };
 }
 function renderChips() {
   const { n, counts } = poolStats();
@@ -616,7 +624,7 @@ function renderLibrary() {
   renderChips();
   S._multiSrc = S.view === 'store' && new Set(S.games.filter(inStore).map(g => g.repo)).size > 1;
   const list = visible();
-  const fltNames = [...S.flt.cats].map(id => (S.cats.find(c => c.id === id) || {}).name || id).concat([...S.flt.sys].map(id => id === 'pc' ? 'PC' : (S.systems[id] || id)), [...S.flt.flags].map(id => (FLAGS.find(f => f[0] === id) || [])[1] || id), S.view === 'store' ? [...S.flt.repos].map(repoName) : []);
+  const fltNames = fltLabels().map(x => x[2]);
   const catName = S.cat !== 'all' ? (S.cats.find(c => c.id === S.cat) || {}).name : fltNames.length ? fltNames.slice(0, 3).join(' · ') + (fltNames.length > 3 ? ` +${fltNames.length - 3}` : '') : (S.view === 'home' ? (stageOn() ? 'Todos os jogos' : 'Minha biblioteca') : 'Disponíveis para baixar');
   let h = '';
   if (S.view === 'store') h += storeTabs();
@@ -626,13 +634,16 @@ function renderLibrary() {
         ${!topSearchVisible() ? `<div class="qmini ${S.q ? 'on' : ''}"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="qm" placeholder="Buscar…" value="${esc(S.q)}" autocomplete="off" spellcheck="false" oninput="miniSearch(this.value)" onfocus="this.parentElement.classList.add('on')" onblur="if(!this.value)this.parentElement.classList.remove('on')"><kbd>/</kbd></div>` : ''}
         ${['home', 'store'].includes(S.view) ? viewBtn() : ''}
         ${S.view === 'home' && !stageOn() ? `<button class="btn s xs" onclick="surprise()" title="Escolhe um jogo da sua biblioteca para você jogar agora">${I.spark} Me surpreenda</button>` : ''}${!(S.view === 'home' && !filtersActive() && !S.q && stageOn()) ? filterBtn() : ''}${S.view === 'home' ? `<button class="btn p xs addbtn" onclick="addGameMenu()">+ Adicionar jogo</button>` : `<button class="btn s xs" onclick="loadCatalog(true)">${I.refresh} Atualizar</button>`}</div>`;
+  h += activeChips();
   const noSrc = S.view === 'store' && !S.repos.some(r => r.enabled && r.kind !== 'rom');
   if (!S.games.length && !noSrc && !(S.view === 'home' && S.loaded)) h += `<div class="grid">${Array.from({ length: 18 }, () => '<div class="card sk"><div class="cov"></div><h4>&nbsp;</h4></div>').join('')}</div>`;
   else if (!list.length && noSrc && !S.q && !filtersActive()) h += `${emptyHtml(I.magnet, S.repos.length ? 'Nenhuma fonte ligada' : 'Nenhuma fonte adicionada', `A Store mostra o que as suas fontes de jogos de PC oferecem${S.repos.some(r => r.enabled && r.kind === 'rom') ? ' — as fontes de ROM ficam na aba <b>Emuladores</b>' : ''}. ${S.repos.length ? 'Ligue uma em' : 'Adicione uma em'} <b>Fontes</b>: site de download, coleção do archive.org, GitHub ou lista .json.`, [['Abrir Fontes', "S.tab.store='sources';renderView()", 1], ['Adicionar jogo que já tenho', 'addLocal()']])}`;
   else if (!list.length) h += `${S.view === 'home' ? (S.q || filtersActive() ? emptyHtml(I.search, 'Nenhum jogo com esse filtro', /\b(dev|ano|gen|sis|origem|src):/.test(S.q) ? 'Prefixos aceitos: dev: (desenvolvedora), ano: (ano ou década, ex. 2010s), gen: (gênero), sis: (sistema), origem: (Steam, Epic, ROM…).' : 'Tente outro termo ou limpe os filtros.', [['Limpar busca e filtros', 'clearSearch();clearFlt()', 1]]) : emptyHtml(I.home, 'Sua biblioteca está vazia', 'Baixe algo na Store ou adicione um jogo que você já tem — um .exe, um atalho ou uma ROM.', [['Abrir Store', "setView('store')", 1], ['Adicionar jogo', 'addLocal()'], ['Importar de outro launcher', 'importWizard()']])) : emptyHtml(I.search, 'Nenhum resultado', 'Tente outro termo ou categoria.', [['Limpar busca e filtros', 'clearSearch();clearFlt()', 1]])}`;
   if (S.view === 'store' && list.length && q.length >= 3 && S.repos.some(r => r.enabled && /^site-/.test(r.id)) && !S._siteQ) h += `<div class="sitehint">Não achou? <button class="lnk" onclick="siteSearch()">Buscar "${esc(S.q.trim())}" direto nos sites ligados</button></div>`;
   else h += `<div class="grid${listMode() ? ' lst' : ''}" id="grid"></div><div class="pager" id="pager"></div>`;
-  $('#view').innerHTML = h;
+  const pin = fpOn(), oldP = $('#fpanel'), pst = oldP ? oldP.scrollTop : 0;
+  $('#view').innerHTML = pin ? `<div class="libwrap"><div class="libmain">${h}</div>${fpanelHtml()}</div>` : h;
+  if (pin && pst) { const np = $('#fpanel'); if (np) np.scrollTop = pst; }
   if (list.length) { if (S.view === 'store') fillPaged(list); else fillGrid(list); }
   if (S.hero.length && $('#hero')) showHero(S.heroIdx);
   if (S.view === 'home' && S.config.cover_slideshow && !ssT && !(S._focusKey && S.config.game_backdrop)) slideshowStart();
@@ -1011,6 +1022,7 @@ function showHero(i) {
   const t = $('#hero .txt'); t.style.animation = 'none'; t.offsetHeight; t.style.animation = '';
 }
 
+const BLANK_GIF = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 function dph(img) {
   const d = document.createElement('div'); d.className = 'dph'; d.textContent = img.alt || '?'; img.replaceWith(d);
 }
@@ -2100,15 +2112,24 @@ async function renderSettings(fresh) {
   S._settingsBody = buildBody;
   const body = buildBody(tab);
   const tabBtn = ([id, n, ic]) => `<button class="${tab === id ? 'on' : ''}" data-tab="${id}" onclick="settingsTab('${id}')">${I[ic] || ''}<span>${n}</span></button>`;
-  $('#view').innerHTML = `<div class="h1"><h2>Ajustes</h2><span title="${esc(c.root)}">${esc(c.root)}</span></div>
+  $('#view').innerHTML = `<div class="h1 seth"><h2>Ajustes</h2><span title="${esc(c.root)}">${esc(c.root)}</span></div>
     ${restartBanner()}<div class="setwrap"><aside class="setnav"><div class="stabs">${TABS.map(tabBtn).join('')}</div><div class="stoc" id="stoc"></div>
-      <div class="setfoot"><label class="sadv" title="Mostra também as opções que quase ninguém precisa mexer"><button class="sw ${c.settings_adv ? 'on' : ''}" onclick="setCfg({settings_adv:!S.config.settings_adv})"></button><span>Opções avançadas</span></label>
+      <div class="setfoot"><div class="sadvbox ${c.settings_adv ? 'on' : ''}"><div class="l"><b>Opções avançadas</b><span id="sadvN">${c.settings_adv ? 'Visíveis em todas as abas' : 'Ocultas — mostra as opções marcadas como avançado'}</span></div><button class="sw ${c.settings_adv ? 'on' : ''}" onclick="toggleAdv()" title="${c.settings_adv ? 'Ocultar opções avançadas' : 'Mostrar opções avançadas'}"></button></div>
       ${(TAB_KEYS[tab] || []).length ? `<button class="lnk" onclick="settingsReset('${tab}')">Redefinir esta aba</button>` : ''}<button class="lnk" onclick="api.post('/api/open',{path:'data'})" title="Pasta data (config, biblioteca, log)">Abrir pasta data</button></div></aside>
     <div class="settings" id="setBody" data-tab="${tab}">${body}</div></div>`;
   settingsToc();
   if (S._settingsJump) { const j = S._settingsJump; S._settingsJump = ''; requestAnimationFrame(() => settingsGo(j, false)); } else $('#view').scrollTop = keepScroll;
   viewFilter();
   if (tab === 'system' && !S.upd) loadUpdates();
+}
+function toggleAdv() {
+  const on = !S.config.settings_adv;
+  setCfg({ settings_adv: on }).then(() => {
+    const n = document.querySelectorAll('#setBody .adv .frow, #setBody .sec.advonly .frow, #setBody .adv .tiles, #setBody .adv .seg').length;
+    if (!on) return;
+    if (!n) toast('info', 'Opções avançadas ligadas', 'Esta aba não tem opções avançadas. Elas aparecem com a marca AVANÇADO nas abas que têm.');
+    else { const first = document.querySelector('#setBody .adv, #setBody .sec.advonly'); if (first) { first.scrollIntoView({ block: 'center', behavior: 'smooth' }); first.classList.add('flash'); setTimeout(() => first.classList.remove('flash'), 1600); } }
+  });
 }
 const TAB_KEYS = {
   general: ['tray_enabled', 'close_action', 'popups', 'notify_sound', 'guides'],
@@ -2476,7 +2497,7 @@ async function handleEvent(ev) {
     TH.err.delete(ev.key); TH.tries[ev.key] = 0;
     if (ev.found === false && ev.mine && S.config.auto_metadata !== false && !S._askedMeta?.has(ev.key)) {
       (S._askedMeta = S._askedMeta || new Set()).add(ev.key);
-      toast('', `Não reconheci "${ev.title}"`, 'Nenhuma fonte achou esse nome. Você pode corrigir o nome, escolher onde procurar ou preencher à mão.', [{ label: 'Editar detalhes', fn: () => editGame(ev.key, 'meta') }, { label: 'Depois', fn: () => { } }]);
+      unrecQueue(ev.key, ev.title);
     }
     document.querySelectorAll(`.card[data-key="${CSS.escape(ev.key)}"]`).forEach(c => {
       const im = c.querySelector('img'); if (im) { im.classList.remove('err'); im.src = `/thumb/${enc(ev.key)}?v=${ev.cv}`; }
@@ -2625,6 +2646,18 @@ const _uiErrSeen = new Set();
 window.addEventListener('error', e => { const msg = String(e.message || e.error || 'erro'); if (_uiErrSeen.has(msg) || _uiErrSeen.size > 20) return; _uiErrSeen.add(msg); try { api.post('/api/log/ui', { msg, src: e.filename || '', line: e.lineno || 0 }); } catch (_) {} });
 window.addEventListener('unhandledrejection', e => { const msg = 'promise: ' + String((e.reason && (e.reason.message || e.reason)) || '?'); if (_uiErrSeen.has(msg) || _uiErrSeen.size > 20) return; _uiErrSeen.add(msg); try { api.post('/api/log/ui', { msg }); } catch (_) {} });
 const _toastSeen = new Map();
+function unrecQueue(key, title) {
+  (S._unrec = S._unrec || []).push({ key, title });
+  clearTimeout(S._unrecT);
+  S._unrecT = setTimeout(() => {
+    const q = S._unrec || []; S._unrec = []; if (!q.length) return;
+    if (q.length === 1) return toast('', `Não reconheci "${q[0].title}"`, 'Nenhuma fonte achou esse nome. Você pode corrigir o nome, escolher onde procurar ou preencher à mão.', [{ label: 'Editar detalhes', fn: () => editGame(q[0].key, 'meta') }, { label: 'Depois', fn: () => { } }]);
+    toast('', `${q.length} jogos não reconhecidos`, `Nenhuma fonte achou: ${q.slice(0, 3).map(x => x.title).join(', ')}${q.length > 3 ? ` e mais ${q.length - 3}` : ''}. Dá para corrigir o nome, escolher onde procurar ou preencher à mão.`, [{ label: 'Ver lista', fn: () => unrecList(q) }, { label: 'Depois', fn: () => { } }]);
+  }, 2500);
+}
+function unrecList(q) {
+  modal({ title: `${q.length} jogos sem informações`, text: 'Clique num jogo para corrigir o nome ou preencher os detalhes à mão.', html: `<div class="mlist">${q.map(x => `<button onclick="editGame(${jsq(x.key)},'meta')">${esc(x.title)}</button>`).join('')}</div>`, noOk: true, cancel: 'Fechar' });
+}
 function toast(type, title, msg, actions) {
   if (actions && !Array.isArray(actions)) actions = [actions];
   const sig = type + '|' + title + '|' + (msg || ''), now = Date.now();
@@ -2742,25 +2775,105 @@ const FLAGS = [['fav', 'Favoritos'], ['recent', 'Jogados esta semana'], ['added'
                ['installed', 'Instalados'], ['notinst', 'Não instalados'], ['old', 'Clássicos (antes de 2005)'], ['big', 'Grandes (> 10 GB)'], ['nometa', 'Sem capa / metadados'], ['broken', 'Arquivo não encontrado'], ['playnite', 'Vindos do Playnite'], ['withargs', 'Com argumentos']];
 const repoFltN = () => (S.view === 'store' ? S.flt.repos.size : 0) + S.flt.src.size;
 const repoName = id => (S.repos.find(r => r.id === id) || {}).name || id || '';
-const filtersActive = () => S.cat !== 'all' || S.flt.cats.size + S.flt.sys.size + S.flt.flags.size + repoFltN() > 0;
+const FLT_KINDS = ['cats', 'sys', 'flags', 'repos', 'src', 'genres', 'devs', 'years', 'lastp', 'added', 'ptime', 'size'];
+const BUCKET_KINDS = ['lastp', 'added', 'ptime', 'size'];
+const BUCKETS = {
+  lastp: [['never', 'Nunca'], ['today', 'Hoje'], ['week', 'Últimos 7 dias'], ['month', 'Últimos 30 dias'], ['year', 'Último ano'], ['older', 'Há mais de um ano']],
+  added: [['today', 'Hoje'], ['week', 'Últimos 7 dias'], ['month', 'Últimos 30 dias'], ['year', 'Último ano'], ['older', 'Há mais de um ano']],
+  ptime: [['none', 'Nunca jogado'], ['lt1', 'Menos de 1 h'], ['h1', '1 a 10 h'], ['h10', '10 a 50 h'], ['h50', 'Mais de 50 h']],
+  size: [['lt1', 'Menos de 1 GB'], ['g1', '1 a 10 GB'], ['g10', '10 a 50 GB'], ['g50', 'Mais de 50 GB']],
+};
+const agoB = ts => { const a = Date.now() / 1000 - ts; return a < 86400 ? 'today' : a < 7 * 86400 ? 'week' : a < 30 * 86400 ? 'month' : a < 365 * 86400 ? 'year' : 'older'; };
+const bucketOf = {
+  lastp: g => g.last_played ? agoB(g.last_played) : 'never',
+  added: g => g.added_at ? agoB(g.added_at) : '',
+  ptime: g => { const h = (g.playtime || 0) / 3600; return !g.playtime ? 'none' : h < 1 ? 'lt1' : h < 10 ? 'h1' : h < 50 ? 'h10' : 'h50'; },
+  size: g => { const gb = (g.size || 0) / 1e9; return !g.size ? '' : gb < 1 ? 'lt1' : gb < 10 ? 'g1' : gb < 50 ? 'g10' : 'g50'; },
+};
+const FLT_TITLES = { repos: 'Fonte', src: 'Origem', sys: 'Plataforma', cats: 'Categoria', genres: 'Gênero', years: 'Ano de lançamento', devs: 'Desenvolvedora', lastp: 'Última vez jogado', added: 'Adicionado', ptime: 'Tempo de jogo', size: 'Tamanho', flags: 'Situação' };
+const QUICK = [['installed', 'Instalados'], ['notinst', 'Não instalados'], ['fav', 'Favoritos'], ['never', 'Nunca joguei']];
+const fltCount = () => FLT_KINDS.reduce((a, k) => a + (k === 'repos' && S.view !== 'store' ? 0 : S.flt[k].size), 0);
+const filtersActive = () => S.cat !== 'all' || fltCount() > 0;
+const fpOn = () => !!S.config.filter_panel && ['home', 'store'].includes(S.view) && !(S.view === 'store' && S.tab.store === 'sources');
+function fltLabel(kind, id) {
+  if (kind === 'cats') return (S.cats.find(c => c.id === id) || {}).name || id;
+  if (kind === 'sys') return id === 'pc' ? 'PC' : (S.systems[id] || id);
+  if (kind === 'flags') return (FLAGS.find(f => f[0] === id) || [])[1] || id;
+  if (kind === 'repos') return repoName(id);
+  if (BUCKET_KINDS.includes(kind)) return (BUCKETS[kind].find(b => b[0] === id) || [])[1] || id;
+  if (kind === 'devs') return id || 'Sem desenvolvedora';
+  if (kind === 'years') return id || 'Sem ano';
+  return id;
+}
+function fltLabels() { const out = []; for (const k of FLT_KINDS) { if (k === 'repos' && S.view !== 'store') continue; for (const id of S.flt[k]) out.push([k, id, fltLabel(k, id)]); } return out; }
+function fpItems(kind) {
+  const P = poolStats();
+  const byCount = o => Object.keys(o).sort((a, b) => o[b] - o[a] || COLL.compare(a, b)).map(id => [id, fltLabel(kind, id), o[id]]);
+  if (kind === 'repos') return S.view === 'store' ? byCount(P.rcount) : [];
+  if (kind === 'src') return S.view === 'home' ? byCount(P.ocount) : [];
+  if (kind === 'sys') { const it = byCount(P.scount); return it.length > 1 ? it : []; }
+  if (kind === 'cats') return S.cats.filter(c => P.counts[c.id]).map(c => [c.id, c.name, P.counts[c.id]]);
+  if (kind === 'genres') return byCount(P.gcount);
+  if (kind === 'devs') return byCount(P.dcount).filter(x => x[0]);
+  if (kind === 'years') return Object.keys(P.ycount).filter(Boolean).sort((a, b) => +b - +a).map(id => [id, id, P.ycount[id]]);
+  if (BUCKET_KINDS.includes(kind)) { if (kind === 'size' && S.view === 'home') return []; return BUCKETS[kind].map(([id, nm]) => [id, nm, P.bcount[kind][id] || 0]).filter(x => x[2]); }
+  if (kind === 'flags') return FLAGS.filter(([id]) => !QUICK.some(q => q[0] === id) && (S.view !== 'store' || !['recent', 'played'].includes(id))).map(([id, nm]) => [id, nm, P.fcount[id]]).filter(x => x[2]);
+  return [];
+}
+function fpanelHtml() {
+  const f = S.flt, n = fltCount(), P = poolStats();
+  const box = (kind, id, nm, c) => `<label class="fbox ${f[kind].has(id) ? 'on' : ''}"><input type="checkbox" ${f[kind].has(id) ? 'checked' : ''} onchange="toggleFlt('${kind}',${jsq(id)})"><span>${esc(nm)}</span><em>${c}</em></label>`;
+  const sec = kind => {
+    const items = fpItems(kind); if (!items.length) return '';
+    const title = FLT_TITLES[kind], act = f[kind].size, open = S._fopen[kind] !== undefined ? S._fopen[kind] : act > 0 || ['sys', 'cats', 'genres'].includes(kind);
+    const many = items.length > 8, q = S._fq[kind] || '', qn = qnorm(q);
+    const shown = qn ? items.filter(x => qnorm(x[1]).includes(qn)) : items;
+    const lim = !qn && many && !S._fall[kind] ? 7 : 1e9;
+    return `<div class="fsc${open ? ' open' : ''}"><button class="fsh" onclick="fpToggle('${kind}')"><b>${title}</b>${act ? `<i>${act}</i>` : ''}<svg class="car" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+      ${open ? `<div class="fsb">${many ? `<input class="fsq" placeholder="Procurar em ${title.toLowerCase()}…" value="${esc(q)}" oninput="fpSearch('${kind}',this.value)" spellcheck="false">` : ''}
+      ${shown.slice(0, lim).map(([id, nm, c]) => box(kind, id, nm, c)).join('')}
+      ${shown.length > lim ? `<button class="lnk fsmore" onclick="S._fall['${kind}']=1;fpRender()">Mostrar todos (${shown.length})</button>` : ''}
+      ${!shown.length ? '<span class="fnone">Nada com esse nome</span>' : ''}</div>` : ''}</div>`;
+  };
+  const presets = S.config.filter_presets || [];
+  const quick = QUICK.filter(([id]) => S.view !== 'store' || !['installed', 'notinst', 'never'].includes(id)).map(([id, nm]) => `<button class="${f.flags.has(id) ? 'on' : ''}" onclick="toggleFlt('flags',${jsq(id)})">${esc(nm)}${P.fcount[id] ? ` <em>${P.fcount[id]}</em>` : ''}</button>`).join('');
+  return `<aside class="fpanel" id="fpanel" onclick="event.stopPropagation()">
+    <div class="fph"><b>Filtros</b>${n ? `<span class="n">${n}</span>` : ''}<span class="sp"></span>${n ? `<button class="lnk" onclick="clearFlt()">Limpar</button>` : ''}<button class="fpx" onclick="fpOpen(false)" title="Fechar painel">${I.x}</button></div>
+    <div class="fpre"><select onchange="fpApplyPreset(this.value)" title="Filtros salvos"><option value="">${presets.length ? 'Filtros salvos…' : 'Nenhum filtro salvo'}</option>${presets.map((p, i) => `<option value="${i}" ${S._fpreset === i ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
+      ${S._fpreset !== undefined && presets[S._fpreset] ? `<button class="btn s xs" onclick="fpDelPreset()" title="Excluir este filtro salvo">${I.trash}</button>` : `<button class="btn s xs" onclick="fpSavePreset()" ${n ? '' : 'disabled'} title="Salvar a combinação atual com um nome">Salvar</button>`}</div>
+    ${quick ? `<div class="fquick">${quick}</div>` : ''}
+    ${['repos', 'src', 'sys', 'cats', 'genres', 'years', 'devs', 'lastp', 'added', 'ptime', 'size', 'flags'].map(sec).join('')}
+    <div class="fpfoot">Marque quantos quiser: dentro de um grupo vale qualquer um; entre grupos, todos.</div>
+  </aside>`;
+}
+function fpRender() { const el = $('#fpanel'); if (!el) return renderLibrary(); const st = el.scrollTop; el.outerHTML = fpanelHtml(); const np = $('#fpanel'); if (np) np.scrollTop = st; }
+function fpToggle(kind) { const cur = S._fopen[kind] !== undefined ? S._fopen[kind] : (S.flt[kind].size > 0 || ['sys', 'cats', 'genres'].includes(kind)); S._fopen[kind] = !cur; fpRender(); }
+function fpSearch(kind, v) { S._fq[kind] = v; const el = $('#fpanel'); const st = el ? el.scrollTop : 0; fpRender(); const inp = $('#fpanel .fsq'); const all = [...document.querySelectorAll('#fpanel .fsq')]; const mine = all.find(i => i.oninput && String(i.getAttribute('oninput')).includes(`'${kind}'`)); if (mine) { mine.focus(); mine.setSelectionRange(v.length, v.length); } if ($('#fpanel')) $('#fpanel').scrollTop = st; }
+function fpOpen(on) { if (on === undefined) on = !S.config.filter_panel; S.config.filter_panel = on; api.post('/api/config', { filter_panel: on }, { quiet: true }); renderLibrary(); }
+function fpSnapshot() { const o = {}; for (const k of FLT_KINDS) if (S.flt[k].size) o[k] = [...S.flt[k]]; return { flt: o, cat: S.cat, sort: S.sort, rev: !!S.sortRev }; }
+function fpSavePreset() {
+  modal({ title: 'Salvar filtro', text: 'Dê um nome para esta combinação. Ela fica na lista "Filtros salvos" do painel.', input: fltLabels().slice(0, 3).map(x => x[2]).join(' + '), ok: 'Salvar', onOk: name => {
+    if (!name) return; const list = [...(S.config.filter_presets || [])].filter(p => p.name !== name); list.push({ name, ...fpSnapshot() }); S._fpreset = list.length - 1; setCfg({ filter_presets: list }).then(() => { renderLibrary(); toast('ok', 'Filtro salvo', `"${name}" está em Filtros salvos.`); });
+  } });
+}
+function fpApplyPreset(i) {
+  if (i === '') { S._fpreset = undefined; fpRender(); return; }
+  const p = (S.config.filter_presets || [])[+i]; if (!p) return;
+  for (const k of FLT_KINDS) S.flt[k].clear();
+  for (const k in (p.flt || {})) if (S.flt[k]) for (const id of p.flt[k]) S.flt[k].add(id);
+  S.cat = p.cat || 'all'; S.sort = p.sort || 'az'; S.sortRev = !!p.rev; S._fpreset = +i; S.page = 1; renderSortBtn(); renderLibrary();
+}
+function fpDelPreset() {
+  const list = [...(S.config.filter_presets || [])], p = list[S._fpreset]; if (!p) return;
+  modal({ title: 'Excluir filtro salvo', text: `"${p.name}" sai da lista. Os jogos não são afetados.`, ok: 'Excluir', danger: true, onOk: () => { list.splice(S._fpreset, 1); S._fpreset = undefined; setCfg({ filter_presets: list }).then(renderLibrary); } });
+}
 function filterBtn() {
-  const { counts, scount, fcount, rcount, ocount } = poolStats();
-  const origins = S.view === 'home' ? Object.keys(ocount).sort((a, b) => ocount[b] - ocount[a]).map(id => [id, id, ocount[id]]) : [];
-  const repos = S.view === 'store' ? Object.keys(rcount).sort((a, b) => rcount[b] - rcount[a]).map(id => [id, repoName(id), rcount[id]]) : [];
-  const cats = S.cats.filter(c => counts[c.id]).map(c => [c.id, c.name, counts[c.id]]);
-  const systems = Object.keys(scount).sort((a, b) => scount[b] - scount[a]).map(id => [id, id === 'pc' ? 'PC' : (S.systems[id] || id), scount[id]]);
-  const fl = FLAGS.filter(([id]) => S.view !== 'store' || !['installed', 'notinst', 'recent', 'never', 'played'].includes(id)).map(([id, nm]) => [id, nm, fcount[id]]).filter(x => x[2]);
-  const n = S.flt.cats.size + S.flt.sys.size + S.flt.flags.size + repoFltN();
-  const box = (set, id, name, c) => `<label class="fbox ${set.has(id) ? 'on' : ''}"><input type="checkbox" ${set.has(id) ? 'checked' : ''} onchange="toggleFlt('${set === S.flt.cats ? 'cats' : set === S.flt.sys ? 'sys' : set === S.flt.repos ? 'repos' : set === S.flt.src ? 'src' : 'flags'}',${jsq(id)})"><span>${esc(name)}</span><em>${c}</em></label>`;
-  return `<div class="filt" id="filt"><button class="btn s xs ${n ? 'p' : ''}" onclick="toggleFilt()">${I.filter} Filtros${n ? ` (${n})` : ''}</button>
-    <div class="pop wide" onclick="event.stopPropagation()">
-      <div class="fhead"><b>Filtros</b><span>marque quantos quiser — combinam entre si</span>${n ? `<button class="btn s xs" onclick="clearFlt()">Limpar</button>` : ''}</div>
-      ${repos.length > 1 ? `<div class="fsec"><h5>Fonte</h5><div class="fgrid">${repos.map(([id, nm, c]) => box(S.flt.repos, id, nm, c)).join('')}</div></div>` : ''}
-      ${cats.length ? `<div class="fsec"><h5>Categoria</h5><div class="fgrid">${cats.map(([id, nm, c]) => box(S.flt.cats, id, nm, c)).join('')}</div></div>` : ''}
-      ${systems.length > 1 ? `<div class="fsec"><h5>Sistema</h5><div class="fgrid">${systems.map(([id, nm, c]) => box(S.flt.sys, id, nm, c)).join('')}</div></div>` : ''}
-      ${origins.length > 1 ? `<div class="fsec"><h5>Origem</h5><div class="fgrid">${origins.map(([id, nm, c]) => box(S.flt.src, id, nm, c)).join('')}</div></div>` : ''}
-      ${fl.length ? `<div class="fsec"><h5>Situação</h5><div class="fgrid">${fl.map(([id, nm, c]) => box(S.flt.flags, id, nm, c)).join('')}</div></div>` : ''}
-    </div></div>`;
+  const n = fltCount();
+  return `<button class="btn s xs ${n || fpOn() ? 'p' : ''}" onclick="fpOpen()" title="Abre ou fecha o painel de filtros (fica aberto até você fechar)">${I.filter} Filtros${n ? ` (${n})` : ''}</button>`;
+}
+function activeChips() {
+  const L = fltLabels(); if (!L.length && S.cat === 'all') return '';
+  return `<div class="fchips">${S.cat !== 'all' ? `<button class="fchip" onclick="S.cat='all';S.page=1;renderLibrary()" title="Remover">${esc((S.cats.find(c => c.id === S.cat) || {}).name || S.cat)}${I.x}</button>` : ''}${L.map(([k, id, nm]) => `<button class="fchip" onclick="toggleFlt('${k}',${jsq(id)})" title="Remover">${esc(nm)}${I.x}</button>`).join('')}${L.length + (S.cat !== 'all' ? 1 : 0) > 1 ? `<button class="lnk" onclick="clearFlt()">Limpar tudo</button>` : ''}</div>`;
 }
 function viewBtn() {
   const g = S.config.group_by || '', lm = listMode(), n = (S.sort !== 'az' ? 1 : 0) + (g ? 1 : 0) + (lm ? 1 : 0);
@@ -2774,7 +2887,8 @@ function viewBtn() {
     </div></div>`;
 }
 function toggleFilt(force, id) {
-  const f = $('#' + (id || 'filt')); if (!f) return; const on = force !== undefined ? force : !f.classList.contains('on');
+  if (!id) return fpOpen(force);
+  const f = $('#' + id); if (!f) return; const on = force !== undefined ? force : !f.classList.contains('on');
   if (on) document.querySelectorAll('.filt.on').forEach(x => { if (x !== f) x.classList.remove('on'); });
   f.classList.toggle('on', on); if (!on) return;
   const pop = f.querySelector('.pop'), b = f.querySelector('button').getBoundingClientRect();
@@ -2784,9 +2898,9 @@ function toggleFilt(force, id) {
   if (r.height > room) { if (b.top - 6 - pad > room && b.top - 6 - pad >= r.height) top = b.top - 6 - r.height; else pop.style.maxHeight = Math.max(200, room) + 'px'; }
   pop.style.left = left + 'px'; pop.style.top = top + 'px';
 }
-function toggleFlt(kind, id) { const set = S.flt[kind]; set.has(id) ? set.delete(id) : set.add(id); S.page = 1; renderLibrary(); requestAnimationFrame(() => toggleFilt(true)); }
+function toggleFlt(kind, id) { const set = S.flt[kind]; set.has(id) ? set.delete(id) : set.add(id); S._fpreset = undefined; S.page = 1; renderLibrary(); }
 function flagOnly(id) { clearFlt(); S.flt.flags.add(id); S.page = 1; if (S.view !== 'home') setView('home'); else renderLibrary(); }
-function clearFlt() { S.flt.cats.clear(); S.flt.sys.clear(); S.flt.flags.clear(); S.flt.repos.clear(); S.flt.src.clear(); S.cat = 'all'; S.sort = 'az'; S.sortRev = false; S.page = 1; renderLibrary(); }
+function clearFlt() { for (const k of FLT_KINDS) S.flt[k].clear(); S._fpreset = undefined; S.cat = 'all'; S.sort = 'az'; S.sortRev = false; S.page = 1; renderLibrary(); }
 function setSort(id) { S.sort = id; S.page = 1; renderSortBtn(); renderLibrary(); if (S.config.sort_by !== id) { S.config.sort_by = id; api.post('/api/config', { sort_by: id }, { quiet: true }); } }
 const HOME_ROWS = [['recent', 'Continuar jogando'], ['favorites', 'Favoritos'], ['added', 'Adicionados há pouco'], ['most', 'Mais jogados']];
 function homeRows() {
@@ -3229,34 +3343,50 @@ async function renderMods() {
   $('#view').innerHTML = `<div class="h1"><h2>Mods e ferramentas</h2><span>carregando…</span></div>`;
   const m = await api.get('/api/mods'); S.mods = m; if (S.view !== 'mods') return;
   const cats = [...new Set(m.tools.map(t => t.category))];
-  const cur = S.tab.mods === 'tools' ? 'mine' : S.tab.mods;
-  let h = `<div class="h1"><h2>Mods e ferramentas</h2><span>${cur === 'mine' ? `${m.games.reduce((a, g) => a + g.count, 0)} mods em ${m.games.length} ${m.games.length === 1 ? 'jogo' : 'jogos'}` : `${m.tools.filter(t => t.installed).length} instaladas de ${m.tools.length}`}</span><div class="acts">${cur === 'mine' ? '' : `<button class="btn s" onclick="api.post('/api/open',{path:${jsq(m.root)}})">${I.folder} tools</button>`}</div></div>
-    <div class="tabs"><button class="${cur === 'mine' ? 'on' : ''}" onclick="S.tab.mods='mine';renderMods()">Meus mods${m.games.length ? ` <span class="n">${m.games.length}</span>` : ''}</button>${cats.map(c => `<button class="${cur === c ? 'on' : ''}" onclick="S.tab.mods=${jsq(c)};renderMods()">${esc(c)}</button>`).join('')}<button class="${cur === 'sites' ? 'on' : ''}" onclick="S.tab.mods='sites';renderMods()">Sites de mods</button></div>`;
+  let cur = S.tab.mods; if (!['mine', 'tools', 'sites'].includes(cur)) cur = cats.includes(cur) ? (S.modsCat = cur, 'tools') : 'mine'; S.tab.mods = cur;
+  const nInst = m.tools.filter(t => t.installed).length, nMods = m.games.reduce((a, g) => a + g.count, 0);
+  const sub = cur === 'mine' ? `${nMods ? pl(nMods, 'mod', 'mods') + ' em ' + pl(m.games.length, 'jogo', 'jogos') : 'nenhum mod instalado ainda'}` : cur === 'tools' ? `${nInst} de ${m.tools.length} instaladas` : `${m.sites.length} sites`;
+  let h = `<div class="h1"><h2>Mods e ferramentas</h2><span>${sub}</span><div class="acts">${cur === 'tools' ? `<button class="btn s" onclick="api.post('/api/open',{path:${jsq(m.root)}})" title="Pasta onde as ferramentas portáteis ficam">${I.folder} Pasta tools</button>` : cur === 'mine' ? `<button class="btn p" onclick="modInstallMenu(event)">${I.plus} Instalar mod</button>` : ''}</div></div>
+    <div class="tabs"><button class="${cur === 'mine' ? 'on' : ''}" onclick="S.tab.mods='mine';renderMods()">Meus mods${m.games.length ? ` <span class="n">${m.games.length}</span>` : ''}</button><button class="${cur === 'tools' ? 'on' : ''}" onclick="S.tab.mods='tools';renderMods()">Ferramentas${nInst ? ` <span class="n">${nInst}</span>` : ''}</button><button class="${cur === 'sites' ? 'on' : ''}" onclick="S.tab.mods='sites';renderMods()">Sites de mods</button></div>`;
   if (cur === 'mine') { $('#view').innerHTML = h + `<div id="myMods"></div>`; return renderMyMods(); }
-  if (cur === 'sites') h += `<div class="sites">${m.sites.map(s => `<button class="site" onclick="api.post('/api/open_url',{url:${jsq(s.url.replace('{q}', ''))}})">${I.ext} ${esc(s.name)}<small style="color:var(--muted);font-weight:400"> · ${esc(s.desc)}</small></button>`).join('')}</div>`;
-  else h += `<div class="hint">As do GitHub o Ludrix baixa e deixa portáteis em <span class="code">tools\\</span>; as demais abrem o site oficial. Na página de cada jogo aparecem só as ferramentas relevantes para ele.</div><div class="tiles wide">${m.tools.filter(t => t.category === cur).map(t => { const job = S.jobs['tool:' + t.id]; return `<div class="tool ${t.installed ? 'ok' : ''}"><div class="tt"><b>${esc(t.title)}</b>${t.installed ? `<span class="pill ok">Instalada${t.version ? ' · ' + esc(t.version) : ''}</span>` : ''}</div><small>${esc(t.for)}</small><p>${esc(t.desc)}</p>
-    ${job ? progHtml(job, 'tool:' + t.id) : `<div class="ta">${t.installed ? `<button class="btn g" onclick="api.post('/api/tools/launch',{id:'${t.id}'})">${I.play} Abrir</button><button class="btn s ico" onclick="api.post('/api/open',{path:${jsq(t.dir)}})">${I.folder}</button><button class="btn d ico" onclick="removeTool('${t.id}',${jsq(t.title)})">${I.trash}</button>` : t.type === 'github_release' ? `<button class="btn p" onclick="installTool('${t.id}')">${I.dl} Instalar</button>` : `<button class="btn s" onclick="api.post('/api/open_url',{url:${jsq(t.url || '')}})">${I.ext} Site oficial</button>`}</div>`}</div>`; }).join('')}</div>`;
+  if (cur === 'sites') {
+    h += `<div class="hint">Sites conhecidos para baixar mods. O arquivo baixado entra pelo botão "Instalar mod" em Meus mods.</div><div class="sitegrid">${m.sites.map(s => `<button class="sitecard" onclick="api.post('/api/open_url',{url:${jsq(s.url.replace('{q}', ''))}})"><span class="ic">${I.ext}</span><b>${esc(s.name)}</b><small>${esc(s.desc)}</small></button>`).join('')}</div>`;
+    $('#view').innerHTML = h; return;
+  }
+  const fc = S.modsCat || '';
+  const chips = `<div class="chips" style="margin:0 0 14px"><button class="chip ${!fc ? 'on' : ''}" onclick="S.modsCat='';renderMods()">Todas <span class="n">${m.tools.length}</span></button><button class="chip ${fc === '__inst' ? 'on' : ''}" onclick="S.modsCat='__inst';renderMods()">Instaladas <span class="n">${nInst}</span></button>${cats.map(c => `<button class="chip ${fc === c ? 'on' : ''}" onclick="S.modsCat=${jsq(c)};renderMods()">${esc(c)} <span class="n">${m.tools.filter(t => t.category === c).length}</span></button>`).join('')}</div>`;
+  const card = t => { const job = S.jobs['tool:' + t.id]; return `<div class="toolc ${t.installed ? 'ok' : ''}"><div class="th"><span class="ic">${t.installed ? I.check : I.wrench}</span><div class="tt"><b>${esc(t.title)}</b><small>${esc(t.category)}</small></div>${t.installed ? `<span class="pill ok">Instalada${t.version ? ' · ' + esc(t.version) : ''}</span>` : t.type === 'github_release' ? `<span class="pill">Portátil</span>` : `<span class="pill">Site</span>`}</div>
+    <p>${esc(t.desc)}</p><div class="for"><b>Para:</b> ${esc(t.for)}</div>
+    ${job ? progHtml(job, 'tool:' + t.id) : `<div class="ta">${t.installed ? `<button class="btn p sm" onclick="api.post('/api/tools/launch',{id:'${t.id}'})">${I.play} Abrir</button><button class="btn s sm ico" title="Abrir pasta" onclick="api.post('/api/open',{path:${jsq(t.dir)}})">${I.folder}</button><button class="btn d sm ico" title="Remover" onclick="removeTool('${t.id}',${jsq(t.title)})">${I.trash}</button>` : t.type === 'github_release' ? `<button class="btn p sm" onclick="installTool('${t.id}')">${I.dl} Instalar</button><small class="mut">baixa do GitHub para tools\\</small>` : `<button class="btn s sm" onclick="api.post('/api/open_url',{url:${jsq(t.url || '')}})">${I.ext} Site oficial</button>`}</div>`}</div>`; };
+  const list = fc === '__inst' ? m.tools.filter(t => t.installed) : fc ? m.tools.filter(t => t.category === fc) : m.tools;
+  h += chips;
+  if (!list.length) h += emptyHtml(I.wrench, 'Nenhuma ferramenta instalada', 'As ferramentas do GitHub são baixadas pelo Ludrix e ficam portáteis em tools\\. Escolha uma categoria para ver as disponíveis.', [['Ver todas', "S.modsCat='';renderMods()", 1]]);
+  else if (fc) h += `<div class="toolgrid">${list.map(card).join('')}</div>`;
+  else h += cats.map(c => `<div class="tsec"><h4>${esc(c)}<span>${m.tools.filter(t => t.category === c).length}</span></h4><div class="toolgrid">${m.tools.filter(t => t.category === c).map(card).join('')}</div></div>`).join('');
   $('#view').innerHTML = h;
 }
 async function renderMyMods() {
   const el = $('#myMods'); if (!el) return;
-  const inst = S.games.filter(g => g.installed && g.kind !== 'emulator').sort((a, b) => a.title.localeCompare(b.title));
-  const withMods = S.mods.games || [];
+  const inst = S.games.filter(g => g.installed && g.kind !== 'emulator').sort((a, b) => COLL.compare(a.title, b.title));
+  const withMods = S.mods.games || [], cnt = {}; for (const w of withMods) cnt[w.key] = w.count;
   if (!S.modsGame || !inst.some(g => g.key === S.modsGame)) S.modsGame = (withMods[0] && withMods[0].key) || (inst[0] && inst[0].key) || '';
   if (!inst.length) { el.innerHTML = `${emptyHtml(I.wrench, 'Nenhum jogo instalado', 'Instale ou adicione um jogo na Biblioteca; depois volte aqui para colocar mods nele.', [['Abrir Store', "setView('store')", 1], ['Adicionar jogo', 'addLocal()']])}`; return; }
   const key = S.modsGame; const g = S.byKey[key] || inst.find(x => x.key === key);
-  el.innerHTML = `<div class="hint">Escolha o jogo, aponte o <b>.zip</b> (ou .7z/.rar ou pasta) do mod e o Ludrix copia os arquivos pra pasta certa. Ele guarda cópia do que for substituído, então dá pra <b>desligar</b> um mod sem perder nada — e religar depois. Baixe mods nos Sites de mods; Friday Night Funkin' aceita mods soltos na pasta <span class="code">mods\\</span> do Psych Engine.</div>
-    <div class="frow" style="border:0;padding:6px 0 14px;gap:10px;flex-wrap:wrap"><select id="mgSel" onchange="S.modsGame=this.value;renderMyMods()">${inst.map(x => `<option value="${esc(x.key)}" ${x.key === key ? 'selected' : ''}>${esc(x.title)}${withMods.find(w => w.key === x.key) ? ` (${withMods.find(w => w.key === x.key).count})` : ''}</option>`).join('')}</select>
-    <button class="btn p" onclick="modInstallMenu(event)">${I.plus} Instalar mod</button><span class="sp"></span><button class="btn s" onclick="openGame(${jsq(key)})">${I.info} Ficha do jogo</button></div>
-    <div id="mgList"><div class="hint">carregando…</div></div>`;
+  const qn = qnorm(S._modsQ || ''), ordered = inst.filter(x => !qn || qnorm(x.title).includes(qn)).sort((a, b) => (cnt[b.key] || 0) - (cnt[a.key] || 0) || COLL.compare(a.title, b.title));
+  el.innerHTML = `<div class="modwrap"><aside class="modgames"><input class="mgq" placeholder="Procurar jogo…" value="${esc(S._modsQ || '')}" oninput="S._modsQ=this.value;renderMyMods();const i=document.querySelector('.modgames .mgq');i.focus();i.setSelectionRange(i.value.length,i.value.length)" spellcheck="false">
+      <div class="mgl">${ordered.map(x => `<button class="mg ${x.key === key ? 'on' : ''}" onclick="S.modsGame=${jsq(x.key)};renderMyMods()"><img loading="lazy" src="/thumb/${enc(x.key)}?v=${x.cv || 0}" alt="" onerror="this.onerror=null;this.src=BLANK_GIF"><span>${esc(x.title)}</span>${cnt[x.key] ? `<i>${cnt[x.key]}</i>` : ''}</button>`).join('') || '<span class="fnone">Nenhum jogo com esse nome</span>'}</div></aside>
+    <div class="modmain"><div class="mghead"><img src="/thumb/${enc(key)}?v=${(g || {}).cv || 0}" alt="" onerror="this.onerror=null;this.src=BLANK_GIF"><div class="tx"><b>${esc(g ? g.title : key)}</b><span id="mgSub">${cnt[key] ? pl(cnt[key], 'mod instalado', 'mods instalados') : 'Sem mods'}</span></div>
+      <div class="ta"><button class="btn p sm" onclick="modInstallMenu(event)">${I.plus} Instalar mod</button><button class="btn s sm" onclick="openGame(${jsq(key)})">${I.info} Ficha</button></div></div>
+      <div id="mgList"><div class="hint">carregando…</div></div>
+      <p class="mgnote">Aponte o <b>.zip</b> (ou .7z/.rar ou pasta) do mod e o Ludrix copia os arquivos para a pasta certa. O que for substituído fica guardado: um mod pode ser desligado sem perder nada e religado depois. Friday Night Funkin' aceita mods soltos na pasta <span class="code">mods\\</span> do Psych Engine.</p></div></div>`;
   const r = await api.get('/api/mods/game/' + enc(key)); if (S.modsGame !== key || !$('#mgList')) return;
   S.modsTargets = r.targets || []; S.modsSuggest = r.suggest || '';
   const job = S.jobs['mod:' + key];
-  if (!r.dir) { $('#mgList').innerHTML = `<div class="empty"><b>Sem pasta</b>${esc(g ? g.title : key)} não tem uma pasta instalada conhecida — o Ludrix precisa dela pra copiar os arquivos do mod.</div>`; return; }
+  if (!r.dir) { $('#mgList').innerHTML = `<div class="empty"><b>Sem pasta</b>${esc(g ? g.title : key)} não tem uma pasta instalada conhecida — o Ludrix precisa dela para copiar os arquivos do mod.</div>`; return; }
   $('#mgList').innerHTML = (job ? `<div class="item"><div class="ic">${I.wrench}</div><div class="tx"><b>Instalando mod…</b>${progHtml(job, 'mod:' + key)}</div></div>` : '') + (r.mods.length ? `<div class="list">${r.mods.map(m => `<div class="item ${m.enabled ? '' : 'off'}"><div class="ic">${I.wrench}</div><div class="tx"><b>${esc(m.title)}</b><span>${pl(m.files.length, 'arquivo', 'arquivos')} · ${fmt(m.size)} · em ${esc(m.target ? m.target + '\\' : 'pasta do jogo')}${m.replaced.length ? ` · substituiu ${m.replaced.length} do jogo (guardados)` : ''}${m.enabled ? '' : ' · desligado'}</span></div>
       <div class="ac"><button class="sw ${m.enabled ? 'on' : ''}" title="${m.enabled ? 'Desligar (tira os arquivos e devolve os originais)' : 'Ligar de novo'}" onclick="modToggle(${jsq(key)},${jsq(m.id)},${m.enabled ? 'false' : 'true'})"></button><button class="btn d ico" title="Remover de vez" onclick="modRemove(${jsq(key)},${jsq(m.id)},${jsq(m.title)})">${I.trash}</button></div></div>`).join('')}</div>`
-    : `${emptyHtml(I.wrench, `Nenhum mod em ${esc(g ? g.title : key)}`, 'Baixe o mod no site de sua preferência e aponte o arquivo aqui — ele é copiado para a pasta certa e o que for substituído fica guardado.', [['Instalar mod', `modInstallMenu(event)`, 1], ['Abrir pasta do jogo', `api.post('/api/open',{path:${jsq(r.dir)}})`]])}`)
-    + `<p style="color:var(--muted2);font-size:12px;margin:14px 0">Pasta do jogo: <a href="#" onclick="api.post('/api/open',{path:${jsq(r.dir)}});return false">${esc(r.dir)}</a>${r.targets.length > 1 ? ` · pastas de mods encontradas: ${r.targets.filter(t => t.path).map(t => `<span class="code">${esc(t.path)}</span>`).join(' ')}` : ''}</p>`;
+    : `${emptyHtml(I.wrench, `Nenhum mod em ${esc(g ? g.title : key)}`, 'Baixe o mod no site de sua preferência e aponte o arquivo aqui.', [['Instalar mod', `modInstallMenu(event)`, 1], ['Abrir pasta do jogo', `api.post('/api/open',{path:${jsq(r.dir)}})`]])}`)
+    + `<p style="color:var(--muted2);font-size:12px;margin:14px 0 0">Pasta do jogo: <a href="#" onclick="api.post('/api/open',{path:${jsq(r.dir)}});return false">${esc(r.dir)}</a>${r.targets.length > 1 ? ` · pastas de mods encontradas: ${r.targets.filter(t => t.path).map(t => `<span class="code">${esc(t.path)}</span>`).join(' ')}` : ''}</p>`;
 }
 function modInstallMenu(ev) {
   showCtx([{ label: 'Arquivo do mod (.zip, .7z, .rar)', icon: 'doc', fn: () => modInstallAsk('file') }, { label: 'Pasta já extraída', icon: 'folder', fn: () => modInstallAsk('dir') }], ev.clientX, ev.clientY, 'Instalar mod');
@@ -3499,10 +3629,10 @@ function renderBell() {
   $('#bellList').innerHTML = NOTIFS.length ? NOTIFS.map(n => `<div class="bn ${n.read ? '' : 'un'} ${n.kind}" onclick="notifOpen(${jsq(n.id)})">${ic[n.kind] || I.info}<div><b>${esc(n.title)}</b><span>${esc(n.text || '')}</span><small>${ago(n.at)}</small></div>${n.kind === 'repack' && n.key ? `<button class="btn p xs" onclick="event.stopPropagation();runRepack(${jsq(n.key)})">Instalar</button>` : ''}</div>`).join('') : '<div class="empty" style="padding:30px 10px"><b>Tudo em dia</b>Nenhuma notificação.</div>';
 }
 const HELP = {
-  home: { t: 'Biblioteca', p: 'Todos os seus jogos num lugar só: instalados no PC, baixados pelo Ludrix, importados de outros launchers e ROMs já baixadas.', s: ['Clique numa capa para selecionar; dois cliques ou botão direito abrem os detalhes. Ctrl+clique seleciona vários para favoritar, atualizar metadados ou remover de uma vez.', 'Use a busca (tecla /), a categoria e a ordenação na barra de tarefas; o botão Filtros combina critérios como console, origem (Steam, Epic, ROM…) e situação.', '"Adicionar jogo" aceita um .exe, um atalho ou uma pasta inteira. Jogos com faixa NÃO ENCONTRADO mudaram de lugar: Jogar neles abre a opção de apontar a pasta nova.', 'Busca com prefixo: dev:nintendo (desenvolvedora), ano:2017 ou ano:2010s (ano ou década), gen:rpg (gênero), sis:snes (sistema), origem:steam (origem). Dá para misturar com palavras normais, como "mario sis:gba".', 'Arrastar um .exe, atalho ou ROM para a janela adiciona o jogo à biblioteca.'] },
+  home: { t: 'Biblioteca', p: 'Todos os seus jogos num lugar só: instalados no PC, baixados pelo Ludrix, importados de outros launchers e ROMs já baixadas.', s: ['Clique numa capa para selecionar; dois cliques ou botão direito abrem os detalhes. Ctrl+clique seleciona vários para favoritar, atualizar metadados ou remover de uma vez.', 'Use a busca (tecla /), a categoria e a ordenação na barra de tarefas. O botão Filtros abre um painel lateral com todos os critérios: situação, origem, categoria, gênero, desenvolvedora, ano, quando jogou, quando adicionou, tempo jogado e tamanho; marque quantos quiser. Uma combinação pode ser salva pelo botão Salvar e reaplicada pela lista "Filtros salvos".', '"Adicionar jogo" aceita um .exe, um atalho ou uma pasta inteira. Jogos com faixa NÃO ENCONTRADO mudaram de lugar: Jogar neles abre a opção de apontar a pasta nova.', 'Busca com prefixo: dev:nintendo (desenvolvedora), ano:2017 ou ano:2010s (ano ou década), gen:rpg (gênero), sis:snes (sistema), origem:steam (origem). Dá para misturar com palavras normais, como "mario sis:gba".', 'Arrastar um .exe, atalho ou ROM para a janela adiciona o jogo à biblioteca.'] },
   store: { t: 'Store', p: 'Catálogo das fontes que você ligou. Nada é baixado sem você pedir.', s: ['Com mais de uma fonte ligada, cada cartão mostra de onde o jogo vem e Filtros ganha a seção "Fonte".', 'Ligue ou desligue fontes em "Fontes de jogos".', 'Baixar um jogo coloca-o na Fila; quando terminar, ele aparece na Biblioteca.', 'A busca e a categoria funcionam aqui também.'] },
   emulation: { t: 'Emuladores', p: 'Instale emuladores por console e traga suas ROMs. A configuração básica é automática.', s: ['Os consoles com emulador pronto ou ROMs na pasta ficam em "Meus consoles"; os outros aparecem abaixo, os mais usados primeiro.', 'Em Consoles, instale o emulador e aponte a pasta das suas ROMs.', 'Em Baixar ROMs aparecem as fontes de ROM que você ligou, com um seletor por console; a ROM só entra na Biblioteca depois de baixada.', 'Ao baixar uma ROM você escolhe a pasta de destino; marque "Usar sempre" para fixar a pasta daquele console — ou use "Baixar em…" no cartão do console.', 'BIOS e chaves, quando necessários, são indicados no próprio console.'] },
-  mods: { t: 'Mods e ferramentas', p: 'Meus mods instala mods nos seus jogos a partir do arquivo baixado, com botão pra desligar e religar; as outras abas trazem utilitários e sites de mods.', s: ['Escolha o jogo, Instalar mod, aponte o .zip.', 'Arquivos do jogo substituídos ficam guardados: desligar o mod devolve os originais.', 'Cada ferramenta mostra para que serve antes de instalar.'] },
+  mods: { t: 'Mods e ferramentas', p: 'Meus mods instala mods nos seus jogos a partir do arquivo baixado, com botão pra desligar e religar; as outras abas trazem utilitários e sites de mods.', s: ['Escolha o jogo, Instalar mod, aponte o .zip.', 'Arquivos do jogo substituídos ficam guardados: desligar o mod devolve os originais.', 'Em Ferramentas, os chips no alto filtram por categoria ou mostram só as instaladas; cada cartão diz para quais jogos serve. Portátil = o Ludrix baixa do GitHub para tools\\; Site = abre a página oficial.'] },
   central: { t: 'Central Ludrix', p: 'Preparação do PC para jogar: otimização durante o jogo, dependências que os jogos pedem, programas úteis e os launchers de Minecraft.', s: ['A Visão geral resume tudo: o que precisa de atenção e um botão para resolver; "Ver tudo" abre a aba completa.', 'Em Minecraft, o Ludrix acha os launchers que você já tem e coloca o Minecraft na Biblioteca; Jogar abre o launcher escolhido.', '"Otimizar antes de jogar" troca o plano de energia e dá prioridade ao jogo; tudo volta ao normal quando ele fecha.', 'Se um jogo fecha na hora ou reclama de .dll, instale as dependências marcadas como faltando.', 'O cartão Opcionais instala launchers e utilitários pelo winget ou abre a página na Microsoft Store.'] },
   flash: { t: 'Jogos rápidos', p: 'Jogos leves que abrem dentro do launcher: Flash (pelo Ruffle), HTML5 e jogos de site.', s: ['Meus jogos é o que já está pronto; Baixar mais é o acervo.', 'Clique para jogar; Esc fecha; "Tela cheia" ocupa a janela inteira.', 'Adicionar aceita .swf, .zip ou pasta com index.html e links de sites.'] },
   downloads: { t: 'Fila', p: 'Tudo o que está baixando, extraindo ou já terminou, separado por situação.', s: ['Agora: o que está baixando; Pausados: retome quando quiser; Precisam de atenção: falharam — tente de novo ou remova.', 'Pausar, retomar e cancelar ficam no próprio item.', 'Concluídos ficam no histórico até você limpar.'] },
