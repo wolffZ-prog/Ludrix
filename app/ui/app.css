@@ -2030,6 +2030,7 @@ html.busy,html.busy *{cursor:progress}
 .sadvbox .sw{flex:none}
 .setwrap .settings{gap:16px}
 .setwrap .settings .sec{padding:20px 24px 14px;border-radius:16px;border:1px solid var(--line2);background:var(--card)}
+.setwrap .settings .sec h3::before{display:none}
 .setwrap .settings .sec h3{font-size:18px;font-weight:800;letter-spacing:-.2px;text-transform:none;margin-bottom:4px;line-height:1.25}
 .setwrap .settings .sec>p{font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.5;max-width:70ch}
 .setwrap .settings .frow{padding:13px 0;gap:16px}

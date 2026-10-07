@@ -855,7 +855,7 @@ function cardHtml(g, i) {
   const prog = job ? `<div class="cprog${job.fraction < 0 ? ' ind' : ''}"><i style="width:${job.fraction >= 0 ? Math.round(job.fraction * 100) : 40}%"></i></div>` : '';
   const favB = `<button class="fav ${g.fav ? 'on' : ''}" data-fav="${esc(g.key)}" title="Favorito">${I.star}</button>`;
   const srcB = S.view === 'store' && S._multiSrc && g.repo && g.repo !== 'local' ? `<span class="src" title="Fonte: ${esc(repoName(g.repo))}">${esc(repoName(g.repo))}</span>` : '';
-  const qpB = g.installed && !job ? `<button class="qp ${live ? 'live' : ''}" data-qp="${esc(g.key)}" title="${live ? 'Em execução — clique para fechar' : 'Jogar'}">${live ? I.x : I.play}</button>` : '';
+  const qpB = g.installed && !job ? `<button class="qp ${live ? 'live' : ''}" data-qp="${esc(g.key)}" title="${live ? 'Em execução — clique para encerrar' : 'Jogar'}">${live ? I.x : I.play}</button>` : '';
   if (lst) return `<div class="card${dim}${S.sel.has(g.key) ? ' msel' : ''}" data-key="${esc(g.key)}">
     <div class="cov"><div class="ph">${esc(g.title)}</div><img loading="lazy" decoding="async" class="${TH.ok.has(g.key) ? 'ld inst' : TH.err.has(g.key) ? 'err' : ''}" src="/thumb/${enc(g.key)}?v=${g.cv || 0}" alt="" onload="this.classList.add('ld');TH.ok.add(${jsq(g.key)})" onerror="thumbFail(this,${jsq(g.key)})">${job ? ringSvg(job.fraction) : ''}</div>
     <h4>${esc(g.title)}${live ? '<span class="live">JOGANDO</span>' : ''}${g.mc_nolauncher ? '<span class="badge warn" title="Falta um launcher de Minecraft — clique em Jogar para escolher um">SEM LAUNCHER</span>' : g.repo === 'local' && !g.installed && !job ? '<span class="badge warn" title="O executável ou a ROM não está mais no lugar — clique em Jogar para apontar o novo caminho">NÃO ENCONTRADO</span>' : g.installed && S.view !== 'home' ? '<span class="badge ok">INSTALADO</span>' : ''}${sys}${srcB}</h4>
@@ -1261,7 +1261,7 @@ async function play(key, after, emulator, optimize, force) {
   const r = await api.post('/api/play', { key, after: after || undefined, emulator: emulator || undefined, optimize, force: force || undefined }).catch(() => ({ error: 'offline' }));
   clearTimeout(busyT); if (r.ok) { setTimeout(() => busyCursor(false), 2500); launchShow(key); } else busyCursor(false);
   if (r.missing) return missingDialog(key, r);
-  if (r.running) return toast('warn', 'Já está aberto', (S.byKey[key] || {}).title || '', [{ label: 'Fechar o jogo', fn: () => stopGame(key) }, { label: 'OK', fn: () => {} }]);
+  if (r.running) return toast('warn', 'Já está aberto', (S.byKey[key] || {}).title || '', [{ label: 'Encerrar o jogo', fn: () => stopGame(key) }, { label: 'OK', fn: () => {} }]);
   if (r.need_mc_launcher) return mcNeedLauncher(r); if (r.mc_missing === 'bedrock') return mcNeedBedrock(r);
   if (r.choose_emulator) { S._optimize = optimize; return chooseEmulator(key, r.choose_emulator, r.default); } if (r.need_prepare) { S._optimizeKeep = optimize; return winPrepareAsk(r); } if (r.error === 'emu_missing') { modal({ title: 'Emulador necessário', text: r.message, ok: 'Ir para Emuladores', cancel: 'Não fazer nada', onOk: () => setView('emulation') }); } else if (r.error) toast('err', 'Não foi possível abrir', r.error); else { toast('ok', 'Jogo aberto', r.hint || (r.tracked ? 'Contando o tempo de jogo…' : '')); S.sessions = S.sessions || {}; S.sessions[key] = { since: Date.now() / 1000 }; applyPlaying(); if (S.det && S.det.key === key) renderDetail(); pollSoon(); } }
 
@@ -1955,7 +1955,7 @@ async function renderSettings(fresh) {
       <select class="mi" style="width:auto;min-width:200px" onchange="setCfg({language:this.value})">${[['pt-BR', 'Português (Brasil)'], ['en', 'English']].map(([v, l]) => `<option value="${v}" ${(c.language || 'pt-BR') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`]),
     janela_geral: () => sec('janela_geral', 'Abrir e fechar', [`
     <div class="frow"><div class="l"><b>Abrir com o ${OSN()}</b><span>Inicia junto com o sistema, recolhido na bandeja</span></div><button class="sw ${c.autostart ? 'on' : ''}" onclick="setAutostart(!S.config.autostart)"></button></div>
-    ${sw('tray_enabled', 'Ícone na bandeja', 'Mantém o launcher acessível ao lado do relógio quando recolhido. Desligado, ele apenas minimiza para a barra de tarefas')}
+    ${sw('tray_enabled', 'Ícone na bandeja', 'Mantém o launcher acessível ao lado do relógio quando recolhido. Botão direito no ícone: jogar um dos últimos jogos, ir direto a uma tela, ver a fila, verificar atualizações ou sair. Desligado, ele apenas minimiza para a barra de tarefas')}
     <div class="frow"><div class="l"><b>Ao fechar a janela</b><span>${{ ask: 'Mostra as opções ao clicar no X e memoriza a escolha.', tray: 'Sai da barra de tarefas e fica no ícone ao lado do relógio.', quit: 'Fecha por completo, inclusive o ícone da bandeja.' }[c.close_action || 'ask']} Com um jogo aberto e a bandeja ligada, o Ludrix apenas se recolhe para continuar contando o tempo.</span></div>${cfgSel('close_action', [['ask', 'Perguntar'], ['tray', 'Bandeja'], ['quit', 'Encerrar']], c.close_action || 'ask')}</div>
     ${c.tray_enabled === false ? '<p>Sem o ícone na bandeja, o X sempre encerra o launcher.</p>' : ''}`]),
     notificacoes: () => sec('notificacoes', 'Notificações', [`
@@ -2077,7 +2077,8 @@ async function renderSettings(fresh) {
     importar: () => sec('importar', 'Importar de outro launcher', [`
     <button class="btn p sm" onclick="importWizard()">${I.import} Importar biblioteca…</button>`], { p: 'Traz sua biblioteca do Playnite (pasta ou backup .zip), Heroic, Steam, Epic, GOG Galaxy, RetroBat / EmulationStation, LaunchBox, Pegasus ou atalhos da área de trabalho. Você confere a lista antes de adicionar.' }),
     exportar: () => sec('exportar', 'Exportar biblioteca', [`
-    <button class="btn s sm" onclick="exportLibrary()">${I.doc} Exportar agora</button>`], { p: 'Gera uma pasta em <span class="code">downloads\\</span> com a lista de jogos, metadados e capas em três formatos: JSON completo do Ludrix, planilha CSV (Excel; Playnite via extensão de importar CSV) e o <span class="code">library.json</span> de jogos avulsos do Heroic Games Launcher.' }),
+    <button class="btn s sm" onclick="exportLibrary()">${I.doc} Exportar agora</button>
+    <div class="frow"><div class="l"><b>Enviar para a Steam</b><span>Cria os atalhos "não-Steam" com capa; os jogos aparecem na Steam e no Big Picture. A Steam precisa estar fechada. Rodar de novo atualiza os atalhos do Ludrix e não mexe nos outros</span></div><button class="btn s sm" onclick="exportSteam()">${I.ext} Enviar…</button></div>`], { p: 'Gera uma pasta em <span class="code">downloads\\</span> com a lista de jogos, metadados e capas em quatro formatos: pacote para o Playnite (<span class="code">playnite\\LudrixImport.pext</span>: dois cliques nele, depois menu Extensões › Ludrix › Importar), JSON completo do Ludrix, planilha CSV (Excel) e o <span class="code">library.json</span> de jogos avulsos do Heroic Games Launcher.', help: 'Para voltar a biblioteca inteira num Ludrix novo, use "Meus dados › Exportar meus dados" (zip com tudo). "Exportar biblioteca" serve para levar os jogos a outro programa: o pacote do Playnite leva nome, capa, pasta, executável, tempo jogado, favoritos, gênero, ano e desenvolvedora; jogos já importados são atualizados, não duplicados. ROMs entram com o arquivo preenchido e o emulador é escolhido no Playnite. Playnite 11 em diante não aceita o pacote (sem PowerShell): aí vale o CSV.' }),
     metadados: () => sec('metadados', 'Capas e informações', [`
     <div class="frow"><div class="l"><b>Atualizar metadados de tudo</b><span>Refaz capa, nome e informações de toda a biblioteca. Roda em segundo plano; a barra de status mostra o andamento</span></div><button class="btn s sm" onclick="api.post('/api/metadata/refetch_all',{}).then(r=>toast(r.ok?'ok':'err', r.ok?'Atualizando…':'Não foi possível concluir', r.ok?'Acompanhe pela barra de status. Você será avisado ao terminar.':r.error))">${I.refresh} Atualizar tudo</button></div>`]),
     dados: () => sec('dados', 'Meus dados', [`
@@ -2448,6 +2449,12 @@ function edMove() {
     const r = await api.post('/api/game/move', { key, dest }); if (r.error) { toast('err', 'Não foi possível mover', r.error); return false; }
     S.jobs[key] = { stage: 'move', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on'); setView('downloads');
   } }), 220);
+}
+async function exportSteam(user, keys) {
+  const r = await api.post('/api/library/steam', { user: user || undefined, keys: keys && keys.length ? keys : undefined });
+  if (r.error) return toast('err', 'Não foi possível enviar para a Steam', r.error);
+  if (r.choose) { S._steamKeys = keys; return modal({ title: 'Qual conta da Steam?', text: 'Este PC tem mais de uma conta. Os atalhos entram na conta escolhida.', noOk: true, cancel: 'Não fazer nada', html: `<div class="askrow">${r.choose.map(u => `<button onclick="$('#modal').classList.remove('on');exportSteam(${jsq(u.id)},S._steamKeys)"><b>${esc(u.name)}</b><span>${u.shortcuts ? 'já tem atalhos' : 'sem atalhos'} · ${esc(u.id)}</span></button>`).join('')}</div>` }); }
+  toast('ok', 'Atalhos enviados para a Steam', `${pl(r.added, 'novo', 'novos')}, ${r.updated} atualizados${r.skipped ? `, ${r.skipped} pulados` : ''} na conta ${r.user}. Abra a Steam para ver.`);
 }
 async function exportLibrary(fmt, keys) {
   const r = await api.post('/api/library/export', { format: fmt || 'ludrix', keys: keys && keys.length ? keys : undefined }); if (r.error) return toast('err', 'Não foi possível exportar', r.error);
@@ -3141,7 +3148,11 @@ document.addEventListener('keydown', e => { const w = $('#welcome'); if (!w || !
 function toggleToolbarItem(id, on) { const cur = new Set(S.config.toolbar_items || ['search', 'cats', 'sort', 'bell']); on ? cur.add(id) : cur.delete(id); setCfg({ toolbar_items: TOOLBAR_ITEMS.map(x => x[0]).filter(x => cur.has(x)) }); }
 document.addEventListener('click', e => { if (!e.target.closest('#filt')) $('#filt')?.classList.remove('on'); if (!e.target.closest('#vpop')) $('#vpop')?.classList.remove('on'); });
 async function toggleFav(key) { const r = await api.post('/api/fav', { key }); const g = S.byKey[key]; if (g) { g.fav = r.fav; S._poolKey = ''; } document.querySelectorAll(`[data-fav="${CSS.escape(key)}"]`).forEach(b => b.classList.toggle('on', r.fav)); if (S.home && S.home.games[key]) S.home.games[key].fav = r.fav; if (S.view === 'home') refreshHome(); }
-async function stopGame(key) { const r = await api.post('/api/stop', { key }); if (r.error) toast('err', 'Não foi possível concluir', r.error); else toast('', 'Fechando…', ''); pollSoon(); }
+async function stopGame(key, force) {
+  const title = (S.byKey[key] || S.det || {}).title || 'o jogo';
+  if (!force) return modal({ title: 'Encerrar ' + title + '?', text: 'O processo é finalizado na hora, mesmo travado. Progresso não salvo dentro do jogo se perde.', ok: 'Encerrar', cancel: 'Não fazer nada', danger: true, onOk: () => stopGame(key, true) });
+  const r = await api.post('/api/stop', { key }); if (r.error) toast('err', 'Não foi possível encerrar', r.error); else toast('', 'Encerrando ' + title + '…', ''); pollSoon();
+}
 
 async function installFromFile() {
   if (!S.config.native) { modal({ title: 'Instalar de arquivo', html: '<label class="ml">Caminho do arquivo (.zip/.7z/.rar/.iso)</label><input class="mi" id="ifPath"><label class="ml">Título (opcional)</label><input class="mi" id="ifTitle">', ok: 'Instalar', onOk: async () => { const r = await api.post('/api/local/install_file', { file: $('#ifPath').value.trim(), title: $('#ifTitle').value.trim() }); if (r.error) { toast('err', 'Não foi possível concluir', r.error); return false; } S.jobs[r.key] = { stage: 'extract', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on'); setView('downloads'); } }); return; }

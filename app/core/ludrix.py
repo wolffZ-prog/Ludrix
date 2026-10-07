@@ -2535,7 +2535,7 @@ class Ludrix:
             if (kind == "rom" or local_rom_key(key)) and sysid and len(self.emu.installed_options(sysid)) > 1:
                 acts.append({"id": "play_with", "label": "Jogar com…", "icon": "gamepad"})
         if live:
-            acts.append({"id": "stop", "label": "Fechar o jogo", "icon": "x", "danger": True})
+            acts.append({"id": "stop", "label": "Encerrar o jogo (fecha mesmo travado)", "icon": "x", "danger": True})
         local_rom = local_rom_key(key)
         if not installed and kind != "local" and not local_rom:
             only_t = bool(g.get("magnet") or g.get("torrent_url")) and not g.get("files")
@@ -2846,14 +2846,79 @@ class Ludrix:
             hd = out / "heroic" / "sideload_apps"
             hd.mkdir(parents=True, exist_ok=True)
             (hd / "library.json").write_text(json.dumps({"games": heroic}, ensure_ascii=False, indent=2), encoding="utf-8")
+        pn = {}
+        try:
+            from . import exporters
+            names = {k: (v or {}).get("name", k) for k, v in (self.emu.presets.get("systems") or {}).items()}
+            ver = self.updates.status()["current"].get("version", "1.0")
+            pn = exporters.build_playnite(out, rows, covers, ver, paths.UI / "icon.png", names)
+        except Exception as e:
+            log.warning("export playnite: %s", e)
         (out / "LEIA-ME.txt").write_text(
             "Exportação do LudrixHub\n\n"
+            "playnite/LudrixImport.pext — importa tudo no Playnite 10: dois cliques no .pext, depois menu Extensões > Ludrix > Importar. Veja playnite/COMO-IMPORTAR.txt.\n"
             "ludrix-library.json  — tudo (nomes, metadados, caminhos, tempo jogado, capas em covers/). Formato aberto, legível.\n"
-            "ludrix-library.csv   — planilha (separador ;). Abre no Excel/LibreOffice; no Playnite use uma extensão de importar CSV.\n"
+            "ludrix-library.csv   — planilha (separador ;). Abre no Excel/LibreOffice.\n"
             "heroic/sideload_apps/library.json — jogos com executável no formato de 'sideload' do Heroic Games Launcher: copie por cima\n"
             "                       do arquivo homônimo na pasta de configuração do Heroic (com ele fechado) ou mescle a lista 'games'.\n"
             "covers/              — capas dos jogos (quando havia).\n", encoding="utf-8")
-        return {"ok": True, "dir": str(out), "count": len(rows), "heroic": len(heroic)}
+        return {"ok": True, "dir": str(out), "count": len(rows), "heroic": len(heroic), "playnite": bool(pn)}
+
+    def export_steam(self, user: str | None = None, keys: list[str] | None = None) -> dict:
+        import subprocess
+        from . import steamexport
+        root = steamexport.steam_root()
+        if not root:
+            return {"error": "Steam não encontrada neste PC."}
+        if steamexport.steam_running():
+            return {"error": "Feche a Steam antes de exportar. Com ela aberta, os atalhos novos seriam descartados ao sair."}
+        us = steamexport.users(root)
+        if not us:
+            return {"error": "Nenhuma conta da Steam já entrou neste PC (pasta userdata vazia)."}
+        pick = next((u for u in us if u["id"] == str(user)), None) if user else (us[0] if len(us) == 1 else None)
+        if not pick:
+            return {"choose": [{"id": u["id"], "name": u["name"], "shortcuts": u["shortcuts"]} for u in us]}
+        cat = self.catalog_payload().get("games", [])
+        sel = set(keys or [])
+        games = []
+        for g in cat:
+            key = g["key"]
+            if sel and key not in sel:
+                continue
+            if not sel and not (g.get("installed") or key.startswith(("local:", "rom:"))):
+                continue
+            if g.get("kind") == "emulator":
+                continue
+            info = self.store.get(key) or {}
+            exe = str(info.get("exe") or "")
+            if not exe or "://" in exe:
+                continue
+            item = {"title": g["title"], "last_played": int(g.get("last_played") or 0)}
+            sysid = g.get("system") or info.get("system") or "pc"
+            if key.startswith("rom:") or sysid != "pc":
+                r = self.emu.launch_rom(exe, sysid)
+                if not r.get("cmd"):
+                    continue
+                cmd = r["cmd"]
+                item.update(exe=cmd[0], dir=r.get("cwd") or str(Path(cmd[0]).parent), args=subprocess.list2cmdline(cmd[1:]) if os.name == "nt" else " ".join(shlex.quote(c) for c in cmd[1:]), icon=cmd[0])
+            else:
+                if not Path(exe).exists():
+                    continue
+                item.update(exe=exe, dir=info.get("workdir") or info.get("dir") or str(Path(exe).parent), args=self._game_args(key), icon=exe)
+            try:
+                c = self.cover_path(key)
+                item["cover"] = str(c) if c else ""
+                h = self.hero_path(key)
+                item["hero"] = str(h) if h else ""
+            except Exception:
+                pass
+            games.append(item)
+        if not games:
+            return {"error": "Nenhum jogo com executável para enviar."}
+        r = steamexport.export(Path(pick["dir"]), games)
+        if r.get("ok"):
+            r["user"] = pick["name"]
+        return r
 
     def set_config(self, data: dict):
         allowed = {k: v for k, v in data.items() if k not in ("settings_lock", "settings_locked")}

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.38.0 — 2026-10-07
+- Enviar para a Steam (Ajustes › Ferramentas › Exportar biblioteca): cria os atalhos "não-Steam" (`shortcuts.vdf`) de todos os jogos com executável, com capa vertical, capa horizontal e fundo para a Steam e o Big Picture. ROMs entram com o comando do emulador. Exige a Steam fechada; faz backup do arquivo atual, atualiza só os atalhos criados pelo Ludrix e não mexe nos demais. Com mais de uma conta no PC, pergunta qual usar.
+- Exportar biblioteca também gera `playnite\LudrixImport.pext`: dois cliques nele e, no Playnite, menu Extensões › Ludrix › Importar biblioteca do Ludrix traz jogos, capas e metadados (atualiza em vez de duplicar).
+- Encerrar o jogo: no menu do jogo, no botão do cartão e no ícone da bandeja. Fecha o processo e os filhos mesmo quando o jogo travou ou ficou em tela preta; pede confirmação antes.
+- Ícone da bandeja: botão direito mostra o jogo em andamento, os últimos jogos para abrir direto, atalhos para cada tela, a fila, verificar atualizações e abrir a pasta do Ludrix. Um clique abre o Ludrix.
+- Ajustes: removido o traço que aparecia antes dos títulos de seção em temas importados.
+
 ## 2.37.0 — 2026-10-07
 - Biblioteca: painel lateral de filtros (botão Filtros) com o conjunto completo: situação, origem, categoria, gênero, desenvolvedora, ano, última vez que jogou, data em que foi adicionado, tempo jogado e tamanho. Cada grupo mostra a contagem, tem busca própria e aceita várias marcações; os filtros ativos aparecem como chips acima da grade. Combinações podem ser salvas e reaplicadas em "Filtros salvos". O painel vale também para a Store.
 - Ajustes: títulos de seção maiores, opções em cartões com nomes em destaque e descrições mais legíveis; abas da lateral maiores.

@@ -162,18 +162,44 @@ class SessionManager:
         if not s:
             return {"error": "Jogo não está aberto"}
         s["killed"] = True
+        pids = {int(s["pid"]), int(s["proc"].pid)}
         try:
             import psutil
-            p = psutil.Process(s["pid"])
-            for c in p.children(recursive=True):
-                c.terminate()
-            p.terminate()
+            for pid in list(pids):
+                try:
+                    p = psutil.Process(pid)
+                    for c in p.children(recursive=True):
+                        pids.add(c.pid)
+                except Exception:
+                    pass
+            procs = []
+            for pid in pids:
+                try:
+                    procs.append(psutil.Process(pid))
+                except Exception:
+                    pass
+            for p in procs:
+                try:
+                    p.terminate()
+                except Exception:
+                    pass
+            _, alive = psutil.wait_procs(procs, timeout=4)
+            for p in alive:
+                try:
+                    p.kill()
+                except Exception:
+                    pass
+            psutil.wait_procs(alive, timeout=3)
         except Exception:
-            try:
-                s["proc"].terminate()
-            except Exception as e:
-                return {"error": str(e)}
-        return {"ok": True}
+            if os.name == "nt":
+                for pid in pids:
+                    subprocess.run(["taskkill", "/PID", str(pid), "/T", "/F"], capture_output=True, creationflags=0x08000000)
+            else:
+                try:
+                    s["proc"].kill()
+                except Exception as e:
+                    return {"error": str(e)}
+        return {"ok": True, "title": s["title"]}
 
     def status(self) -> dict:
         return {k: {"title": s["title"], "since": s["started"], "elapsed": time.time() - s["started"]}

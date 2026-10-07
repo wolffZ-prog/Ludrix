@@ -192,19 +192,15 @@ def setup_logging():
 
 class Tray:
 
-    def __init__(self, on_show, on_quit):
+    def __init__(self, on_show, on_quit, items=None, dark=None):
         self.icon = None
         self.on_show, self.on_quit = on_show, on_quit
+        self.items, self.dark = items, dark
         try:
             import pystray
             from PIL import Image
             img = Image.open(_icon_png()).convert("RGBA").resize((64, 64))
-            menu = pystray.Menu(
-                pystray.MenuItem("Abrir Ludrix", lambda: self.on_show(), default=True),
-                pystray.Menu.SEPARATOR,
-                pystray.MenuItem("Sair", lambda: self.on_quit()),
-            )
-            self.icon = pystray.Icon("ludrix-launcher", img, APP_NAME, menu)
+            self.icon = pystray.Icon("ludrix-launcher", img, APP_NAME, pystray.Menu(self._build))
             threading.Thread(target=self.icon.run, daemon=True).start()
             if sys.platform != "win32":
 
@@ -212,6 +208,47 @@ class Tray:
                 threading.Thread(target=self._check_docked, daemon=True).start()
         except Exception as e:
             logging.warning("tray indisponível: %s", e)
+
+    def _theme(self):
+        if sys.platform != "win32":
+            return
+        try:
+            import ctypes
+            ux = ctypes.WinDLL("uxtheme")
+            ctypes.WINFUNCTYPE(ctypes.c_int, ctypes.c_int)((135, ux))(2 if (self.dark and self.dark()) else 3)
+            ctypes.WINFUNCTYPE(None)((136, ux))()
+        except Exception:
+            pass
+
+    def _item(self, sp):
+        import pystray
+        if sp.get("sep"):
+            return pystray.Menu.SEPARATOR
+        label = str(sp.get("label") or "")[:60]
+        if sp.get("sub"):
+            return pystray.MenuItem(label, pystray.Menu(*[self._item(x) for x in sp["sub"]]))
+        fn = sp.get("fn")
+        return pystray.MenuItem(label, (lambda f: (lambda: self._safe(f)))(fn) if fn else None, enabled=bool(fn) and not sp.get("disabled"))
+
+    @staticmethod
+    def _safe(fn):
+        try:
+            fn()
+        except Exception as e:
+            logging.warning("bandeja: %s", e)
+
+    def _build(self):
+        import pystray
+        self._theme()
+        specs = []
+        try:
+            specs = list(self.items()) if self.items else []
+        except Exception as e:
+            logging.warning("menu da bandeja: %s", e)
+        out = [pystray.MenuItem("Abrir Ludrix", lambda: self._safe(self.on_show), default=True)]
+        out += [self._item(x) for x in specs]
+        out += [pystray.Menu.SEPARATOR, pystray.MenuItem("Sair", lambda: self._safe(self.on_quit))]
+        return out
 
     def _check_docked(self):
         time.sleep(2.5)
@@ -814,7 +851,61 @@ def main():
         put(33, {"round": 2, "small": 3, "square": 1}.get(body.get("corners") or "", 0))
         return {}
 
-    tray = Tray(on_show=show, on_quit=quit_app)
+    def tray_js(code: str):
+        show()
+        try:
+            window.evaluate_js(code)
+        except Exception as e:
+            logging.warning("bandeja js: %s", e)
+
+    def tray_view(v: str):
+        return lambda: tray_js(f"setView('{v}')")
+
+    def tray_play(key: str):
+        def go():
+            import json as _j
+            r = {}
+            try:
+                r = ludrix.play(key, after="minimize") or {}
+            except Exception as e:
+                r = {"error": str(e)}
+            if r.get("ok") and not r.get("choose_emulator") and not r.get("pick_exe"):
+                return
+            tray_js(f"play({_j.dumps(key)})")
+        return go
+
+    def tray_stop(key):
+        def go():
+            try:
+                ludrix.stop_game(key)
+            except Exception as e:
+                ludrix.log.warning("tray stop: %s", e)
+        return go
+
+    def tray_items():
+        items = []
+        act = list(ludrix.sessions.active.values())
+        if act:
+            s0 = act[0]
+            mins = int((time.time() - float(s0.get("started") or time.time())) // 60)
+            items.append({"label": f"Jogando: {str(s0.get('title') or '')[:36]} · {mins} min" + (f" (+{len(act) - 1})" if len(act) > 1 else ""), "disabled": True})
+            for s in act:
+                items.append({"label": f"Encerrar {str(s.get('title') or '')[:40]}", "fn": tray_stop(s.get("key"))})
+        rec = [(k, g) for k, g in ludrix.store.library.items() if isinstance(g, dict) and g.get("installed") and g.get("last_played") and g.get("kind") != "emulator" and k not in ludrix.sessions.active]
+        rec.sort(key=lambda x: -float(x[1].get("last_played") or 0))
+        sub = [{"label": str(g.get("title") or k)[:48], "fn": tray_play(k)} for k, g in rec[:6]] or [{"label": "Nenhum jogo recente", "disabled": True}]
+        items.append({"label": "Jogar", "sub": sub})
+        views = [("home", "Biblioteca"), ("store", "Store"), ("emulation", "Emuladores"), ("mods", "Mods e ferramentas"), ("central", "Central"), ("flash", "Jogos rápidos"), ("downloads", "Fila"), ("settings", "Ajustes")]
+        items.append({"label": "Ir para", "sub": [{"label": n, "fn": tray_view(v)} for v, n in views]})
+        n = len(ludrix.jobs)
+        if n:
+            items.append({"label": f"Fila: {n} em andamento", "fn": tray_view("downloads")})
+        items.append({"sep": True})
+        items.append({"label": "Verificar atualizações", "fn": lambda: tray_js("checkUpdates()")})
+        items.append({"label": "Abrir pasta do Ludrix", "fn": lambda: ludrix.open_path(str(paths.ROOT))})
+        return items
+
+    tray = Tray(on_show=show, on_quit=quit_app, items=tray_items, dark=lambda: bool(frame_last.get("dark")))
     ludrix.window_hooks = {"frame": win_frame, "hide": hide, "show": show, "quit": quit_app, "minimize": win_min, "maximize": win_max, "close": win_close,
                           "frameless": lambda: {"frameless": frameless}, "snapshot": win_snapshot, "resize": win_resize, "fullscreen": win_fullscreen,
                           "terminal": term_open, "terminal_minimize": _term("minimize"), "terminal_maximize": term_max,

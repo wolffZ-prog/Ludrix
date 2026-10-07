@@ -381,6 +381,7 @@ class Handler(BaseHTTPRequestHandler):
                 "/api/game/relocate": lambda: v.relocate_game(b["key"], b.get("path")),
                 "/api/library/check": lambda: v.library_check(),
                 "/api/library/export": lambda: v.export_metadata(b.get("keys"), b.get("format") or "ludrix"),
+                "/api/library/steam": lambda: v.export_steam(b.get("user"), b.get("keys")),
                 "/api/edit/probe": lambda: v.edit_probe(b["key"], b.get("source") or "", b.get("title") or ""),
                 "/api/edit/webcovers": lambda: v.edit_web_covers(b["key"], b.get("title") or "", b.get("kind") or "cover"),
                 "/api/edit/copy": lambda: v.edit_copy(b["key"], b.get("from") or ""),
