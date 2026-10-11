@@ -1,8 +1,7 @@
 {
-  "version": "2.40.0",
+  "version": "2.41.1",
   "channel": "stable",
-  "date": "2026-10-07",
+  "date": "2026-10-11",
   "name": "LudrixHub",
-  "changelog": "- O WebView2 deixa de vir embutido: o Ludrix usa o WebView2 Runtime do Windows (já presente na maioria dos PCs). Se faltar, instala sozinho na primeira abertura, com a tela \"Aguarde, últimos ajustes finais..\". A pasta do Ludrix fica cerca de 270 MB menor e os pacotes de atualização também. Esta atualização é a completa (troca o runtime inteiro), por isso é maior que as anteriores; a partir dela os pacotes voltam ao tamanho normal.\n- Importar do Playnite: jogos diferentes na mesma pasta (coleções, episódios) não são mais pulados como \"já está na biblioteca\"; só é pulado quem aponta para o mesmo executável de outro jogo. Ação do Playnite que não é executável (manual em PDF, texto) é ignorada e o executável é procurado na pasta. Jogos da Epic/GOG com pasta local existente entram pela pasta, não pelo launcher. Data de adição e contagem de partidas passam a vir do Playnite (ordem \"Adicionados\" igual à do Playnite). Jogos ocultos no Playnite, quando incluídos, entram ocultos aqui também.\n- Importar: o que fica de fora aparece com o motivo — na prévia (\"N ficaram de fora\") e na lista final, incluindo o que o leitor descartou (oculto, sem caminho, não instalado, repetido). A lista também vai para o `ludrix.log`.\n- Depois de importar ROMs, a biblioteca já mostra todas na hora; a lista de ROMs não some mais da grade enquanto o Ludrix revarre as pastas.\n- Ícone da bandeja: o menu do botão direito passa a ser desenhado com as cores do tema, com os últimos 10 jogos (com capa) para abrir direto, \"Encerrar\" do jogo em andamento, Ir para, Fila, Verificar atualizações, Abrir pasta e Sair. \"Abrir Ludrix\" em destaque.\n- Atualizações: o cartão mostra o tamanho do pacote antes de baixar.",
-  "needs_full": true
+  "changelog": "- Compilação: o teste automático do exe não é mais interrompido quando o WebView2 Runtime não consta no registro da máquina que compila (o Ludrix instala o runtime sozinho na primeira abertura). A detecção do WebView2 no Diagnóstico passa a procurar também pela pasta de instalação (Program Files › Microsoft › EdgeWebView), não só pelo registro."
 }

@@ -624,6 +624,15 @@ class Ludrix:
     def _hidden(self) -> set:
         return set(self.store.config.get("hidden_games") or [])
 
+    def emu_guide_install(self, sid: str, what: str, path: str | None, pick: str = "file") -> dict:
+        if not path:
+            if not self.pick_file:
+                return {"error": "Diálogo nativo indisponível no modo navegador — informe o caminho"}
+            path = self.pick_folder() if pick == "folder" and self.pick_folder else self.pick_file("")
+            if not path:
+                return {"cancel": True}
+        return self.emu.guide_install(sid, what, path)
+
     def toggle_hidden(self, key: str) -> dict:
         h = self._hidden
         (h.discard if key in h else h.add)(key)
@@ -1629,7 +1638,7 @@ class Ludrix:
                 emulator = self._pick_emulator(key, r["system"], emulator)
                 if isinstance(emulator, dict):
                     return emulator
-                lr = self.emu.launch_rom(r["path"], r["system"], emulator)
+                lr = self.emu.launch_rom(r["path"], r["system"], emulator, force)
                 if lr.get("error"):
                     return lr
                 res = self.sessions.launch(key, lr["cmd"] + self._split_args(self._game_args(key)), lr["cwd"], r["title"])
@@ -1653,7 +1662,7 @@ class Ludrix:
             emulator = self._pick_emulator(key, info["system"], emulator)
             if isinstance(emulator, dict):
                 return emulator
-            lr = self.emu.launch_rom(info["exe"], info["system"], emulator)
+            lr = self.emu.launch_rom(info["exe"], info["system"], emulator, force)
             if lr.get("error"):
                 return lr
             res = self.sessions.launch(key, lr["cmd"] + self._split_args(self._game_args(key)), lr["cwd"], info.get("title", key))
@@ -3350,9 +3359,11 @@ class Ludrix:
         try:
             if "java" in have:
                 info = self.store.get(have["java"]) or {}
-                if not info.get("exe"):
+                cur = str(info.get("exe") or "")
+                weak = not cur or cur.lower().endswith(".jar") or (not cur.startswith(("shell:", "flatpak:")) and not Path(cur).exists())
+                if weak:
                     it, fresh = self.mced.java_launcher(info.get("mc_launcher") or "")
-                    if fresh and it:
+                    if fresh and it and fresh != cur and (not cur or not fresh.lower().endswith(".jar")):
                         self.store.update(have["java"], exe=fresh, mc_launcher=it["id"], description=minecraft.EDITIONS["java"]["desc"] + f" Abre pelo {it['title']}.")
                         self.notify("info", f"Minecraft Java agora abre pelo {it['title']}", "Launcher encontrado; o jogo está pronto para Jogar.", key=have["java"])
             if "java" not in have and (minecraft.java_dirs() or self.mced.java_launcher()[1]):
@@ -5132,10 +5143,8 @@ class Ludrix:
     def _import_prefer_emulator(self, sid: str, vid: str):
         try:
             if vid in self.emu.presets["emulators"] and (self.emu.emu_exe(vid) or (self.store.config.get("emu_paths") or {}).get(vid)):
-                se = dict(self.store.config.get("system_emulators") or {})
-                if se.get(sid) != vid:
-                    se[sid] = vid
-                    self.store.set_config(system_emulators=se)
+                if self.emu.emulator_for(sid) != vid:
+                    self.emu.set_system_emulator(sid, vid)
         except Exception as ex:
             log.debug("prefer emu %s/%s: %s", sid, vid, ex)
 
@@ -5156,6 +5165,9 @@ class Ludrix:
         if not vid:
             vid = importers.playnite_emu_of(Path(exe).stem) if hasattr(importers, "playnite_emu_of") else ""
         if vid in self.emu.presets["emulators"]:
+            if not self.emu.same_family(vid, exe):
+                vid = ""
+        if vid in self.emu.presets["emulators"]:
             self.emu.set_emulator_exe(vid, exe)
             for sid in g.get("systems") or []:
                 if sid in self.emu.presets["systems"] and sid not in (self.emu.presets["emulators"][vid].get("systems") or []):
@@ -5166,7 +5178,7 @@ class Ludrix:
             return False
         title = re.sub(r"^Emulador:\s*", "", g.get("title") or Path(exe).stem)
         args = (g.get("args") or "").replace("{ImagePath}", "{rom}").replace("{ImageName}", "{rom}").replace("{ImageNameNoExt}", "{rom}")
-        self.emu.add_custom_emulator({"title": title, "exe": exe, "args": args or "{rom}", "systems": systems})
+        self.emu.add_custom_emulator({"title": title, "exe": exe, "args": args or "{rom}", "systems": systems}, make_default=False)
         return True
 
     def _warm_up(self):

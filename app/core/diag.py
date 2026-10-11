@@ -121,7 +121,27 @@ def webview2_version() -> str:
                     return v
         except OSError:
             continue
-    return ""
+    f = webview2_folder()
+    return (f.name + " (pasta)") if f else ""
+
+
+def webview2_folder():
+    bases = [os.environ.get("ProgramFiles(x86)"), os.environ.get("ProgramFiles"), os.environ.get("LOCALAPPDATA")]
+    for sub in (r"Microsoft\EdgeWebView\Application", r"Microsoft\Edge\Application"):
+        for b in bases:
+            if not b:
+                continue
+            d = Path(b) / sub
+            if not d.is_dir():
+                continue
+            try:
+                vers = [x for x in d.iterdir() if x.is_dir() and x.name[:1].isdigit() and (x / "msedgewebview2.exe").exists()]
+            except OSError:
+                continue
+            if vers:
+                vers.sort(key=lambda x: [int(n) if n.isdigit() else 0 for n in x.name.split(".")])
+                return vers[-1]
+    return None
 
 
 def log_tail(n: int = 30) -> list[str]:
@@ -295,8 +315,7 @@ def selftest(ludrix, port: int, token: str) -> tuple[bool, str]:
         ok = False
         notes.append(f"webview: {e}")
     if os.name == "nt" and not webview2_version():
-        ok = False
-        notes.append("WebView2 Runtime não encontrado")
+        notes.append("WebView2 Runtime não encontrado nesta máquina (o Ludrix instala sozinho na primeira abertura)")
     elif sys.platform != "win32":
         try:
             importlib.import_module("webview.guilib").initialize(None)

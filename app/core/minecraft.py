@@ -44,7 +44,11 @@ LAUNCHERS = [
      "linux": []},
     {"id": "sklauncher", "title": "SKLauncher", "group": "other", "winget": [], "site": "https://skmedix.pl/",
      "desc": "Launcher leve e popular, com skins e versões personalizadas. Precisa do Java. Não é código aberto.",
-     "win": [r"%LOCALAPPDATA%\Programs\SKlauncher\SKlauncher.exe", r"%APPDATA%\.minecraft\SKlauncher*.jar", r"%APPDATA%\.minecraft\SKlauncher*.exe", r"%USERPROFILE%\Downloads\SKlauncher*.jar", r"%USERPROFILE%\Downloads\SKlauncher*.exe", r"%USERPROFILE%\Desktop\SKlauncher*.jar", r"%USERPROFILE%\Desktop\SKlauncher*.exe"],
+     "win": [r"%LOCALAPPDATA%\Programs\SKlauncher\SKlauncher.exe", r"%LOCALAPPDATA%\SKlauncher\SKlauncher.exe", r"%ProgramFiles%\SKlauncher\SKlauncher.exe",
+             r"%APPDATA%\.minecraft\SKlauncher*.exe", r"%USERPROFILE%\Desktop\SKlauncher*.exe", r"%USERPROFILE%\Desktop\*\SKlauncher*.exe", r"%USERPROFILE%\OneDrive\Desktop\SKlauncher*.exe",
+             r"%USERPROFILE%\OneDrive\Desktop\*\SKlauncher*.exe", r"%USERPROFILE%\OneDrive\Área de Trabalho\SKlauncher*.exe", r"%USERPROFILE%\OneDrive\Área de Trabalho\*\SKlauncher*.exe",
+             r"%USERPROFILE%\Downloads\SKlauncher*.exe", r"%USERPROFILE%\Downloads\*\SKlauncher*.exe", r"%USERPROFILE%\Documents\SKlauncher*.exe", r"%USERPROFILE%\Documents\*\SKlauncher*.exe",
+             r"%APPDATA%\.minecraft\SKlauncher*.jar", r"%USERPROFILE%\Downloads\SKlauncher*.jar", r"%USERPROFILE%\Desktop\SKlauncher*.jar", r"%USERPROFILE%\Desktop\*\SKlauncher*.jar"],
      "linux": ["~/Downloads/SKlauncher*.jar", "~/.minecraft/SKlauncher*.jar"]},
 ]
 
@@ -59,7 +63,15 @@ def _expand(p: str) -> str:
     return os.path.expandvars(os.path.expanduser(p))
 
 
+def _rank(p: str) -> int:
+    low = p.lower()
+    if low.endswith(".jar"):
+        return 2 if java_path() else 3
+    return 0 if low.endswith(".exe") else 1
+
+
 def _find(patterns: list[str]) -> str:
+    found = []
     for pat in patterns:
         if pat.startswith("flatpak:"):
             app = pat[8:]
@@ -67,16 +79,21 @@ def _find(patterns: list[str]) -> str:
             if fp:
                 base = [Path("/var/lib/flatpak/app") / app, Path.home() / ".local/share/flatpak/app" / app]
                 if any(b.exists() for b in base):
-                    return pat
+                    found.append(pat)
             continue
         p = _expand(pat)
         if any(ch in p for ch in "*?["):
             hits = sorted(glob.glob(p), key=lambda x: os.path.getmtime(x), reverse=True)
             if hits:
-                return hits[0]
-        elif os.path.exists(p):
-            return p
-    return ""
+                found.append(hits[0])
+            continue
+        if os.path.isfile(p):
+            found.append(p)
+    if not found:
+        return ""
+    best = min(found, key=_rank)
+    return best if _rank(best) < 3 else ""
+
 
 
 REG_NAMES = {

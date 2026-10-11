@@ -588,7 +588,7 @@
         ]
       },
       "asset": "Windows.*amd64-msvc-standard\\.zip$",
-      "description": "Switch — código aberto (fork do Yuzu), releases oficiais em git.eden-emu.dev. Precisa de prod.keys e firmware (pasta Emuladores → BIOS/keys)."
+      "description": "Switch — código aberto (fork do Yuzu), releases oficiais em git.eden-emu.dev. Precisa de prod.keys e firmware (botão guia do console)."
     },
     "mesen": {
       "title": "Mesen 2",
@@ -913,7 +913,7 @@
           "--fullscreen"
         ]
       },
-      "description": "PS2 — emulador sem BIOS (baixe o instalador e aponte o .exe)"
+      "description": "PS2 — precisa da BIOS do console (botão guia do console)"
     },
     "epsxe": {
       "title": "ePSXe",

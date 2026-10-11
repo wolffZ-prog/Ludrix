@@ -449,7 +449,7 @@ def main():
     if "--web" in sys.argv:
         i = sys.argv.index("--web")
         port = int(sys.argv[i + 1]) if len(sys.argv) > i + 1 else 8000
-        _, port = serve(ludrix, host="0.0.0.0" if "--lan" in sys.argv else "127.0.0.1", port=port)
+        _, port = serve(ludrix, host="127.0.0.1", port=port)
         instance.write("window", port, server_token())
         print(f"{APP_NAME}: http://localhost:{port}")
 
@@ -1229,28 +1229,78 @@ def main():
                 ludrix.log.warning("tray stop: %s", e)
         return go
 
-    def tray_items():
-        items = []
-        act = list(ludrix.sessions.active.values())
-        if act:
-            s0 = act[0]
-            mins = int((time.time() - float(s0.get("started") or time.time())) // 60)
-            items.append({"label": f"Jogando: {str(s0.get('title') or '')[:36]} · {mins} min" + (f" (+{len(act) - 1})" if len(act) > 1 else ""), "disabled": True})
-            for s in act:
-                items.append({"label": f"Encerrar {str(s.get('title') or '')[:40]}", "fn": tray_stop(s.get("key"))})
-        rec = [(k, g) for k, g in ludrix.store.library.items() if isinstance(g, dict) and g.get("installed") and g.get("last_played") and g.get("kind") != "emulator" and k not in ludrix.sessions.active]
+    def tray_clients():
+        if sys.platform != "win32":
+            return []
+        env = os.environ.get
+        pf, pf86, la = env("ProgramFiles", r"C:\Program Files"), env("ProgramFiles(x86)", r"C:\Program Files (x86)"), env("LOCALAPPDATA", "")
+        cands = [
+            ("Steam", [r"%s\Steam\steam.exe" % pf86, r"%s\Steam\steam.exe" % pf]),
+            ("Epic Games", [r"%s\Epic Games\Launcher\Portal\Binaries\Win64\EpicGamesLauncher.exe" % pf86, r"%s\Epic Games\Launcher\Portal\Binaries\Win32\EpicGamesLauncher.exe" % pf86]),
+            ("GOG Galaxy", [r"%s\GOG Galaxy\GalaxyClient.exe" % pf86]),
+            ("EA app", [r"%s\Electronic Arts\EA Desktop\EA Desktop\EADesktop.exe" % pf]),
+            ("Ubisoft Connect", [r"%s\Ubisoft\Ubisoft Game Launcher\UbisoftConnect.exe" % pf86, r"%s\Ubisoft\Ubisoft Game Launcher\upc.exe" % pf86]),
+            ("Battle.net", [r"%s\Battle.net\Battle.net Launcher.exe" % pf86]),
+            ("Rockstar Games", [r"%s\Rockstar Games\Launcher\Launcher.exe" % pf]),
+            ("Amazon Games", [r"%s\Amazon Games\App\Amazon Games.exe" % la]),
+            ("itch", [r"%s\itch\itch.exe" % la]),
+        ]
+        try:
+            import winreg
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam") as k:
+                cands[0][1].insert(0, str(winreg.QueryValueEx(k, "SteamExe")[0]).replace("/", "\\"))
+        except Exception:
+            pass
+        out = []
+        for name, exes in cands:
+            exe = next((e for e in exes if e and os.path.isfile(e)), None)
+            if exe:
+                out.append({"label": name, "fn": (lambda x: (lambda: os.startfile(x)))(exe)})
+        if la and os.path.isdir(os.path.join(la, "Packages", "Microsoft.GamingApp_8wekyb3d8bbwe")):
+            out.append({"label": "Xbox", "fn": lambda: os.startfile("shell:AppsFolder\\Microsoft.GamingApp_8wekyb3d8bbwe!Microsoft.Xbox.App")})
+        return out
+
+    def tray_games(n: int = 10):
+        lib = [(k, g) for k, g in ludrix.store.library.items() if isinstance(g, dict) and g.get("installed") and g.get("kind") != "emulator" and k not in ludrix.sessions.active]
+        rec = [x for x in lib if x[1].get("last_played")]
         rec.sort(key=lambda x: -float(x[1].get("last_played") or 0))
-        sub = [{"label": str(g.get("title") or k)[:48], "fn": tray_play(k)} for k, g in rec[:6]] or [{"label": "Nenhum jogo recente", "disabled": True}]
-        items.append({"label": "Jogar", "sub": sub})
+        fav = sorted([x for x in lib if x[1].get("favorite")], key=lambda x: str(x[1].get("title") or x[0]).lower())
+        item = lambda k, g: {"label": str(g.get("title") or k)[:48], "fn": tray_play(k), "icon_key": k}
+        return [item(k, g) for k, g in rec[:n]], [item(k, g) for k, g in fav[:15]]
+
+    def tray_specs(rich: bool):
+        specs = []
+        act = list(ludrix.sessions.active.values())
+        for s in act:
+            mins = int((time.time() - float(s.get("started") or time.time())) // 60)
+            specs.append({"label": f"Encerrar {str(s.get('title') or '')[:40]} · {mins} min", "fn": tray_stop(s.get("key")), "danger": True, "icon_key": s.get("key")})
+        if act:
+            specs.append({"sep": True})
+        rec, fav = tray_games()
+        specs += rec or [{"label": "Nenhum jogo recente", "disabled": True}]
+        if fav:
+            specs.append({"label": "Favoritos", "sub": fav})
+        specs.append({"sep": True})
+        if rich:
+            specs.append({"label": "Abrir Ludrix", "fn": show, "primary": True})
         views = [("home", "Biblioteca"), ("store", "Store"), ("emulation", "Emuladores"), ("mods", "Mods e ferramentas"), ("central", "Central"), ("flash", "Jogos rápidos"), ("downloads", "Fila"), ("settings", "Ajustes")]
-        items.append({"label": "Ir para", "sub": [{"label": n, "fn": tray_view(v)} for v, n in views]})
+        specs.append({"label": "Ir para", "sub": [{"label": n, "fn": tray_view(v)} for v, n in views]})
+        cl = tray_clients()
+        if cl:
+            specs.append({"label": "Lojas e clientes", "sub": cl})
         n = len(ludrix.jobs)
         if n:
-            items.append({"label": f"Fila: {n} em andamento", "fn": tray_view("downloads")})
-        items.append({"sep": True})
-        items.append({"label": "Verificar atualizações", "fn": lambda: tray_js("checkUpdates()")})
-        items.append({"label": "Abrir pasta do Ludrix", "fn": lambda: ludrix.open_path(str(paths.ROOT))})
-        return items
+            specs.append({"label": f"Fila: {n} em andamento", "fn": tray_view("downloads")})
+        specs.append({"sep": True})
+        specs.append({"label": "Verificar atualizações", "fn": lambda: tray_js("checkUpdates()")})
+        specs.append({"label": "Abrir pasta do Ludrix", "fn": lambda: ludrix.open_path(str(paths.ROOT))})
+        if rich:
+            specs.append({"sep": True})
+            specs.append({"label": "Sair", "fn": quit_app})
+        return specs
+
+    def tray_items():
+        return tray_specs(False)
 
     def tray_popup(icon) -> bool:
         if sys.platform != "win32":
@@ -1258,25 +1308,7 @@ def main():
         owner, fg = getattr(icon, "_menu_hwnd", None), getattr(icon, "_hwnd", None)
         if not owner:
             return False
-        specs = [{"label": "Abrir Ludrix", "fn": show, "primary": True}]
-        act = list(ludrix.sessions.active.values())
-        for s in act:
-            specs.append({"label": f"Encerrar {str(s.get('title') or '')[:40]}", "fn": tray_stop(s.get("key")), "danger": True})
-        rec = [(k, g) for k, g in ludrix.store.library.items() if isinstance(g, dict) and g.get("installed") and g.get("last_played") and g.get("kind") != "emulator" and k not in ludrix.sessions.active]
-        rec.sort(key=lambda x: -float(x[1].get("last_played") or 0))
-        if rec:
-            specs.append({"sep": True})
-            specs += [{"label": str(g.get("title") or k)[:48], "fn": tray_play(k), "icon_key": k} for k, g in rec[:10]]
-        views = [("home", "Biblioteca"), ("store", "Store"), ("emulation", "Emuladores"), ("mods", "Mods e ferramentas"), ("central", "Central"), ("flash", "Jogos rápidos"), ("downloads", "Fila"), ("settings", "Ajustes")]
-        specs.append({"sep": True})
-        specs.append({"label": "Ir para", "sub": [{"label": n, "fn": tray_view(v)} for v, n in views]})
-        n = len(ludrix.jobs)
-        if n:
-            specs.append({"label": f"Fila: {n} em andamento", "fn": tray_view("downloads")})
-        specs.append({"label": "Verificar atualizações", "fn": lambda: tray_js("checkUpdates()")})
-        specs.append({"label": "Abrir pasta do Ludrix", "fn": lambda: ludrix.open_path(str(paths.ROOT))})
-        specs.append({"sep": True})
-        specs.append({"label": "Sair", "fn": quit_app})
+        specs = tray_specs(True)
         dark = frame_last.get("dark", True)
         r = ctx_popup({"items": specs, "colors": frame_last.get("colors") or {}, "light": "0" if dark else "1", "at_cursor": "1"}, int(owner), False, int(fg or 0))
         if not r.get("ok"):
@@ -1449,19 +1481,8 @@ def _bring_to_front():
 
 
 def _webview2_folder():
-    bases = [os.environ.get("ProgramFiles(x86)"), os.environ.get("ProgramFiles"), os.environ.get("LOCALAPPDATA")]
-    for sub in (r"Microsoft\EdgeWebView\Application", r"Microsoft\Edge\Application"):
-        for b in bases:
-            if not b:
-                continue
-            d = Path(b) / sub
-            if not d.is_dir():
-                continue
-            vers = [x for x in d.iterdir() if x.is_dir() and x.name[:1].isdigit() and (x / "msedgewebview2.exe").exists()]
-            if vers:
-                vers.sort(key=lambda x: [int(n) if n.isdigit() else 0 for n in x.name.split(".")])
-                return vers[-1]
-    return None
+    from core import diag
+    return diag.webview2_folder()
 
 
 def _webview2_registered() -> bool:

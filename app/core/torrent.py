@@ -95,10 +95,14 @@ class TorrentClient:
     def __init__(self, store):
         self.store = store
         self.session = None
-        if _load_lt():
+        self._open()
+
+    def _open(self):
+        store = self.store
+        if self.session is None and _load_lt():
             self.session = lt.session({
                 "listen_interfaces": "0.0.0.0:6881,[::]:6881",
-                "enable_dht": True, "enable_lsd": True, "enable_upnp": True, "enable_natpmp": True,
+                "enable_dht": True, "enable_lsd": False, "enable_upnp": False, "enable_natpmp": False,
                 "user_agent": "Ludrix/1.0",
                 "download_rate_limit": int(store.config.get("torrent_max_down") or 0) * 1024,
                 "upload_rate_limit": int(store.config.get("torrent_max_up") or 0) * 1024,
@@ -132,6 +136,9 @@ class TorrentClient:
         dest_dir.mkdir(parents=True, exist_ok=True)
         if not _load_lt():
             return self._download_aria2(source, dest_dir, cb, cancel, http_session)
+        with TorrentClient._guard:
+            self._open()
+            TorrentClient._instance = self
         params = lt.add_torrent_params()
         if source.startswith("magnet:"):
             params = lt.parse_magnet_uri(source)
@@ -176,7 +183,19 @@ class TorrentClient:
         ti = h.torrent_file()
         name = ti.name() if ti else ""
         p = dest_dir / name
+        self._maybe_close()
         return p if p.exists() else dest_dir
+
+    def _maybe_close(self):
+        try:
+            with TorrentClient._guard:
+                if self.session and not self.session.get_torrents():
+                    self.session.pause()
+                    self.session = None
+                    if TorrentClient._instance is self:
+                        TorrentClient._instance = None
+        except Exception:
+            pass
 
     _ARIA_RX = re.compile(r"\[#\w+\s+(?P<done>[\d.]+\s*[KMGT]?i?B)(?:/(?P<total>[\d.]+\s*[KMGT]?i?B)\((?P<pct>\d+)%\))?")
     _ARIA_F = {k: re.compile(k + r":(\w+)") for k in ("CN", "SD", "DL", "ETA")}

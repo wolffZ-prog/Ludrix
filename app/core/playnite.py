@@ -56,9 +56,9 @@ PLATFORMS = [
 
 EMULATORS = {"pcsx2": "pcsx2", "duckstation": "duckstation", "ppsspp": "ppsspp", "dolphin": "dolphin", "flycast": "flycast", "xemu": "xemu",
              "xenia": "xenia", "mgba": "mgba", "snes9x": "snes9x", "melonds": "melonds", "retroarch": "retroarch", "rpcs3": "rpcs3", "cemu": "cemu",
-             "ryujinx": "eden", "ryubing": "eden", "yuzu": "eden", "sudachi": "eden", "suyu": "eden", "eden": "eden", "citron": "citron", "citra": "azahar", "azahar": "azahar", "lime3ds": "azahar", "mesen": "mesen", "ares": "ares",
+             "eden": "eden", "citron": "citron", "azahar": "azahar", "mesen": "mesen", "ares": "ares",
              "mednafen": "mednafen", "mame": "mame", "stella": "stella", "dosbox": "dosbox", "simple64": "simple64", "redream": "redream",
-             "project64": "rmg", "mupen64": "rmg", "rmg": "rmg", "rosalie": "rmg", "bsnes": "bsnes", "fceux": "fceux", "nestopia": "nestopia",
+             "rmg": "rmg", "rosalie": "rmg", "bsnes": "bsnes", "fceux": "fceux", "nestopia": "nestopia",
              "kega": "kega", "blastem": "blastem", "epsxe": "epsxe", "desmume": "desmume", "visualboy": "vbam", "vbam": "vbam"}
 
 _ABS = re.compile(r"^([A-Za-z]:[\\/]|\\\\|/)")

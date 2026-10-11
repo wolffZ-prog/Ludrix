@@ -13,7 +13,7 @@ from pathlib import Path
 
 import requests
 
-from . import paths
+from . import emuguide, paths
 
 log = logging.getLogger("ludrix.emu")
 from .titles import normalize_title
@@ -76,6 +76,7 @@ class EmulationManager:
         self._upd_at = 0.0
         self.presets = self._load_presets()
         self._migrate_removed()
+        self._migrate_paths()
         self._scan_cache: dict[str, tuple[float, list]] = {}
         self._scan_lock = threading.Lock()
         self._scan_running: set[str] = set()
@@ -106,6 +107,34 @@ class EmulationManager:
             d = paths.EMU_EMULATORS / old
             if d.exists():
                 shutil.rmtree(d, ignore_errors=True)
+
+    def same_family(self, eid: str, exe: str) -> bool:
+        pc = self.presets["emulators"].get(eid)
+        if not pc or not exe:
+            return True
+        stem = Path(exe).stem.lower()
+        toks = {eid.split("-")[0].lower()}
+        m = re.match(r"[a-z0-9]+", str(pc.get("exe") or "").lower())
+        if m:
+            toks.add(m.group(0))
+        return any(t and t in stem for t in toks)
+
+    def _migrate_paths(self):
+        cfg = self.store.config
+        ep = dict(cfg.get("emu_paths") or {})
+        custom = dict(cfg.get("custom_emulators") or {})
+        bad = [(eid, exe) for eid, exe in ep.items() if exe and not self.same_family(eid, exe)]
+        if not bad:
+            return
+        for eid, exe in bad:
+            ep.pop(eid, None)
+            log.warning("emulador %s apontava para %s (não é %s); desvinculado", eid, exe, self.presets["emulators"][eid].get("exe"))
+            if Path(exe).is_file():
+                cid = re.sub(r"[^a-z0-9]+", "-", Path(exe).stem.lower()).strip("-")
+                if cid and cid not in custom and cid not in self.presets["emulators"]:
+                    systems = list(self.presets["emulators"][eid].get("systems") or [])
+                    custom[cid] = {"title": Path(exe).stem, "exe": str(exe), "args": self._args_for(eid, systems[0] if systems else ""), "systems": systems, "based_on": eid}
+        self.store.set_config(emu_paths=ep, custom_emulators=custom)
 
     def invalidate_scan(self, sid: str | None = None):
         with self._scan_lock:
@@ -213,7 +242,24 @@ class EmulationManager:
                               key=lambda x: (x != sc.get("emulator"), x)),
             "installed_options": self.installed_options(sid),
             "emu_dir": str(exe.parent) if exe else "",
+            "guide": sid in emuguide.GUIDES,
+            "setup_ok": (not emuguide.missing_required(sid, emu or "", exe)) if exe and sid in emuguide.GUIDES else True,
         }
+
+    def guide(self, sid: str) -> dict:
+        emu = self.emulator_for(sid)
+        exe = self.emu_exe(emu) if emu else None
+        st = emuguide.status(sid, emu or "", exe)
+        if not st:
+            return {"error": "Este console não precisa de configuração extra"}
+        st["emulator_title"] = self.all_emulators().get(emu, {}).get("title", emu)
+        st["installed"] = bool(exe)
+        return st
+
+    def guide_install(self, sid: str, what: str, path: str) -> dict:
+        emu = self.emulator_for(sid)
+        exe = self.emu_exe(emu) if emu else None
+        return emuguide.install(sid, emu or "", exe, what, path)
 
     def status(self) -> dict:
         systems = {}
@@ -238,7 +284,7 @@ class EmulationManager:
         return {"systems": systems, "emulators": emus, "bios_dir": str(paths.EMU_BIOS),
                 "games_root": str(paths.EMU_GAMES), "updates": self._upd}
 
-    def add_custom_emulator(self, data: dict) -> dict:
+    def add_custom_emulator(self, data: dict, make_default: bool = True) -> dict:
         exe = Path(data.get("exe") or "")
         if not str(data.get("exe") or "").strip() or not exe.is_file():
             raise ValueError("Executável não encontrado")
@@ -260,7 +306,8 @@ class EmulationManager:
                        "based_on": base or ""}
         se = dict(self.store.config.get("system_emulator") or {})
         for sid in systems:
-            se[sid] = eid
+            if make_default or not se.get(sid):
+                se[sid] = eid
         self.store.set_config(custom_emulators=custom, system_emulator=se)
         return {"id": eid, **custom[eid]}
 
@@ -594,7 +641,7 @@ class EmulationManager:
         shutil.rmtree(self.emu_dir(emu_id), ignore_errors=True)
         self.store.remove(f"emu:{emu_id}")
 
-    def launch_rom(self, rom_path: str, sid: str, emu_override: str | None = None) -> dict:
+    def launch_rom(self, rom_path: str, sid: str, emu_override: str | None = None, force: bool = False) -> dict:
         sc = self.presets["systems"].get(sid)
         if not sc:
             return {"error": f"Sistema desconhecido: {sid}"}
@@ -603,10 +650,11 @@ class EmulationManager:
         if not exe:
             title = self.all_emulators().get(emu_id, {}).get("title", emu_id)
             return {"error": "emu_missing", "emulator": emu_id, "message": f"{title} não está instalado."}
-        if sc.get("bios") and not any(paths.EMU_BIOS.iterdir()):
-            hint = f"Este sistema precisa de BIOS/keys em {paths.EMU_BIOS}"
-        else:
-            hint = ""
+        hint = ""
+        miss = emuguide.missing_required(sid, emu_id, exe) if sid in emuguide.GUIDES else []
+        if miss and not force:
+            return {"error": "needs_setup", "system": sid, "emulator": emu_id, "missing": miss,
+                    "message": f"{sc['name']}: falta {', '.join(miss)}. O guia do console mostra onde conseguir e instala no lugar certo."}
         if emu_id == "retroarch":
             core_name = sc.get("core") or self.presets["emulators"]["retroarch"].get("cores", {}).get(sid)
             core = self.ensure_core(core_name) if core_name else None

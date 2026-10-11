@@ -185,6 +185,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(v.list_exes(unquote(p[10:])))
             if p == "/api/emulation":
                 return self._json(v.emu.status())
+            if p == "/api/emulator/guide":
+                return self._json(v.emu.guide((q.get("system") or [""])[0]))
             if p == "/api/home":
                 return self._json(v.home_payload())
             if p == "/api/queue":
@@ -324,6 +326,7 @@ class Handler(BaseHTTPRequestHandler):
                 "/api/rom/preview": lambda: v.rom_preview(b.get("path")),
                 "/api/emulator/exe": lambda: v.emu.set_emulator_exe(b["id"], b.get("exe")),
                 "/api/emulator/open": lambda: v.emu.open_emulator_gui(b["id"]),
+                "/api/emulator/guide/install": lambda: v.emu_guide_install(b["system"], b["what"], b.get("path"), b.get("pick") or "file"),
                 "/api/tools/install": lambda: v.install_tool(b["id"]),
                 "/api/tools/remove": lambda: (v.mods.remove(b["id"]), {"ok": True})[1],
                 "/api/tools/launch": lambda: v.mods.launch(b["id"]),
