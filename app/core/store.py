@@ -85,7 +85,7 @@ DEFAULT_CONFIG = {
     "card_playtime": False,
     "warn_missing": True,
     "game_dirs": [],
-    "auto_scan_dirs": True,
+    "auto_scan_dirs": True, "scan_ignore_rest": False, "linux_runner": "auto", "linux_proton": "", "linux_env": "", "linux_runtime_updates": True,
     "track_external": True,
     "scan_ignored": [],
     "last_lib_check": 0,

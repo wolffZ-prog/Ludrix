@@ -129,7 +129,11 @@ class SessionManager:
                 kw["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
             else:
                 from . import compat
-                cmd, _, _ = compat.wrap(cmd)
+                game = dict(self.store.get(key) or {})
+                game["key"] = key
+                cmd, env, _ = compat.wrap(cmd, self.store.config, game)
+                if env:
+                    kw["env"] = env
             proc = subprocess.Popen(cmd, cwd=str(cwd), **kw)
         except OSError as e:
 

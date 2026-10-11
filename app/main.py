@@ -463,7 +463,7 @@ def main():
 
     os.environ["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = ("--disable-features=msSmartScreenProtection,msEdgeSmartScreen --disable-background-networking "
                                                           "--disable-component-update --disable-domain-reliability --no-pings --disk-cache-size=67108864 "
-                                                          "--renderer-process-limit=2 --disable-gpu-shader-disk-cache")
+                                                          "--renderer-process-limit=1 --in-process-gpu --disable-gpu-shader-disk-cache")
     import webview
     _pin_webview2(webview)
     _, port = serve(ludrix, host="127.0.0.1", port=0)
@@ -496,6 +496,13 @@ def main():
                 if core is not None:
                     from Microsoft.Web.WebView2.Core import CoreWebView2MemoryUsageTargetLevel as L
                     core.MemoryUsageTargetLevel = L.Low if low else L.Normal
+                    if low and state["hidden"]:
+                        try:
+                            core.TrySuspendAsync()
+                        except Exception as e:
+                            logging.getLogger("ludrix").debug("suspend: %s", e)
+                    elif not low and getattr(core, "IsSuspended", False):
+                        core.Resume()
             except Exception as e:
                 logging.getLogger("ludrix").debug("mem mode: %s", e)
             if low:
@@ -1402,9 +1409,10 @@ def main():
     def _mem_watch():
         import ctypes
         u = ctypes.windll.user32
-        last = None
+        k32 = ctypes.windll.kernel32
+        last, away_since = None, 0.0
         while not state["quitting"]:
-            time.sleep(20)
+            time.sleep(10)
             try:
                 if state["hidden"]:
                     continue
@@ -1412,8 +1420,15 @@ def main():
                 if not h:
                     continue
                 mini = bool(u.IsIconic(h))
-                away = bool(ludrix.sessions.active) and u.GetForegroundWindow() != h
-                low = mini or away
+                fg = u.GetForegroundWindow()
+                pid = ctypes.c_ulong(0)
+                u.GetWindowThreadProcessId(fg, ctypes.byref(pid))
+                away = fg != h and pid.value != k32.GetCurrentProcessId()
+                if not away:
+                    away_since = 0.0
+                elif not away_since:
+                    away_since = time.time()
+                low = mini or (away and time.time() - away_since >= 60)
                 if low != last:
                     last = low
                     _mem_mode(low)

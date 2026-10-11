@@ -1,0 +1,49 @@
+name: AppImage
+
+on:
+  push:
+    branches: [main]
+    paths: ["app/version.json"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: appimage-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dependências
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libfuse2 libnss3 libxkbcommon0 libxkbcommon-x11-0 libasound2 libxdamage1 libxcomposite1 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxcb-xkb1 libxcb-render-util0 libxcb-image0 libxcb-util1 libxtst6 libxrandr2 libxcursor1 libxi6 libdouble-conversion3 libpcre2-16-0
+      - name: Versão
+        id: v
+        run: echo "ver=$(python3 -c "import json;print(json.load(open('app/version.json'))['version'])")" >> "$GITHUB_OUTPUT"
+      - name: Build
+        run: bash tools/build_appimage.sh
+      - name: Esperar a release v${{ steps.v.outputs.ver }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 60); do
+            if gh release view "v${{ steps.v.outputs.ver }}" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then exit 0; fi
+            sleep 30
+          done
+          echo "release v${{ steps.v.outputs.ver }} não apareceu em 30 min"; exit 1
+      - name: Anexar à release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "v${{ steps.v.outputs.ver }}" release/${{ steps.v.outputs.ver }}/LudrixHub-${{ steps.v.outputs.ver }}-x86_64.AppImage release/${{ steps.v.outputs.ver }}/LudrixHub-${{ steps.v.outputs.ver }}-x86_64.AppImage.sha256 -R "$GITHUB_REPOSITORY" --clobber
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: LudrixHub-${{ steps.v.outputs.ver }}-AppImage
+          path: release/${{ steps.v.outputs.ver }}/LudrixHub-*.AppImage
+          if-no-files-found: ignore
+          retention-days: 7

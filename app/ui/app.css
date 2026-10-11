@@ -2080,3 +2080,5 @@ html.busy,html.busy *{cursor:progress}
 @media (max-width:900px){.modwrap{grid-template-columns:1fr}.modgames{position:static;max-height:260px}}
 
 .dirlist{display:flex;flex-direction:column;gap:4px;margin-top:8px}.dirlist>div{display:flex;align-items:center;gap:6px}.dirlist code{font:12px ui-monospace,Consolas,monospace;background:color-mix(in srgb,var(--text) 7%,transparent);padding:3px 8px;border-radius:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:420px}.dirlist .btn.xs svg{width:14px;height:14px}
+body.away .sbg,body.away .bbg,body.away #backdrop .bl,body.away #heroBg{background-image:none!important}
+body.away #backdrop .bl{filter:none;transition:none}

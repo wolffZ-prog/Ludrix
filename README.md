@@ -41,10 +41,15 @@
 | **`Ludrix-<versão>.zip`** | Programa pronto. Extrai em qualquer pasta (pode ser pendrive) e abre `Ludrix.exe`. Não instala nada no sistema. |
 | `ludrix-<versão>-patch.lxup` | Atualização. O Ludrix baixa e aplica sozinho em **Ajustes → Sistema → Checar atualizações**; também dá pra arrastar o arquivo pra janela. |
 | `Ludrix-<versão>-src.zip` | Código-fonte desta mesma versão, pra compilar com `build.bat`. |
+| `LudrixHub-<versão>-x86_64.AppImage` | Linux. Dá permissão de execução e abre; nada é instalado. Dados em `~/.local/share/Ludrix`. |
 
 Última versão: **[Releases](https://github.com/wolffZ-prog/Ludrix/releases/latest)**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
 Requisitos: Windows 10 ou 11, 64 bits. Usa o WebView2 Runtime do Windows (já vem no sistema; se faltar, o Ludrix instala sozinho na primeira abertura). Nada de conta, login ou cadastro.
+
+### Linux
+
+O AppImage traz tudo (Python, Qt WebEngine). Jogos nativos (`.sh`, `.x86_64`, `.AppImage`, binários) abrem direto. Jogos de Windows (`.exe`) abrem pelo Proton: na primeira vez o Ludrix baixa o [umu-launcher](https://github.com/Open-Wine-Components/umu-launcher) e o GE-Proton (≈1 GB, uma vez só) e depois abre o jogo sozinho; o progresso aparece na Fila. Prefixo compartilhado em `data/pfx/shared` (ou um por jogo, em Editar → Instalação). Em Ajustes → Ao jogar dá pra trocar para o Wine do sistema. Precisa de `python3` na distro (o umu usa ele). Emuladores: os instalados na distro ou via Flatpak são usados; os de Windows abrem pelo Proton. Para rodar do código: `./run.sh` (cria um `.venv` com PyQt6).
 
 ## O que ele faz
 

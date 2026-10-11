@@ -17,8 +17,11 @@
 | **`Ludrix-<version>.zip`** | Ready to run. Extract anywhere (USB stick works), open `Ludrix.exe`. Nothing is installed system-wide. |
 | `ludrix-<version>-patch.lxup` | Update package. Ludrix downloads and applies it from **Settings → System → Check for updates**; dropping the file on the window also works. |
 | `Ludrix-<version>-src.zip` | Source of the same version, builds with `build.bat`. |
+| `LudrixHub-<version>-x86_64.AppImage` | Linux. Make it executable and run; nothing is installed. Data lives in `~/.local/share/Ludrix`. |
 
 Latest: **[Releases](https://github.com/wolffZ-prog/Ludrix/releases/latest)**. Requirements: Windows 10/11 64-bit. Uses the Windows WebView2 Runtime (already on the system; installed automatically on first run if missing). No account, no login.
+
+**Linux:** the AppImage bundles Python and Qt WebEngine. Native games (`.sh`, `.x86_64`, `.AppImage`, binaries) run directly. Windows games (`.exe`) run through Proton: on first launch Ludrix downloads [umu-launcher](https://github.com/Open-Wine-Components/umu-launcher) and GE-Proton (≈1 GB, once), then starts the game by itself; progress shows in the Queue. Shared prefix in `data/pfx/shared` (or one per game in Edit → Installation). Settings → Playing can switch to the system Wine. Requires `python3` from the distro. From source: `./run.sh`.
 
 ## Features
 

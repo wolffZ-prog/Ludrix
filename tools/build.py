@@ -489,7 +489,7 @@ def cmd_src():
         add_tree(z, APP, "Ludrix-src/app")
         z.writestr(f"Ludrix-src/app/{integrity.MANIFEST}", integrity_json())
         add_tree(z, ROOT / "tools", "Ludrix-src/tools")
-        for f in ("run.bat", "build.bat", "requirements.txt", "README.md", "README.en.md", "CHANGELOG.md", "LICENSE"):
+        for f in ("run.bat", "run.sh", "build.bat", "requirements.txt", "README.md", "README.en.md", "CHANGELOG.md", "LICENSE"):
             if (ROOT / f).exists():
                 zi = zipfile.ZipInfo.from_file(ROOT / f, f"Ludrix-src/{f}")
                 zi.compress_type = zipfile.ZIP_DEFLATED

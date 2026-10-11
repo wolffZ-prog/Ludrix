@@ -792,7 +792,7 @@ function slideshowStart() {
   const bd = $('#backdrop'); if (!bd) return;
   const show = () => {
     if (!S.config.cover_slideshow || S.view !== 'home' || (S._focusKey && S.config.game_backdrop)) { slideshowStop(); return; }
-    if (!document.hidden) {
+    if (!document.hidden && document.hasFocus()) {
       const g = list[ssIdx++ % list.length], url = `/cover/${enc(g.key)}?v=${g.cv || 0}`, img = new Image();
       img.onload = () => { if ((S._focusKey && S.config.game_backdrop) || S.view !== 'home') return; bd.style.setProperty('--bdblur', (S.config.backdrop_blur ?? 10) + 'px'); bd.style.setProperty('--bddim', String((S.config.backdrop_dim ?? 42) / 100)); const ls = bd.querySelectorAll('.bl'); bdLayer ^= 1; ls[bdLayer].style.backgroundImage = `url("${url}")`; ls[bdLayer].classList.add('on'); ls[bdLayer ^ 1].classList.remove('on'); bd.classList.add('on'); };
       img.src = url;
@@ -1265,8 +1265,18 @@ async function play(key, after, emulator, optimize, force) {
   if (r.missing) return missingDialog(key, r);
   if (r.running) return toast('warn', 'Já está aberto', (S.byKey[key] || {}).title || '', [{ label: 'Encerrar o jogo', fn: () => stopGame(key) }, { label: 'OK', fn: () => {} }]);
   if (r.need_mc_launcher) return mcNeedLauncher(r); if (r.mc_missing === 'bedrock') return mcNeedBedrock(r);
-  if (r.choose_emulator) { S._optimize = optimize; return chooseEmulator(key, r.choose_emulator, r.default, r.missing_default); } if (r.error === 'emu_missing') { modal({ title: 'Emulador necessário', text: r.message, ok: 'Ir para Emuladores', cancel: 'Não fazer nada', onOk: () => setView('emulation') }); } else if (r.error === 'needs_setup') { modal({ title: 'Falta configurar o emulador', text: r.message, ok: 'Abrir guia', cancel: 'Não fazer nada', onOk: () => emuGuide(r.system, () => {}), buttons: [{ label: 'Abrir mesmo assim', fn: () => play(key, after, emulator, optimize, true) }] }); } else if (r.error) toast('err', 'Não foi possível abrir', r.error); else { toast('ok', 'Jogo aberto', r.hint || (r.tracked ? 'Contando o tempo de jogo…' : '')); S.sessions = S.sessions || {}; S.sessions[key] = { since: Date.now() / 1000 }; applyPlaying(); if (S.det && S.det.key === key) renderDetail(); pollSoon(); } }
+  if (r.choose_emulator) { S._optimize = optimize; return chooseEmulator(key, r.choose_emulator, r.default, r.missing_default); } if (r.error === 'emu_missing') { modal({ title: 'Emulador necessário', text: r.message, ok: 'Ir para Emuladores', cancel: 'Não fazer nada', onOk: () => setView('emulation') }); } else if (r.error === 'needs_setup') { modal({ title: 'Falta configurar o emulador', text: r.message, ok: 'Abrir guia', cancel: 'Não fazer nada', onOk: () => emuGuide(r.system, () => {}), buttons: [{ label: 'Abrir mesmo assim', fn: () => play(key, after, emulator, optimize, true) }] }); } else if (r.error && r.linux_runner) { modal({ title: 'Falta um componente do sistema', text: r.error, ok: 'Ajustes', cancel: 'Fechar', onOk: () => { setView('settings'); S.tab.settings = 'play'; renderSettings(true); } }); } else if (r.error) toast('err', 'Não foi possível abrir', r.error); else if (r.preparing) { toast('info', 'Preparando o Proton', r.hint, [{ label: 'Ver fila', fn: () => setView('queue') }]); } else { toast('ok', 'Jogo aberto', r.hint || (r.tracked ? 'Contando o tempo de jogo…' : '')); S.sessions = S.sessions || {}; S.sessions[key] = { since: Date.now() / 1000 }; applyPlaying(); if (S.det && S.det.key === key) renderDetail(); pollSoon(); } }
 
+async function linuxStatus() {
+  const el = $('#lxst'); if (!el) return; const st = await api.get('/api/linux'); if (!st || !st.linux) return;
+  const bits = [st.runner === 'wine' ? (st.wine ? 'Wine: ' + st.wine : 'Wine não encontrado') : (st.ready ? 'Proton pronto (' + st.proton + ')' : st.umu ? 'umu baixado; Proton ainda não' : 'Nada baixado ainda — acontece sozinho no primeiro jogo')];
+  if (st.error) bits.push(st.error); bits.push('Prefixos em ' + st.prefix_root);
+  el.textContent = bits.join(' · ');
+}
+async function linuxPrepare() {
+  const r = await api.post('/api/linux/prepare', {}); if (r && r.error) return toast('err', 'Proton', r.error);
+  toast('info', 'Proton', 'Baixando em segundo plano. Acompanhe na Fila.', [{ label: 'Ver fila', fn: () => setView('queue') }]);
+}
 function missingDialog(key, r) {
   const g = S.byKey[key] || {}; const rom = r.missing === 'rom';
   modal({ title: rom ? 'ROM não encontrada' : 'Executável não encontrado', wide: true,
@@ -1308,7 +1318,7 @@ async function editGame(key, tab) {
   ED.form = { title: info.title, system: info.system, developer: info.developer, publisher: info.publisher, year: info.year, genres: info.genres.join(', '), summary: info.summary, series: info.series, modes: info.modes, notes: info.notes,
     links: info.links.map(l => ({ ...l })), cover_url: info.cover_url && info.cover_src === 'manual' ? info.cover_url : '', hero_url: info.user.includes('hero_url') ? info.hero_url : '', background_file: info.background_file || '',
     exe: info.exe, dir: info.dir, args: info.args, workdir: info.workdir, version: info.version, emulator: info.emulator, fav: info.fav, unlock_title: false,
-    admin: !!info.admin, pre_cmd: info.pre_cmd || '', post_cmd: info.post_cmd || '' };
+    admin: !!info.admin, pre_cmd: info.pre_cmd || '', post_cmd: info.post_cmd || '', pfx: info.pfx || '' };
   modal({ title: 'Editar detalhes do jogo', wide: true, html: `<div class="ged"><div class="tabs" id="edTabs"></div><div class="gedb" id="edBody"></div></div>`, ok: 'Salvar', cancel: 'Cancelar', extra: 'Baixar metadados…',
     onExtra: () => edProbeMenu(), onOk: () => edSave() });
   $('#modalBox').classList.add('ged-box');
@@ -1373,7 +1383,8 @@ function edRender() {
       ${isRom ? '' : row('Pasta de trabalho', `<div class="grow">${inp('workdir', 'vazio = pasta do executável')}${i.native ? `<button class="btn s xs" onclick="edPick('folder','workdir')">${I.folder}</button>` : ''}</div>`, 'Alguns jogos antigos só acham seus arquivos se abertos "de dentro" de uma pasta específica.')}
     </div><p class="ghelp">${isRom ? 'Os argumentos vão para o emulador, depois do caminho da ROM.' : 'Cada jogo aceita coisas diferentes: -dx12 força DirectX 12, -windowed abre em janela, -skipintro pula os logos. Procure "launch options" + nome do jogo.'}</p>
     ${isRom || !i.installed ? '' : `<div class="g1" style="margin-top:12px">
-      ${row('Administrador', `<label class="remember" style="margin:0"><input type="checkbox" ${f.admin ? 'checked' : ''} onchange="edSet('admin',this.checked)"> Abrir como administrador (o Windows pede permissão a cada abertura)</label>`, 'Para jogos antigos que só funcionam com permissão de administrador. O tempo de jogo continua sendo contado.')}
+      ${S.config.os === 'linux' ? row('Prefixo do Proton', `<label class="remember" style="margin:0"><input type="checkbox" ${f.pfx === 'own' ? 'checked' : ''} onchange="edSet('pfx',this.checked?'own':'')"> Usar um prefixo só deste jogo</label>`, 'Por padrão todos os jogos de Windows dividem o mesmo prefixo (data/pfx/shared). Um prefixo próprio isola instalações e ajustes deste jogo; é criado na próxima abertura.') : ''}
+      ${S.config.os !== 'windows' ? '' : row('Administrador', `<label class="remember" style="margin:0"><input type="checkbox" ${f.admin ? 'checked' : ''} onchange="edSet('admin',this.checked)"> Abrir como administrador (o Windows pede permissão a cada abertura)</label>`, 'Para jogos antigos que só funcionam com permissão de administrador. O tempo de jogo continua sendo contado.')}
       ${row('Antes de abrir', inp('pre_cmd', 'ex.: "C:\\\\Apps\\\\DS4Windows\\\\DS4Windows.exe"'), 'Comando executado antes do jogo, na pasta do jogo. O Ludrix espera até 15 s por ele e abre o jogo em seguida; se o programa ficar aberto, tudo bem.')}
       ${row('Ao fechar', inp('post_cmd', 'ex.: taskkill /IM DS4Windows.exe'), 'Comando executado quando o jogo fecha. Útil para encerrar o que foi aberto antes ou restaurar algo.')}
     </div><p class="ghelp">Os comandos rodam como no Prompt (cmd). Caminhos com espaço vão entre aspas.</p>`}`;
@@ -1569,14 +1580,15 @@ function scanReview() {
   const emuOpts = (sel, sid) => `<option value="">emulador padrão do console</option>` + SC.emus.filter(e => !sid || !e.systems || !e.systems.length || e.systems.includes(sid)).map(e => `<option value="${e.id}" ${e.id === sel ? 'selected' : ''}>${esc(e.title)}${e.installed ? '' : ' (não instalado)'}</option>`).join('');
   const row = (g, i) => mode === 'roms'
     ? `<div class="impg scrow ${g.dup ? 'dup' : ''}"><input type="checkbox" data-i="${i}" ${g.dup ? '' : 'checked'}><div class="t"><input class="mi sm" data-t="${i}" value="${esc(g.title)}" title="Nome (edite se quiser)"><small>${esc(g.rom.replace(SC.path, '…'))} · ${fmt(g.size)}</small></div><select class="mi sm" data-s="${i}" title="Console">${sysOpts(g.system)}</select><select class="mi sm" data-e="${i}" title="Emulador">${emuOpts(g.emulator, g.system)}</select>${g.dup ? '<span class="pill warn">já tem</span>' : ''}</div>`
-    : `<div class="impg scrow ${g.dup ? 'dup' : ''}"><input type="checkbox" data-i="${i}" ${g.dup ? '' : 'checked'}><div class="t"><input class="mi sm" data-t="${i}" value="${esc(g.title)}" title="Nome (edite se quiser)"><small>${esc(g.exe.replace(SC.path, '…'))} · ${fmt(g.size)}${g.alt_exes.length ? ` · +${g.alt_exes.length} outro(s) .exe` : ''}</small></div>${g.alt_exes.length ? `<select class="mi sm" data-x="${i}" title="Qual .exe abre o jogo">${[g.exe, ...g.alt_exes].map(x => `<option value="${esc(x)}">${esc(x.split(/[\\/]/).pop())}</option>`).join('')}</select>` : ''}<span class="pill ${g.confidence === 'alta' ? 'ok' : ''}" title="Confiança de que este .exe é o jogo">${g.confidence}</span>${g.dup ? '<span class="pill warn">já tem</span>' : ''}</div>`;
-  const bulk = mode === 'roms' ? `<div class="scbulk"><b>Pra todos de uma vez:</b><select class="mi sm" id="scAllSys" onchange="scanAll('s',this.value)">${sysOpts('')}</select><select class="mi sm" id="scAllEmu" onchange="scanAll('e',this.value)">${emuOpts('', '')}</select><label class="chk"><input type="checkbox" id="scAddDir" checked> Lembrar esta pasta em Emuladores (novas ROMs entram sozinhas)</label></div>` : `<div class="scbulk"><b>Dica:</b> o nome vem da pasta e é refinado pelos metadados depois; se o .exe escolhido estiver errado, troque no menu da linha ou depois em <i>Atalho</i>.</div>`;
+    : `<div class="impg scrow ${g.dup ? 'dup' : ''}"><input type="checkbox" data-i="${i}" ${g.dup ? '' : 'checked'}><div class="t"><input class="mi sm" data-t="${i}" value="${esc(g.title)}" title="Nome (edite se quiser)"><small>${esc(g.exe.replace(SC.path, '…'))} · ${fmt(g.size)}${g.alt_exes.length ? ` · +${g.alt_exes.length} outro(s) .exe` : ''}</small></div>${g.alt_exes.length ? `<select class="mi sm" data-x="${i}" title="Qual .exe abre o jogo">${[g.exe, ...g.alt_exes].map(x => `<option value="${esc(x)}">${esc(x.split(/[\\/]/).pop())}</option>`).join('')}</select>` : ''}<span class="pill ${g.confidence === 'alta' ? 'ok' : ''}" title="Confiança de que este .exe é o jogo">${g.confidence}</span>${g.dup ? '<span class="pill warn">já tem</span>' : ''}<button class="ib" data-ign="${i}" title="Ignorar este .exe: não é jogo, não sugerir de novo" onclick="scanIgnore(${i})">${I.x}</button></div>`;
+  const bulk = mode === 'roms' ? `<div class="scbulk"><b>Pra todos de uma vez:</b><select class="mi sm" id="scAllSys" onchange="scanAll('s',this.value)">${sysOpts('')}</select><select class="mi sm" id="scAllEmu" onchange="scanAll('e',this.value)">${emuOpts('', '')}</select><label class="chk"><input type="checkbox" id="scAddDir" checked> Lembrar esta pasta em Emuladores (novas ROMs entram sozinhas)</label></div>` : `<div class="scbulk"><b>Dica:</b> o nome vem da pasta e é refinado pelos metadados depois; se o .exe escolhido estiver errado, troque no menu da linha ou depois em <i>Atalho</i>. O ✕ da linha ignora aquele .exe para sempre.</div><label class="chk" style="margin-top:6px"><input type="checkbox" id="scIgnRest" ${S.config.scan_ignore_rest ? 'checked' : ''} onchange="setCfg({scan_ignore_rest:this.checked})"> Não sugerir de novo os que ficarem desmarcados</label>`;
   const html = `<div class="imphead"><span>${mode === 'roms' ? pl(items.length, 'ROM', 'ROMs') : pl(items.length, 'jogo', 'jogos')} em <span class="code">${esc(SC.path)}</span> · ${items.filter(g => g.dup).length} já na biblioteca</span><span style="flex:1"></span><button class="btn s sm" onclick="document.querySelectorAll('.scrow input[type=checkbox]').forEach(c=>c.checked=true)">Marcar todos</button><button class="btn s sm" onclick="document.querySelectorAll('.scrow input[type=checkbox]').forEach(c=>c.checked=false)">Desmarcar</button></div>${bulk}<div class="impgames">${items.map(row).join('')}</div>`;
   modal({ title: mode === 'roms' ? 'Revisar ROMs encontradas' : 'Revisar jogos encontrados', html, ok: 'Adicionar selecionados', extra: '← Outra pasta', onExtra: () => scanPick(mode), wide: true, onOk: async () => {
     const sel = [];
     document.querySelectorAll('.scrow input[type=checkbox]:checked').forEach(c => { const i = +c.dataset.i, g = { ...items[i] }; const t = document.querySelector(`[data-t="${i}"]`); if (t && t.value.trim()) g.title = t.value.trim();
       if (mode === 'roms') { const sSel = document.querySelector(`[data-s="${i}"]`), eSel = document.querySelector(`[data-e="${i}"]`); g.system = sSel ? sSel.value : g.system; g.emulator = eSel ? eSel.value : ''; }
       else { const x = document.querySelector(`[data-x="${i}"]`); if (x) g.exe = x.value; } sel.push(g); });
+    if (mode !== 'roms' && $('#scIgnRest')?.checked) { const rest = []; document.querySelectorAll('.scrow input[type=checkbox]:not(:checked)').forEach(c => { const i = +c.dataset.i, x = document.querySelector(`[data-x="${i}"]`); rest.push(x ? x.value : items[i].exe); }); if (rest.length) api.post('/api/dirs/ignore', { exes: rest }); }
     if (!sel.length) return false;
     if (mode === 'roms' && sel.some(g => !g.system)) { toast('err', 'Falta o console', 'Escolha o console das ROMs marcadas (ou use "para todos de uma vez").'); return false; }
     const opts = mode === 'roms' ? { system: $('#scAllSys').value, emulator: $('#scAllEmu').value, add_dir: $('#scAddDir').checked, path: SC.path } : {};
@@ -1586,6 +1598,15 @@ function scanReview() {
     TH.err.clear(); TH.tries = {}; S.home = null;
     S.view = ''; setView(mode === 'roms' ? 'emulation' : 'home'); await loadCatalog(false);
   } });
+}
+async function scanIgnore(i) {
+  const g = SC.items[i]; if (!g) return;
+  const x = document.querySelector(`[data-x="${i}"]`), exe = x ? x.value : g.exe;
+  const r = await api.post('/api/dirs/ignore', { exes: [exe] }); if (r.error) return toast('err', 'Ignorar', r.error);
+  const rest = [g.exe, ...(g.alt_exes || [])].filter(a => a !== exe);
+  if (rest.length) { g.exe = rest[0]; g.alt_exes = rest.slice(1); g.confidence = 'média'; toast('ok', 'Ignorado', `${exe.split(/[\\/]/).pop()} não será sugerido de novo. A linha passou para ${rest[0].split(/[\\/]/).pop()}.`); }
+  else { SC.items = SC.items.filter((_, k) => k !== i); toast('ok', 'Ignorado', `${exe.split(/[\\/]/).pop()} não será sugerido de novo.`); }
+  scanReview();
 }
 function scanAll(kind, v) { document.querySelectorAll(kind === 's' ? '.scrow select[data-s]' : '.scrow select[data-e]').forEach(sel => { sel.value = v; if (kind === 's') { const i = sel.dataset.s; const e = document.querySelector(`[data-e="${i}"]`); if (e) { const cur = e.value; e.innerHTML = e.innerHTML; e.value = cur; } } }); }
 
@@ -1950,7 +1971,7 @@ async function renderSettings(fresh) {
     ['appearance', 'Aparência', 'image', ['tema', 'janela', 'navegacao', 'escala', 'efeitos', 'personalizar_link']],
     ['custom', 'Personalizar', 'edit', []],
     ['library', 'Biblioteca', 'home', ['tela_inicial', 'cartoes', 'capas', 'pastas']],
-    ['play', 'Ao jogar', 'play', ['ao_abrir', 'saves', 'otimizar', 'emuladores', 'controle', 'console']],
+    ['play', 'Ao jogar', 'play', ['ao_abrir', 'linux', 'saves', 'otimizar', 'emuladores', 'controle', 'console']],
     ['store', 'Store e downloads', 'dl', ['fontes', 'store', 'instalacao', 'torrent']],
     ['tools', 'Ferramentas', 'wrench', ['verificar', 'importar', 'exportar', 'metadados', 'dados', 'diagnostico', 'limpeza']],
     ['system', 'Sistema', 'cpu', ['pc', 'segundo_plano', 'atualizacoes', 'avancado', 'perigo', 'sobre']],
@@ -2049,6 +2070,12 @@ async function renderSettings(fresh) {
     <div class="frow"><div class="l"><b>Apresentação ao abrir um jogo</b><span>Uma tela rápida com a capa e o nome enquanto o jogo carrega. Clique ou Esc fecham antes</span></div>${cfgSel('launch_splash', [['off', 'Desligada'], ['short', 'Curta'], ['long', 'Longa']], c.launch_splash || 'short')}</div>
     ${sw('track_external', 'Contar tempo de jogos abertos fora do Ludrix', 'Quando um jogo da biblioteca é aberto pela Steam, por um atalho ou direto pelo .exe, o Ludrix percebe e conta o tempo do mesmo jeito. Checa os processos a cada 15 s; não interfere no jogo')}
     ${sw('nav_hide_playing', 'Esconder a barra de navegação enquanto um jogo está aberto', 'A barra se recolhe quando você abre um jogo e volta quando ele fecha. Para vê-la no meio do jogo, encoste o mouse na borda onde ela fica')}`]),
+    linux: () => c.os !== 'linux' ? '' : sec('linux', 'Jogos de Windows no Linux', [`
+    <div class="frow"><div class="l"><b>Como abrir .exe</b><span>Proton via umu baixa o GE-Proton e o runtime da Steam sozinho na primeira vez que um jogo de Windows for aberto (~1 GB, uma vez só). Wine usa o que já estiver instalado na distro.</span></div>${cfgSel('linux_runner', [['auto', 'Proton (umu)'], ['wine', 'Wine do sistema']], c.linux_runner || 'auto')}</div>
+    <div class="frow"><div class="l"><b>Versão do Proton</b><span>Vazio = GE-Proton mais recente. Aceita o nome de uma pasta em ~/.local/share/Steam/compatibilitytools.d ou um caminho completo.</span></div><input class="mi" style="width:240px" value="${esc(c.linux_proton || '')}" placeholder="GE-Proton" onchange="setCfg({linux_proton:this.value.trim()})"></div>
+    <div class="frow"><div class="l"><b>Variáveis extras</b><span>Separadas por espaço, ex.: <span class="code">DXVK_HUD=fps MANGOHUD=1</span>. Valem para todos os jogos.</span></div><input class="mi" style="width:240px" value="${esc(c.linux_env || '')}" onchange="setCfg({linux_env:this.value.trim()})"></div>
+    ${sw('linux_runtime_updates', 'Manter o runtime do Proton atualizado', 'O umu confere e baixa atualizações do runtime da Steam ao abrir um jogo. Desligue se a conexão for lenta')}
+    <div class="frow"><div class="l"><b>Proton e prefixo</b><span id="lxst">Verificando…</span></div><div style="display:flex;gap:6px"><button class="btn s sm" onclick="linuxPrepare()">${I.dl} Baixar/atualizar agora</button><button class="btn s sm" onclick="api.post('/api/open',{path:S.config.root+'/data/pfx'})">${I.folder} Prefixos</button></div></div>`]),
     saves: () => sec('saves', 'Saves', [`
     ${sw('save_auto_backup', 'Guardar cópia dos saves ao fechar o jogo', `Depois de cada sessão, copia a pasta de saves do jogo para data${SEP()}save_backups (até 5 cópias por jogo, só quando algo mudou; pastas acima de 512 MB são puladas). Restaure em Saves, no menu do jogo`)}`]),
     otimizar: () => sec('otimizar', 'Otimizar antes de jogar', [`
@@ -2135,6 +2162,7 @@ async function renderSettings(fresh) {
   if (S._settingsJump) { const j = S._settingsJump; S._settingsJump = ''; requestAnimationFrame(() => settingsGo(j, false)); } else $('#view').scrollTop = keepScroll;
   viewFilter();
   if (tab === 'system' && !S.upd) loadUpdates();
+  if (tab === 'play' && c.os === 'linux') linuxStatus();
 }
 function toggleAdv() {
   const on = !S.config.settings_adv;
@@ -2212,7 +2240,7 @@ function notesBetween(m, cur) {
   return secs.map(x => `## ${x.version}${x.date ? ' — ' + x.date : ''}${x.title ? ' — ' + x.title : ''}\n${x.text || ''}`).join('\n\n');
 }
 function updatesHtml() {
-  if (S.config.appimage) return `<div class="sec"><h3>Atualizações</h3><p>Esta é a versão <b>${esc(S.config.version || '')}</b> em AppImage. Para atualizar, baixe o AppImage novo e substitua o arquivo — seus jogos, ajustes e temas ficam em <span class="code">${esc(S.config.root || '')}</span> e não são tocados.</p></div>`;
+  if (S.config.appimage) return `<div class="sec"><h3>Atualizações</h3><p>Esta é a versão <b>${esc(S.config.version || '')}</b> em AppImage. Para atualizar, baixe o AppImage novo e substitua o arquivo — jogos, ajustes e temas ficam em <span class="code">${esc(S.config.root || '')}</span> e não são tocados.</p><div class="row" style="margin-top:8px"><button class="btn s sm" onclick="api.post('/api/open_url',{url:'https://github.com/wolffZ-prog/Ludrix/releases/latest'})">${I.dl} Baixar a versão mais recente</button></div></div>`;
   const u = S.upd, cur = (u && u.current) || {}; const av = u && u.available, rem = u && u.remote, st = (u && u.state) || {};
   const job = S.jobs.update;
   const ready = !!av, remote = !ready && !!rem;
@@ -2727,7 +2755,8 @@ function iconSetSample(id) {
   const p = iconSet(id); const views = ['home', 'store', 'emulation', 'settings'];
   return views.map(v => { const d = p && p.icons[v]; const orig = document.querySelector(`.rb[data-view=${v}] svg`); const inner = d || (orig && (orig.dataset.orig || orig.innerHTML)) || ''; const col = p && p.colors && p.colors[v]; return `<svg viewBox="${d ? p.vb : '0 0 24 24'}" class="${d && p.fill ? 'fill' : ''}" style="${d && !p.fill ? `stroke-width:${p.sw};` : ''}${col ? `color:${col};${p.glow ? `filter:drop-shadow(0 0 4px ${col})` : ''}` : ''}">${inner}</svg>`; }).join('');
 }
-function idleState() { const hidden = document.hidden, idle = hidden || !document.hasFocus(); document.body.classList.toggle('idle', idle); const fx = $('#fx'); if (fx) fx.style.display = hidden ? 'none' : ''; }
+let awayT = 0;
+function idleState() { const hidden = document.hidden, idle = hidden || !document.hasFocus(); document.body.classList.toggle('idle', idle); const fx = $('#fx'); if (fx) fx.style.display = hidden ? 'none' : ''; clearTimeout(awayT); if (idle) awayT = setTimeout(() => document.body.classList.add('away'), 60000); else document.body.classList.remove('away'); }
 document.addEventListener('visibilitychange', idleState); window.addEventListener('blur', () => setTimeout(idleState, 250)); window.addEventListener('focus', idleState);
 
 function homeOrder(list) {

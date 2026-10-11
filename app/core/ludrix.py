@@ -22,7 +22,7 @@ from pathlib import Path
 
 import lxsign
 
-from . import paths
+from . import compat, paths
 from .emulation import EmulationManager
 from .images import ImageCache, _safe as _safe_name
 from .installer import STATS as installer_stats
@@ -1642,7 +1642,7 @@ class Ludrix:
                 lr = self.emu.launch_rom(r["path"], r["system"], emulator, force)
                 if lr.get("error"):
                     return lr
-                res = self.sessions.launch(key, lr["cmd"] + self._split_args(self._game_args(key)), lr["cwd"], r["title"])
+                res = self._launch(key, lr["cmd"] + self._split_args(self._game_args(key)), lr["cwd"], r["title"])
                 res["hint"] = lr.get("hint", "")
                 return res
         info = self.store.get(key)
@@ -1666,7 +1666,7 @@ class Ludrix:
             lr = self.emu.launch_rom(info["exe"], info["system"], emulator, force)
             if lr.get("error"):
                 return lr
-            res = self.sessions.launch(key, lr["cmd"] + self._split_args(self._game_args(key)), lr["cwd"], info.get("title", key))
+            res = self._launch(key, lr["cmd"] + self._split_args(self._game_args(key)), lr["cwd"], info.get("title", key))
             res["hint"] = lr.get("hint", "")
             return res
         if _URI_RE.match(str(info.get("exe", ""))):
@@ -1675,7 +1675,7 @@ class Ludrix:
                 if os.name == "nt":
                     os.startfile(uri)
                 else:
-                    webbrowser.open(uri)
+                    compat.xdg_open(uri) or webbrowser.open(uri)
             except OSError as e:
                 return {"error": f"{uri_name(uri)} não respondeu: {e}", "uri": uri}
             self.store.update(key, last_played=time.time())
@@ -1706,7 +1706,7 @@ class Ludrix:
                     os.startfile(spec["shell"])
                 self.store.update(key, last_played=time.time())
                 return {"ok": True, "tracked": False, "hint": "Aberto pela Microsoft Store (o tempo de jogo não é contado)."}
-            res = self.sessions.launch(key, spec["cmd"] + self._split_args(self._game_args(key)), spec["cwd"], info.get("title", "Minecraft"))
+            res = self._launch(key, spec["cmd"] + self._split_args(self._game_args(key)), spec["cwd"], info.get("title", "Minecraft"))
             return res
         exe = Path(info.get("exe") or "")
         if not exe.exists():
@@ -1720,7 +1720,60 @@ class Ludrix:
         self._run_hook(info.get("pre_cmd"), cwd, wait=True)
         if info.get("admin") and os.name == "nt":
             return self._launch_admin(key, exe, cmd[1:], cwd, info.get("title", exe.stem))
-        return self.sessions.launch(key, cmd, cwd, info.get("title", exe.stem))
+        return self._launch(key, cmd, cwd, info.get("title", exe.stem))
+
+    def _launch(self, key: str, cmd: list[str], cwd, title: str) -> dict:
+        if os.name != "nt" and compat.is_windows_cmd(cmd):
+            st = compat.status(self.store.config)
+            if st.get("error"):
+                return {"error": st["error"], "linux_runner": True}
+            if not st.get("ready"):
+                return self._prepare_linux(key, cmd, cwd, title)
+        return self.sessions.launch(key, cmd, cwd, title)
+
+    def _prepare_linux(self, key: str, cmd: list[str], cwd, title: str) -> dict:
+        jk = "linux:proton"
+        if jk in self.jobs:
+            return {"ok": True, "tracked": False, "preparing": True, "hint": "O Proton ainda está sendo baixado. O jogo abre sozinho quando terminar."}
+        game = dict(self.store.get(key) or {})
+        game["key"] = key
+        after, optimize = self.sessions.next_after, self.sessions.next_optimize
+
+        def fn(cb, cancel):
+            def step(text, frac):
+                cb(Progress("download", frac, text))
+            r = compat.prepare(self.store.config, step, cancel, game)
+            if r.get("error"):
+                raise RuntimeError(r["error"])
+            cb(Progress("install", 1.0, "Abrindo o jogo…"))
+            self.sessions.next_after, self.sessions.next_optimize = after, optimize
+            res = self.sessions.launch(key, cmd, cwd, title)
+            if res.get("error"):
+                raise RuntimeError(res["error"])
+            return {"title": title}
+        self._run_job(jk, "Proton (umu) — primeira vez", "tool", fn)
+        return {"ok": True, "tracked": False, "preparing": True, "hint": "Baixando o Proton e o runtime (só na primeira vez, ~1 GB). O jogo abre sozinho quando terminar; acompanhe na Fila."}
+
+    def linux_status(self) -> dict:
+        return compat.status(self.store.config)
+
+    def linux_prepare(self) -> dict:
+        jk = "linux:proton"
+        if jk in self.jobs:
+            return {"error": "Já em andamento"}
+
+        def fn(cb, cancel):
+            r = compat.prepare(self.store.config, lambda t, f: cb(Progress("download", f, t)), cancel)
+            if r.get("error"):
+                raise RuntimeError(r["error"])
+            return {"title": "Proton"}
+        return self._run_job(jk, "Proton (umu)", "tool", fn)
+
+    def linux_prefix_remove(self, key: str | None = None) -> dict:
+        game = dict(self.store.get(key) or {}) if key else None
+        if game is not None:
+            game["key"] = key
+        return compat.remove_prefix(self.store.config, game)
 
     def _run_hook(self, cmd: str | None, cwd: Path, wait: bool) -> None:
         cmd = (cmd or "").strip()
@@ -1975,7 +2028,7 @@ class Ludrix:
             "cover_src": d.get("cover_src", ""), "custom_cover": bool(d.get("custom_cover")), "cover_url": m.get("cover_url", ""),
             "hero_url": m.get("hero_url", ""), "background_file": m.get("background_file", ""), "cv": self._cv(key, m),
             "installed": bool(d.get("installed")), "dir": d.get("dir", ""), "exe": exe, "args": d.get("args", ""),
-            "workdir": info.get("workdir", ""), "admin": bool(info.get("admin")), "pre_cmd": info.get("pre_cmd", ""), "post_cmd": info.get("post_cmd", ""),
+            "workdir": info.get("workdir", ""), "admin": bool(info.get("admin")), "pre_cmd": info.get("pre_cmd", ""), "post_cmd": info.get("post_cmd", ""), "pfx": info.get("pfx", ""),
             "emu": d.get("emu"), "emulator": (self.store.config.get("game_emulator") or {}).get(key, ""),
             "fav": key in self._favs, "playtime_h": d.get("playtime_h", ""), "last_played": d.get("last_played", 0),
             "added_at": info.get("installed_at", 0), "version": d.get("version", ""), "repo": d.get("repo", ""), "playtime": info.get("playtime", 0), "play_count": info.get("play_count", 0),
@@ -2108,6 +2161,8 @@ class Ludrix:
             for f in ("pre_cmd", "post_cmd"):
                 if f in data:
                     launch[f] = str(data[f] or "").strip()[:2000]
+            if "pfx" in data:
+                launch["pfx"] = "own" if data["pfx"] == "own" else ""
             if launch:
                 self.store.update(key, **launch)
         if "emulator" in data and (key.startswith("rom:") or (info or {}).get("kind") == "rom"):
@@ -2273,7 +2328,7 @@ class Ludrix:
         elif sys.platform == "darwin":
             subprocess.Popen(["open", p])
         else:
-            subprocess.Popen(["xdg-open", p])
+            compat.xdg_open(p) or subprocess.Popen(["xdg-open", p])
         return {"ok": True}
 
     def list_exes(self, key: str):
@@ -3422,7 +3477,7 @@ class Ludrix:
             os.startfile(url)
         else:
             url = f"https://apps.microsoft.com/detail/{pid}" if pid else "https://apps.microsoft.com/search?query=" + urllib.parse.quote(it["title"])
-            webbrowser.open(url)
+            compat.xdg_open(url) or webbrowser.open(url)
         return {"ok": True, "url": url}
 
     CONSOLE_THEMES = {
@@ -4505,7 +4560,7 @@ class Ludrix:
         if url.startswith("magnet:") and os.name == "nt":
             os.startfile(url)
         else:
-            webbrowser.open(url)
+            compat.xdg_open(url) or webbrowser.open(url)
         return {"ok": True}
 
     _RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
@@ -4744,7 +4799,13 @@ class Ludrix:
                 continue
             for it in items:
                 ex = it["exe"].lower()
-                if ex in ignored or ex in seen or self._is_known_pc(it, known):
+                if ex in ignored:
+                    alts = [a for a in (it.get("alt_exes") or []) if a.lower() not in ignored]
+                    if not alts:
+                        continue
+                    it["exe"], it["alt_exes"], it["confidence"] = alts[0], alts[1:], "média"
+                    ex = it["exe"].lower()
+                if ex in seen or self._is_known_pc(it, known):
                     continue
                 seen.add(ex)
                 it["dup"] = False

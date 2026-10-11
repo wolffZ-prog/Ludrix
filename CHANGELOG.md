@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.43.0 — 2026-10-11
+- Linux de volta: `LudrixHub-<versão>-x86_64.AppImage` em cada release (Python e Qt WebEngine embutidos; dados em `~/.local/share/Ludrix`). O AppImage é montado e anexado à release pelo GitHub Actions a partir do código publicado.
+- Jogos de Windows no Linux abrem pelo Proton sem configurar nada: na primeira abertura o Ludrix baixa o umu-launcher e o GE-Proton (uma vez só, com progresso na Fila) e abre o jogo sozinho em seguida. Prefixo compartilhado em `data/pfx/shared` ou um por jogo (Editar → Instalação). Em Ajustes → Ao jogar: Proton ou Wine do sistema, versão do Proton, variáveis extras, baixar/atualizar agora e pasta dos prefixos. Jogos nativos (`.sh`, `.x86_64`, `.AppImage`, binários) abrem direto; emuladores da distro/Flatpak são usados e os de Windows passam pelo Proton. Links e pastas abrem com o ambiente limpo do sistema (não o do AppImage).
+- Revisar jogos encontrados: um executável secundário pode ser ignorado de vez (ou todos os desmarcados, com "Não sugerir de novo os que ficarem desmarcados") — o Ludrix não volta a perguntar por ele nas próximas varreduras.
+- `run.sh` para rodar do código no Linux (cria um `.venv` com PyQt6) e `tools/build_appimage.sh` para gerar o AppImage localmente.
+
+## 2.42.1 — 2026-10-11
+- Memória: o WebView2 passa a rodar o processo de GPU dentro do principal e com um único renderizador (menos processos, menos memória fixa). Depois de 60 s sem a janela do Ludrix em primeiro plano, a interface entra em modo de pouca memória (o Chromium libera caches) e solta as imagens grandes de fundo (destaque, pano de fundo desfocado, slideshow); ao voltar para a janela tudo retorna na hora. Na bandeja, o WebView2 é suspenso de verdade (TrySuspend) e retomado ao reabrir. O slideshow de capas não roda com a janela sem foco.
+
 ## 2.42.0 — 2026-10-11
 - Disco: a varredura automática das pastas de jogos na abertura passa a pular as pastas de jogos que já estão na biblioteca — antes ela percorria todas as pastas (e lia os executáveis) a cada abertura, o que em HD mecânico travava o PC por minutos. "Procurar jogos novos" continua varrendo tudo quando você pede.
 - Disco: biblioteca e configurações são gravadas em lote (uma gravação por mudança, não dezenas), a cópia de segurança `.bak` é feita por renomeação (sem copiar o arquivo) e no máximo a cada 10 minutos, e configurações iguais não são regravadas. Tempo de jogo é salvo a cada 2 minutos (era 30 s) e sempre ao fechar o jogo e ao sair do Ludrix.

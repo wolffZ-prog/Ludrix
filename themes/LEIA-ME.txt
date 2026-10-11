@@ -1,2 +1,0 @@
-Seus estilos de aparencia. Cada um e uma pasta com theme.json (+ extra.css, wallpaper, preview.png opcionais).
-Importe um .lxtheme/.zip em Ajustes > Aparencia > Estilos importados ou crie o seu em Novo estilo.
