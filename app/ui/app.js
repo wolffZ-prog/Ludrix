@@ -1265,7 +1265,7 @@ async function play(key, after, emulator, optimize, force) {
   if (r.missing) return missingDialog(key, r);
   if (r.running) return toast('warn', 'Já está aberto', (S.byKey[key] || {}).title || '', [{ label: 'Encerrar o jogo', fn: () => stopGame(key) }, { label: 'OK', fn: () => {} }]);
   if (r.need_mc_launcher) return mcNeedLauncher(r); if (r.mc_missing === 'bedrock') return mcNeedBedrock(r);
-  if (r.choose_emulator) { S._optimize = optimize; return chooseEmulator(key, r.choose_emulator, r.default); } if (r.error === 'emu_missing') { modal({ title: 'Emulador necessário', text: r.message, ok: 'Ir para Emuladores', cancel: 'Não fazer nada', onOk: () => setView('emulation') }); } else if (r.error === 'needs_setup') { modal({ title: 'Falta configurar o emulador', text: r.message, ok: 'Abrir guia', cancel: 'Não fazer nada', onOk: () => emuGuide(r.system, () => {}), buttons: [{ label: 'Abrir mesmo assim', fn: () => play(key, after, emulator, optimize, true) }] }); } else if (r.error) toast('err', 'Não foi possível abrir', r.error); else { toast('ok', 'Jogo aberto', r.hint || (r.tracked ? 'Contando o tempo de jogo…' : '')); S.sessions = S.sessions || {}; S.sessions[key] = { since: Date.now() / 1000 }; applyPlaying(); if (S.det && S.det.key === key) renderDetail(); pollSoon(); } }
+  if (r.choose_emulator) { S._optimize = optimize; return chooseEmulator(key, r.choose_emulator, r.default, r.missing_default); } if (r.error === 'emu_missing') { modal({ title: 'Emulador necessário', text: r.message, ok: 'Ir para Emuladores', cancel: 'Não fazer nada', onOk: () => setView('emulation') }); } else if (r.error === 'needs_setup') { modal({ title: 'Falta configurar o emulador', text: r.message, ok: 'Abrir guia', cancel: 'Não fazer nada', onOk: () => emuGuide(r.system, () => {}), buttons: [{ label: 'Abrir mesmo assim', fn: () => play(key, after, emulator, optimize, true) }] }); } else if (r.error) toast('err', 'Não foi possível abrir', r.error); else { toast('ok', 'Jogo aberto', r.hint || (r.tracked ? 'Contando o tempo de jogo…' : '')); S.sessions = S.sessions || {}; S.sessions[key] = { since: Date.now() / 1000 }; applyPlaying(); if (S.det && S.det.key === key) renderDetail(); pollSoon(); } }
 
 function missingDialog(key, r) {
   const g = S.byKey[key] || {}; const rom = r.missing === 'rom';
@@ -1697,8 +1697,8 @@ async function sysEmus(sid) {
     ${others.length ? `<div class="mrow" style="margin-top:10px"><select class="mi" id="seAdd">${others.map(em => `<option value="${em.id}">${esc(em.title)}${em.installed ? '' : ' (não instalado)'}</option>`).join('')}</select><button class="btn s sm" onclick="api.post('/api/emulator/add_system',{system:'${sid}',id:$('#seAdd').value}).then(()=>sysEmus('${sid}'))">+ Vincular</button><button class="btn s sm" onclick="$('#modal').classList.remove('on');addCustomEmu()">+ Meu .exe</button></div>` : ''}`,
     ok: 'Fechar', noCancel: true, onOk: () => renderEmulation() });
 }
-function chooseEmulator(key, opts, def) {
-  modal({ title: 'Jogar com qual emulador?', text: 'Este console tem mais de um emulador instalado.', noOk: true, cancel: 'Cancelar', html: `<div class="askrow">${opts.map(o => `<button onclick="$('#modal').classList.remove('on');if($('#emuRem').checked)api.post('/api/game/emulator',{key:${jsq(key)},emulator:'${o.id}'});play(${jsq(key)}, S._after, '${o.id}')">${I.gamepad}<div><b>${esc(o.title)}</b><small>${o.id === def ? 'padrão deste console' : 'alternativo'}</small></div></button>`).join('')}</div>
+function chooseEmulator(key, opts, def, missing) {
+  modal({ title: 'Jogar com qual emulador?', text: missing ? `O padrão do console (${missing}) não está instalado nem apontado — em Emuladores, use Instalar ou Apontar executável. Enquanto isso:` : 'Este console tem mais de um emulador instalado.', noOk: true, cancel: 'Cancelar', html: `<div class="askrow">${opts.map(o => `<button onclick="$('#modal').classList.remove('on');if($('#emuRem').checked)api.post('/api/game/emulator',{key:${jsq(key)},emulator:'${o.id}'});play(${jsq(key)}, S._after, '${o.id}')">${I.gamepad}<div><b>${esc(o.title)}</b><small>${o.id === def ? 'padrão deste console' : 'alternativo'}</small></div></button>`).join('')}</div>
     <label class="remember"><input type="checkbox" id="emuRem"> Lembrar só para este jogo (é possível trocar no menu do jogo → "Jogar com…")</label>
     <label class="remember"><input type="checkbox" onchange="setCfg({emu_no_ask:this.checked})"> Nunca perguntar — usar sempre o padrão do console</label>` });
   setTimeout(() => gpFocusFirst('.askrow button'), 50);
@@ -3004,7 +3004,7 @@ setInterval(() => {
   if ($('#modal').classList.contains('on') || $('#detail').classList.contains('on') || $('#ctx')?.classList.contains('on')) return;
   const i = S.showPick.indexOf(S.stageKey), next = S.showPick[(i + 1) % S.showPick.length];
   if (next && next !== S.stageKey) stageSet(next, true);
-}, 7000);
+}, 12000);
 function stageSet(key, auto) {
   const hm = S.home, st = $('#stage'); if (!hm || !hm.games[key] || !st) return; S.stageKey = key;
   if (!auto) stageHold = Date.now() + 25000;

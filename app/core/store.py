@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import shutil
 import threading
@@ -264,6 +265,9 @@ class Store:
         self._defer = 0
         self._dirty: dict[Path, object] = {}
         self.frozen = False
+        self._pending: dict[Path, object] = {}
+        self._timer: threading.Timer | None = None
+        self._bak_at: dict[Path, float] = {}
 
     @contextmanager
     def batch(self):
@@ -278,21 +282,55 @@ class Store:
                     dirty, self._dirty = self._dirty, {}
                     if not self.frozen:
                         for p, data in dirty.items():
-                            self._write(p, data)
+                            self._pending[p] = data
+                        if dirty and self._timer is None:
+                            self._timer = threading.Timer(0.5, self.flush)
+                            self._timer.daemon = True
+                            self._timer.start()
 
     def freeze(self):
         with self._lock:
             self.frozen = True
             self._dirty.clear()
+            self._pending.clear()
+            if self._timer is not None:
+                self._timer.cancel()
+                self._timer = None
 
-    def _save(self, p: Path, data):
+    def _save(self, p: Path, data, delay: float = 1.5):
         with self._lock:
             if getattr(self, "frozen", False):
                 return
             if self._defer:
                 self._dirty[p] = data
                 return
-        self._write(p, data)
+            self._pending[p] = data
+            if self._timer is None:
+                self._timer = threading.Timer(delay, self.flush)
+                self._timer.daemon = True
+                self._timer.start()
+
+    def flush(self):
+        with self._lock:
+            if self._timer is not None:
+                self._timer.cancel()
+                self._timer = None
+            pend, self._pending = self._pending, {}
+            if self.frozen:
+                return
+            snap = {p: json.dumps(d, indent=2, ensure_ascii=False) for p, d in pend.items()}
+        for p, txt in snap.items():
+            try:
+                self._write(p, txt, bak=self._want_bak(p))
+            except OSError as e:
+                logging.getLogger("ludrix").warning("não consegui gravar %s: %s", p.name, e)
+
+    def _want_bak(self, p: Path) -> bool:
+        now = time.time()
+        if now - self._bak_at.get(p, 0) < 600:
+            return False
+        self._bak_at[p] = now
+        return True
 
     @staticmethod
     def _load(p: Path, default):
@@ -312,16 +350,17 @@ class Store:
         return default
 
     @staticmethod
-    def _write(p: Path, data):
+    def _write(p: Path, data, bak: bool = True):
         p.parent.mkdir(parents=True, exist_ok=True)
         tmp = p.with_suffix(".tmp")
+        txt = data if isinstance(data, str) else json.dumps(data, indent=2, ensure_ascii=False)
         with open(tmp, "w", encoding="utf-8") as f:
-            f.write(json.dumps(data, indent=2, ensure_ascii=False))
+            f.write(txt)
             f.flush()
             os.fsync(f.fileno())
-        if p.exists():
+        if bak and p.exists():
             try:
-                shutil.copy2(p, p.with_suffix(p.suffix + ".bak"))
+                os.replace(p, p.with_suffix(p.suffix + ".bak"))
             except OSError:
                 pass
         tmp.replace(p)
@@ -331,7 +370,13 @@ class Store:
             for k, v in kw.items():
                 if k in DEFAULT_CONFIG:
                     self.config[k] = v
-            self._save(paths.CONFIG_FILE, self.config)
+            try:
+                snap = json.dumps(self.config, sort_keys=True, ensure_ascii=False)
+            except (TypeError, ValueError):
+                snap = None
+            if snap is None or snap != getattr(self, "_cfg_snap", None):
+                self._cfg_snap = snap
+                self._save(paths.CONFIG_FILE, self.config)
             return dict(self.config)
 
     def games_dir(self) -> Path:

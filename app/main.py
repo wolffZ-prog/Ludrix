@@ -461,7 +461,9 @@ def main():
         while True:
             time.sleep(3600)
 
-    os.environ["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = "--disable-features=msSmartScreenProtection --disable-background-networking"
+    os.environ["WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS"] = ("--disable-features=msSmartScreenProtection,msEdgeSmartScreen --disable-background-networking "
+                                                          "--disable-component-update --disable-domain-reliability --no-pings --disk-cache-size=67108864 "
+                                                          "--renderer-process-limit=2 --disable-gpu-shader-disk-cache")
     import webview
     _pin_webview2(webview)
     _, port = serve(ludrix, host="127.0.0.1", port=0)
@@ -1396,6 +1398,30 @@ def main():
             return ctypes.windll.user32.FindWindowW(None, APP_NAME) or 0
         except Exception:
             return 0
+
+    def _mem_watch():
+        import ctypes
+        u = ctypes.windll.user32
+        last = None
+        while not state["quitting"]:
+            time.sleep(20)
+            try:
+                if state["hidden"]:
+                    continue
+                h = _hwnd()
+                if not h:
+                    continue
+                mini = bool(u.IsIconic(h))
+                away = bool(ludrix.sessions.active) and u.GetForegroundWindow() != h
+                low = mini or away
+                if low != last:
+                    last = low
+                    _mem_mode(low)
+            except Exception as e:
+                logging.getLogger("ludrix").debug("mem watch: %s", e)
+
+    if sys.platform == "win32":
+        threading.Thread(target=_mem_watch, daemon=True, name="mem-watch").start()
 
     def _fix_min_box():
         if sys.platform != "win32":

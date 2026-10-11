@@ -27,20 +27,27 @@ ROM_EXTS_FALLBACK = {".iso", ".chd", ".cue", ".bin", ".img", ".pbp", ".cso", ".z
 ARCH_EXTS = {".zip", ".7z", ".rar"}
 
 
-def scan_windows(root: Path, progress=None, limit: int = 3000) -> list[dict]:
+def scan_windows(root: Path, progress=None, limit: int = 3000, skip: set[str] | None = None) -> list[dict]:
     out: list[dict] = []
     root = Path(root)
     if not root.is_dir():
         raise ValueError("Pasta não encontrada")
     seen_dirs: set[str] = set()
+    skip = skip or set()
+
+    def _skipped(p: Path) -> bool:
+        return bool(skip) and os.path.normcase(os.path.normpath(str(p))) in skip
 
     def game_dirs():
         try:
-            kids = sorted(root.iterdir(), key=lambda p: p.name.lower())
+            with os.scandir(root) as it:
+                ents = sorted(it, key=lambda e: e.name.lower())
         except OSError:
             return
-        direct = [p for p in kids if p.is_file() and _is_game_file(p)]
-        subs = [p for p in kids if p.is_dir() and not SKIP_DIRS.match(p.name) and not p.name.startswith(".")]
+        kids = [Path(e.path) for e in ents]
+        isdir = {e.path: e.is_dir() for e in ents}
+        direct = [p for p in kids if not isdir[str(p)] and _is_game_file(p) and not _skipped(p)]
+        subs = [p for p in kids if isdir[str(p)] and not SKIP_DIRS.match(p.name) and not p.name.startswith(".") and not _skipped(p)]
         if direct and (not subs or len(direct) >= 1 and all(INNER_DIRS.match(s.name) for s in subs)):
             yield root
             return

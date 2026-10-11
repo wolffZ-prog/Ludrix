@@ -75,12 +75,13 @@ class EmulationManager:
         self._upd: list[dict] = []
         self._upd_at = 0.0
         self.presets = self._load_presets()
-        self._migrate_removed()
-        self._migrate_paths()
         self._scan_cache: dict[str, tuple[float, list]] = {}
         self._scan_lock = threading.Lock()
         self._scan_running: set[str] = set()
-        self.SCAN_TTL = 120.0
+        self.SCAN_TTL = 900.0
+        self._exe_cache: dict[str, tuple[float, Path | None]] = {}
+        self._migrate_removed()
+        self._migrate_paths()
 
     REMOVED = {"ryujinx": "eden", "sudachi": "eden"}
 
@@ -119,6 +120,37 @@ class EmulationManager:
             toks.add(m.group(0))
         return any(t and t in stem for t in toks)
 
+    def find_family_exe(self, eid: str, near: Path | None = None) -> Path | None:
+        pc = self.presets["emulators"].get(eid) or {}
+        want = str(pc.get("exe") or "").lower()
+        if not want:
+            return None
+        roots = []
+        if near:
+            roots += [near.parent, near.parent.parent]
+        for v in ("LOCALAPPDATA", "ProgramFiles", "ProgramFiles(x86)"):
+            if os.environ.get(v):
+                roots.append(Path(os.environ[v]))
+                if v == "LOCALAPPDATA":
+                    roots.append(Path(os.environ[v]) / "Programs")
+        seen = set()
+        for r in roots:
+            try:
+                r = r.resolve()
+            except OSError:
+                continue
+            if r in seen or not r.is_dir() or len(r.parts) <= 1:
+                continue
+            seen.add(r)
+            for pat in (want, f"*/{want}", f"*/*/{want}"):
+                try:
+                    for h in r.glob(pat):
+                        if h.is_file() and self.same_family(eid, str(h)):
+                            return h
+                except OSError:
+                    continue
+        return None
+
     def _migrate_paths(self):
         cfg = self.store.config
         ep = dict(cfg.get("emu_paths") or {})
@@ -129,12 +161,17 @@ class EmulationManager:
         for eid, exe in bad:
             ep.pop(eid, None)
             log.warning("emulador %s apontava para %s (não é %s); desvinculado", eid, exe, self.presets["emulators"][eid].get("exe"))
+            real = self.find_family_exe(eid, Path(exe).parent)
+            if real:
+                ep[eid] = str(real)
+                log.info("emulador %s encontrado em %s", eid, real)
             if Path(exe).is_file():
                 cid = re.sub(r"[^a-z0-9]+", "-", Path(exe).stem.lower()).strip("-")
                 if cid and cid not in custom and cid not in self.presets["emulators"]:
                     systems = list(self.presets["emulators"][eid].get("systems") or [])
                     custom[cid] = {"title": Path(exe).stem, "exe": str(exe), "args": self._args_for(eid, systems[0] if systems else ""), "systems": systems, "based_on": eid}
         self.store.set_config(emu_paths=ep, custom_emulators=custom)
+        self.forget_exe()
 
     def invalidate_scan(self, sid: str | None = None):
         with self._scan_lock:
@@ -192,6 +229,20 @@ class EmulationManager:
         self.store.set_config(system_emulators=se)
 
     def emu_exe(self, emu_id: str) -> Path | None:
+        hit = self._exe_cache.get(emu_id)
+        if hit and time.time() - hit[0] < 15:
+            return hit[1]
+        r = self._emu_exe(emu_id)
+        self._exe_cache[emu_id] = (time.time(), r)
+        return r
+
+    def forget_exe(self, emu_id: str | None = None):
+        if emu_id:
+            self._exe_cache.pop(emu_id, None)
+        else:
+            self._exe_cache.clear()
+
+    def _emu_exe(self, emu_id: str) -> Path | None:
         cfg = self.all_emulators().get(emu_id)
         if not cfg:
             return None
@@ -285,6 +336,7 @@ class EmulationManager:
                 "games_root": str(paths.EMU_GAMES), "updates": self._upd}
 
     def add_custom_emulator(self, data: dict, make_default: bool = True) -> dict:
+        self.forget_exe()
         exe = Path(data.get("exe") or "")
         if not str(data.get("exe") or "").strip() or not exe.is_file():
             raise ValueError("Executável não encontrado")
@@ -312,6 +364,7 @@ class EmulationManager:
         return {"id": eid, **custom[eid]}
 
     def set_emulator_exe(self, eid: str, exe: str | None):
+        self.forget_exe()
         ep = dict(self.store.config.get("emu_paths") or {})
         if exe:
             if not Path(exe).exists():
@@ -323,6 +376,7 @@ class EmulationManager:
         return {"ok": True, "exe": exe or ""}
 
     def remove_custom_emulator(self, eid: str):
+        self.forget_exe()
         custom = dict(self.store.config.get("custom_emulators") or {})
         custom.pop(eid, None)
         se = {k: v for k, v in (self.store.config.get("system_emulator") or {}).items() if v != eid}
@@ -429,11 +483,14 @@ class EmulationManager:
         seen = set()
         files = []
         for d in dirs:
-            if d.exists():
-                try:
-                    files += list(d.rglob("*"))
-                except OSError:
-                    pass
+            if not d.is_dir():
+                continue
+            for cur, subs, names in os.walk(d):
+                depth = len(Path(cur).parts) - len(d.parts)
+                subs[:] = [x for x in subs if not x.startswith(".") and depth < 8]
+                for n in names:
+                    if n.lower().endswith(tuple(exts)):
+                        files.append(Path(cur) / n)
 
         for rf in (self.store.config.get("rom_files") or []):
             if rf.get("system") == sid:
@@ -525,6 +582,7 @@ class EmulationManager:
         return out
 
     def install_emulator(self, emu_id: str, cb, cancel: threading.Event, keep: bool = False):
+        self.forget_exe()
         cfg = self.presets["emulators"][emu_id]
         dest = self.emu_dir(emu_id)
         tmp = paths.DOWNLOADS / f"emu_{emu_id}"
@@ -638,6 +696,7 @@ class EmulationManager:
         return dest if dest.exists() else None
 
     def remove_emulator(self, emu_id: str):
+        self.forget_exe()
         shutil.rmtree(self.emu_dir(emu_id), ignore_errors=True)
         self.store.remove(f"emu:{emu_id}")
 

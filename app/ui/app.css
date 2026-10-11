@@ -438,7 +438,7 @@ main.glass[style]::before{display:none}
 .brand{filter:drop-shadow(0 6px 14px rgba(0,0,0,.45))}
 .brand img{width:40px;height:40px;border-radius:0;opacity:.92}
 .view.enter .card{animation:up .26s cubic-bezier(.2,.8,.2,1) both}
-.card{contain:layout style}
+.card{contain:layout style;content-visibility:auto;contain-intrinsic-size:auto 160px auto 260px}
 .view.enter>*{animation:up .28s ease both}
 .gpind{display:none;position:fixed;top:calc(var(--tb) + 10px);right:14px;z-index:760;width:34px;height:34px;border-radius:99px;place-items:center;color:var(--green);background:color-mix(in srgb,var(--bg) 82%,transparent);border:1px solid color-mix(in srgb,var(--green) 45%,transparent);box-shadow:0 6px 18px -8px rgba(0,0,0,.5);backdrop-filter:blur(12px);margin:0;pointer-events:none}
 .gpind.on{display:grid;animation:pop .4s ease}

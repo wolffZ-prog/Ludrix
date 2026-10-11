@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.42.0 — 2026-10-11
+- Disco: a varredura automática das pastas de jogos na abertura passa a pular as pastas de jogos que já estão na biblioteca — antes ela percorria todas as pastas (e lia os executáveis) a cada abertura, o que em HD mecânico travava o PC por minutos. "Procurar jogos novos" continua varrendo tudo quando você pede.
+- Disco: biblioteca e configurações são gravadas em lote (uma gravação por mudança, não dezenas), a cópia de segurança `.bak` é feita por renomeação (sem copiar o arquivo) e no máximo a cada 10 minutos, e configurações iguais não são regravadas. Tempo de jogo é salvo a cada 2 minutos (era 30 s) e sempre ao fechar o jogo e ao sair do Ludrix.
+- Disco: a varredura de ROMs usa listagem direta (sem `rglob`), só desce 8 níveis, fica em cache por 15 minutos e o caminho de cada emulador é lembrado por 15 s em vez de ser procurado no disco a cada pedido da interface. Miniaturas são geradas por 2 threads (eram 6) para não disputar o disco.
+- Memória: a interface só desenha os cartões visíveis (`content-visibility`), o destaque da Biblioteca troca de jogo a cada 12 s (era 7 s) e o WebView2 entra em modo de pouca memória quando o Ludrix está minimizado ou quando há um jogo aberto e a janela não está em primeiro plano, voltando ao normal ao focar. O WebView2 roda com cache em disco limitado a 64 MB, sem cache de shaders em disco e com no máximo 2 processos de renderização.
+- Emuladores: quando um executável errado estava na vaga de um emulador (ex.: Ryujinx no lugar do Eden), ao desvincular o Ludrix agora procura o executável certo nas pastas vizinhas, em AppData\Local e em Arquivos de Programas e religa sozinho. O diálogo "Jogar com qual emulador?" avisa quando o padrão do console está sem executável.
+
 ## 2.41.1 — 2026-10-11
 - Compilação: o teste automático do exe não é mais interrompido quando o WebView2 Runtime não consta no registro da máquina que compila (o Ludrix instala o runtime sozinho na primeira abertura). A detecção do WebView2 no Diagnóstico passa a procurar também pela pasta de instalação (Program Files › Microsoft › EdgeWebView), não só pelo registro.
 

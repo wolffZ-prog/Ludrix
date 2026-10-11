@@ -225,7 +225,7 @@ class SessionManager:
         if not s:
             return
         now = time.time()
-        if now - s.get("last_save", s["started"]) >= 30:
+        if now - s.get("last_save", s["started"]) >= 120:
             delta = now - s.get("last_save", s["started"])
             s["last_save"] = now
             info = self.store.get(key) or {}

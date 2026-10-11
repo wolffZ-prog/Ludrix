@@ -120,7 +120,7 @@ class Ludrix:
         self._mq_total = 0
         self._mq_done = 0
         self._mq_workers: list[threading.Thread] = []
-        self._thumb_pool = ThreadPoolExecutor(max_workers=6, thread_name_prefix="thumb")
+        self._thumb_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="thumb")
 
         self.images.on_thumb = lambda k: self._push({"type": "thumb_ready", "key": k})
         self.gamepad = None
@@ -709,6 +709,7 @@ class Ludrix:
             dest = self.pick_folder(str(paths.ROOT))
             if not dest:
                 return {"cancel": True}
+        self.store.flush()
         return backup.export_data(Path(dest) if dest else paths.ROOT, self.updates.status()["current"].get("version", "?"))
 
     def data_inspect(self, path: str | None) -> dict:
@@ -1774,7 +1775,9 @@ class Ludrix:
         if remembered in ids:
             return remembered
         if len(opts) > 1 and not self.store.config.get("emu_no_ask"):
-            return {"choose_emulator": opts, "system": sid, "default": self.emu.emulator_for(sid), "key": key}
+            default = self.emu.emulator_for(sid)
+            miss = "" if default in ids else self.emu.all_emulators().get(default, {}).get("title", default or "")
+            return {"choose_emulator": opts, "system": sid, "default": default, "key": key, "missing_default": miss}
         return None
 
     def set_game_emulator(self, key: str, emulator: str | None) -> dict:
@@ -2334,6 +2337,7 @@ class Ludrix:
 
     def _backup_library(self):
         try:
+            self.store.flush()
             src = paths.LIBRARY_FILE
             if not src.exists() or src.stat().st_size < 3:
                 return
@@ -2353,6 +2357,7 @@ class Ludrix:
 
     def library_backup_now(self) -> dict:
         try:
+            self.store.flush()
             src = paths.LIBRARY_FILE
             if not src.exists():
                 return {"error": "Biblioteca vazia"}
@@ -3564,6 +3569,7 @@ class Ludrix:
         return {"ok": True, "files": n, "restart": True}
 
     def restart_app(self) -> dict:
+        self.store.flush()
         import subprocess
         import sys
         cmd = [sys.executable] if paths.FROZEN else [sys.executable, str(paths.APP / "main.py")]
@@ -4710,16 +4716,29 @@ class Ludrix:
         self.store.set_config(scan_ignored=cur[-2000:])
         return {"ok": True, "count": len(cur)}
 
-    def _scan_new_games(self, prog=None) -> list[dict]:
+    def _known_cover(self, known: tuple[set[str], set[str]]) -> set[str]:
+        cover: set[str] = set()
+        for x in known[0] | known[1]:
+            cur = x
+            for _ in range(12):
+                cover.add(cur)
+                up = os.path.dirname(cur)
+                if not up or up == cur:
+                    break
+                cur = up
+        return cover
+
+    def _scan_new_games(self, prog=None, quick: bool = False) -> list[dict]:
         from . import scanner
         known = self._known_pc()
         ignored = {str(x).lower() for x in (self.store.config.get("scan_ignored") or [])}
+        skip = self._known_cover(known) | {os.path.normcase(os.path.normpath(x)) for x in ignored} if quick else None
         out, seen = [], set()
         for d in self.game_dirs():
             if not Path(d).is_dir():
                 continue
             try:
-                items = scanner.scan_windows(Path(d), prog)
+                items = scanner.scan_windows(Path(d), prog, skip=skip)
             except Exception as e:
                 log.debug("scan %s: %s", d, e)
                 continue
@@ -4767,7 +4786,9 @@ class Ludrix:
         try:
             if not self.store.config.get("auto_scan_dirs", True) or not self.store.config.get("welcome_done"):
                 return
-            items = self._scan_new_games()
+            t0 = time.time()
+            items = self._scan_new_games(quick=True)
+            log.info("varredura rápida das pastas de jogos: %d novo(s) em %.1fs", len(items), time.time() - t0)
             if items:
                 self._push({"type": "new_games", "count": len(items), "games": items[:300], "dirs": self.game_dirs()})
         except Exception as e:
@@ -5329,6 +5350,10 @@ class Ludrix:
     def shutdown(self):
         for j in self.jobs.values():
             j["cancel"].set()
+        try:
+            self.store.flush()
+        except Exception as e:
+            log.warning("flush final: %s", e)
         self.pool.shutdown(wait=False, cancel_futures=True)
         self._thumb_pool.shutdown(wait=False, cancel_futures=True)
         try:
