@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.0.1 — 2026-10-12
+- Reenvio assinado da 3.0.0: o pacote anterior saiu sem assinatura e o Ludrix o recusava em Checar atualizações. Nenhuma mudança no programa além do número da versão.
+
 ## 3.0.0 — 2026-10-12
 - Nova cara da Biblioteca. Início em formato Estante: destaque com a capa em pé, tempo jogado, nota e vezes, com cinco sorteados e o dado para trocar; abaixo, "Continuar jogando" em cartões largos e "Adicionados há pouco". Menu lateral com nomes, bloco Coleções (Favoritos, Jogando, Zerados, Nunca joguei, com contagem) e o último jogo aberto com botão de jogar.
 - Todos os jogos em modo Mural: parede de capas mais densa; clicar numa capa abre um painel fixo à direita com arte, Jogar, favorito, editar, detalhes, tempo, última vez, status, nota, capturas, resumo e gêneros. Duplo clique ou botão direito continuam abrindo os detalhes. Com 30 jogos ou mais e ordem A–Z aparece um índice de letras. Grade de capas e Lista seguem em Exibição → Modo.

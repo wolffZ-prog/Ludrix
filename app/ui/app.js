@@ -829,7 +829,7 @@ async function gpanelFill(key) {
   $('#gpx').innerHTML = `${shots.length ? `<div><h5>Capturas</h5><div class="gshots">${shots.slice(0, 3).map((u, i) => `<img src="${u}" alt="" loading="lazy" onclick="lightbox(${jsq(u)})" onerror="this.remove()">`).join('')}</div></div>` : ''}
     ${desc ? `<p class="gdesc">${esc(desc)}</p>` : ''}
     ${genres.length ? `<div><h5>Gêneros</h5><div class="gtags">${genres.map(t => `<span>${esc(t)}</span>`).join('')}</div></div>` : ''}
-    ${d.installed ? `<div class="gnote${d.missing ? ' warn' : ''}"><i>${d.missing ? I.warn : I.check}</i><span>${d.missing ? 'Arquivo não encontrado' : 'Instalado'}${d.size ? ' · ' + fmt(d.size) : ''}${d.system_name && d.system_name !== 'PC' ? ' · ' + esc(d.system_name) : where ? ' · ' + esc(where) : ''}</span></div>` : ''}`;
+    ${d.installed ? `<div class="gnote${d.missing ? ' warn' : ''}" title="${esc(where)}"><i>${d.missing ? I.warn : I.check}</i><span>${d.missing ? 'Arquivo não encontrado' : 'Instalado'}${d.size ? ' · ' + fmt(d.size) : ''}${d.system_name && d.system_name !== 'PC' ? ' · ' + esc(d.system_name) : ''}</span></div>` : ''}`;
 }
 function azBar(list) {
   if (!muralMode() || S.config.group_by || S.sort !== 'az' || list.length < 30) return '';

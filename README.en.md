@@ -25,7 +25,7 @@ Latest: **[Releases](https://github.com/wolffZ-prog/Ludrix/releases/latest)**. R
 
 ## Features
 
-- **Library** — PC games (`.exe`, shortcuts, whole folders), ROMs and quick Flash/HTML5 games in one place. Covers, metadata, screenshots and system requirements fetched automatically and editable. Imports from Playnite, Steam, Epic, GOG, Ubisoft Connect, EA app, Battle.net, Amazon Games and itch.io. Names you type are never changed.
+- **Library** — PC games (`.exe`, shortcuts, whole folders), ROMs and quick Flash/HTML5 games in one place. Covers, metadata, screenshots and system requirements fetched automatically and editable. Imports from Playnite, Steam, Epic, GOG, Ubisoft Connect, EA app, Battle.net, Amazon Games and itch.io. Names you type are never changed. Home is a Shelf (standing cover, time played, score, continue playing); the library is a cover Wall with a side panel that opens on click. Per-game status and score, grouping, list with columns.
 - **Store by sources** — no download source is built in. Add `.json` lists, web pages, archive.org collections, GitHub repositories or local folders and the Store shows what they offer. Direct links, file hosts (MEGA, MediaFire, Pixeldrain, Google Drive, itch.io…) and torrents; staged downloads, pause, queue with history. Installs what it downloads: archives, installers, disc images.
 - **Recompilations** — native ports (N64, Xbox 360, PS1…) straight from GitHub, always the latest release. Ready list: `Recomps.json` (91 projects).
 - **Emulators** — 25 systems, 45 emulators catalogued, installed from official sites into the Ludrix folder. Point a ROM folder per console and the games join the Library.

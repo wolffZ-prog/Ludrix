@@ -57,7 +57,9 @@ O AppImage traz tudo (Python, Qt WebEngine). Jogos nativos (`.sh`, `.x86_64`, `.
 - Jogos de PC (`.exe`, atalhos, pastas inteiras), ROMs e jogos rápidos (Flash/HTML5) na mesma tela, com capas, categorias, filtros combináveis e busca com prefixos (`dev:`, `ano:`, `gen:`, `sis:`, `origem:`).
 - Importa de Playnite, Steam, Epic, GOG, Ubisoft Connect, EA app, Battle.net, Amazon Games e itch.io. Os nomes que você digita nunca são alterados.
 - Capas, descrição, ano, desenvolvedora, screenshots e requisitos buscados automaticamente; tudo editável. Compara os requisitos com o seu PC.
-- Destaque com os jogos da casa, "Me surpreenda", favoritos, tempo jogado, última sessão, backup automático de saves.
+- Início em formato Estante: capa em pé com tempo jogado, nota e vezes, "Continuar jogando", "Adicionados há pouco", "Me surpreenda". Coleções (favoritos, jogando, zerados) e o último jogo aberto ficam no menu lateral.
+- Biblioteca em Mural: parede de capas com painel fixo ao lado — clica numa capa e vê arte, tempo, última vez, status, nota, capturas e resumo sem sair da tela. Grade de capas e lista com colunas continuam disponíveis.
+- Status (planejo, jogando, zerado, 100%, em espera, abandonado) e nota de 1 a 10 por jogo; agrupar por status, nota, gênero, ano ou desenvolvedora. Backup automático de saves.
 - Clique com o botão direito em qualquer jogo: jogar, abrir pasta, trocar capa, mods, saves, atalho na área de trabalho, verificar arquivos.
 
 **Store por fontes**
@@ -78,7 +80,7 @@ O AppImage traz tudo (Python, Qt WebEngine). Jogos nativos (`.sh`, `.x86_64`, `.
 - Interface separada para TV e controle: capas grandes, navegação por analógico/D-pad, mesmas tabs do launcher. Abre pelo ícone ou automaticamente com controle conectado.
 
 **Aparência**
-- Tema claro e escuro, cor de destaque, barra lateral ou inferior, escala adaptativa, intensidade de efeitos. Temas `.lxtheme` importáveis, feitos no [Ludrix Studio](#temas-e-ludrix-studio).
+- Tema escuro (padrão) e claro, cor de destaque, barra lateral ou inferior, escala adaptativa, intensidade de efeitos. Temas `.lxtheme` importáveis, feitos no [Ludrix Studio](#temas-e-ludrix-studio).
 - Interface em português do Brasil e inglês.
 
 **Sistema**
@@ -92,7 +94,7 @@ O AppImage traz tudo (Python, Qt WebEngine). Jogos nativos (`.sh`, `.x86_64`, `.
 <table>
   <tr>
     <td><img src="docs/screenshots/02-detalhes.jpg" alt="Detalhes do jogo"><br><sub>Detalhes: descrição, metadados, screenshots, requisitos</sub></td>
-    <td><img src="docs/screenshots/03-store.jpg" alt="Store"><br><sub>Store lendo duas listas .json</sub></td>
+    <td><img src="docs/screenshots/01b-mural.jpg" alt="Mural com painel"><br><sub>Biblioteca em Mural: clique na capa abre o painel ao lado</sub></td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/04-emuladores.jpg" alt="Emuladores"><br><sub>Emuladores: instala, aponta ROMs, escolhe o núcleo</sub></td>
