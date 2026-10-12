@@ -399,6 +399,29 @@ class _Redirect(Exception):
         self.path = path
 
 
+_STATUS_WORDS = (("plan", ("plan", "planej", "quero", "backlog")), ("playing", ("playing", "jogando")), ("completed", ("complet", "100")),
+                 ("beaten", ("beaten", "zerad", "finish", "termin")), ("abandoned", ("abandon", "drop", "desist")), ("on_hold", ("hold", "espera", "pausa")),
+                 ("played", ("played", "jogad")))
+
+
+def _status_of(name: str) -> str:
+    n = name.lower()
+    if n.startswith(("not ", "não ", "nao ")):
+        return ""
+    for sid, words in _STATUS_WORDS:
+        if any(w in n for w in words):
+            return sid
+    return ""
+
+
+def _score_of(v) -> int:
+    try:
+        v = int(v or 0)
+    except (TypeError, ValueError):
+        return 0
+    return max(1, min(10, round(v / 10))) if v > 0 else 0
+
+
 def read(path: Path) -> list[dict]:
     try:
         src = Source(path)
@@ -435,6 +458,7 @@ def _read(src: Source) -> list[dict]:
     comps = {k: v.get("Name") or "" for k, v in _table(src, "companies.db", "empresas").items()}
     genres = {k: v.get("Name") or "" for k, v in _table(src, "genres.db", "gêneros").items()}
     sources = {k: v.get("Name") or "" for k, v in _table(src, "sources.db", "fontes").items()}
+    cstatus = {k: _status_of(v.get("Name") or "") for k, v in _table(src, "completionstatuses.db", "status").items()}
     emus = _table(src, "emulators.db", "emuladores")
     scanners = _table(src, "scanners.db", "pastas de ROMs")
 
@@ -604,6 +628,7 @@ def _read(src: Source) -> list[dict]:
             "description": re.sub(r"<[^>]+>", "", g.get("Description") or "")[:1500], "missing": not exists,
             "links": [{"name": str(l.get("Name") or "")[:40], "url": str(l.get("Url") or "")} for l in (g.get("Links") or []) if isinstance(l, dict) and str(l.get("Url") or "").startswith("http")][:8],
             "notes": str(g.get("Notes") or "")[:2000], "hidden": bool(g.get("Hidden")), "play_count": int(g.get("PlayCount") or 0),
+            "status": cstatus.get(_id(g.get("CompletionStatusId")), ""), "score": _score_of(g.get("UserScore")),
             "alt_exe": alt, "added": float(g["Added"]) if isinstance(g.get("Added"), (int, float)) and 0 < g["Added"] < 10**10 else 0.0,
         })
     if PROGRESS:

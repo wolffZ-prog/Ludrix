@@ -53,6 +53,12 @@ def umu_path() -> Path | None:
     return Path(w) if w else None
 
 
+def gamemode_path() -> str | None:
+    if IS_WIN:
+        return None
+    return shutil.which("gamemoderun", path=host_env().get("PATH"))
+
+
 def wine_path() -> Path | None:
     w = shutil.which("wine")
     return Path(w) if w else None

@@ -12,7 +12,7 @@ from pathlib import Path
 from . import paths
 
 DEFAULT_CONFIG = {
-    "theme": "system",
+    "theme": "dark",
     "theme_mode": "",
     "face": "padrao",
     "lights": ["#9ec5ff", "#b48cff", "#7c4dff"],
@@ -55,7 +55,8 @@ DEFAULT_CONFIG = {
     "favorites": [],
     "store_hide_installed": True,
     "card_size": 136,
-    "view_mode": "grid",
+    "view_mode": "mural",
+    "list_cols": ["year", "genre", "size", "playtime", "last", "status"],
     "game_backdrop": "",
     "backdrop_blur": 10,
     "backdrop_dim": 42,
@@ -76,7 +77,7 @@ DEFAULT_CONFIG = {
     "reduce_motion": False,
     "parallax": True,
     "high_contrast": False,
-    "home_rows": ["favorites"],
+    "home_rows": ["recent", "added"],
     "home_spot_style": "auto",
     "clock": "off",
     "settings_adv": False,
@@ -101,7 +102,7 @@ DEFAULT_CONFIG = {
     "flash_stats": {},
     "store_page_size": 25,
     "nav": "bottom",
-    "layout": "",
+    "layout": "side",
     "game_args": {},
     "repos_default_off": True,
     "repos_initialized": False,
@@ -260,6 +261,19 @@ class Store:
             self.config["look"] = 7
             if self.config.get("animations") == "full":
                 self.config["animations"] = "light"
+            self._write(paths.CONFIG_FILE, self.config)
+        if int(self.config.get("look") or 0) < 8:
+            self.config["look"] = 8
+            if self.config.get("theme") == "system" and not self.config.get("theme_mode"):
+                self.config["theme"] = "dark"
+            if self.config.get("layout") in ("", "rail") and self.config.get("nav") in ("bottom", "side", None):
+                self.config["layout"] = "side"
+            if self.config.get("view_mode") == "grid":
+                self.config["view_mode"] = "mural"
+            if self.config.get("home_rows") in ([], ["favorites"]):
+                self.config["home_rows"] = ["recent", "added"]
+            if self.config.get("home_spot_style") in ("banner", "painel"):
+                self.config["home_spot_style"] = "auto"
             self._write(paths.CONFIG_FILE, self.config)
         self.library: dict[str, dict] = self._load(paths.LIBRARY_FILE, {})
         self._defer = 0

@@ -95,7 +95,7 @@ body.frameless{border:1px solid var(--line2)}
 <script>'use strict';
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
-const TOKEN = document.querySelector('meta[name=ludrix-token]')?.content || '';
+const TOKEN = (m => { const t = m?.content || ''; m?.remove(); return t; })(document.querySelector('meta[name=ludrix-token]'));
 const post = (u, b) => fetch(u, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Ludrix-Token': TOKEN }, body: JSON.stringify(b || {}) }).then(r => r.json()).catch(e => ({ error: String(e) }));
 const get = u => fetch(u, { headers: { 'X-Ludrix-Token': TOKEN } }).then(r => r.json()).catch(() => ({}));
 const out = $('#out'), inp = $('#in');

@@ -33,6 +33,7 @@ _GZ: dict = {}
 TOKEN = secrets.token_urlsafe(24)
 PAGES = {"/": "index.html", "/index.html": "index.html", "/console": "console/console.html", "/console/": "console/console.html", "/terminal": "terminal.html"}
 PUBLIC = ("/ui/", "/thumb/", "/cover/", "/hero/", "/shot/", "/api/custom.css", "/api/custom/file/", "/flash/cover/", "/flash/ruffle/", "/flash/games/", "/flash/play/", "/api/import/cover", "/favicon.ico")
+FILE_CSP = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox"
 MAX_BODY = 32 * 1024 * 1024
 LOCAL_HOSTS = {"127.0.0.1", "localhost", "[::1]", "::1"}
 CSP = ("default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https: http:; "
@@ -89,6 +90,8 @@ class Handler(BaseHTTPRequestHandler):
         if not path or not path.exists() or not path.is_file():
             return self._send(404, b"", "text/plain")
         ctype = ctype_of(path)
+        if not getattr(self, "_csp", "") and (ctype.startswith("image/svg") or ctype.startswith("text/html") or ctype.startswith("application/xhtml")):
+            self._csp = FILE_CSP
         st = path.stat()
         if st.st_size > 4096 and ctype.split(";")[0] in GZ_TYPES and "gzip" in (self.headers.get("Accept-Encoding") or ""):
             k = (str(path), st.st_mtime_ns, st.st_size)

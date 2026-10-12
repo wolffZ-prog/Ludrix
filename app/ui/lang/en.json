@@ -2317,7 +2317,21 @@
   "Prefixos aceitos: dev: (desenvolvedora), ano: (ano ou década, ex. 2010s), gen: (gênero), sis: (sistema), origem: (Steam, Epic, ROM…).": "Accepted prefixes: dev: (developer), ano: (year or decade, e.g. 2010s), gen: (genre), sis: (system), origem: (Steam, Epic, ROM…).",
   "Mais vezes jogados": "Most times played",
   "Mais vezes": "Most times",
-  "Há entradas repetidas na biblioteca.": "There are repeated entries in the library."
+  "Há entradas repetidas na biblioteca.": "There are repeated entries in the library.",
+  "Coleções": "Collections",
+  "Capturas": "Screenshots",
+  "tempo jogado": "time played",
+  "última vez": "last played",
+  "sua nota": "your score",
+  "jogadas": "played",
+  "vezes": "times",
+  "vez": "time",
+  "Mural com painel": "Wall with panel",
+  "Estante: capa em pé e seus números": "Shelf: standing cover and your numbers",
+  "Sem status": "No status",
+  "Jogando": "Playing",
+  "Zerados": "Beaten",
+  "status": "status"
  },
  "patterns": [
   [

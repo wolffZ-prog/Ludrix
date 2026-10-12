@@ -192,7 +192,7 @@ def memory_usage() -> dict:
             try:
                 ci = c.memory_info()
                 n = int(getattr(ci, "private", ci.rss))
-                if "webview2" in c.name().lower() or "msedge" in c.name().lower():
+                if any(k in c.name().lower() for k in ("webview2", "msedge", "qtwebengine", "webkit")):
                     web += n
                 else:
                     other += n
@@ -234,12 +234,23 @@ def report(ludrix, api_ok: bool | None = None) -> dict:
         wv = webview2_mode()
         add("webview2", "WebView2 Runtime", wv != "não encontrado", wv if wv != "não encontrado" else "Não encontrado — instale o Microsoft Edge WebView2 Runtime (a janela do Ludrix depende dele)")
     else:
-        add("webview", "Motor da janela", True, "GTK/Qt (Linux)")
+        add("webview", "Motor da janela", True, "Qt WebEngine" if paths.APPIMAGE else "GTK/Qt (Linux)")
+        try:
+            from . import compat
+            st = compat.status(store.config)
+            if st.get("runner") == "wine":
+                add("proton", "Jogos de Windows", bool(st.get("wine")), f"Wine do sistema: {st.get('wine') or 'não encontrado'}", warn=not st.get("wine"))
+            else:
+                ok = bool(st.get("proton_ready") and st.get("runtime_ready"))
+                add("proton", "Jogos de Windows", True, f"umu + {st.get('proton') or 'GE-Proton'} {'prontos' if ok else '(baixa na primeira vez que um jogo abrir)'}" + ("" if st.get("python") else " · python3 do sistema não encontrado"), warn=not st.get("python"))
+            add("gamemode", "GameMode (Feral)", True, "instalado" if compat.gamemode_path() else "não instalado · Central › Programas úteis")
+        except Exception as e:
+            add("proton", "Jogos de Windows", True, f"não verificado: {e}", warn=True)
     if api_ok is not None:
         add("api", "Servidor interno", api_ok, "respondendo" if api_ok else "não respondeu")
     mem = memory_usage()
     if mem:
-        parts_m = [f"Ludrix {human(mem['own'])}", f"interface (WebView2) {human(mem['web'])}"]
+        parts_m = [f"Ludrix {human(mem['own'])}", f"interface ({'WebView2' if os.name == 'nt' else 'navegador'}) {human(mem['web'])}"]
         if mem["other"]:
             parts_m.append(f"outros processos {human(mem['other'])}")
         add("mem", "Memória em uso", mem["total"] < 700 * 1024 ** 2, " · ".join(parts_m) + f" · total {human(mem['total'])}", warn=mem["total"] >= 700 * 1024 ** 2)
@@ -298,7 +309,10 @@ def selftest(ludrix, port: int, token: str) -> tuple[bool, str]:
     import urllib.request
     ok = True
     notes = []
-    for route in ("/", "/api/config", "/api/emulation", "/api/flash", "/api/repos", "/api/updates"):
+    routes = ["/", "/api/config", "/api/emulation", "/api/flash", "/api/repos", "/api/updates", "/api/redists", "/api/optionals", "/api/gamemode", "/api/minecraft"]
+    if os.name != "nt":
+        routes.append("/api/linux")
+    for route in routes:
         try:
             req = urllib.request.Request(f"http://127.0.0.1:{port}{route}", headers={"X-Ludrix-Token": token})
             with urllib.request.urlopen(req, timeout=10) as r:

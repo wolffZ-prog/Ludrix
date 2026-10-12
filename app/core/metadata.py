@@ -208,7 +208,7 @@ class MetadataService:
             self._mem.pop(key, None)
 
     USER_FIELDS = ("developer", "publisher", "year", "genres", "summary", "series", "modes", "links", "notes",
-                   "cover_url", "cover_src", "hero_url", "background_file", "platforms")
+                   "cover_url", "cover_src", "hero_url", "background_file", "platforms", "status", "score")
 
     def fetch(self, key: str, title: str, year: str = "", system: str = "pc", force=False, steam_appid: str = "") -> dict:
         if not force:
@@ -341,7 +341,7 @@ class MetadataService:
         for k, v in fields.items():
             if k not in self.USER_FIELDS:
                 continue
-            if v in (None, "", []):
+            if v in (None, "", []) or (k == "score" and not v):
                 user.pop(k, None)
             else:
                 user[k] = v

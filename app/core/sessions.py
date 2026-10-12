@@ -134,6 +134,10 @@ class SessionManager:
                 cmd, env, _ = compat.wrap(cmd, self.store.config, game)
                 if env:
                     kw["env"] = env
+                if self.next_optimize:
+                    gm = compat.gamemode_path()
+                    if gm:
+                        cmd = [gm] + cmd
             proc = subprocess.Popen(cmd, cwd=str(cwd), **kw)
         except OSError as e:
 

@@ -14,6 +14,16 @@ MANIFEST = "ludrix-backup.json"
 MAX_IMPORT = 4 * 1024 ** 3
 
 
+def _restorable(n: str) -> bool:
+    if "\\" in n or n.startswith("/") or any(part in ("..", "") for part in n.split("/")):
+        return False
+    if n in {f"data/{f}" for f in DATA_FILES} or n == "games/rapidos/custom.json":
+        return True
+    if any(n.startswith(f"data/{d}/") for d in DATA_DIRS):
+        return True
+    return n.startswith("themes/") and n.count("/") >= 2 and not n.lower().endswith((".exe", ".dll", ".bat", ".cmd", ".ps1", ".sh", ".py", ".js", ".html", ".htm"))
+
+
 def _add(z: zipfile.ZipFile, src: Path, arc: str) -> int:
     n = 0
     if src.is_file():
@@ -89,6 +99,8 @@ def import_data(path: str, version: str) -> dict:
             if any(n.startswith(f"data/{d}/") for n in names):
                 shutil.rmtree(paths.DATA / d, ignore_errors=True)
         for n in names:
+            if not _restorable(n):
+                continue
             target = (paths.ROOT / n).resolve()
             if paths.ROOT.resolve() not in target.parents:
                 continue

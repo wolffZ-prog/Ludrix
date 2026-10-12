@@ -62,6 +62,7 @@ def uri_name(uri: str) -> str:
     return scheme or "launcher"
 
 log = logging.getLogger("ludrix")
+STATUSES = ("plan", "playing", "played", "beaten", "completed", "on_hold", "abandoned")
 
 
 def local_rom_key(key: str) -> bool:
@@ -575,7 +576,7 @@ class Ludrix:
             "installed": self.store.is_installed(e.key) or bool(e.extra.get("local_path") and Path(e.extra["local_path"]).exists()), "job": e.key in self.jobs,
             "has_meta": bool(m), "thumb_ok": self.images.has_thumb(e.key) or bool(self.covers.custom_path(e.key)),
             "torrent": bool(e.magnet or e.torrent_url),
-            "playtime": (self.store.get(e.key) or {}).get("playtime", 0),
+            "playtime": (self.store.get(e.key) or {}).get("playtime", 0), "status": (m or {}).get("status", ""), "score": int((m or {}).get("score") or 0),
             "last_played": (self.store.get(e.key) or {}).get("last_played", 0),
             "added_at": (self.store.get(e.key) or {}).get("installed_at", 0) or e.extra.get("posted", 0),
             "fav": e.key in self._favs, "cv": self._cv(e.key, m),
@@ -597,6 +598,7 @@ class Ludrix:
                 "playtime": info.get("playtime", 0), "last_played": info.get("last_played", 0),
                 "added_at": info.get("installed_at", 0), "fav": key in self._favs, "cv": self._cv(key, m), "source": info.get("source", ""),
                 "store_src": info.get("store_src", ""), "play_count": info.get("play_count", 0), "has_args": key in ga,
+                "status": (m or {}).get("status", ""), "score": int((m or {}).get("score") or 0),
             })
         for g in out:
             fake = Entry(key=g["key"], repo="local", id=g["key"], title=g["title"], kind="local", genres=g["genres"])
@@ -664,7 +666,7 @@ class Ludrix:
                       "repo": "local", "has_meta": bool(m), "thumb_ok": self.images.has_thumb(r["key"]), "torrent": False,
                       "playtime": info.get("playtime", 0), "last_played": info.get("last_played", 0),
                       "added_at": info.get("installed_at", 0) or (self._rom_seen.setdefault(r["key"], time.time())), "fav": r["key"] in self._favs, "cv": self._cv(r["key"], m),
-                      "source": info.get("source", ""), "store_src": info.get("store_src", ""), "play_count": info.get("play_count", 0)})
+                      "source": info.get("source", ""), "store_src": info.get("store_src", ""), "play_count": info.get("play_count", 0), "status": (m or {}).get("status", ""), "score": int((m or {}).get("score") or 0)})
         seen_roms = {r["key"] for r in roms}
         for k, info in lib:
             if not k.startswith("rom:") or k in seen_roms or info.get("kind") != "rom":
@@ -678,7 +680,7 @@ class Ludrix:
                          "installed": False, "missing": True, "job": False, "cats": ["emu"], "genres": ((m or {}).get("genres") or [])[:3],
                          "creator": (m or {}).get("developer", ""), "year": (m or {}).get("year", ""), "has_meta": bool(m), "thumb_ok": self.images.has_thumb(k), "torrent": False,
                          "playtime": info.get("playtime", 0), "last_played": info.get("last_played", 0), "added_at": info.get("installed_at", 0), "fav": k in self._favs, "cv": self._cv(k, m),
-                         "source": info.get("source", ""), "store_src": info.get("store_src", ""), "play_count": info.get("play_count", 0)})
+                         "source": info.get("source", ""), "store_src": info.get("store_src", ""), "play_count": info.get("play_count", 0), "status": (m or {}).get("status", ""), "score": int((m or {}).get("score") or 0)})
         games += roms + self._local_games()
         hid = self._hidden
         if hid:
@@ -2019,6 +2021,7 @@ class Ludrix:
             "developer": m.get("developer", ""), "publisher": m.get("publisher", ""), "year": str(m.get("year") or d.get("year") or ""),
             "genres": list(m.get("genres") or d.get("genres") or []), "summary": m.get("summary") or d.get("description") or "",
             "series": m.get("series", ""), "modes": m.get("modes", ""), "notes": m.get("notes", ""), "links": list(m.get("links") or []),
+            "status": m.get("status", ""), "score": int(m.get("score") or 0),
             "auto_links": [x for x in (
                 {"name": "Steam", "url": f"https://store.steampowered.com/app/{m['steam_appid']}"} if m.get("steam_appid") else None,
                 {"name": "GOG", "url": m.get("gog_url")} if m.get("gog_url") else None,
@@ -2080,6 +2083,13 @@ class Ludrix:
         for k in ("developer", "publisher", "year", "summary", "series", "modes", "notes"):
             if k in data:
                 fields[k] = str(data[k] or "").strip()
+        if "status" in data:
+            fields["status"] = str(data["status"] or "") if str(data["status"] or "") in STATUSES else ""
+        if "score" in data:
+            try:
+                fields["score"] = max(0, min(10, int(data["score"] or 0)))
+            except (TypeError, ValueError):
+                fields["score"] = 0
         if "genres" in data:
             g = data["genres"]
             if isinstance(g, str):
@@ -2317,12 +2327,16 @@ class Ludrix:
                 return True
         return False
 
+    OPEN_DOC_EXTS = {".txt", ".log", ".json", ".md", ".csv", ".ini", ".cfg", ".yaml", ".yml", ".png", ".jpg", ".jpeg", ".webp"}
+
     def open_path(self, p: str):
         import os, subprocess, sys
         if not p or not Path(p).exists():
             return {"error": "Pasta não existe"}
         if not self._path_allowed(Path(p)):
             return {"error": "Essa pasta não é do Ludrix"}
+        if Path(p).is_file() and Path(p).suffix.lower() not in self.OPEN_DOC_EXTS:
+            return {"error": "Só pastas e arquivos de texto podem ser abertos por aqui"}
         if os.name == "nt":
             os.startfile(p)
         elif sys.platform == "darwin":
@@ -2688,6 +2702,12 @@ class Ludrix:
             acts.append({"id": "open_select", "label": "Mostrar o executável na pasta", "icon": "folder"})
         if (kind == "local" or local_rom or key.startswith("rom:")) and installed:
             acts.append({"id": "mark_played", "label": "Marcar como nunca jogado" if g.get("last_played") else "Marcar como jogado", "icon": "check"})
+        if installed or kind in ("local", "rom") or key.startswith(("local:", "rom:")):
+            cur = (g.get("meta") or {}).get("status", "")
+            names = {"plan": "Planejo jogar", "playing": "Jogando", "played": "Jogado", "beaten": "Zerado", "completed": "Completado 100%", "on_hold": "Em espera", "abandoned": "Abandonado"}
+            sub = [{"id": f"status:{sid}", "label": names[sid], "icon": "check" if cur == sid else ""} for sid in STATUSES]
+            sub += [{"sep": True}, {"id": "status:", "label": "Sem status", "icon": "check" if not cur else ""}]
+            acts.append({"id": "status", "label": f"Status: {names[cur]}" if cur in names else "Status", "icon": "flag", "sub": sub})
         if g.get("emu"):
             emu = g["emu"]
             if emu.get("installed"):
@@ -2968,7 +2988,7 @@ class Ludrix:
                    "exe": info.get("exe", ""), "dir": info.get("dir", ""), "args": self._game_args(key), "cover": ("covers/" + cover_file) if cover_file else "",
                    "cover_url": m.get("cover_url", ""), "hero_url": m.get("hero_url", ""), "links": list(m.get("links") or []),
                    "steam_appid": m.get("steam_appid", ""), "wiki_url": m.get("wiki_url", ""),
-                   "play_count": int(info.get("play_count") or 0), "source": info.get("source", ""), "store": info.get("store_src", ""), "notes": m.get("notes", ""),
+                   "play_count": int(info.get("play_count") or 0), "source": info.get("source", ""), "store": info.get("store_src", ""), "notes": m.get("notes", ""), "status": m.get("status", ""), "score": int(m.get("score") or 0),
                    "workdir": info.get("workdir", "")}
             rows.append(row)
             if info.get("exe") and "://" not in str(info.get("exe")):
@@ -2983,11 +3003,11 @@ class Ludrix:
                                                             ensure_ascii=False, indent=2), encoding="utf-8")
         with (out / "ludrix-library.csv").open("w", newline="", encoding="utf-8-sig") as f:
             w = csv.writer(f, delimiter=";")
-            w.writerow(["Name", "Platform", "Developer", "Publisher", "ReleaseYear", "Genres", "Description", "InstallDirectory", "Path", "Arguments", "Playtime (min)", "Favorite", "Cover", "PlayCount", "LastActivity", "Source", "Notes"])
+            w.writerow(["Name", "Platform", "Developer", "Publisher", "ReleaseYear", "Genres", "Description", "InstallDirectory", "Path", "Arguments", "Playtime (min)", "Favorite", "Cover", "PlayCount", "LastActivity", "Source", "Notes", "CompletionStatus", "UserScore"])
             for r in rows:
                 w.writerow([r["title"], "PC" if r["system"] == "pc" else r["system"], r["developer"], r["publisher"], r["year"], ", ".join(r["genres"]),
                             r["summary"].replace("\n", " "), r["dir"], r["exe"], r["args"], r["playtime_seconds"] // 60, "1" if r["favorite"] else "0", r["cover"],
-                            r["play_count"], time.strftime("%Y-%m-%d", time.localtime(r["last_played"])) if r["last_played"] else "", r["store"] or r["source"], r["notes"].replace("\n", " ")])
+                            r["play_count"], time.strftime("%Y-%m-%d", time.localtime(r["last_played"])) if r["last_played"] else "", r["store"] or r["source"], r["notes"].replace("\n", " "), r["status"], r["score"] or ""])
         if heroic:
             hd = out / "heroic" / "sideload_apps"
             hd.mkdir(parents=True, exist_ok=True)
@@ -3293,7 +3313,7 @@ class Ludrix:
         return ok
 
     def redists_status(self) -> dict:
-        st = self.redists.status()
+        st = self.redists.status(self.store.config)
         st["jobs"] = [k[7:] for k in self.jobs if k.startswith("redist:")]
         return st
 
@@ -3304,7 +3324,7 @@ class Ludrix:
         if not self.online():
             return {"error": "Sem conexão com a internet"}
         return self._run_job(f"redist:{rid}", f"{it['title']} ({it['arch']})", "redist",
-                             lambda cb, cancel: self.redists.install(rid, cb, cancel), retry={"m": "redist_install", "a": [rid]})
+                             lambda cb, cancel: self.redists.install(rid, cb, cancel, config=self.store.config), retry={"m": "redist_install", "a": [rid]})
 
     def optionals_status(self, deep: bool = False) -> dict:
         st = self.optionals.status(deep)
@@ -3439,13 +3459,22 @@ class Ludrix:
             return {"error": "Launcher desconhecido"}
         if not self.online():
             return {"error": "Sem conexão com a internet"}
-        if not it.get("winget"):
+        fp = next((x[8:] for x in it.get("linux", []) if x.startswith("flatpak:")), "") if os.name != "nt" else ""
+        if os.name != "nt":
+            if not fp:
+                return {"error": "Este launcher não está no Flathub. Use \"Site\" para baixar e depois \"Localizar\"."}
+            if not shutil.which("flatpak"):
+                return {"error": "flatpak não encontrado. Instale o Flatpak pela sua distro (flatpak.org/setup)."}
+        elif not it.get("winget"):
             return {"error": "Este launcher não está no winget. Use \"Site\" para baixar no navegador e depois \"Localizar\"."}
-        if not optionals.winget_path():
+        elif not optionals.winget_path():
             return {"error": "winget não encontrado (Windows 10/11 com o \"Instalador de Aplicativo\" da Microsoft Store)"}
 
         def run(cb, cancel):
-            self.optionals.install_pkgs(it["winget"], cb, cancel)
+            if fp:
+                self.optionals.install_flatpak(fp, cb, cancel)
+            else:
+                self.optionals.install_pkgs(it["winget"], cb, cancel)
             path = self.mc.detect(it)
             if path:
                 self.minecraft_set_launcher(lid, path)
@@ -3524,7 +3553,7 @@ class Ludrix:
             return {"error": "Kit desconhecido"}
         if not self.online():
             return {"error": "Sem conexão com a internet"}
-        st = {i["id"]: i for i in self.redists.status()["items"]}
+        st = {i["id"]: i for i in self.redists.status(self.store.config)["items"]}
         todo = [i for i in b["items"] if st.get(i, {}).get("state") != "installed"]
         if not todo:
             return {"ok": True, "queued": 0}
@@ -3539,7 +3568,7 @@ class Ludrix:
                     frac = (k + max(0.0, p.fraction)) / n if p.fraction >= 0 else (k + 0.5) / n
                     cb(Progress(p.stage, frac, f"[{k + 1}/{n}] {p.detail}"))
                 try:
-                    self.redists.install(rid, sub, cancel)
+                    self.redists.install(rid, sub, cancel, config=self.store.config)
                 except CancelledError:
                     raise
                 except Exception as e:
@@ -5195,6 +5224,10 @@ class Ludrix:
             meta["year"] = str(g["year"])
         if g.get("notes"):
             meta["notes"] = str(g["notes"]).strip()[:2000]
+        if g.get("status") in STATUSES:
+            meta["status"] = g["status"]
+        if g.get("score"):
+            meta["score"] = max(0, min(10, int(g["score"])))
         if g.get("links"):
             meta["links"] = [l for l in g["links"] if isinstance(l, dict) and l.get("url")][:8]
         if meta:

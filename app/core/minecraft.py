@@ -186,7 +186,8 @@ class MinecraftManager:
         items = []
         for it in LAUNCHERS:
             path = self.detect(it)
-            items.append({"id": it["id"], "title": it["title"], "desc": it["desc"], "group": it["group"], "winget": it.get("winget") or [],
+            fp = next((x[8:] for x in it.get("linux", []) if x.startswith("flatpak:")), "")
+            items.append({"id": it["id"], "title": it["title"], "desc": it["desc"], "group": it["group"], "winget": it.get("winget") or [], "flatpak": fp,
                           "site": it["site"], "store": it.get("store"), "path": path, "installed": bool(path),
                           "kind": "store" if path.startswith("shell:") else ("jar" if path.lower().endswith(".jar") else ("flatpak" if path.startswith("flatpak:") else "exe")),
                           "in_library": library_keys.get(it["id"], ""), "suggest": it["id"] in ("prism", "sklauncher")})

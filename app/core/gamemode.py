@@ -22,6 +22,13 @@ KHORVIE_GUID = "02836485-1111-1111-1111-111111111111"
 PLANS = {"high": "Alto desempenho", "ultimate": "Desempenho máximo (Ultimate)", "khorvie": "Khorvie (comunidade)"}
 
 
+def _gamemode() -> str | None:
+    if os.name == "nt":
+        return None
+    from . import compat
+    return compat.gamemode_path()
+
+
 class GameMode:
     def __init__(self, store):
         self.store = store
@@ -31,7 +38,7 @@ class GameMode:
         self._lock = threading.Lock()
 
     def snapshot(self) -> dict:
-        out = {"windows": os.name == "nt", "active": self.active, "ram": {}, "running": [], "suggested": SUGGESTED,
+        out = {"windows": os.name == "nt", "active": self.active, "ram": {}, "running": [], "suggested": SUGGESTED, "gamemode": bool(_gamemode()),
                "close_list": self.store.config.get("game_mode_close") or [], "reopen": bool(self.store.config.get("game_mode_reopen", True)),
                "power": bool(self.store.config.get("game_mode_power", True)), "quiet": bool(self.store.config.get("game_mode_quiet", True)),
                "priority": bool(self.store.config.get("game_mode_priority", True)), "plan": self._current_plan_name()}
