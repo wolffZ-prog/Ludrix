@@ -1,5 +1,20 @@
 # Changelog
 
+## 3.0.2 — 2026-10-12
+- Mural: com ordem A–Z a parede fica alfabética de verdade (antes seguia a ordem inteligente do Início e o índice de letras não batia); o índice só aparece quando a ordem é mesmo alfabética.
+- Estante: texto do destaque legível também sobre artes claras.
+- Tema claro refeito: fundo cinza-pedra com pouco brilho, barra lateral escura e destaque da Estante sempre escuro sobre a arte.
+- Estante: com o painel aberto o destaque encolhe sem sobrepor botões e números.
+- Editar → Mídia: a prévia de capa e fundo não mostra mais a imagem escolhida para o jogo editado antes.
+- Abrir pasta: quando o caminho guardado não existe, o Ludrix tenta a pasta do executável e a pasta de trabalho; se nada existir, avisa em vez de ficar mudo. Vale para jogos vindos do Playnite, emuladores e ROMs.
+- Nenhuma ação fica muda: qualquer botão cuja resposta do launcher seja um erro mostra o aviso na tela (antes dezenas deles falhavam em silêncio).
+- Cartão largo e destaque sem arte de fundo usam a capa como fundo; fundos vindos do Playnite em formatos que a tela não abre são convertidos.
+- Jogo que fecha sozinho: a janela de socorro agora resolve na hora — abrir como administrador, modo de compatibilidade Windows 7, dependências, trocar executável, abrir a pasta — e reabre o jogo em seguida.
+- Modo sofá: com um controle ligado, qualquer botão passa a navegação para ele (direcional move, A seleciona, B volta, X menu, Y favorito, LB/RB abas, Start joga, analógico direito rola). A interface aumenta (ajustável) e o mouse devolve o modo normal. Ajustes → Aparência → Modo sofá.
+- Emuladores: botão "ROMs" aparecia duas vezes no cabeçalho.
+- Log registra o tempo até a interface ficar pronta, para medir a abertura.
+- Procurar atualização ao abrir vinha desligado de fábrica. Agora vem ligado, tenta de novo quando a internet demora a conectar e repete a cada 6 horas com o launcher aberto.
+
 ## 3.0.1 — 2026-10-12
 - Reenvio assinado da 3.0.0: o pacote anterior saiu sem assinatura e o Ludrix o recusava em Checar atualizações. Nenhuma mudança no programa além do número da versão.
 

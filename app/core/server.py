@@ -15,6 +15,15 @@ from . import diag, paths
 from .ludrix import Ludrix
 
 log = logging.getLogger("server")
+_T0 = time.time()
+_UI_T = [0]
+
+
+def _ui_ready(games: int, ms: int):
+    if _UI_T[0]:
+        return
+    _UI_T[0] = time.time()
+    log.info("interface pronta em %.1fs desde o processo (%d jogos, %d ms na tela)", _UI_T[0] - _T0, games, ms)
 CTYPES = {".css": "text/css; charset=utf-8", ".js": "application/javascript; charset=utf-8", ".mjs": "application/javascript; charset=utf-8", ".html": "text/html; charset=utf-8", ".htm": "text/html; charset=utf-8",
           ".json": "application/json; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif", ".ico": "image/x-icon",
           ".woff2": "font/woff2", ".woff": "font/woff", ".ttf": "font/ttf", ".otf": "font/otf", ".wasm": "application/wasm", ".swf": "application/x-shockwave-flash", ".mp4": "video/mp4", ".webm": "video/webm",
@@ -342,7 +351,9 @@ class Handler(BaseHTTPRequestHandler):
                 "/api/mods/game/remove": lambda: v.gmods.remove(b["key"], b["id"]),
                 "/api/shortcut/desktop": lambda: v.desktop_shortcut(b["key"]),
                 "/api/downloads/clean": lambda: v.clean_downloads(),
-                "/api/open": lambda: v.open_path(b.get("path") or (v.store.get(b["key"]) or {}).get("dir", "")),
+                "/api/open": lambda: v.open_path(b.get("path") or "", b.get("key") or ""),
+                "/api/compat/layer": lambda: v.compat_layer(b["key"], b.get("layer") or ""),
+                "/api/ui_ready": lambda: (_ui_ready(int(b.get("games") or 0), int(b.get("ms") or 0)), {"ok": True})[1],
                 "/api/uninstall": lambda: v.uninstall(b["key"]),
                 "/api/uninstall/undo": lambda: v.undo_remove(),
                 "/api/library/dupes": lambda: v.library_dupes(),

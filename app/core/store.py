@@ -152,7 +152,7 @@ DEFAULT_CONFIG = {
     "gamepad_wake": False,
     "mods_dir": "",
     "update_feed": "",
-    "update_auto_check": False,
+    "update_auto_check": True,
     "pending_restart": [],
     "gamepad_speed": "normal",
     "game_emulator": {},
@@ -232,8 +232,6 @@ class Store:
             if self.config.get("home_spot_style") == "painel":
                 self.config["home_spot_style"] = "auto"
             self._write(paths.CONFIG_FILE, self.config)
-        if int(self.config.get("look") or 0) < 3:
-            self.config["look"] = 3
             if self.config.get("nav") in ("taskbar", "dock"):
                 self.config["nav"] = "bottom"
             if self.config.get("layout") in ("taskbar", "dock"):
@@ -274,6 +272,10 @@ class Store:
                 self.config["home_rows"] = ["recent", "added"]
             if self.config.get("home_spot_style") in ("banner", "painel"):
                 self.config["home_spot_style"] = "auto"
+            self._write(paths.CONFIG_FILE, self.config)
+        if int(self.config.get("look") or 0) < 9:
+            self.config["look"] = 9
+            self.config["update_auto_check"] = True
             self._write(paths.CONFIG_FILE, self.config)
         self.library: dict[str, dict] = self._load(paths.LIBRARY_FILE, {})
         self._defer = 0

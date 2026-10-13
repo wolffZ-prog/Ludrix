@@ -3,6 +3,14 @@ const $ = s => document.querySelector(s);
 const TOKEN = (m => { const t = m?.content || ''; m?.remove(); return t; })(document.querySelector('meta[name=ludrix-token]'));
 const api = (() => {
   const listeners = {};
+  const SILENT = new Set(['/api/window', '/api/log/ui', '/api/cancel', '/api/ui_ready']);
+  const watchErr = (u, j) => {
+    if (!j || typeof j !== 'object' || Array.isArray(j) || typeof j.error !== 'string' || !j.error || /^cancelad[oa]$/i.test(j.error)) return j;
+    let seen = false; const msg = j.error;
+    Object.defineProperty(j, 'error', { get() { seen = true; return msg; }, set(v) { }, enumerable: true, configurable: true });
+    setTimeout(() => { if (!seen && typeof toast === 'function') toast('err', 'Não foi possível concluir', msg); }, 80);
+    return j;
+  };
   const req = async (u, opt, quiet) => {
     const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), opt.timeout || 120000);
     try {
@@ -15,7 +23,7 @@ const api = (() => {
   };
   const A = {
     get: (u, opt = {}) => req(u, { method: 'GET', ...opt }, opt.quiet),
-    post: (u, b, opt = {}) => req(u, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b || {}), ...opt }, opt.quiet),
+    post: (u, b, opt = {}) => req(u, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b || {}), ...opt }, opt.quiet).then(j => opt.quiet || SILENT.has(u) ? j : watchErr(u, j)),
     on: (ev, fn) => { (listeners[ev] = listeners[ev] || []).push(fn); return () => { listeners[ev] = (listeners[ev] || []).filter(f => f !== fn); }; },
     emit: (ev, data) => { for (const fn of listeners[ev] || []) { try { fn(data); } catch (e) { console.warn('evento', ev, e); } } },
     routes: {
@@ -255,6 +263,7 @@ function splashDrain() {
 function splashOff() {
   const el = $('#splash'); if (!el || SPL.done) return;
   SPL.done = true; SPL.q.push(['pronto', 100]); if (!SPL.t) splashDrain();
+  api.post('/api/ui_ready', { ms: Math.round(performance.now()), games: (S.games || []).filter(g => g.installed).length }, { quiet: true });
   const wait = Math.max(0, 900 - (performance.now() - SPLASH_T0), SPL.q.length * 170 + 220);
   setTimeout(() => { const last = $('#slog') && $('#slog').lastElementChild; if (last) last.classList.add('ok'); el.classList.add('off'); setTimeout(() => el.remove(), 550); }, wait);
 }
@@ -370,7 +379,7 @@ function appMenu(x, y) {
     { label: 'Store', icon: 'dl', sub: [
       { label: 'Baixar novos games', icon: 'dl', fn: go('store', 'games') }, { label: 'Fontes de jogos…', icon: 'cog', fn: go('store', 'sources') }, { label: 'Atualizar catálogo', icon: 'refresh', fn: () => loadCatalog(true) }, { label: 'Fila de downloads', icon: 'dl', fn: go('downloads') }] },
     { label: 'Emuladores', icon: 'gamepad', sub: [
-      { label: 'Emuladores e consoles', icon: 'gamepad', fn: go('emulation') }, { label: 'Meu próprio emulador…', icon: 'plus', fn: () => addCustomEmu() }, { label: 'Pasta emulation\\games', icon: 'folder', fn: () => api.post('/api/open', { path: S.emu?.games_root || 'emulation/games' }) }, { label: 'Pasta de BIOS', icon: 'folder', fn: () => api.post('/api/open', { path: S.emu?.bios_dir || 'emulation/bios' }) }] },
+      { label: 'Emuladores e consoles', icon: 'gamepad', fn: go('emulation') }, { label: 'Meu próprio emulador…', icon: 'plus', fn: () => addCustomEmu() }, { label: 'Pasta emulation\\games', icon: 'folder', fn: () => openPath(S.emu?.games_root || 'emulation/games') }, { label: 'Pasta de BIOS', icon: 'folder', fn: () => openPath(S.emu?.bios_dir || 'emulation/bios') }] },
     { label: 'Ferramentas', icon: 'wrench', sub: [
       { label: 'Mods e ferramentas', icon: 'wrench', fn: go('mods') }, { label: 'Central Ludrix', icon: 'chip', fn: go('central') }, { label: 'Otimizar agora', icon: 'bolt', fn: gamemodeRun }, { label: 'Jogos Rápidos', icon: 'play', fn: go('flash') }] },
     { label: 'Aparência', icon: 'image', sub: [
@@ -379,8 +388,8 @@ function appMenu(x, y) {
       ...(S.config.os === 'windows' ? [{ label: S.config.frameless ? 'Usar moldura do Windows' : 'Janela sem moldura', icon: 'win', fn: () => setCfg({ frameless: !S.config.frameless }) }] : []), { sep: true },
       { label: 'Abrir o Modo Console', icon: 'gamepad', hint: 'fecha esta janela', fn: () => openConsole() }] },
     { label: 'Pastas', icon: 'folder', sub: [
-      { label: 'Pasta do launcher', icon: 'folder', fn: () => api.post('/api/open', { path: S.config.root || '.' }) }, { label: 'games' + SEP() + ' (jogos instalados)', icon: 'folder', fn: () => api.post('/api/open', { path: S.config.games_dir || 'games' }) },
-      { label: 'downloads\\', icon: 'folder', fn: () => api.post('/api/open', { path: 'downloads' }) }, { label: 'themes\\', icon: 'folder', fn: () => api.post('/api/open', { path: 'themes' }) }, { label: 'data\\ (config, biblioteca, fontes)', icon: 'folder', fn: () => api.post('/api/open', { path: 'data' }) }, { label: 'Log (ludrix.log)', icon: 'doc', fn: () => api.post('/api/open', { path: 'data/ludrix.log' }) }] },
+      { label: 'Pasta do launcher', icon: 'folder', fn: () => openPath(S.config.root || '.') }, { label: 'games' + SEP() + ' (jogos instalados)', icon: 'folder', fn: () => openPath(S.config.games_dir || 'games') },
+      { label: 'downloads\\', icon: 'folder', fn: () => openPath('downloads') }, { label: 'themes\\', icon: 'folder', fn: () => openPath('themes') }, { label: 'data\\ (config, biblioteca, fontes)', icon: 'folder', fn: () => openPath('data') }, { label: 'Log (ludrix.log)', icon: 'doc', fn: () => openPath('data/ludrix.log') }] },
     { sep: true },
     { label: 'Ajustes', icon: 'cog', fn: set('general') },
     { label: 'Sobre o Ludrix', icon: 'info', fn: () => { S._settingsJump = 'Sobre'; set('system')(); } },
@@ -392,11 +401,11 @@ function viewMenu(view, x, y) {
   const m = {
     home: [{ label: 'Adicionar jogo instalado…', icon: 'plus', fn: addLocal }, { label: 'Selecionar todos da página', icon: 'check', fn: msAll }, { label: 'Baixar de link…', icon: 'dl', fn: linkDownload }, { label: 'Escanear pastas…', icon: 'search', fn: scanWizard }, { label: 'Importar de outro launcher…', icon: 'import', fn: importWizard }, { sep: true }, { label: 'Tamanho das capas…', icon: 'image', fn: () => { setView('settings'); S.tab.settings = 'appearance'; renderSettings(); } }],
     store: [{ label: 'Fontes de jogos…', icon: 'cog', fn: () => { S.tab.store = 'sources'; renderView(); } }, { label: 'Atualizar catálogo', icon: 'refresh', fn: () => loadCatalog(true) }],
-    emulation: [{ label: 'Meu próprio emulador…', icon: 'plus', fn: () => addCustomEmu() }, { label: 'Pasta emulation', icon: 'folder', fn: () => api.post('/api/open', { path: S.emu?.games_root }) }],
+    emulation: [{ label: 'Meu próprio emulador…', icon: 'plus', fn: () => addCustomEmu() }, { label: 'Pasta emulation', icon: 'folder', fn: () => openPath(S.emu?.games_root) }],
     flash: [{ label: 'Adicionar jogo rápido…', icon: 'plus', fn: () => setTimeout(() => addFlashMenu({ clientX: x, clientY: y }), 30) }, { label: 'Baixar mais', icon: 'dl', fn: () => { S.tab.flash = 'more'; S.flashF = 'all'; renderFlash(); } }],
-    downloads: [{ label: 'Baixar de link…', icon: 'dl', fn: linkDownload }, { label: 'Abrir pasta downloads', icon: 'folder', fn: () => api.post('/api/open', { path: 'downloads' }) }],
+    downloads: [{ label: 'Baixar de link…', icon: 'dl', fn: linkDownload }, { label: 'Abrir pasta downloads', icon: 'folder', fn: () => openPath('downloads') }],
     central: [{ label: 'Otimizar agora', icon: 'bolt', fn: gamemodeRun }, { label: 'Abrir pasta redists', icon: 'folder', fn: () => api.post('/api/redist/open', {}) }, { label: 'Re-checar instalados', icon: 'refresh', fn: () => { S.opt = null; renderCentral(); } }],
-    settings: [{ label: 'Abrir pasta data', icon: 'folder', fn: () => api.post('/api/open', { path: 'data' }) }, { label: 'Abrir log', icon: 'ext', fn: () => api.post('/api/open', { path: 'data/ludrix.log' }) }],
+    settings: [{ label: 'Abrir pasta data', icon: 'folder', fn: () => openPath('data') }, { label: 'Abrir log', icon: 'ext', fn: () => openPath('data/ludrix.log') }],
   }[view] || [];
   const base = [{ label: 'Atualizar esta tela', icon: 'refresh', fn: renderView }];
   showCtx(m.length ? [...m, { sep: true }, ...base] : base, x, y);
@@ -404,7 +413,7 @@ function viewMenu(view, x, y) {
 function sysMenu(sid, x, y) {
   const s = S.emu?.systems[sid]; if (!s) return;
   const items = [
-    { label: 'Abrir pasta de ROMs', icon: 'folder', fn: () => api.post('/api/open', { path: s.games_dir }) },
+    { label: 'Abrir pasta de ROMs', icon: 'folder', fn: () => openPath(s.games_dir) },
     { label: '+ Pasta de ROMs…', icon: 'plus', fn: () => addRomDir(sid) },
     { label: 'Emuladores deste console…', icon: 'cog', fn: () => sysEmus(sid) },
   ];
@@ -605,7 +614,7 @@ function visible() {
     for (const t of flags) if (!t(g)) return false;
     return true;
   });
-  if (S.view === 'home' && !filtersActive() && !S.q && S.sort === 'az' && !S.sortRev) { const ho = homeOrder(list); return S.config.fav_first ? ho.filter(g => g.fav).concat(ho.filter(g => !g.fav)) : ho; }
+  if (S.view === 'home' && !filtersActive() && !S.q && S.sort === 'az' && !S.sortRev && !muralMode()) { const ho = homeOrder(list); return S.config.fav_first ? ho.filter(g => g.fav).concat(ho.filter(g => !g.fav)) : ho; }
   const az = (a, b) => a._az - b._az;
   if (S.sort === 'recent') list.sort((a, b) => (b.last_played || 0) - (a.last_played || 0) || (b.added_at || 0) - (a.added_at || 0) || az(a, b));
   else if (S.sort === 'most') list.sort((a, b) => (b.playtime || 0) - (a.playtime || 0) || az(a, b));
@@ -832,7 +841,7 @@ async function gpanelFill(key) {
     ${d.installed ? `<div class="gnote${d.missing ? ' warn' : ''}" title="${esc(where)}"><i>${d.missing ? I.warn : I.check}</i><span>${d.missing ? 'Arquivo não encontrado' : 'Instalado'}${d.size ? ' · ' + fmt(d.size) : ''}${d.system_name && d.system_name !== 'PC' ? ' · ' + esc(d.system_name) : ''}</span></div>` : ''}`;
 }
 function azBar(list) {
-  if (!muralMode() || S.config.group_by || S.sort !== 'az' || list.length < 30) return '';
+  if (!muralMode() || S.config.group_by || S.sort !== 'az' || S.sortRev || S.config.fav_first || list.length < 30) return '';
   const have = new Set(list.map(g => { const ch = (g.title || '?').trim().charAt(0).toUpperCase(); return /[A-Z]/.test(ch) ? ch : '#'; }));
   return `<div class="azbar">${['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].map(l => `<span class="${have.has(l) ? '' : 'off'}" onclick="azGo(${jsq(l)})">${l}</span>`).join('')}</div>`;
 }
@@ -1171,11 +1180,11 @@ function renderDetail() {
   else if (d.repack && d.repack_state !== 'done') {
     acts = `<button class="btn p" onclick="runRepack(${jsq(key)})">${I.dl} ${d.repack_state === 'installing' ? 'Instalador aberto…' : d.disc ? 'Montar o disco e instalar' : 'Abrir instalador (setup)'}</button>
       <span class="pill" style="justify-content:center;text-align:center;white-space:normal;line-height:1.35">Repack baixado. Quando o setup terminar, a pasta é localizada e o jogo entra na biblioteca.</span>
-      <div class="row"><button class="btn s sm" onclick="api.post('/api/open',{path:${jsq(d.dir)}})">${I.folder} Pasta</button><button class="btn s sm" onclick="chooseExe(${jsq(key)})">${I.cog} Já instalei</button></div>
+      <div class="row"><button class="btn s sm" onclick="openPath(${jsq(d.dir)},${jsq(key)})">${I.folder} Pasta</button><button class="btn s sm" onclick="chooseExe(${jsq(key)})">${I.cog} Já instalei</button></div>
       <div class="row"><button class="btn s sm" onclick="api.post('/api/finish_repack',{key:${jsq(key)}}).then(()=>openGame(${jsq(key)}))">${I.check} Procurar instalação agora</button><button class="btn d sm" onclick="confirmUninstall(${jsq(key)})" title="Apagar o repack baixado">${I.trash}</button></div>`;
   } else if (d.installed || isRom) {
     acts = `${d.crash_count ? `<button class="pill warn crashpill" onclick="crashDialog(${jsq(key)}, ${jsq(d.title)})" title="${esc(d.crash_why || '')}">${I.warn || '!'} Fechou sozinho ${d.crash_count > 1 ? d.crash_count + '× ' : ''}— por quê?</button>` : ''}${d.missing ? `<button class="btn p" onclick="play(${jsq(key)})">${I.folder} Apontar ${isRom ? 'arquivo' : 'pasta'}…</button>` : `<button class="btn g" ${live ? 'disabled' : ''} onclick="play(${jsq(key)})">${I.play} ${live ? 'Jogando…' : 'Jogar'}</button>`}
-      <div class="row">${d.dir && !isUri(d.exe) && !d.missing ? `<button class="btn s sm" onclick="api.post('/api/open',{path:${jsq(d.dir)}})">${I.folder} Pasta</button>` : ''}
+      <div class="row">${d.dir && !isUri(d.exe) && !d.missing ? `<button class="btn s sm" onclick="openPath(${jsq(d.dir)},${jsq(key)})">${I.folder} Pasta</button>` : ''}
       <button class="btn s sm" onclick="savesPanel(${jsq(key)})" title="Saves">${I.save} Saves</button>
       <button class="btn s sm" onclick="editGame(${jsq(key)})" title="Editar detalhes do jogo (nome, capa, descrição, executável…)">${I.edit} Editar</button><button class="btn d sm" onclick="confirmUninstall(${jsq(key)})" title="${isLocal || isRom ? 'Remover da biblioteca' : 'Desinstalar'}">${I.trash}</button></div>`;
   } else {
@@ -1431,6 +1440,7 @@ const ED_TABS = [['geral', 'Geral'], ['midia', 'Mídia'], ['links', 'Links'], ['
 async function editGame(key, tab) {
   const info = await api.get('/api/edit/' + enc(key));
   if (info.error) return toast('err', 'Editar', info.error);
+  if (ED.key !== key) { ED.webThumb = ''; ED.heroThumb = ''; ED.web = null; ED.webKind = ''; }
   ED.key = key; ED.info = info; ED.tab = tab === 'meta' ? 'geral' : (tab || 'geral'); ED.probe = null;
   ED.form = { title: info.title, system: info.system, developer: info.developer, publisher: info.publisher, year: info.year, genres: info.genres.join(', '), summary: info.summary, series: info.series, modes: info.modes, notes: info.notes, status: info.status || '', score: info.score || 0,
     links: info.links.map(l => ({ ...l })), cover_url: info.cover_url && info.cover_src === 'manual' ? info.cover_url : '', hero_url: info.user.includes('hero_url') ? info.hero_url : '', background_file: info.background_file || '',
@@ -1442,6 +1452,7 @@ async function editGame(key, tab) {
   edRender();
 }
 function edSet(k, v) { ED.form[k] = v; }
+async function openPath(path, key) { const r = await api.post('/api/open', { path: path || '', key: key || '' }); if (r && r.error) toast('err', 'Abrir pasta', r.error); return r; }
 function edRender() {
   const f = ED.form, i = ED.info;
   $('#edTabs').innerHTML = ED_TABS.filter(([id]) => !(id === 'instalacao' && !i.installed && i.kind !== 'rom')).map(([id, n]) => `<button class="${ED.tab === id ? 'on' : ''}" onclick="ED.tab='${id}';edRender()">${n}</button>`).join('');
@@ -1489,12 +1500,12 @@ function edRender() {
       ${isRom && i.emu ? row('Emulador deste jogo', `<select class="mi" onchange="edSet('emulator',this.value)"><option value="">padrão do console (${esc(i.emu.emulator_title || '')})</option>${(i.emu.installed_options || []).map(o => `<option value="${o.id}" ${o.id === f.emulator ? 'selected' : ''}>${esc(o.title)}</option>`).join('')}</select>`, 'Só vale para este jogo. O padrão do console muda em Emuladores.') : ''}
       ${row('Versão', inp('version', 'ex.: 1.0.3'))}
       ${i.installed && !isRom && i.can_move ? row('Mover para outra pasta', `<div class="grow"><input class="mi" id="edMoveTo" placeholder="Pasta de destino (ex.: D:\\Jogos)">${i.native ? `<button class="btn s xs" onclick="edPickMove()" title="Escolher pasta">${I.folder}</button>` : ''}<button class="btn s xs" onclick="edMove()">Mover</button></div>`, 'Copia a pasta inteira do jogo para dentro do destino e depois apaga a original. O jogo continua na Biblioteca, com o caminho novo. Feche o jogo antes.') : ''}
-      ${i.installed && !isRom ? `<div class="row" style="margin-top:6px"><button class="btn s xs" onclick="api.post('/api/open',{path:ED.form.dir})">${I.folder} Abrir pasta</button>${i.kind === 'pc' || i.kind === 'local' ? `<button class="btn s xs" onclick="api.post('/api/shortcut/desktop',{key:ED.key}).then(r=>toast(r.error?'err':'ok','Atalho',r.error||'Criado na área de trabalho'))">${I.win} Atalho na área de trabalho</button>` : ''}</div>` : ''}
+      ${i.installed && !isRom ? `<div class="row" style="margin-top:6px"><button class="btn s xs" onclick="openPath(ED.form.dir,ED.key)">${I.folder} Abrir pasta</button>${i.kind === 'pc' || i.kind === 'local' ? `<button class="btn s xs" onclick="api.post('/api/shortcut/desktop',{key:ED.key}).then(r=>toast(r.error?'err':'ok','Atalho',r.error||'Criado na área de trabalho'))">${I.win} Atalho na área de trabalho</button>` : ''}</div>` : ''}
     </div>`;
   } else if (ED.tab === 'acoes') {
     const isRom = i.kind === 'rom'; const ex = ARG_HINTS[(f.title || '').length % ARG_HINTS.length];
     h = `<div class="g1">
-      ${isRom ? row('ROM', `<input class="mi" value="${esc(i.exe)}" disabled>`) : row('Executável', `<div class="grow">${inp('exe', 'C:\\Jogos\\MeuJogo\\game.exe')}${i.native ? `<button class="btn s xs" onclick="edPick('exe','exe')" title="Procurar">${I.folder}</button><button class="btn s xs" onclick="api.post('/api/open', {path: (ED.form.exe || '').replace(/[\\\\/][^\\\\/]*$/, '')})" title="Abrir a pasta do executável">${I.ext}</button>` : ''}<button class="btn s xs" onclick="edListExes()" title="Listar os .exe da pasta do jogo">${I.search}</button></div>`, 'O arquivo que abre o jogo. Atalhos de loja (steam://…) também valem.')}
+      ${isRom ? row('ROM', `<input class="mi" value="${esc(i.exe)}" disabled>`) : row('Executável', `<div class="grow">${inp('exe', 'C:\\Jogos\\MeuJogo\\game.exe')}${i.native ? `<button class="btn s xs" onclick="edPick('exe','exe')" title="Procurar">${I.folder}</button><button class="btn s xs" onclick="openPath((ED.form.exe || '').replace(/[\\\\/][^\\\\/]*$/, ''),ED.key)" title="Abrir a pasta do executável">${I.ext}</button>` : ''}<button class="btn s xs" onclick="edListExes()" title="Listar os .exe da pasta do jogo">${I.search}</button></div>`, 'O arquivo que abre o jogo. Atalhos de loja (steam://…) também valem.')}
       ${row('Argumentos', inp('args', 'ex.: ' + ex), 'O que vai depois do .exe — igual ao campo "Destino" de um atalho do Windows.')}
       <div class="chips">${ARG_HINTS.slice(0, 7).map(a => `<button class="chip" onclick="ED.form.args=((ED.form.args||'')+' ${esc(a)}').trim();edRender()">${esc(a)}</button>`).join('')}</div>
       ${isRom ? '' : row('Pasta de trabalho', `<div class="grow">${inp('workdir', 'vazio = pasta do executável')}${i.native ? `<button class="btn s xs" onclick="edPick('folder','workdir')">${I.folder}</button>` : ''}</div>`, 'Alguns jogos antigos só acham seus arquivos se abertos "de dentro" de uma pasta específica.')}
@@ -1543,6 +1554,7 @@ async function edSave() {
     const r = await api.post('/api/edit/save', { key: ED.key, data: { ...f, refetch } });
     if (r.error) { toast('err', 'Não foi possível salvar', r.error); return false; }
     toast('ok', 'Salvo', refetch ? 'Buscando capa e informações com o novo nome…' : (f.cover_url || f.hero_url ? 'Imagem baixada e guardada com o jogo.' : ''));
+    ED.webThumb = ''; ED.heroThumb = ''; ED.web = null;
     await loadCatalog(false); if (S.det && S.det.key === ED.key) openGame(ED.key);
   };
   if (renamed && !i.copied_from && !i.user.length) {
@@ -1621,11 +1633,21 @@ async function chooseExe(key) {
 }
 async function crashDialog(key, title) {
   const d = await api.get('/api/game/' + enc(key)).catch(() => null); const why = d?.crash_why || 'Fechou em poucos segundos — normalmente arquivo corrompido ou instalação incompleta.';
-  const n = d?.crash_count || 1, isRom = key.startsWith('rom:') || d?.kind === 'rom';
-  modal({ title: `${title} não abriu`, wide: true, html: `<p>${esc(why)}</p><p class="mut" style="font-size:12px">${n > 1 ? `Já é a ${n}ª vez seguida. ` : ''}O que costuma resolver, nesta ordem:</p>
-    <ol class="steps"><li>Instalar os <b>Redists</b> (Visual C++, DirectX, .NET) na aba Ferramentas.</li><li>${isRom ? 'Abrir o guia do console (botão "guia" em Emuladores) e conferir BIOS/keys/firmware.' : 'Abrir a pasta e rodar o executável direto — se pedir algo, o erro aparece lá.'}</li><li><b>Apagar e adicionar de novo</b>: remove a entrada${isRom || d?.kind === 'local' ? '' : ' e a pasta'} e baixa/importa de novo, limpo.</li></ol>`,
-    ok: 'Apagar e adicionar de novo', danger: true, onOk: () => confirmUninstall(key),
-    cancel: 'Não fazer nada', buttons: [{ label: 'Abrir pasta', fn: () => api.post('/api/open', { path: d?.dir || '' }) }, { label: 'Redists', fn: () => setView('mods') }] });
+  const n = d?.crash_count || 1, isRom = key.startsWith('rom:') || d?.kind === 'rom', uri = isUri(d?.exe || ''), win = S.config.os === 'windows', rc = d?.last_rc;
+  const again = async (fn, label) => { const r = await fn(); if (r && r.error) return; toast('ok', label, 'Abrindo de novo…'); play(key); };
+  const acts = [];
+  if (!isRom && !uri && win && !d?.admin) acts.push(['shield', 'Abrir como administrador', rc === 740 ? 'O código do erro indica exatamente isso' : 'Resolve jogos antigos que gravam na própria pasta', () => again(() => api.post('/api/edit/save', { key, data: { admin: true } }), 'Administrador ligado')]);
+  if (!isRom && !uri && win && d?.compat !== 'win7') acts.push(['refresh', 'Modo de compatibilidade Windows 7', 'Para jogos de antes de 2015 que fecham na hora', () => again(() => api.post('/api/compat/layer', { key, layer: 'win7' }), 'Compatibilidade aplicada')]);
+  acts.push(['dl', 'Instalar dependências', 'Visual C++, DirectX e .NET em um clique (Central)', () => setView('redists')]);
+  if (isRom) acts.push(['info', 'Guia do console', 'BIOS, keys e firmware que o emulador exige', () => { setView('emulation'); }]);
+  else if (!uri) acts.push(['cog', 'Trocar o executável', 'Às vezes o certo é outro .exe da pasta', () => chooseExe(key)]);
+  if (d?.dir || d?.exe) acts.push(['folder', 'Abrir a pasta', 'Rodar direto pelo Explorer mostra o erro real', () => openPath(d?.dir || '', key)]);
+  if (d?.compat) acts.push(['x', 'Tirar o modo de compatibilidade', 'Volta ao normal', () => api.post('/api/compat/layer', { key, layer: '' })]);
+  S._crashActs = acts;
+  modal({ title: `${title} fechou sozinho`, wide: true, html: `<p>${esc(why)}</p>${n > 1 ? `<p class="mut" style="font-size:12px">${n}ª vez seguida.</p>` : ''}
+    <div class="sgrid">${acts.map((a, i) => `<button class="sact" onclick="$('#modal').classList.remove('on');S._crashActs[${i}][3]()">${I[a[0]] || I.cog}<div><b>${esc(a[1])}</b><small>${esc(a[2])}</small></div></button>`).join('')}</div>
+    <p class="mut" style="font-size:12px;margin-top:12px">Se o jogo só abre um launcher próprio e fecha, ignore este aviso.</p>`,
+    ok: 'Fechar', noCancel: true, buttons: [{ label: 'Apagar e adicionar de novo', fn: () => confirmUninstall(key) }] });
 }
 function confirmUninstall(key) { const d = (S.det && S.det.key === key) ? S.det : (S.byKey[key] || {}); const local = d.kind === 'local', rom = key.startsWith('rom:'), repoRom = d.kind === 'rom' && !rom; modal({ title: local || rom ? `Remover ${d.title} da biblioteca?` : `Remover ${d.title}?`, text: local || rom ? 'Os arquivos do jogo NÃO serão apagados — só a entrada no launcher (o tempo jogado se perde).' : repoRom ? `A ROM baixada será apagada e o jogo volta a aparecer na Store:\n${d.exe || d.dir || ''}` : `A pasta será apagada e o jogo volta a aparecer na Store:\n${d.dir || ''}`, ok: 'Remover', danger: true, onOk: async () => { await api.post('/api/uninstall', { key }); const g = S.byKey[key]; if (g) g.installed = false; if (local || rom) toast('', 'Removido da biblioteca', d.title, [{ label: 'Desfazer', fn: undoRemove }, { label: 'OK', fn: () => {} }]); else toast('', 'Removido', d.title); closeDetail(); await loadCatalog(false); } }); }
 async function calcSize(key, el) { if (el) el.textContent = 'Calculando…'; const r = await api.post('/api/game/size', { key }); if (r.error) { if (el) el.textContent = r.error; return; } const g = S.byKey[key]; if (g) g.size = r.size; if (el) el.outerHTML = esc(fmt(r.size)) + (r.partial ? ' <small style="color:var(--muted)">(parcial — pasta muito grande)</small>' : ` <small style="color:var(--muted)">(${pl(r.files, 'arquivo', 'arquivos')})</small>`); }
@@ -1655,7 +1677,7 @@ async function libraryBackups() {
   const l = await api.post('/api/library/backups', {});
   if (!Array.isArray(l) || !l.length) return modal({ title: 'Cópias da biblioteca', text: 'Nenhuma cópia ainda. A primeira é feita na próxima abertura do Ludrix.', ok: 'Criar cópia agora', onOk: libraryBackupNow });
   const rows = l.map(b => `<div class="frow"><div class="l"><b>${esc(new Date(b.mtime * 1000).toLocaleDateString('pt-BR'))}</b><span>${b.games >= 0 ? pl(b.games, 'jogo', 'jogos') : 'ilegível'} · <code>${esc(b.file)}</code></span></div><div class="ta"><button class="btn s xs" onclick="libraryRestore(${jsq(b.file)})" ${b.games > 0 ? '' : 'disabled'}>Restaurar</button></div></div>`).join('');
-  modal({ title: 'Cópias da biblioteca', wide: true, text: 'Restaurar adiciona os jogos que estão na cópia e não estão mais na biblioteca. Nada é removido ou sobrescrito.', html: `<div class="diag">${rows}</div>`, ok: 'Fechar', noCancel: true, extra: 'Criar cópia agora', onExtra: libraryBackupNow, buttons: [{ label: 'Abrir pasta', fn: () => api.post('/api/open', { path: l[0].path.replace(/[\\/][^\\/]+$/, '') }) }] });
+  modal({ title: 'Cópias da biblioteca', wide: true, text: 'Restaurar adiciona os jogos que estão na cópia e não estão mais na biblioteca. Nada é removido ou sobrescrito.', html: `<div class="diag">${rows}</div>`, ok: 'Fechar', noCancel: true, extra: 'Criar cópia agora', onExtra: libraryBackupNow, buttons: [{ label: 'Abrir pasta', fn: () => openPath(l[0].path.replace(/[\\/][^\\/]+$/, '')) }] });
 }
 async function libraryBackupNow() { const r = await api.post('/api/library/backup', {}); if (r.error) return toast('err', 'Não foi possível copiar', r.error); toast('ok', 'Cópia criada', `${r.file} · ${pl(r.games, 'jogo', 'jogos')}`);
 }
@@ -1741,8 +1763,7 @@ async function renderEmulation() {
   const e = await api.get('/api/emulation'); S.emu = e; if (S.view !== 'emulation') return;
   const sys = Object.values(e.systems);
   let h = `<div class="h1"><h2>Emuladores</h2><span>${sys.filter(s => s.installed).length} de ${sys.length} consoles ${sys.filter(s => s.installed).length === 1 ? 'pronto' : 'prontos'}</span><div class="acts">
-    <button class="btn s" onclick="api.post('/api/open',{path:${jsq(e.games_root)}})" title="Abrir emulation${SEP()}games">${I.folder} ROMs</button>
-    <button class="btn s" onclick="api.post('/api/open',{path:${jsq(e.games_root)}})" title="Abrir a pasta de ROMs do Ludrix">${I.folder} ROMs</button>
+    <button class="btn s" onclick="openPath(${jsq(e.games_root)})" title="Abrir a pasta de ROMs do Ludrix">${I.folder} ROMs</button>
     <button class="btn p" onclick="addCustomEmu()">${I.plus} Meu próprio emulador</button></div></div>${emuTabs()}
     <div class="hint">Coloque suas ROMs em <span class="code">emulation${SEP()}games${SEP()}&lt;sistema&gt;</span> (ou aponte outra pasta no console) e elas entram na Biblioteca. Emuladores são baixados do site oficial e ficam portáteis em <span class="code">emulation\\emulators</span>.</div>`;
   const POP = ['ps2', 'ps1', 'psp', 'snes', 'gba', 'n64', 'nds', 'gc', 'wii', 'genesis', 'nes', 'switch'];
@@ -1761,8 +1782,8 @@ async function renderEmulation() {
       <div class="tm">${opts.length > 1 ? `<select onchange="api.post('/api/emulator/select',{system:'${s.id}',id:this.value}).then(renderEmulation)">${opts.map(o => `<option value="${o.id}" ${o.id === s.emulator ? 'selected' : ''}>${esc(o.title)}${o.custom ? ' (meu)' : ''}</option>`).join('')}</select>` : `<span>${esc(s.emulator_title)}</span>`}<span>·</span><span>${s.rom_count} ${s.rom_count === 1 ? 'jogo' : 'jogos'}</span>${(() => { const nb = S.games.filter(g => g.system === s.id && g.kind === 'rom' && g.repo === 'local' && !g.installed).length; return nb ? `<span>·</span><a href="#" style="color:var(--amber)" title="ROMs da biblioteca cujo arquivo não foi encontrado" onclick="closeDetail();setView('home');setTimeout(()=>{clearFlt();S.flt.sys.add('${s.id}');S.flt.flags.add('broken');renderLibrary()},80);return false">${pl(nb, 'não encontrada', 'não encontradas')}</a>` : ''; })()}</div>
       <div class="tm"><span class="mono" title="${esc(dirs.join('\n'))}">${esc(dirs[0])}${dirs.length > 1 ? ` +${dirs.length - 1}` : ''}</span><span class="sp"></span><button class="lnk" style="font-size:11.5px" onclick="addRomDir('${s.id}')">+ pasta de ROMs</button></div>
       <div class="tm"><span title="Para onde vão os downloads de ROM deste console">${I.dl}</span><span class="mono" title="${esc(s.dest || s.games_dir)}">${esc(s.dest ? s.dest.split(/[\\/]/).slice(-2).join(SEP()) : `games${SEP()}${s.id}`)}</span><span class="sp"></span><button class="lnk" style="font-size:11.5px" onclick="romDestMenu(this,'${s.id}')">Baixar em…</button></div>
-      ${job ? progHtml(job, 'emu:' + s.emulator) : `<div class="ta">${s.installed ? `${em.update && !isCustom && !em.pointed ? `<button class="btn p" title="Baixa a versão ${esc(em.update)} por cima; configurações e saves do emulador ficam" onclick="updateEmu('${s.emulator}')">${I.dl} Atualizar</button>` : ''}<button class="btn s" title="Abrir o emulador sem jogo, para configurar controles/BIOS" onclick="api.post('/api/emulator/open',{id:'${s.emulator}'})">${I.cog} Abrir</button><button class="btn s ico" title="Pasta do emulador" onclick="api.post('/api/open',{path:${jsq((em.exe_path || '').replace(/[\\/][^\\/]+$/, ''))}})">${I.folder}</button>${isCustom ? `<button class="btn d ico" title="Remover este emulador" onclick="removeCustomEmu('${s.emulator}')">${I.trash}</button>` : em.pointed ? `<button class="btn d ico" title="Esquecer o .exe apontado" onclick="api.post('/api/emulator/exe',{id:'${s.emulator}',exe:null}).then(renderEmulation)">${I.x}</button>` : `<button class="btn d ico" title="Remover" onclick="removeEmu('${s.emulator}')">${I.trash}</button>`}` : isCustom ? `<span class="pill warn">exe não encontrado</span>` : em.source === 'manual' ? `<button class="btn ${quiet ? 's' : 'p'}" onclick="api.post('/api/open_url',{url:${jsq(em.homepage || '')}})">${I.ext} Baixar no site</button><button class="btn s" title="Se você já tem esse emulador, só aponte o .exe" onclick="pointEmuExe('${s.emulator}')">Já tenho</button>` : `<button class="btn ${quiet ? 's' : 'p'}" onclick="installEmu('${s.emulator}')">${I.dl} Instalar ${esc(s.emulator_title)}</button><button class="btn s" title="Se você já tem esse emulador instalado, só aponte o .exe" onclick="pointEmuExe('${s.emulator}')">Já tenho</button>`}
-        <button class="btn s ico" title="Abrir a pasta de ROMs" onclick="api.post('/api/open',{path:${jsq(s.games_dir)}})">${I.folder}</button></div>`}</div>`;
+      ${job ? progHtml(job, 'emu:' + s.emulator) : `<div class="ta">${s.installed ? `${em.update && !isCustom && !em.pointed ? `<button class="btn p" title="Baixa a versão ${esc(em.update)} por cima; configurações e saves do emulador ficam" onclick="updateEmu('${s.emulator}')">${I.dl} Atualizar</button>` : ''}<button class="btn s" title="Abrir o emulador sem jogo, para configurar controles/BIOS" onclick="api.post('/api/emulator/open',{id:'${s.emulator}'})">${I.cog} Abrir</button><button class="btn s ico" title="Pasta do emulador" onclick="openPath(${jsq((em.exe_path || '').replace(/[\\/][^\\/]+$/, ''))})">${I.folder}</button>${isCustom ? `<button class="btn d ico" title="Remover este emulador" onclick="removeCustomEmu('${s.emulator}')">${I.trash}</button>` : em.pointed ? `<button class="btn d ico" title="Esquecer o .exe apontado" onclick="api.post('/api/emulator/exe',{id:'${s.emulator}',exe:null}).then(renderEmulation)">${I.x}</button>` : `<button class="btn d ico" title="Remover" onclick="removeEmu('${s.emulator}')">${I.trash}</button>`}` : isCustom ? `<span class="pill warn">exe não encontrado</span>` : em.source === 'manual' ? `<button class="btn ${quiet ? 's' : 'p'}" onclick="api.post('/api/open_url',{url:${jsq(em.homepage || '')}})">${I.ext} Baixar no site</button><button class="btn s" title="Se você já tem esse emulador, só aponte o .exe" onclick="pointEmuExe('${s.emulator}')">Já tenho</button>` : `<button class="btn ${quiet ? 's' : 'p'}" onclick="installEmu('${s.emulator}')">${I.dl} Instalar ${esc(s.emulator_title)}</button><button class="btn s" title="Se você já tem esse emulador instalado, só aponte o .exe" onclick="pointEmuExe('${s.emulator}')">Já tenho</button>`}
+        <button class="btn s ico" title="Abrir a pasta de ROMs" onclick="openPath(${jsq(s.games_dir)})">${I.folder}</button></div>`}</div>`;
   };
   if (mine.length) h += `<div class="gh"><h3>Meus consoles <em>${mine.length}</em></h3><span>com emulador pronto ou ROMs na pasta</span></div><div class="tiles">${mine.map(x => tile(x, false)).join('')}</div>`;
   if (rest.length) h += `<div class="gh"><h3>${mine.length ? 'Outros consoles' : 'Consoles'} <em>${rest.length}</em></h3><span>${mine.length ? 'instale um emulador ou coloque ROMs e ele sobe para Meus consoles' : 'os mais usados primeiro'}</span></div><div class="tiles">${rest.map((x, i) => tile(x, mine.length > 0 || i >= 6)).join('')}</div>`;
@@ -1819,7 +1840,7 @@ async function emuGuide(sid, after) {
     ${reqs ? `<div class="diag" style="margin-bottom:10px">${reqs}</div>` : ''}<ol class="steps">${steps}</ol>
     <p class="mut" style="font-size:11.5px;margin:8px 0 0">Emulador: ${esc(g.emulator_title || '—')}${g.user_dir ? ` · pasta de dados: <code>${esc(g.user_dir)}</code>` : ''}</p>`,
     ok: 'Fechar', noCancel: true, onOk: () => { if (after) after(); else renderEmulation(); },
-    buttons: [...(g.installed ? [{ label: 'Abrir emulador', fn: () => api.post('/api/emulator/open', { id: g.emulator }) }] : []), ...(g.user_dir ? [{ label: 'Abrir pasta de dados', fn: () => api.post('/api/open', { path: g.user_dir }) }] : [])] });
+    buttons: [...(g.installed ? [{ label: 'Abrir emulador', fn: () => api.post('/api/emulator/open', { id: g.emulator }) }] : []), ...(g.user_dir ? [{ label: 'Abrir pasta de dados', fn: () => openPath(g.user_dir) }] : [])] });
 }
 async function emuGuideInstall(sid, what, pick) {
   const r = await api.post('/api/emulator/guide/install', { system: sid, what, pick });
@@ -1893,10 +1914,10 @@ async function renderDownloads() {
     const g = S.byKey[i.key], [lbl, cls] = ST[i.status] || [i.status, ''];
     const acts = i.status === 'running'
       ? `<button class="btn s xs" onclick="qAct('pause',${jsq(i.key)})" title="Para e guarda o parcial para retomar">Pausar</button><button class="btn d xs" onclick="qAct('stop',${jsq(i.key)})" title="Cancela e apaga o parcial">Parar</button>`
-      : `${i.can_retry ? `<button class="btn p xs" onclick="qAct('retry',${jsq(i.key)})">${i.status === 'paused' ? 'Retomar' : 'Tentar de novo'}</button>` : ''}${i.dir ? `<button class="btn s xs" onclick="api.post('/api/open',{path:${jsq(i.dir)}})">${I.folder} Pasta</button>` : ''}${g && i.installed ? `<button class="btn s xs" onclick="openGame(${jsq(i.key)})">Abrir</button>` : ''}<button class="btn s xs" onclick="qAct('remove',${jsq(i.key)})" title="Tira da lista">✕</button>`;
+      : `${i.can_retry ? `<button class="btn p xs" onclick="qAct('retry',${jsq(i.key)})">${i.status === 'paused' ? 'Retomar' : 'Tentar de novo'}</button>` : ''}${i.dir ? `<button class="btn s xs" onclick="openPath(${jsq(i.dir)})">${I.folder} Pasta</button>` : ''}${g && i.installed ? `<button class="btn s xs" onclick="openGame(${jsq(i.key)})">Abrir</button>` : ''}<button class="btn s xs" onclick="qAct('remove',${jsq(i.key)})" title="Tira da lista">✕</button>`;
     return `<div class="item q ${cls}"><div class="ic">${g ? `<img src="/thumb/${enc(i.key)}" onerror="this.remove()">` : I.dl}</div><div class="tx"><b>${esc(i.title)}</b><span><em class="qst ${cls}">${lbl}</em> · ${KIND[i.kind] || i.kind} · ${when(i.at)}${i.message ? ` · ${esc(i.message)}` : ''}</span>${i.job ? progHtml(i.job, i.key) : ''}</div><div class="qa">${acts}</div></div>`;
   };
-  let h = `<div class="h1"><h2>Fila</h2><span>${running.length ? `${running.length} em andamento` : 'nada baixando agora'}${rest.length ? ` · ${rest.length} no histórico` : ''}</span><div class="acts"><button class="btn p xs" onclick="linkDownload()">${I.dl} Baixar de link</button>${running.length ? `<button class="btn s xs" onclick="qAct('clear_all')">Parar tudo</button>` : ''}${rest.length ? `<button class="btn s xs" onclick="qAct('clear')">Limpar histórico</button>` : ''}<button class="btn s xs" onclick="api.post('/api/open',{path:${jsq(S.config.downloads_dir || 'downloads')}})">${I.folder} downloads\\</button></div></div>`;
+  let h = `<div class="h1"><h2>Fila</h2><span>${running.length ? `${running.length} em andamento` : 'nada baixando agora'}${rest.length ? ` · ${rest.length} no histórico` : ''}</span><div class="acts"><button class="btn p xs" onclick="linkDownload()">${I.dl} Baixar de link</button>${running.length ? `<button class="btn s xs" onclick="qAct('clear_all')">Parar tudo</button>` : ''}${rest.length ? `<button class="btn s xs" onclick="qAct('clear')">Limpar histórico</button>` : ''}<button class="btn s xs" onclick="openPath(${jsq(S.config.downloads_dir || 'downloads')})">${I.folder} downloads\\</button></div></div>`;
   const sec = (title, sub, list, extra) => list.length ? `<div class="gh qh"><h3>${title} <em>${list.length}</em></h3><span>${sub}</span>${extra || ''}</div><div class="list">${list.map(row).join('')}</div>` : '';
   if (!items.length) h += emptyHtml(I.dl, 'Nada por aqui', 'Jogos, emuladores, ferramentas e dependências que você baixar aparecem nesta lista, com pausa, retomada e histórico. Tem um link do Google Drive, MEGA, Gofile, MediaFire ou Pixeldrain? <b>Baixar de link</b> traz o arquivo, extrai e adiciona à Biblioteca.', [['Baixar de link', 'linkDownload()', 1], ['Ir para a Store', "setView('store')"]]);
   else h += `<div class="qsecs">${sec('Agora', running.length ? 'em andamento' : 'nada baixando', running)}${sec('Pausados', 'retome quando quiser', paused)}${sec('Precisam de atenção', 'não terminaram — tente de novo ou remova', failed)}${sec('Concluídos', 'histórico do que já passou por aqui', done, `<button class="btn s xs" onclick="qAct('clear_done')">Limpar concluídos</button>`)}</div>`;
@@ -1980,7 +2001,7 @@ function themesHtml(c, themes) {
   </div>
   <div class="sec"><h3>Estilos importados ${help('Um estilo importado substitui o tema inteiro (cores e, às vezes, barra, menu do botão direito e ponteiro). Importe um .lxtheme ou .zip, crie o seu ou exporte para enviar a alguém.')}</h3><p>Clique para aplicar; para voltar, escolha uma aparência acima.</p>
     ${filt}${selBar}${grp(shown)}
-    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><button class="btn p sm" onclick="themeImport()">${I.import} Importar .lxtheme / .zip / .json</button><button class="btn s sm" onclick="themeDuplicate(S.config.theme||'dark')">${I.copy} Criar a partir do tema atual</button>${user.length ? `<button class="btn s sm" onclick="themeExportAll()">${I.ext} Exportar todos (.zip)</button>` : ''}<button class="btn s sm" onclick="api.post('/api/open',{path:'themes'})">${I.folder} Abrir pasta themes</button></div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><button class="btn p sm" onclick="themeImport()">${I.import} Importar .lxtheme / .zip / .json</button><button class="btn s sm" onclick="themeDuplicate(S.config.theme||'dark')">${I.copy} Criar a partir do tema atual</button>${user.length ? `<button class="btn s sm" onclick="themeExportAll()">${I.ext} Exportar todos (.zip)</button>` : ''}<button class="btn s sm" onclick="openPath('themes')">${I.folder} Abrir pasta themes</button></div>
   </div>`;
 }
 function selHtml(opts, cur, on, cls) { return `<select class="sel ${cls || ''}" onchange="${on}">${opts.map(([v, l]) => `<option value="${esc(JSON.stringify(v))}" ${v === cur ? 'selected' : ''}>${esc(String(l))}</option>`).join('')}</select>`; }
@@ -1991,7 +2012,7 @@ async function cset(patch) { const r = await api.post('/api/custom/set', patch);
 async function cpick(what, path) { if (!path && !S.config.native) return modal({ title: 'Imagem', text: 'Caminho completo do arquivo de imagem:', input: '', ok: 'Usar', onOk: v => v && cpick(what, v) }); const r = await api.post(path ? '/api/custom/add' : '/api/custom/pick', path ? { what, path } : { what }); if (r.error) return toast('err', 'Personalizar', r.error); if (r.cancel) return; S.custom = r; applyCustom(); renderSettings(); }
 async function cremove(what, name) { const r = await api.post('/api/custom/remove', { what, name }); if (r.error) return toast('err', 'Personalizar', r.error); S.custom = r; applyCustom(); renderSettings(); }
 function creset() { modal({ title: 'Redefinir o Personalizar?', text: 'Volta tudo ao que o tema define. Suas imagens de fundo e ícones enviados continuam na pasta data\\custom.', ok: 'Redefinir', danger: true, onOk: async () => { const r = await api.post('/api/custom/reset', {}); S.custom = r; applyCustom(); renderSettings(); } }); }
-function cexport() { modal({ title: 'Exportar como tema', text: 'Nome do tema. O arquivo .lxtheme vai para a pasta themes\\exportados e pode ser importado em qualquer Ludrix.', input: 'Meu tema', ok: 'Exportar', onOk: async name => { if (!name) return false; const r = await api.post('/api/custom/export', { name }); if (r.error) return toast('err', 'Exportar', r.error); toast('ok', 'Tema exportado', r.path, [{ label: 'Abrir pasta', fn: () => api.post('/api/open', { path: r.path.replace(/[\\/][^\\/]*$/, '') }) }]); } }); }
+function cexport() { modal({ title: 'Exportar como tema', text: 'Nome do tema. O arquivo .lxtheme vai para a pasta themes\\exportados e pode ser importado em qualquer Ludrix.', input: 'Meu tema', ok: 'Exportar', onOk: async name => { if (!name) return false; const r = await api.post('/api/custom/export', { name }); if (r.error) return toast('err', 'Exportar', r.error); toast('ok', 'Tema exportado', r.path, [{ label: 'Abrir pasta', fn: () => openPath(r.path.replace(/[\\/][^\\/]*$/, '')) }]); } }); }
 let customV = 0;
 function applyCustom() {
   const l = $('#customLink'); if (l) l.href = '/api/custom.css?v=' + (++customV);
@@ -2089,7 +2110,7 @@ async function renderSettings(fresh) {
   const sw = (k, label, desc) => `<div class="frow"><div class="l"><b>${label}${restartTag(k)}</b><span>${desc}</span></div><button class="sw ${c[k] ? 'on' : ''}" onclick="setCfg({${k}:!S.config.${k}})"></button></div>`;
   const TABS = [
     ['general', 'Geral', 'cog', ['idioma', 'janela_geral', 'notificacoes', 'orientacao']],
-    ['appearance', 'Aparência', 'image', ['tema', 'janela', 'navegacao', 'escala', 'efeitos', 'personalizar_link']],
+    ['appearance', 'Aparência', 'image', ['tema', 'janela', 'navegacao', 'sofa', 'escala', 'efeitos', 'personalizar_link']],
     ['custom', 'Personalizar', 'edit', []],
     ['library', 'Biblioteca', 'home', ['tela_inicial', 'cartoes', 'capas', 'pastas']],
     ['play', 'Ao jogar', 'play', ['ao_abrir', 'linux', 'saves', 'otimizar', 'emuladores', 'controle', 'console']],
@@ -2138,6 +2159,11 @@ async function renderSettings(fresh) {
     <div class="frow" style="align-items:flex-start;flex-direction:column;gap:8px"><div class="l"><b>Ícones da navegação</b><span>Estilo dos ícones de Biblioteca, Store, Emuladores e das demais abas. Os dois últimos são coloridos${S.themeIcons ? ` · o tema atual ${typeof S.themeIcons === 'object' ? 'traz ícones próprios' : `sugere <b style="display:inline">${esc((ICON_SETS.find(x => x[0] === S.themeIcons) || [])[1] || S.themeIcons)}</b>`}` : ''}</span></div>
       <div class="iconsets">${ICON_SETS.map(([v, l]) => `<button class="iset ${(c.rail_icons || S.themeIcons || 'solid') === v ? 'on' : ''}" onclick="setCfg({rail_icons:'${v}'})"><div class="ico">${iconSetSample(v)}</div><b>${l}</b></button>`).join('')}${c.rail_icons && S.themeIcons && c.rail_icons !== S.themeIcons ? `<button class="iset" onclick="setCfg({rail_icons:''})"><div class="ico" style="font-size:20px">↺</div><b>Seguir o tema</b></button>` : ''}</div></div>
     <div class="frow" style="align-items:flex-start"><div class="l"><b>Barra de tarefas</b><span>A faixa no alto com busca, categoria, ordenação e notificações. O que for desmarcado continua acessível pelo botão Filtros e pela tecla /</span></div><div class="checks">${TOOLBAR_ITEMS.map(([id, l, d]) => `<label><input type="checkbox" ${(c.toolbar_items || ['search', 'cats', 'sort', 'bell']).includes(id) ? 'checked' : ''} onchange="toggleToolbarItem('${id}',this.checked)"><div>${l}<small>${d}</small></div></label>`).join('')}</div></div>`]),
+    sofa: () => sec('sofa', 'Modo sofá', [`
+    <div class="frow"><div class="l"><b>Controle</b><span>Com um controle ligado, qualquer botão passa a navegação para ele: direcional move, A seleciona, B volta, X abre o menu, Y favorita, LB/RB trocam de aba, Start joga. Mexer o mouse volta ao normal</span></div>
+      ${cfgSel('gamepad', [['auto', 'Ligar quando um controle for usado'], ['off', 'Desligado']], c.gamepad || 'auto')}</div>
+    <div class="frow"><div class="l"><b>Zoom no sofá</b><span>Aumenta a interface enquanto o controle está no comando, para ler de longe</span></div>
+      ${cfgSel('sofa_zoom', [[1, 'Igual'], [1.15, '115%'], [1.3, '130%'], [1.5, '150%']], c.sofa_zoom || 1.15)}</div>`]),
     escala: () => sec('escala', 'Escala da interface', [`
     <div class="frow"><div class="l"><b>Zoom</b><span id="uiScaleLbl">${c.ui_scale ? Math.round(c.ui_scale * 100) + '%' : 'Auto (' + Math.round(autoScale() * 100) + '%)'}</span></div>
       ${cfgSel('ui_scale', [[0, 'Automático'], ...[0.8, 0.9, 1, 1.1, 1.25, 1.5].map(v => [v, Math.round(v * 100) + '%'])], c.ui_scale || 0)}</div>
@@ -2182,10 +2208,10 @@ async function renderSettings(fresh) {
     ${sw('auto_rename', 'Corrigir nomes automaticamente', 'Ao encontrar o jogo nas fontes, substitui nomes como "Atalho para Sleeping Dogs" ou "SleepingDogs_x64" pelo nome oficial. Só renomeia quando o nome encontrado bate com segurança (mesmo título e mesma numeração); em dúvida, mantém o atual. Nomes digitados por você nunca são alterados')}`], { adv: [`
     <div class="frow"><div class="l"><b>Chave SteamGridDB ${help('SteamGridDB é um site com capas e artes em alta resolução feitas pela comunidade. Pra usar, crie uma conta grátis lá, vá em Perfil → Preferences → API e copie a chave que aparece.')}</b><span>Opcional. Capas e artes em alta resolução ${c.sgdb_key_set ? '· <span style="color:var(--green2)">configurada</span>' : ''}</span></div><input type="password" placeholder="cole a chave" onchange="setCfg({sgdb_key:this.value})" style="min-width:220px"></div>`] }),
     pastas: () => sec('pastas', 'Pastas', [`
-    <div class="frow"><div class="l"><b>Pasta de jogos instalados</b><span>Destino definitivo dos jogos baixados e extraídos. Atual: ${esc(c.games_dir_effective)}</span></div><button class="btn s sm" onclick="api.post('/api/open',{path:${jsq(c.games_dir_effective)}})">${I.folder} Abrir</button><button class="btn s sm" onclick="chooseFolder()">Alterar</button>${c.games_dir ? `<button class="btn s sm" onclick="setCfg({games_dir:''})">Padrão</button>` : ''}</div>
-    <div class="frow"><div class="l"><b>Outras pastas com jogos</b><span>Pastas de outros discos ou de outros launchers. O Ludrix procura jogos novos nelas (e na pasta de instalados) ao abrir e no botão abaixo.${(c.game_dirs || []).length ? '' : ' Nenhuma adicionada.'}</span>${(c.game_dirs || []).length ? `<div class="dirlist">${c.game_dirs.map(d => `<div><code>${esc(d)}</code><button class="btn s xs" onclick="api.post('/api/open',{path:${jsq(d)}})">${I.folder}</button><button class="btn s xs" onclick="gameDirRemove(${jsq(d)})">${I.x}</button></div>`).join('')}</div>` : ''}</div><button class="btn s sm" onclick="gameDirAdd()">${I.plus} Adicionar pasta</button><button class="btn s sm" onclick="scanRun('windows','*')">${I.search} Procurar jogos novos</button></div>
+    <div class="frow"><div class="l"><b>Pasta de jogos instalados</b><span>Destino definitivo dos jogos baixados e extraídos. Atual: ${esc(c.games_dir_effective)}</span></div><button class="btn s sm" onclick="openPath(${jsq(c.games_dir_effective)})">${I.folder} Abrir</button><button class="btn s sm" onclick="chooseFolder()">Alterar</button>${c.games_dir ? `<button class="btn s sm" onclick="setCfg({games_dir:''})">Padrão</button>` : ''}</div>
+    <div class="frow"><div class="l"><b>Outras pastas com jogos</b><span>Pastas de outros discos ou de outros launchers. O Ludrix procura jogos novos nelas (e na pasta de instalados) ao abrir e no botão abaixo.${(c.game_dirs || []).length ? '' : ' Nenhuma adicionada.'}</span>${(c.game_dirs || []).length ? `<div class="dirlist">${c.game_dirs.map(d => `<div><code>${esc(d)}</code><button class="btn s xs" onclick="openPath(${jsq(d)})">${I.folder}</button><button class="btn s xs" onclick="gameDirRemove(${jsq(d)})">${I.x}</button></div>`).join('')}</div>` : ''}</div><button class="btn s sm" onclick="gameDirAdd()">${I.plus} Adicionar pasta</button><button class="btn s sm" onclick="scanRun('windows','*')">${I.search} Procurar jogos novos</button></div>
     ${sw('auto_scan_dirs', 'Procurar jogos novos ao abrir', 'Alguns segundos depois de abrir, o Ludrix olha as pastas acima e avisa se achou jogo que ainda não está na biblioteca. Nada é adicionado sem revisão')}
-    <div class="frow"><div class="l"><b>Pasta de downloads (temporária)</b><span>Os arquivos chegam em <code>downloads${SEP()}</code>, são extraídos ou instalados e essa pasta é limpa sozinha. O que sobrar de downloads cancelados é apagado quando o Ludrix abre.</span></div><button class="btn s sm" onclick="api.post('/api/open',{path:${jsq(c.downloads_dir || 'downloads')}})">${I.folder} Abrir</button><button class="btn s sm" onclick="api.post('/api/downloads/clean',{}).then(r=>toast('ok','Pasta limpa',(r.freed_h||'')+(r.skipped?' · '+r.skipped+' em uso':'')))">Limpar agora</button></div>`]),
+    <div class="frow"><div class="l"><b>Pasta de downloads (temporária)</b><span>Os arquivos chegam em <code>downloads${SEP()}</code>, são extraídos ou instalados e essa pasta é limpa sozinha. O que sobrar de downloads cancelados é apagado quando o Ludrix abre.</span></div><button class="btn s sm" onclick="openPath(${jsq(c.downloads_dir || 'downloads')})">${I.folder} Abrir</button><button class="btn s sm" onclick="api.post('/api/downloads/clean',{}).then(r=>toast('ok','Pasta limpa',(r.freed_h||'')+(r.skipped?' · '+r.skipped+' em uso':'')))">Limpar agora</button></div>`]),
     ao_abrir: () => sec('ao_abrir', 'Ao abrir um jogo', [`
     <div class="frow"><div class="l"><b>Ao abrir um jogo</b><span>${{ ask: 'Pergunta antes de abrir (com opção de lembrar).', none: 'Continua visível normalmente.', minimize: 'Sai da barra de tarefas e volta quando o jogo fechar.', close: 'Fecha por completo; o tempo de jogo desta sessão não é contado.' }[c.after_launch || 'ask']} O tempo de jogo é contado enquanto o processo do jogo estiver em execução.</span></div>${cfgSel('after_launch', [['ask', 'Perguntar'], ['none', 'Manter'], ['minimize', 'Bandeja'], ['close', 'Fechar']], c.after_launch || 'ask')}</div>
     <div class="frow"><div class="l"><b>Apresentação ao abrir um jogo</b><span>Uma tela rápida com a capa e o nome enquanto o jogo carrega. Clique ou Esc fecham antes</span></div>${cfgSel('launch_splash', [['off', 'Desligada'], ['short', 'Curta'], ['long', 'Longa']], c.launch_splash || 'short')}</div>
@@ -2196,7 +2222,7 @@ async function renderSettings(fresh) {
     <div class="frow"><div class="l"><b>Versão do Proton</b><span>Vazio = GE-Proton mais recente. Aceita o nome de uma pasta em ~/.local/share/Steam/compatibilitytools.d ou um caminho completo.</span></div><input class="mi" style="width:240px" value="${esc(c.linux_proton || '')}" placeholder="GE-Proton" onchange="setCfg({linux_proton:this.value.trim()})"></div>
     <div class="frow"><div class="l"><b>Variáveis extras</b><span>Separadas por espaço, ex.: <span class="code">DXVK_HUD=fps MANGOHUD=1</span>. Valem para todos os jogos.</span></div><input class="mi" style="width:240px" value="${esc(c.linux_env || '')}" onchange="setCfg({linux_env:this.value.trim()})"></div>
     ${sw('linux_runtime_updates', 'Manter o runtime do Proton atualizado', 'O umu confere e baixa atualizações do runtime da Steam ao abrir um jogo. Desligue se a conexão for lenta')}
-    <div class="frow"><div class="l"><b>Proton e prefixo</b><span id="lxst">Verificando…</span></div><div style="display:flex;gap:6px"><button class="btn s sm" onclick="linuxPrepare()">${I.dl} Baixar/atualizar agora</button><button class="btn s sm" onclick="api.post('/api/open',{path:S.config.root+'/data/pfx'})">${I.folder} Prefixos</button></div></div>`]),
+    <div class="frow"><div class="l"><b>Proton e prefixo</b><span id="lxst">Verificando…</span></div><div style="display:flex;gap:6px"><button class="btn s sm" onclick="linuxPrepare()">${I.dl} Baixar/atualizar agora</button><button class="btn s sm" onclick="openPath(S.config.root+'/data/pfx')">${I.folder} Prefixos</button></div></div>`]),
     saves: () => sec('saves', 'Saves', [`
     ${sw('save_auto_backup', 'Guardar cópia dos saves ao fechar o jogo', `Depois de cada sessão, copia a pasta de saves do jogo para data${SEP()}save_backups (até 5 cópias por jogo, só quando algo mudou; pastas acima de 512 MB são puladas). Restaure em Saves, no menu do jogo`)}`]),
     otimizar: () => sec('otimizar', 'Otimizar antes de jogar', [`
@@ -2249,7 +2275,7 @@ async function renderSettings(fresh) {
     <div class="frow"><div class="l"><b>Diagnóstico</b><span>Confere pasta, espaço em disco, WebView2, ferramentas e mostra o fim do log — copie e cole quando algo der errado</span></div><button class="btn s sm" onclick="showDiag()">Ver diagnóstico</button></div>`]),
     limpeza: () => sec('limpeza', 'Limpeza', [`
     <div class="cache" id="cacheBox">${[['web', 'Listas das fontes'], ['thumbs', 'Miniaturas'], ['covers', 'Capas grandes'], ['meta', 'Informações dos jogos'], ['downloads', 'Downloads incompletos'], ['log', 'Registro de erros']].map(([k, n]) => `<label><input type="checkbox" value="${k}"><div><b>${n}</b><span>${fmt(cache[k]) || '0 B'}</span></div></label>`).join('')}</div>
-    <div style="margin-top:12px;display:flex;gap:8px"><button class="btn d sm" onclick="clearCache()">${I.trash} Limpar selecionados</button><button class="btn s sm" onclick="api.post('/api/open',{path:${jsq(c.root)}})">${I.folder} Abrir pasta do app</button></div>`], { cls: 'wide', help: 'Tudo o que o launcher guarda aqui (capas, listas, informações) serve apenas para abrir mais rápido. Pode apagar sem receio: é baixado de novo quando necessário. Seus jogos e configurações não são afetados.', p: 'Tudo o que o launcher cria fica dentro da própria pasta. Selecione o que apagar:' }),
+    <div style="margin-top:12px;display:flex;gap:8px"><button class="btn d sm" onclick="clearCache()">${I.trash} Limpar selecionados</button><button class="btn s sm" onclick="openPath(${jsq(c.root)})">${I.folder} Abrir pasta do app</button></div>`], { cls: 'wide', help: 'Tudo o que o launcher guarda aqui (capas, listas, informações) serve apenas para abrir mais rápido. Pode apagar sem receio: é baixado de novo quando necessário. Seus jogos e configurações não são afetados.', p: 'Tudo o que o launcher cria fica dentro da própria pasta. Selecione o que apagar:' }),
     pc: () => hwHtml(hw),
     segundo_plano: () => sec('segundo_plano', 'Em segundo plano', [`
     ${sw('bg_warmup', 'Completar capas e informações ao abrir', 'Ao abrir, busca em lote as capas e descrições que faltam na biblioteca e no início da Store. Desligado, cada jogo é buscado apenas quando aparece na tela')}
@@ -2277,7 +2303,7 @@ async function renderSettings(fresh) {
   $('#view').innerHTML = `<div class="h1 seth"><h2>Ajustes</h2><span title="${esc(c.root)}">${esc(c.root)}</span></div>
     ${restartBanner()}<div class="setwrap"><aside class="setnav"><div class="stabs">${TABS.map(tabBtn).join('')}</div><div class="stoc" id="stoc"></div>
       <div class="setfoot"><div class="sadvbox ${c.settings_adv ? 'on' : ''}"><div class="l"><b>Opções avançadas</b><span id="sadvN">${c.settings_adv ? 'Visíveis em todas as abas' : 'Ocultas — mostra as opções marcadas como avançado'}</span></div><button class="sw ${c.settings_adv ? 'on' : ''}" onclick="toggleAdv()" title="${c.settings_adv ? 'Ocultar opções avançadas' : 'Mostrar opções avançadas'}"></button></div>
-      ${(TAB_KEYS[tab] || []).length ? `<button class="lnk" onclick="settingsReset('${tab}')">Redefinir esta aba</button>` : ''}<button class="lnk" onclick="api.post('/api/open',{path:'data'})" title="Pasta data (config, biblioteca, log)">Abrir pasta data</button></div></aside>
+      ${(TAB_KEYS[tab] || []).length ? `<button class="lnk" onclick="settingsReset('${tab}')">Redefinir esta aba</button>` : ''}<button class="lnk" onclick="openPath('data')" title="Pasta data (config, biblioteca, log)">Abrir pasta data</button></div></aside>
     <div class="settings" id="setBody" data-tab="${tab}">${body}</div></div>`;
   settingsToc();
   if (S._settingsJump) { const j = S._settingsJump; S._settingsJump = ''; requestAnimationFrame(() => settingsGo(j, false)); } else $('#view').scrollTop = keepScroll;
@@ -2296,7 +2322,7 @@ function toggleAdv() {
 }
 const TAB_KEYS = {
   general: ['tray_enabled', 'close_action', 'popups', 'notify_sound', 'guides'],
-  appearance: ['theme', 'theme_mode', 'face', 'accent', 'theme_schedule', 'theme_light_from', 'theme_light_to', 'frameless', 'frame_mode', 'frame_corners', 'status_position', 'clock', 'ctx_menu', 'layout', 'nav', 'nav_hidden', 'nav_order', 'rail_icons', 'toolbar', 'toolbar_items', 'ui_scale', 'text_size', 'card_size', 'density', 'animations', 'fx_type', 'fx_intensity', 'glass', 'card_hover', 'reduce_motion', 'parallax', 'high_contrast'],
+  appearance: ['gamepad', 'sofa_zoom', 'theme', 'theme_mode', 'face', 'accent', 'theme_schedule', 'theme_light_from', 'theme_light_to', 'frameless', 'frame_mode', 'frame_corners', 'status_position', 'clock', 'ctx_menu', 'layout', 'nav', 'nav_hidden', 'nav_order', 'rail_icons', 'toolbar', 'toolbar_items', 'ui_scale', 'text_size', 'card_size', 'density', 'animations', 'fx_type', 'fx_intensity', 'glass', 'card_hover', 'reduce_motion', 'parallax', 'high_contrast'],
   library: ['home_spot', 'home_autoplay', 'fav_first', 'home_spot_style', 'home_rows', 'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'accent_from_cover', 'cover_slideshow', 'cover_slideshow_secs', 'view_mode', 'group_by', 'card_ribbons', 'card_playtime', 'detail_art', 'auto_metadata', 'web_covers', 'auto_rename'],
   play: ['after_launch', 'launch_splash', 'nav_hide_playing', 'save_auto_backup', 'game_mode_auto', 'game_mode_ask', 'emu_no_ask', 'gamepad_enabled', 'gamepad_speed', 'gamepad_wake'],
   store: ['hero_enabled', 'store_hide_installed', 'dim_not_installed', 'store_page_size', 'keep_archive', 'concurrent_downloads', 'shortcut_ask', 'repack_auto_open', 'torrent_max_down', 'torrent_max_up', 'torrent_seed_after'],
@@ -2407,7 +2433,7 @@ function pickFace(id) { const prev = faceInfo(S.config.face || DEFAULT_FACE), pa
 async function pickTheme(id) { if (!(S.themes || []).length) S.themes = await api.get('/api/themes/full'); const t = (S.themes || []).find(x => x.id === id), prev = (S.themes || []).find(x => x.id === (S.config.theme || 'system')); const patch = { theme: id }; if (prev && prev.accent && S.config.accent === prev.accent) patch.accent = ''; setCfg(patch); }
 const toHex = v => { v = (v || '').trim(); if (/^#([0-9a-f]{6})$/i.test(v)) return v; const m = v.match(/rgba?\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)/i); if (m) return '#' + [m[1], m[2], m[3]].map(x => (+x).toString(16).padStart(2, '0')).join(''); return ''; };
 function reloadTheme() { currentTheme = null; applyTheme(); }
-async function themeExport(id, fmt) { const r = await api.post('/api/theme/export', { id, format: fmt || 'lxtheme' }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); toast('ok', 'Tema exportado', r.path, [{ label: 'Abrir pasta', fn: () => api.post('/api/open', { path: r.path.replace(/[\\/][^\\/]*$/, '') }) }]); }
+async function themeExport(id, fmt) { const r = await api.post('/api/theme/export', { id, format: fmt || 'lxtheme' }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); toast('ok', 'Tema exportado', r.path, [{ label: 'Abrir pasta', fn: () => openPath(r.path.replace(/[\\/][^\\/]*$/, '')) }]); }
 function themeMenu(id, x, y) {
   const t = (S.themes || []).find(t => t.id === id) || {}; const items = [{ label: 'Aplicar', icon: 'check', fn: () => pickTheme(id) }];
   if (id.startsWith('file:')) items.push({ sep: true },
@@ -2416,7 +2442,7 @@ function themeMenu(id, x, y) {
   showCtx(items, x, y);
 }
 function themeExportMenu(id, e) { showCtx([{ label: 'Exportar .lxtheme', hint: 'oficial', icon: 'ext', fn: () => themeExport(id, 'lxtheme') }, { label: 'Exportar .zip', hint: 'mesmo esqueleto', icon: 'ext', fn: () => themeExport(id, 'zip') }], e.clientX, e.clientY); }
-async function themeExportAll() { const r = await api.post('/api/theme/export_all', { format: 'zip' }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); toast('ok', `Arquivo com ${pl(r.count, 'tema', 'temas')}`, r.path, [{ label: 'Abrir pasta', fn: () => api.post('/api/open', { path: r.path.replace(/[\\/][^\\/]*$/, '') }) }]); }
+async function themeExportAll() { const r = await api.post('/api/theme/export_all', { format: 'zip' }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); toast('ok', `Arquivo com ${pl(r.count, 'tema', 'temas')}`, r.path, [{ label: 'Abrir pasta', fn: () => openPath(r.path.replace(/[\\/][^\\/]*$/, '')) }]); }
 async function themeImport() {
   if (S.config.native) { const r = await api.post('/api/theme/import', {}); if (r.error) return toast('err', 'Não foi possível concluir', r.error); if (r.ok) { toast('ok', r.count > 1 ? 'Temas importados' : 'Tema importado', r.name || ''); renderSettings(true); } return; }
   modal({ title: 'Importar temas', text: 'Caminho do .lxtheme, .zip (um ou vários estilos) ou theme.json. Para vários arquivos, um por linha.', textarea: '', ok: 'Importar', onOk: async v => { const r = await api.post('/api/theme/import', { path: v }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); if (r.ok) toast('ok', r.count > 1 ? 'Temas importados' : 'Tema importado', r.name || ''); renderSettings(true); } });
@@ -2433,7 +2459,7 @@ function themeDeleteSel() {
 }
 function themeDelete(id, name) { modal({ title: `Apagar o estilo "${name}"?`, text: 'A pasta dele em themes será removida. É possível importar de novo depois.', ok: 'Apagar', danger: true, onOk: async () => { await api.post('/api/theme/delete', { id }); if (S.config.theme === id) S.config.theme = 'system'; reloadTheme(true); renderSettings(true); } }); }
 function autoScale() { const r = Math.min(window.innerWidth / 1500, window.innerHeight / 860); const s = 1 + (r - 1) * 0.6; return Math.round(Math.min(1.35, Math.max(0.8, s)) * 20) / 20; }
-function applyScale() { const s = S.config.ui_scale || autoScale(); document.documentElement.style.setProperty('--scale', s); document.documentElement.style.fontSize = ((13 + (S.config.text_size || 0)) * s) + 'px'; document.body.classList.toggle('compact', (S.config.density || 'normal') === 'compact'); document.body.classList.toggle('noglass', S.config.glass === false); }
+function applyScale() { const s = (S.config.ui_scale || autoScale()) * (document.body.classList.contains('sofa') ? (S.config.sofa_zoom || 1.15) : 1); document.documentElement.style.setProperty('--scale', s); document.documentElement.style.fontSize = ((13 + (S.config.text_size || 0)) * s) + 'px'; document.body.classList.toggle('compact', (S.config.density || 'normal') === 'compact'); document.body.classList.toggle('noglass', S.config.glass === false); }
 let rzT = 0; window.addEventListener('resize', () => { if (S.config.ui_scale) return; cancelAnimationFrame(rzT); rzT = requestAnimationFrame(() => { const s = autoScale(); if (String(s) !== document.documentElement.style.getPropertyValue('--scale')) applyScale(); }); });
 async function setCfg(patch) { const r = await api.post('/api/config', patch); if (r && !r.error) { S.config = r; api.emit('config', patch); if ('language' in patch) { location.reload(); return r; } applyTheme(); applyAnim(); applyScale(); if ('rail_icons' in patch) applyRailIcons(); if ('cursor' in patch) if ('game_backdrop' in patch || 'accent_from_cover' in patch || 'cover_slideshow' in patch || 'cover_slideshow_secs' in patch) gameFocus(S._focusKey || S.stageKey || null); if ('frame_mode' in patch || 'frame_corners' in patch) { frameLast = ''; applyFrame(); } if ('nav_hide_playing' in patch) applyPlaying(); if ('nav_hidden' in patch || 'nav_order' in patch) applyNavItems(); if ('card_hover' in patch || 'reduce_motion' in patch || 'detail_art' in patch || 'high_contrast' in patch || 'settings_adv' in patch) applyMotion(); if ('clock' in patch) applyClock(); if ('group_by' in patch && ['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'settings') renderSettings(); if (['home', 'store'].includes(S.view) && ('card_size' in patch || 'face' in patch || 'theme' in patch || 'home_spot' in patch || 'home_spot_style' in patch || 'home_rows' in patch || 'view_mode' in patch)) renderLibrary(); if ('toolbar' in patch || patch.toolbar_items) { applyToolbar(); if (['home', 'store'].includes(S.view)) renderLibrary(); } } }
 async function setAutostart(on) { const r = await api.post('/api/autostart', { on }); if (r.error) return toast('err', r.error); S.config.autostart = !!r.enabled; renderSettings(); toast('ok', r.enabled ? 'O Ludrix vai abrir com o Windows' : 'Não abre mais com o Windows'); }
@@ -2569,7 +2595,7 @@ async function exportSteam(user, keys) {
 }
 async function exportLibrary(fmt, keys) {
   const r = await api.post('/api/library/export', { format: fmt || 'ludrix', keys: keys && keys.length ? keys : undefined }); if (r.error) return toast('err', 'Não foi possível exportar', r.error);
-  toast('ok', 'Biblioteca exportada', `${pl(r.count, 'jogo', 'jogos')} em ${r.dir}`, [{ label: 'Abrir pasta', fn: () => api.post('/api/open', { path: r.dir }) }]);
+  toast('ok', 'Biblioteca exportada', `${pl(r.count, 'jogo', 'jogos')} em ${r.dir}`, [{ label: 'Abrir pasta', fn: () => openPath(r.dir) }]);
 }
 async function handleEvent(ev) {
   if (ev.type === 'flash_cover') { if (S.view === 'flash') { const c = document.querySelector(`.fcard[data-fid="${CSS.escape(ev.id)}"] .fart`); if (c && !c.querySelector('img')) c.insertAdjacentHTML('afterbegin', `<img src="/flash/cover/${esc(ev.id)}?t=${Date.now()}" onload="this.classList.add('ld')" onerror="this.remove()">`); } return; }
@@ -2738,7 +2764,7 @@ async function dataExport() {
   const r = await api.post('/api/data/export', {});
   if (r.cancel) return;
   if (r.error) return toast('err', 'Não foi possível exportar', r.error);
-  toast('ok', 'Backup pronto', `${pl(r.files, 'arquivo', 'arquivos')} · ${fmt(r.size)}`, [{ label: 'Abrir pasta', fn: () => api.post('/api/open', { path: r.path.replace(/[\\/][^\\/]*$/, '') }) }, { label: 'OK', fn: () => {} }]);
+  toast('ok', 'Backup pronto', `${pl(r.files, 'arquivo', 'arquivos')} · ${fmt(r.size)}`, [{ label: 'Abrir pasta', fn: () => openPath(r.path.replace(/[\\/][^\\/]*$/, '')) }, { label: 'OK', fn: () => {} }]);
 }
 async function dataImport(path) {
   if (!path && !S.config.native) return modal({ title: 'Importar um backup', text: 'Caminho completo do Ludrix-dados-*.zip:', input: '', ok: 'Continuar', onOk: v => v && dataImport(v) });
@@ -3041,7 +3067,7 @@ function homeRows() {
 }
 function wideCard(g) {
   const live = S.sessions && S.sessions[g.key], sub = [g.last_played ? cap(lastPlayedText(g.last_played)) : '', g.playtime >= 60 ? fmtTime(g.playtime) : '', g.status ? statusName(g.status) : ''].filter(Boolean).join(' · ');
-  return `<div class="card wc${S.panelKey === g.key ? ' sel' : ''}" data-key="${esc(g.key)}"><div class="wimg" style="background-image:url('/hero/${enc(g.key)}')"></div>
+  return `<div class="card wc${S.panelKey === g.key ? ' sel' : ''}" data-key="${esc(g.key)}"><div class="wimg" style="background-image:url('/hero/${enc(g.key)}'),url('/cover/${enc(g.key)}')"></div>
     <div class="wt"><div><b>${esc(g.title)}</b><small>${esc(sub) || '&nbsp;'}</small></div>${g.installed ? `<button class="qp ${live ? 'live' : ''}" data-qp="${esc(g.key)}" title="${live ? 'Em execução — clique para encerrar' : 'Jogar'}">${live ? I.x : I.play}</button>` : ''}</div></div>`;
 }
 function homeTop() {
@@ -3155,7 +3181,7 @@ function stageEstante(hm, pool, key, g) {
   const tags = [...new Set([...(g.genres || []).slice(0, 3), ...cats.slice(0, 2), g.system && g.system !== 'pc' ? (S.systems[g.system] || g.system) : 'PC'])].slice(0, 5);
   if (DESC[key] === undefined) stageDesc(key);
   const meta = [g.creator, g.year, g.last_played ? 'jogado por último ' + lastPlayedText(g.last_played) : ''].filter(Boolean).map(esc).join(' · ');
-  return `<div class="stage g-est" id="stage"><div class="ebg" style="background-image:url('/hero/${enc(key)}')"></div><div class="egrad"></div>
+  return `<div class="stage g-est" id="stage"><div class="ebg" style="background-image:url('/hero/${enc(key)}'),url('/cover/${enc(key)}')"></div><div class="egrad"></div>
     <div class="ein"><div class="ecov" onclick="openGame(${jsq(key)})">${coverImg(key, g)}</div>
       <div class="etxt"><span class="etag">${g.last_played ? 'Continuar jogando' : 'Destaque'}</span><h1 onclick="openGame(${jsq(key)})">${esc(g.title)}</h1>
         <div class="emeta">${meta}</div><p class="edesc" data-desc="${esc(key)}">${esc(DESC[key] || '')}</p>
@@ -3416,12 +3442,12 @@ async function ctxDo(key, id) {
     case 'details': return openGame(key);
     case 'fav': return toggleFav(key);
     case 'hide': return toggleHidden(key);
-    case 'open_dir': { const d = S.det && S.det.key === key ? S.det : await api.get('/api/game/' + enc(key)); return api.post('/api/open', { path: d.dir }); }
+    case 'open_dir': { const d = S.det && S.det.key === key ? S.det : await api.get('/api/game/' + enc(key)); return openPath(d.dir, key); }
     case 'open_select': return api.post('/api/open_select', { key });
     case 'mark_played': { const r = await api.post('/api/game/played', { key, played: !(g.last_played > 0) }); if (!r.error) { toast('ok', g.last_played > 0 ? 'Marcado como nunca jogado' : 'Marcado como jogado', g.title || ''); loadCatalog(false); } return; }
     case 'copy_name': { const tt = (S.byKey[key] || S.det || {}).title || ''; return navigator.clipboard.writeText(tt).then(() => toast('ok', 'Nome copiado', tt)); }
     case 'copy_path': { const d = S.det && S.det.key === key ? S.det : await api.get('/api/game/' + enc(key)); const p = d.exe || d.dir || ''; return navigator.clipboard.writeText(p).then(() => toast('ok', 'Caminho copiado', p)); }
-    case 'open_emu_dir': { const d = await api.get('/api/game/' + enc(key)); return api.post('/api/open', { path: d.emu && d.emu.emu_dir }); }
+    case 'open_emu_dir': { const d = await api.get('/api/game/' + enc(key)); return openPath(d.emu && d.emu.emu_dir); }
     case 'config_emu': { const d = await api.get('/api/game/' + enc(key)); return api.post('/api/emulator/open', { id: d.emu.emulator }); }
     case 'choose_emu': { const d = await api.get('/api/game/' + enc(key)); const e = await api.get('/api/emulation'); const sys = e.systems[d.system]; const opts = sys.options.map(i => e.emulators[i]).filter(Boolean);
       return modal({ title: `Emulador para ${sys.name}`, text: 'Vale para todos os jogos desse console.', html: `<select class="mi" id="ceSel">${opts.map(o => `<option value="${o.id}" ${o.id === sys.emulator ? 'selected' : ''}>${esc(o.title)}${o.installed ? '' : ' (não instalado)'}</option>`).join('')}</select>`, ok: 'Aplicar', extra: 'Meu próprio emulador…', onExtra: () => addCustomEmu(), onOk: async () => { await api.post('/api/emulator/select', { system: d.system, id: $('#ceSel').value }); toast('ok', 'Emulador trocado', ''); } }); }
@@ -3503,7 +3529,7 @@ async function renderMods() {
   let cur = S.tab.mods; if (!['mine', 'tools', 'sites'].includes(cur)) cur = cats.includes(cur) ? (S.modsCat = cur, 'tools') : 'mine'; S.tab.mods = cur;
   const nInst = m.tools.filter(t => t.installed).length, nMods = m.games.reduce((a, g) => a + g.count, 0);
   const sub = cur === 'mine' ? `${nMods ? pl(nMods, 'mod', 'mods') + ' em ' + pl(m.games.length, 'jogo', 'jogos') : 'nenhum mod instalado ainda'}` : cur === 'tools' ? `${nInst} de ${m.tools.length} instaladas` : `${m.sites.length} sites`;
-  let h = `<div class="h1"><h2>Mods e ferramentas</h2><span>${sub}</span><div class="acts">${cur === 'tools' ? `<button class="btn s" onclick="api.post('/api/open',{path:${jsq(m.root)}})" title="Pasta onde as ferramentas portáteis ficam">${I.folder} Pasta tools</button>` : cur === 'mine' ? `<button class="btn p" onclick="modInstallMenu(event)">${I.plus} Instalar mod</button>` : ''}</div></div>
+  let h = `<div class="h1"><h2>Mods e ferramentas</h2><span>${sub}</span><div class="acts">${cur === 'tools' ? `<button class="btn s" onclick="openPath(${jsq(m.root)})" title="Pasta onde as ferramentas portáteis ficam">${I.folder} Pasta tools</button>` : cur === 'mine' ? `<button class="btn p" onclick="modInstallMenu(event)">${I.plus} Instalar mod</button>` : ''}</div></div>
     <div class="tabs"><button class="${cur === 'mine' ? 'on' : ''}" onclick="S.tab.mods='mine';renderMods()">Meus mods${m.games.length ? ` <span class="n">${m.games.length}</span>` : ''}</button><button class="${cur === 'tools' ? 'on' : ''}" onclick="S.tab.mods='tools';renderMods()">Ferramentas${nInst ? ` <span class="n">${nInst}</span>` : ''}</button><button class="${cur === 'sites' ? 'on' : ''}" onclick="S.tab.mods='sites';renderMods()">Sites de mods</button></div>`;
   if (cur === 'mine') { $('#view').innerHTML = h + `<div id="myMods"></div>`; return renderMyMods(); }
   if (cur === 'sites') {
@@ -3514,7 +3540,7 @@ async function renderMods() {
   const chips = `<div class="chips" style="margin:0 0 14px"><button class="chip ${!fc ? 'on' : ''}" onclick="S.modsCat='';renderMods()">Todas <span class="n">${m.tools.length}</span></button><button class="chip ${fc === '__inst' ? 'on' : ''}" onclick="S.modsCat='__inst';renderMods()">Instaladas <span class="n">${nInst}</span></button>${cats.map(c => `<button class="chip ${fc === c ? 'on' : ''}" onclick="S.modsCat=${jsq(c)};renderMods()">${esc(c)} <span class="n">${m.tools.filter(t => t.category === c).length}</span></button>`).join('')}</div>`;
   const card = t => { const job = S.jobs['tool:' + t.id]; return `<div class="toolc ${t.installed ? 'ok' : ''}"><div class="th"><span class="ic">${t.installed ? I.check : I.wrench}</span><div class="tt"><b>${esc(t.title)}</b><small>${esc(t.category)}</small></div>${t.installed ? `<span class="pill ok">Instalada${t.version ? ' · ' + esc(t.version) : ''}</span>` : t.type === 'github_release' ? `<span class="pill">Portátil</span>` : `<span class="pill">Site</span>`}</div>
     <p>${esc(t.desc)}</p><div class="for"><b>Para:</b> ${esc(t.for)}</div>
-    ${job ? progHtml(job, 'tool:' + t.id) : `<div class="ta">${t.installed ? `<button class="btn p sm" onclick="api.post('/api/tools/launch',{id:'${t.id}'})">${I.play} Abrir</button><button class="btn s sm ico" title="Abrir pasta" onclick="api.post('/api/open',{path:${jsq(t.dir)}})">${I.folder}</button><button class="btn d sm ico" title="Remover" onclick="removeTool('${t.id}',${jsq(t.title)})">${I.trash}</button>` : t.type === 'github_release' ? `<button class="btn p sm" onclick="installTool('${t.id}')">${I.dl} Instalar</button><small class="mut">baixa do GitHub para tools\\</small>` : `<button class="btn s sm" onclick="api.post('/api/open_url',{url:${jsq(t.url || '')}})">${I.ext} Site oficial</button>`}</div>`}</div>`; };
+    ${job ? progHtml(job, 'tool:' + t.id) : `<div class="ta">${t.installed ? `<button class="btn p sm" onclick="api.post('/api/tools/launch',{id:'${t.id}'})">${I.play} Abrir</button><button class="btn s sm ico" title="Abrir pasta" onclick="openPath(${jsq(t.dir)})">${I.folder}</button><button class="btn d sm ico" title="Remover" onclick="removeTool('${t.id}',${jsq(t.title)})">${I.trash}</button>` : t.type === 'github_release' ? `<button class="btn p sm" onclick="installTool('${t.id}')">${I.dl} Instalar</button><small class="mut">baixa do GitHub para tools\\</small>` : `<button class="btn s sm" onclick="api.post('/api/open_url',{url:${jsq(t.url || '')}})">${I.ext} Site oficial</button>`}</div>`}</div>`; };
   const list = fc === '__inst' ? m.tools.filter(t => t.installed) : fc ? m.tools.filter(t => t.category === fc) : m.tools;
   h += chips;
   if (!list.length) h += emptyHtml(I.wrench, 'Nenhuma ferramenta instalada', 'As ferramentas do GitHub são baixadas pelo Ludrix e ficam portáteis em tools\\. Escolha uma categoria para ver as disponíveis.', [['Ver todas', "S.modsCat='';renderMods()", 1]]);
@@ -3542,8 +3568,8 @@ async function renderMyMods() {
   if (!r.dir) { $('#mgList').innerHTML = `<div class="empty"><b>Sem pasta</b>${esc(g ? g.title : key)} não tem uma pasta instalada conhecida — o Ludrix precisa dela para copiar os arquivos do mod.</div>`; return; }
   $('#mgList').innerHTML = (job ? `<div class="item"><div class="ic">${I.wrench}</div><div class="tx"><b>Instalando mod…</b>${progHtml(job, 'mod:' + key)}</div></div>` : '') + (r.mods.length ? `<div class="list">${r.mods.map(m => `<div class="item ${m.enabled ? '' : 'off'}"><div class="ic">${I.wrench}</div><div class="tx"><b>${esc(m.title)}</b><span>${pl(m.files.length, 'arquivo', 'arquivos')} · ${fmt(m.size)} · em ${esc(m.target ? m.target + '\\' : 'pasta do jogo')}${m.replaced.length ? ` · substituiu ${m.replaced.length} do jogo (guardados)` : ''}${m.enabled ? '' : ' · desligado'}</span></div>
       <div class="ac"><button class="sw ${m.enabled ? 'on' : ''}" title="${m.enabled ? 'Desligar (tira os arquivos e devolve os originais)' : 'Ligar de novo'}" onclick="modToggle(${jsq(key)},${jsq(m.id)},${m.enabled ? 'false' : 'true'})"></button><button class="btn d ico" title="Remover de vez" onclick="modRemove(${jsq(key)},${jsq(m.id)},${jsq(m.title)})">${I.trash}</button></div></div>`).join('')}</div>`
-    : `${emptyHtml(I.wrench, `Nenhum mod em ${esc(g ? g.title : key)}`, 'Baixe o mod no site de sua preferência e aponte o arquivo aqui.', [['Instalar mod', `modInstallMenu(event)`, 1], ['Abrir pasta do jogo', `api.post('/api/open',{path:${jsq(r.dir)}})`]])}`)
-    + `<p style="color:var(--muted2);font-size:12px;margin:14px 0 0">Pasta do jogo: <a href="#" onclick="api.post('/api/open',{path:${jsq(r.dir)}});return false">${esc(r.dir)}</a>${r.targets.length > 1 ? ` · pastas de mods encontradas: ${r.targets.filter(t => t.path).map(t => `<span class="code">${esc(t.path)}</span>`).join(' ')}` : ''}</p>`;
+    : `${emptyHtml(I.wrench, `Nenhum mod em ${esc(g ? g.title : key)}`, 'Baixe o mod no site de sua preferência e aponte o arquivo aqui.', [['Instalar mod', `modInstallMenu(event)`, 1], ['Abrir pasta do jogo', `openPath(${jsq(r.dir)})`]])}`)
+    + `<p style="color:var(--muted2);font-size:12px;margin:14px 0 0">Pasta do jogo: <a href="#" onclick="openPath(${jsq(r.dir)});return false">${esc(r.dir)}</a>${r.targets.length > 1 ? ` · pastas de mods encontradas: ${r.targets.filter(t => t.path).map(t => `<span class="code">${esc(t.path)}</span>`).join(' ')}` : ''}</p>`;
 }
 function modInstallMenu(ev) {
   showCtx([{ label: 'Arquivo do mod (.zip, .7z, .rar)', icon: 'doc', fn: () => modInstallAsk('file') }, { label: 'Pasta já extraída', icon: 'folder', fn: () => modInstallAsk('dir') }], ev.clientX, ev.clientY, 'Instalar mod');
@@ -4177,7 +4203,7 @@ async function savesPanel(key, deep) {
   const bks = s.backups && s.backups.length ? `<details class="salt"><summary>Backups automáticos (${s.backups.length}) — feitos antes de cada importação</summary>${s.backups.map(b => `<div class="bk"><span>${esc(b.name)} · ${fmt(b.size)}</span><button class="btn s sm" onclick="api.post('/api/saves/restore',{key:${jsq(key)},backup:${jsq(b.path)},dir:${jsq(s.dir)}}).then(r=>{toast(r.error?'err':'ok','Backup',r.error||'Restaurado');savesPanel(${jsq(key)})})">Restaurar</button></div>`).join('')}</details>` : '';
   const html = `<div class="saves">${where}${emuNote}${ext}${alts}
     <div class="sgrid">
-      <button class="sact" ${s.dir ? '' : 'disabled'} onclick="api.post('/api/open',{path:${jsq(s.dir)}})">${I.folder}<div><b>Abrir pasta</b><small>Ver os arquivos de save no Explorer</small></div></button>
+      <button class="sact" ${s.dir ? '' : 'disabled'} onclick="openPath(${jsq(s.dir)})">${I.folder}<div><b>Abrir pasta</b><small>Ver os arquivos de save no Explorer</small></div></button>
       <button class="sact" ${s.dir ? '' : 'disabled'} onclick="savesImport(${jsq(key)},${jsq(s.dir)},false)">${I.import}<div><b>Importar save (arquivo / .zip)</b><small>Um save baixado da internet vai para o lugar certo, com backup do atual</small></div></button>
       <button class="sact" ${s.dir ? '' : 'disabled'} onclick="savesImport(${jsq(key)},${jsq(s.dir)},true)">${I.folder}<div><b>Importar uma pasta</b><small>Quando o save é uma pasta inteira (PPSSPP, RPCS3, perfis)</small></div></button>
       <button class="sact" ${s.dir ? '' : 'disabled'} onclick="api.post('/api/saves/export',{key:${jsq(key)},dir:${jsq(s.dir)}}).then(r=>toast(r.error?'err':'ok','Exportar',r.error||'Zip salvo em Downloads'))">${I.dl}<div><b>Exportar (.zip)</b><small>Copia o save para Downloads para guardar ou compartilhar</small></div></button>

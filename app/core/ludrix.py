@@ -157,17 +157,33 @@ class Ludrix:
         self.pool.submit(self.bootstrap_run)
         self.pool.submit(lambda: self.emu.scan_all(True))
         self.reload_catalog(force=False)
-        if self.store.config.get("update_auto_check"):
-            self.pool.submit(self._auto_check_updates)
+        if self.store.config.get("update_auto_check", True):
+            threading.Thread(target=self._auto_update_loop, daemon=True).start()
 
     RESTART_KEYS = {"frameless": "Janela sem moldura", "tray_enabled": "Ícone na bandeja", "torrent_enabled": "Suporte a torrent"}
 
+    def _auto_update_loop(self):
+        time.sleep(20)
+        waits = [60, 300, 900]
+        while True:
+            if not self.store.config.get("update_auto_check", True):
+                time.sleep(600)
+                continue
+            if not self.online(True):
+                time.sleep(waits.pop(0) if waits else 1800)
+                continue
+            self._auto_check_updates()
+            waits = [60, 300, 900]
+            time.sleep(6 * 3600)
+
     def _auto_check_updates(self):
         try:
-            self.updates.check(online=self.online())
+            self.updates.check(online=True)
             if self.updates.available or self.updates.remote:
                 v = (self.updates.available or self.updates.remote).get("version")
-                self._push({"type": "update_available", "version": v})
+                if v and v != getattr(self, "_update_told", ""):
+                    self._update_told = v
+                    self._push({"type": "update_available", "version": v})
         except Exception as e:
             log.warning("update check: %s", e)
 
@@ -400,6 +416,38 @@ class Ludrix:
                 log.info("save backup %s -> %s", key, out)
         except Exception as e:
             log.warning("save backup %s: %s", key, e)
+
+    COMPAT_LAYERS = {"": "", "win7": "WIN7RTM", "win8": "WIN8RTM", "winxp": "WINXPSP3", "dpi": "HIGHDPIAWARE", "nofs": "DISABLEDXMAXIMIZEDWINDOWEDMODE"}
+
+    def compat_layer(self, key: str, layer: str) -> dict:
+        if os.name != "nt":
+            return {"error": "Modo de compatibilidade só existe no Windows"}
+        info = self.store.get(key) or {}
+        exe = str(info.get("exe") or "")
+        if not exe or "://" in exe or info.get("kind") == "rom" or not Path(exe).is_file():
+            return {"error": "Esse jogo não tem um executável próprio para aplicar o modo de compatibilidade"}
+        if layer not in self.COMPAT_LAYERS:
+            return {"error": "Modo desconhecido"}
+        import winreg
+        sub = r"Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers"
+        want = self.COMPAT_LAYERS[layer]
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, sub) as k:
+            try:
+                cur, _ = winreg.QueryValueEx(k, exe)
+            except OSError:
+                cur = ""
+            flags = [f for f in str(cur).replace("~", " ").split() if f not in set(v for v in self.COMPAT_LAYERS.values() if v) or f == want]
+            if want and want not in flags:
+                flags.append(want)
+            if flags:
+                winreg.SetValueEx(k, exe, 0, winreg.REG_SZ, "~ " + " ".join(flags))
+            else:
+                try:
+                    winreg.DeleteValue(k, exe)
+                except OSError:
+                    pass
+        self.store.update(key, compat=layer)
+        return {"ok": True, "layer": layer}
 
     def _diagnose_crash(self, key: str, info: dict, rc) -> str:
         exe = Path(info.get("exe") or "")
@@ -824,6 +872,9 @@ class Ludrix:
             if info.get("crash_count"):
                 d["crash_count"] = info["crash_count"]
                 d["crash_why"] = self._diagnose_crash(key, info, info.get("last_rc"))
+                d["last_rc"] = info.get("last_rc")
+            d["admin"] = bool(info.get("admin"))
+            d["compat"] = info.get("compat") or ""
         return d
 
     def _game_payload(self, key: str) -> dict | None:
@@ -969,7 +1020,11 @@ class Ludrix:
         m = self.meta.get(key)
         bgf = (m or {}).get("background_file")
         if bgf and Path(bgf).is_file():
-            return Path(bgf)
+            if Path(bgf).suffix.lower() in (".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"):
+                return Path(bgf)
+            h = self.images.local_hero(key, Path(bgf))
+            if h:
+                return h
         url = (m or {}).get("hero") or (m or {}).get("hero_url")
         if url:
             h = self.images.cover("hero:" + key, url)
@@ -2315,9 +2370,23 @@ class Ludrix:
         for v in (self.store.config.get("rom_dirs") or {}).values():
             roots += [Path(x) for x in (v if isinstance(v, list) else [v]) if x]
         for info in list(self.store.library.values()):
-            d = info.get("dir") or (Path(info["exe"]).parent if info.get("exe") else None)
-            if d:
-                roots.append(Path(d))
+            try:
+                ex = str(info.get("exe") or "")
+                d = info.get("dir") or (Path(ex).parent if ex and "://" not in ex else None)
+                if d:
+                    roots.append(Path(d))
+                wd = info.get("workdir")
+                if wd:
+                    roots.append(Path(wd))
+            except Exception:
+                continue
+        for v in (self.store.config.get("emu_paths") or {}).values():
+            if isinstance(v, str) and v:
+                roots.append(Path(v).parent)
+        for v in (self.store.config.get("custom_emulators") or {}).values():
+            ex = (v or {}).get("exe") if isinstance(v, dict) else ""
+            if ex:
+                roots.append(Path(ex).parent)
         for b in roots:
             try:
                 b = Path(b).resolve()
@@ -2329,16 +2398,40 @@ class Ludrix:
 
     OPEN_DOC_EXTS = {".txt", ".log", ".json", ".md", ".csv", ".ini", ".cfg", ".yaml", ".yml", ".png", ".jpg", ".jpeg", ".webp"}
 
-    def open_path(self, p: str):
+    def open_path(self, p: str, key: str = ""):
         import os, subprocess, sys
-        if not p or not Path(p).exists():
-            return {"error": "Pasta não existe"}
+        cands = [p]
+        info = self.store.get(key) if key else None
+        if info:
+            ex = str(info.get("exe") or "")
+            cands += [info.get("dir"), info.get("workdir"), str(Path(ex).parent) if ex and "://" not in ex else ""]
+        found = ""
+        for c in cands:
+            c = os.path.expandvars(str(c or "").strip().strip('"').strip())
+            if not c:
+                continue
+            if "://" in c:
+                continue
+            try:
+                if Path(c).exists():
+                    found = c
+                    break
+            except Exception:
+                continue
+        if not found:
+            log.warning("abrir pasta: nenhum caminho existe %s", [c for c in cands if c])
+            return {"error": f"Pasta não encontrada: {p or (info or {}).get('dir') or '?'}"}
+        p = found
         if not self._path_allowed(Path(p)):
             return {"error": "Essa pasta não é do Ludrix"}
         if Path(p).is_file() and Path(p).suffix.lower() not in self.OPEN_DOC_EXTS:
-            return {"error": "Só pastas e arquivos de texto podem ser abertos por aqui"}
+            p = str(Path(p).parent)
         if os.name == "nt":
-            os.startfile(p)
+            try:
+                os.startfile(p)
+            except OSError as e:
+                log.warning("startfile %s: %s", p, e)
+                subprocess.Popen(["explorer.exe", p])
         elif sys.platform == "darwin":
             subprocess.Popen(["open", p])
         else:

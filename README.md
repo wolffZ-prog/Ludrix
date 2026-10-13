@@ -78,6 +78,7 @@ O AppImage traz tudo (Python, Qt WebEngine). Jogos nativos (`.sh`, `.x86_64`, `.
 
 **Modo Console**
 - Interface separada para TV e controle: capas grandes, navegação por analógico/D-pad, mesmas tabs do launcher. Abre pelo ícone ou automaticamente com controle conectado.
+- Modo sofá no launcher normal: com um controle ligado, qualquer botão passa a navegação para ele (D-pad move, A seleciona, B volta, X menu, Y favorito, LB/RB abas, Start joga). A interface aumenta e o mouse devolve o modo normal.
 
 **Aparência**
 - Tema escuro (padrão) e claro, cor de destaque, barra lateral ou inferior, escala adaptativa, intensidade de efeitos. Temas `.lxtheme` importáveis, feitos no [Ludrix Studio](#temas-e-ludrix-studio).

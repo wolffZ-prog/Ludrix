@@ -31,6 +31,7 @@ Latest: **[Releases](https://github.com/wolffZ-prog/Ludrix/releases/latest)**. R
 - **Emulators** — 25 systems, 45 emulators catalogued, installed from official sites into the Ludrix folder. Point a ROM folder per console and the games join the Library.
 - **Central** — missing runtimes (Visual C++, DirectX, .NET, PhysX…), Game Mode, useful tools via winget / Microsoft Store, Minecraft launcher detection.
 - **Console Mode** — separate TV/controller interface with the same tabs.
+- **Couch mode** — in the regular launcher, any gamepad button hands navigation to the controller (D-pad moves, A selects, B backs out, X menu, Y favorite, LB/RB tabs, Start plays); the UI scales up and the mouse returns to normal.
 - **Appearance** — light/dark, accent, side or bottom bar, adaptive scale, importable `.lxtheme` themes made with Ludrix Studio (a separate program by the same author, not part of this repository). Portuguese (Brazil) and English.
 - **System** — truly portable (`data/`, `games/`, `emulation/`, `downloads/`, `themes/` all inside the folder), tray, optional autostart, single instance, self-repair on boot, signed updates (Ed25519) with automatic rollback, full library export/import.
 

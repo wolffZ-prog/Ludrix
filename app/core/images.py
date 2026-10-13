@@ -128,6 +128,22 @@ class ImageCache:
     def shot(self, key: str, i: int, url: str) -> Path | None:
         return self._fetch(f"s:{key}:{i}", url, paths.CACHE_SHOTS, SHOT_H, 76)
 
+    def local_hero(self, key: str, src: Path) -> Path | None:
+        p = paths.CACHE_COVERS / f"{_safe('hb:' + key)}.webp"
+        try:
+            if p.exists() and p.stat().st_mtime >= src.stat().st_mtime:
+                return p
+            data = _convert(src.read_bytes(), COVER_H, 82)
+            if not data:
+                return None
+            p.parent.mkdir(parents=True, exist_ok=True)
+            tmp = p.with_suffix(".tmp")
+            tmp.write_bytes(data)
+            tmp.replace(p)
+            return p
+        except OSError:
+            return None
+
     def local_thumb(self, key: str, src: Path) -> Path | None:
         p = paths.CACHE_THUMBS / f"{_safe('t:' + key)}.webp"
         try:

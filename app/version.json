@@ -1,7 +1,7 @@
 {
-  "version": "3.0.1",
+  "version": "3.0.2",
   "channel": "stable",
   "date": "2026-10-12",
   "name": "LudrixHub",
-  "changelog": "- Reenvio assinado da 3.0.0: o pacote anterior saiu sem assinatura e o Ludrix o recusava em Checar atualizações. Nenhuma mudança no programa além do número da versão."
+  "changelog": "- Mural: com ordem A–Z a parede fica alfabética de verdade (antes seguia a ordem inteligente do Início e o índice de letras não batia); o índice só aparece quando a ordem é mesmo alfabética.\n- Estante: texto do destaque legível também sobre artes claras.\n- Tema claro refeito: fundo cinza-pedra com pouco brilho, barra lateral escura e destaque da Estante sempre escuro sobre a arte.\n- Estante: com o painel aberto o destaque encolhe sem sobrepor botões e números.\n- Editar → Mídia: a prévia de capa e fundo não mostra mais a imagem escolhida para o jogo editado antes."
 }
