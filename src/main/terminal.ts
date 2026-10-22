@@ -700,12 +700,12 @@ cmd('openfolder', 'Abre uma pasta do Ludrix no Explorer', (t, a) => {
     return `Abrindo ${p}`;
 }, { args: [['qual', 'root | data | games | downloads | emulation | themes | updates | cache | log', true]], examples: ['/openfolder data', '/openfolder log'], aliases: ['folder'] });
 
-cmd('cache', 'Mostra o tamanho do cache (ou limpa: /cache clear)', (t, a) => {
+cmd('cache', 'Mostra o tamanho do cache (ou limpa: /cache clear)', async (t, a) => {
     if (a.length && a[0].toLowerCase() === 'clear') {
-        const r = t.n.clearCache(['web', 'thumbs']);
+        const r = await t.n.clearCache(['web', 'thumbs']);
         return 'Cache limpo. ' + JSON.stringify(r);
     }
-    const info = t.n.cacheInfo();
+    const info = await t.n.cacheInfo();
     return Object.entries<any>(info).map(([k, v]) => `${k.padEnd(12)} ${typeof v === 'number' ? human(v) : v}`).join('\n');
 }, { args: [['clear', 'escreva clear pra limpar miniaturas/web', false]], examples: ['/cache', '/cache clear'] });
 

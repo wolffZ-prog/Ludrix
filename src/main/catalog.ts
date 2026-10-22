@@ -168,6 +168,13 @@ export class Catalog {
         return this.be.hub.covers.customPath(key);
     }
 
+    hasHero(m: any): boolean {
+        if (!m)
+            return false;
+        if (m.hero || m.hero_url)
+            return true;
+        return Boolean(m.background_file && this.existsCached(String(m.background_file)));
+    }
     hasThumb(key: string): boolean {
         return this.be.hub.images.hasThumb(key);
     }
@@ -208,7 +215,7 @@ export class Catalog {
             creator: (m || {}).developer || e.creator, year: (m || {}).year || e.year,
             size: e.size, genres: genres.slice(0, 3), cats: this.categoryOf(e, m),
             installed: this.store.isInstalled(e.key) || Boolean(e.extra.local_path && this.existsCached(e.extra.local_path)), job: this.be.jobs.has(e.key),
-            has_meta: Boolean(m), thumb_ok: this.hasThumb(e.key) || Boolean(this.customPath(e.key)),
+            has_meta: Boolean(m), hero_ok: this.hasHero(m), thumb_ok: this.hasThumb(e.key) || Boolean(this.customPath(e.key)),
             torrent: Boolean(e.magnet || e.torrent_url),
             playtime: info.playtime || 0, status: (m || {}).status || '', score: Math.trunc(Number((m || {}).score || 0)),
             last_played: info.last_played || 0,
@@ -248,7 +255,7 @@ export class Catalog {
                     || Boolean(info.mc === 'java' && !info.exe && info.dir && util.isDir(String(info.dir))),
                 job: false,
                 mc: info.mc || '', mc_nolauncher: Boolean(info.mc === 'java' && !info.exe),
-                has_meta: Boolean(m), thumb_ok: this.hasThumb(key), torrent: false,
+                has_meta: Boolean(m), hero_ok: this.hasHero(m), thumb_ok: this.hasThumb(key), torrent: false,
                 playtime: info.playtime || 0, last_played: info.last_played || 0,
                 added_at: info.installed_at || 0, fav: favs.has(key), cv: this.cv(key, m), source: info.source || '',
                 store_src: info.store_src || '', play_count: info.play_count || 0, has_args: key in ga,
@@ -283,7 +290,7 @@ export class Catalog {
             Object.assign(r, {
                 installed: true, job: false, cats: ['emu'], genres: ((m || {}).genres || []).slice(0, 3),
                 creator: (m || {}).developer || '', year: (m || {}).year || '',
-                repo: 'local', has_meta: Boolean(m), thumb_ok: this.hasThumb(r.key), torrent: false,
+                repo: 'local', has_meta: Boolean(m), hero_ok: this.hasHero(m), thumb_ok: this.hasThumb(r.key), torrent: false,
                 playtime: info.playtime || 0, last_played: info.last_played || 0,
                 added_at: info.installed_at || this.romSeen.get(r.key), fav: favs.has(r.key), cv: this.cv(r.key, m),
                 source: info.source || '', store_src: info.store_src || '', play_count: info.play_count || 0, status: (m || {}).status || '', score: Math.trunc(Number((m || {}).score || 0)),
@@ -302,7 +309,7 @@ export class Catalog {
             roms.push({
                 key: k, repo: 'local', id: k, title: info.title || k.split(':').pop(), kind: 'rom', system: sid, path: ex, size: 0,
                 installed: false, missing: true, job: false, cats: ['emu'], genres: ((m || {}).genres || []).slice(0, 3),
-                creator: (m || {}).developer || '', year: (m || {}).year || '', has_meta: Boolean(m), thumb_ok: this.hasThumb(k), torrent: false,
+                creator: (m || {}).developer || '', year: (m || {}).year || '', has_meta: Boolean(m), hero_ok: this.hasHero(m), thumb_ok: this.hasThumb(k), torrent: false,
                 playtime: info.playtime || 0, last_played: info.last_played || 0, added_at: info.installed_at || 0, fav: favs.has(k), cv: this.cv(k, m),
                 source: info.source || '', store_src: info.store_src || '', play_count: info.play_count || 0, status: (m || {}).status || '', score: Math.trunc(Number((m || {}).score || 0)),
             });

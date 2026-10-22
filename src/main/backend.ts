@@ -1534,13 +1534,10 @@ class Backend {
         return this.customUX.fonts();
     }
     /* ------------------------------- cache ------------------------------- */
-    cacheInfo() {
+    async cacheInfo() {
+        const [web, thumbs, covers, shots, meta, downloads] = await Promise.all([P.CACHE_WEB, P.CACHE_THUMBS, P.CACHE_COVERS, P.CACHE_SHOTS, P.CACHE_META, P.DOWNLOADS].map((d) => P.dirSizeAsync(d)));
         return {
-            web: P.dirSize(P.CACHE_WEB),
-            thumbs: P.dirSize(P.CACHE_THUMBS),
-            covers: P.dirSize(P.CACHE_COVERS) + P.dirSize(P.CACHE_SHOTS),
-            meta: P.dirSize(P.CACHE_META),
-            downloads: P.dirSize(P.DOWNLOADS),
+            web, thumbs, covers: covers + shots, meta, downloads,
             log: fs.existsSync(P.LOG_FILE) ? fs.statSync(P.LOG_FILE).size : 0,
         };
     }

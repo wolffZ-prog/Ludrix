@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.0.3 — 2026-10-22
+- Ajustes abre na hora: a tela esperava quatro consultas (temas, tamanho do cache, fontes, hardware) antes de desenhar qualquer coisa; medir o cache percorria todas as pastas de capas e downloads e ainda prendia o processo principal. Agora a tela aparece de imediato, o tamanho do cache é lido em segundo plano só na aba Ferramentas e o hardware só na aba Sistema.
+- Ajustes refeitos: cada opção é uma linha dentro de um bloco, com título e descrição à esquerda e o controle à direita, alinhados e com a mesma altura; seções com título e explicação fora do bloco; opções avançadas no mesmo bloco, com fundo levemente diferente; campos numéricos e de texto com largura fixa; coluna lateral mais enxuta. Vale para as sete abas, no tema escuro e no claro.
+- Topo da Biblioteca: usa o fundo (hero) do jogo selecionado como imagem da faixa, com a capa à esquerda; jogo sem fundo fica na cor normal do tema, sem faixa colorida.
+
 ## 4.0.2 — 2026-10-22
 - Vidro fosco refeito: na 4.0.1 o acrílico deixava Ajustes com blocos pretos, a tela de Detalhes mostrando a biblioteca por trás e temas escuros quebrados. Agora todas as superfícies do tema (fundo, barra lateral, painéis, cartões, menus, caixas) ficam translúcidas na mesma proporção sobre o acrílico do Windows 11, nos temas escuro, claro e importados; cabeçalhos fixos desfocam o que rola por baixo; a tela de Detalhes esconde a biblioteca enquanto está aberta; o tom do acrílico do sistema segue o tema escolhido.
 - Topo da Biblioteca: mostra o jogo selecionado em qualquer modo de exibição (antes só no modo mural, nos outros ficava no último jogado) e a capa ocupa a altura inteira da faixa.

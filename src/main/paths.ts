@@ -170,5 +170,32 @@ function dirSize(p) {
     walk(p);
     return total;
 }
+async function dirSizeAsync(p) {
+    let total = 0;
+    const walk = async (dir) => {
+        let entries;
+        try {
+            entries = await fs.promises.readdir(dir, { withFileTypes: true });
+        }
+        catch {
+            return;
+        }
+        for (const e of entries) {
+            const full = path.join(dir, e.name);
+            try {
+                if (e.isDirectory())
+                    await walk(full);
+                else if (e.isFile())
+                    total += (await fs.promises.stat(full)).size;
+            }
+            catch {
+                /* ignore */
+            }
+        }
+    };
+    if (fs.existsSync(p))
+        await walk(p);
+    return total;
+}
 
-export { APP_DIR, bootTries, bootBegin, bootOk, bootRead, bootWrite, ensureDirs, dirSize, FROZEN, ROOT, DATA, CACHE, CACHE_WEB, CACHE_THUMBS, CACHE_COVERS, CACHE_META, CACHE_SHOTS, DOWNLOADS, GAMES, EMU, EMU_EMULATORS, EMU_GAMES, EMU_BIOS, TOOLS, THEMES, FLASH, REDISTS, UPDATES, BIN, BACKUPS, UI, ASSETS, CONFIG_FILE, LIBRARY_FILE, LOG_FILE, INSTANCE_FILE, BOOT_FILE, PENDING_VERIFY };
+export { APP_DIR, bootTries, bootBegin, bootOk, bootRead, bootWrite, ensureDirs, dirSize, dirSizeAsync, FROZEN, ROOT, DATA, CACHE, CACHE_WEB, CACHE_THUMBS, CACHE_COVERS, CACHE_META, CACHE_SHOTS, DOWNLOADS, GAMES, EMU, EMU_EMULATORS, EMU_GAMES, EMU_BIOS, TOOLS, THEMES, FLASH, REDISTS, UPDATES, BIN, BACKUPS, UI, ASSETS, CONFIG_FILE, LIBRARY_FILE, LOG_FILE, INSTANCE_FILE, BOOT_FILE, PENDING_VERIFY };

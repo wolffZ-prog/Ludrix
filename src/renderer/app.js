@@ -2077,7 +2077,6 @@ function themesHtml(c) {
   </div>`;
 }
 function themeListHtml(c) {
-  if (!S.themes) { S.themes = []; api.get('/api/themes/full').then(r => { S.themes = Array.isArray(r) ? r : []; if (S.view === 'settings' && S.tab.settings === 'appearance') renderSettings(true); }); }
   const list = (S.themes || []).filter(t => t.id && t.id.startsWith('file:')), cur = c.theme || 'system', usingFile = cur.startsWith('file:');
   const card = t => { const on = cur === t.id; return `<div class="thcard${on ? ' on' : ''}" data-tid="${esc(t.id)}" oncontextmenu="event.preventDefault();themeMenu(${jsq(t.id)},event.clientX,event.clientY)" onclick="${on ? '' : `pickTheme(${jsq(t.id)})`}" title="${esc(t.description || t.name)}"><i class="thsw" style="${themeSwatch(t)}"></i><div class="tht"><b>${esc(t.name)}</b><small>${t.scheme === 'light' ? 'Claro' : 'Escuro'}${t.author ? ' · ' + esc(t.author) : ''}</small></div>${on ? `<span class="pill ok">Em uso</span>` : ''}<button class="ib" title="Opções" onclick="event.stopPropagation();themeMenu(${jsq(t.id)},this.getBoundingClientRect().left,this.getBoundingClientRect().bottom+4)">${I.dots}</button></div>`; };
   return `<div class="frow" style="align-items:flex-start;flex-direction:column;gap:10px"><div class="l" style="width:100%;display:flex;align-items:center;gap:10px"><div style="flex:1"><b>Temas instalados</b><span>Arquivos <b style="display:inline;font-size:12px">.lxtheme</b> ou .zip de tema mudam as cores por cima do visual padrão. Botão direito num tema: exportar ou apagar.</span></div><button class="btn s xs" onclick="themeImport()">${I.dl}<span>Importar</span></button>${usingFile ? `<button class="btn s xs" onclick="pickTheme('dark')">Voltar ao padrão</button>` : ''}</div>
@@ -2182,12 +2181,32 @@ const CFMT = { n: v => v, pct: v => v + '%', px: v => v + 'px', deg: v => v + '�
 function setPath(path, v) { const o = {}; let cur = o; const parts = path.split('.'); parts.forEach((p, i) => { if (i === parts.length - 1) cur[p] = v; else cur = cur[p] = {}; }); return o; }
 function cssVar(n) { const v = getComputedStyle(document.documentElement).getPropertyValue(n).trim(); return /^#[0-9a-f]{6}$/i.test(v) ? v : rgbToHex(v) || '#000000'; }
 function rgbToHex(v) { const m = v.match(/rgba?\((\d+)[ ,]+(\d+)[ ,]+(\d+)/); return m ? '#' + [m[1], m[2], m[3]].map(x => (+x).toString(16).padStart(2, '0')).join('') : ''; }
+function settingsData(fresh) {
+  if (fresh) { S._setOk = false; S._cache = null; }
+  if (!S._setOk && !S._setReq) {
+    S._setReq = Promise.all([api.get('/api/themes/full'), api.get('/api/repos')]).then(([t, r]) => {
+      S._setReq = null; S._setOk = true;
+      const nt = Array.isArray(t) ? t : [], nr = Array.isArray(r) ? r : [];
+      const changed = JSON.stringify(nt) !== JSON.stringify(S.themes || []) || JSON.stringify(nr) !== JSON.stringify(S.repos || []);
+      S.themes = nt; S.repos = nr;
+      if (changed && S.view === 'settings') renderSettings();
+    }).catch(() => { S._setReq = null; });
+  }
+  const tab = S.tab.settings || 'general';
+  if (tab === 'tools' && !S._cache && !S._cacheReq) S._cacheReq = api.get('/api/cache').then(d => { S._cacheReq = null; S._cache = d || {}; settingsCacheFill(); }).catch(() => { S._cacheReq = null; });
+  if (tab === 'system' && !S.hw && !S._hwReq) S._hwReq = api.get('/api/hardware').then(d => { S._hwReq = null; S.hw = d || { error: 'sem resposta' }; if (S.view === 'settings' && (S.tab.settings || 'general') === 'system') renderSettings(); }).catch(() => { S._hwReq = null; });
+  return { themes: S.themes || [], repos: S.repos || [], cache: S._cache || null, hw: S.hw || null };
+}
+function settingsCacheFill() {
+  const box = $('#cacheBox'); if (!box || !S._cache) return;
+  box.querySelectorAll('input[value]').forEach(i => { const sp = i.parentElement.querySelector('span'); if (sp) sp.textContent = fmt(S._cache[i.value]) || '0 B'; });
+}
 async function renderSettings(fresh) {
-  if (fresh || !S._set) S._set = await Promise.all([api.get('/api/themes/full'), api.get('/api/cache'), api.get('/api/repos'), S.hw ? Promise.resolve(S.hw) : api.get('/api/hardware')]);
-  const [themes, cache, repos, hw] = S._set;
-  S.themes = themes; S.hw = hw; if (S.view !== 'settings') return;
+  const { themes, cache, repos, hw } = settingsData(fresh);
+  if (S.view !== 'settings') return;
   if ((S.tab.settings || 'general') === 'custom' && !S.custom) S.custom = await api.get('/api/custom');
   if ((S.tab.settings || 'general') === 'custom' && !S.fonts) S.fonts = ((await api.get('/api/fonts')) || {}).fonts || [];
+  if (S.view !== 'settings') return;
   const keepScroll = $('#view').scrollTop;
   const c = S.config; const tab = S.tab.settings || 'general';
   const sw = (k, label, desc) => `<div class="frow"><div class="l"><b>${label}${restartTag(k)}</b><span>${desc}</span></div><button class="sw ${c[k] ? 'on' : ''}" onclick="setCfg({${k}:!S.config.${k}})"></button></div>`;
@@ -2329,7 +2348,7 @@ async function renderSettings(fresh) {
     diagnostico: () => sec('diagnostico', 'Diagnóstico', [`
     <div class="frow"><div class="l"><b>Diagnóstico</b><span>Confere pasta, espaço em disco, WebView2, ferramentas e mostra o fim do log — copie e cole quando algo der errado</span></div><button class="btn s sm" onclick="showDiag()">Ver diagnóstico</button></div>`]),
     limpeza: () => sec('limpeza', 'Limpeza', [`
-    <div class="cache" id="cacheBox">${[['web', 'Listas das fontes'], ['thumbs', 'Miniaturas'], ['covers', 'Capas grandes'], ['meta', 'Informações dos jogos'], ['downloads', 'Downloads incompletos'], ['log', 'Registro de erros']].map(([k, n]) => `<label><input type="checkbox" value="${k}"><div><b>${n}</b><span>${fmt(cache[k]) || '0 B'}</span></div></label>`).join('')}</div>
+    <div class="cache" id="cacheBox">${[['web', 'Listas das fontes'], ['thumbs', 'Miniaturas'], ['covers', 'Capas grandes'], ['meta', 'Informações dos jogos'], ['downloads', 'Downloads incompletos'], ['log', 'Registro de erros']].map(([k, n]) => `<label><input type="checkbox" value="${k}"><div><b>${n}</b><span>${cache ? (fmt(cache[k]) || '0 B') : '…'}</span></div></label>`).join('')}</div>
     <div style="margin-top:12px;display:flex;gap:8px"><button class="btn d sm" onclick="clearCache()">${I.trash} Limpar selecionados</button><button class="btn s sm" onclick="openPath(${jsq(c.root)})">${I.folder} Abrir pasta do app</button></div>`], { cls: 'wide', help: 'Tudo o que o launcher guarda aqui (capas, listas, informações) serve apenas para abrir mais rápido. Pode apagar sem receio: é baixado de novo quando necessário. Seus jogos e configurações não são afetados.', p: 'Tudo o que o launcher cria fica dentro da própria pasta. Selecione o que apagar:' }),
     pc: () => hwHtml(hw),
     segundo_plano: () => sec('segundo_plano', 'Em segundo plano', [`
@@ -3209,27 +3228,24 @@ function nowbarInner(key, label) {
   const g = S.byKey[key]; if (!g) return '';
   const live = S.sessions && S.sessions[key], sys = g.system && g.system !== 'pc' ? (S.systems[g.system] || g.system) : 'PC';
   const sub = [g.last_played ? cap(lastPlayedText(g.last_played)) : 'Nunca jogado', g.playtime >= 60 ? fmtTime(g.playtime) : '', sys, g.year || ''].filter(Boolean).join(' · ');
-  return `<div class="nbcov" onclick="openGame(${jsq(key)})"><div class="ph">${esc(g.title)}</div><img src="/thumb/${enc(key)}?v=${g.cv || 0}" alt="" decoding="async" onload="this.classList.add('ld');nbBand(this)" onerror="this.remove()"></div>
+  return `<div class="nbcov" onclick="openGame(${jsq(key)})"><div class="ph">${esc(g.title)}</div><img src="/thumb/${enc(key)}?v=${g.cv || 0}" alt="" decoding="async" onload="this.classList.add('ld')" onerror="this.remove()"></div>
     <div class="nbtxt"><small class="nbl">${label}</small><h2 onclick="openGame(${jsq(key)})" title="${esc(g.title)}">${esc(g.title)}</h2><div class="nbsub">${esc(sub)}</div>
       <div class="nbacts"><button class="btn p xs" onclick="play(${jsq(key)})">${live ? I.x + ' Encerrar' : playLbl(key)}</button><button class="btn s xs" onclick="openGame(${jsq(key)})">${I.info}<span>Detalhes</span></button><button class="btn s xs" onclick="openPath(${jsq(g.dir || '')},${jsq(key)})">${I.folder}<span>Pasta</span></button><button class="btn s xs ic ${g.fav ? 'on' : ''}" title="Favorito" onclick="toggleFav(${jsq(key)});this.classList.toggle('on')">${I.star}</button></div></div>`;
 }
+function nbHero(key) { const g = S.byKey[key]; return g && g.hero_ok ? `--nbimg:url('/hero/${enc(key)}?v=${g.cv || 0}')` : ''; }
 function stageBase(hm) {
   const [key, label] = nowKey(hm); if (!key) return '';
-  return `<div class="nowbar" id="nowbar" data-key="${esc(key)}" data-ctx="game">${nowbarInner(key, label)}</div>`;
+  const h = nbHero(key);
+  return `<div class="nowbar${h ? ' hb' : ''}" id="nowbar" data-key="${esc(key)}" data-ctx="game" style="${h}">${nowbarInner(key, label)}</div>`;
 }
 function nowbarFill() {
   const nb = $('#nowbar'); if (!nb || S.view !== 'home') return;
   const [key, label] = nowKey(); if (!key) return;
   if (nb.dataset.key === key && nb.dataset.label === label) return;
-  nb.dataset.key = key; nb.dataset.label = label; nb.style.background = '';
-  if (BAND[key]) nb.style.background = bandMix(BAND[key], 14, 'card');
+  nb.dataset.key = key; nb.dataset.label = label;
+  const h = nbHero(key); nb.style.cssText = h; nb.classList.toggle('hb', !!h);
   nb.classList.remove('nbsw'); void nb.offsetWidth; nb.classList.add('nbsw');
   nb.innerHTML = nowbarInner(key, label);
-}
-function nbBand(img) {
-  const nb = img.closest('.nowbar'); if (!nb) return; const key = nb.dataset.key;
-  if (BAND[key] === undefined) { try { BAND[key] = dominantColor(img) || ''; } catch (_) { BAND[key] = ''; } }
-  if (BAND[key]) nb.style.background = bandMix(BAND[key], 14, 'card');
 }
 function stageSpot(key, g) {
   return `<div class="stage spot" id="stage"><div class="sbg" style="background-image:url('/hero/${enc(key)}')"></div><div class="sgrad"></div>
@@ -3784,7 +3800,8 @@ applyAnim(); loadCatalog(false); poll();
 const GB = n => n ? (n / 2 ** 30).toFixed(n > 2 ** 30 * 100 ? 0 : 1) + ' GB' : '—';
 const MB = n => !n ? '—' : n >= 2 ** 30 ? (n / 2 ** 30).toFixed(1) + ' GB' : Math.round(n / 2 ** 20) + ' MB';
 function hwHtml(hw) {
-  if (!hw || hw.error) return `<div class="sec"><h3>Seu PC</h3><p>Não consegui ler o hardware${hw && hw.error ? ': ' + esc(hw.error) : ''}.</p></div>`;
+  if (!hw) return `<div class="sec" id="s-pc"><h3>Seu PC</h3><p>Lendo o hardware…</p></div>`;
+  if (hw.error) return `<div class="sec"><h3>Seu PC</h3><p>Não consegui ler o hardware${hw && hw.error ? ': ' + esc(hw.error) : ''}.</p></div>`;
   const t = hw.tier || {}; const lvl = { high: ['ALTO', 'green'], mid: ['MÉDIO', 'amber'], low: ['BÁSICO', 'muted'] }[t.level] || ['?', 'muted'];
   const gpus = hw.gpus && hw.gpus.length ? hw.gpus : [{ name: 'Não identificada', vram: 0 }];
   const ramUse = hw.ram.total ? Math.round((1 - hw.ram.available / hw.ram.total) * 100) : 0;

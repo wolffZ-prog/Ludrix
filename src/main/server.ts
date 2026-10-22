@@ -281,7 +281,7 @@ async function routeGet(req, res, p, q, be, getWindow) {
     if (p === '/api/notifications')
         return sendJson(res, be.notifications());
     if (p === '/api/cache')
-        return sendJson(res, be.cacheInfo());
+        return sendJson(res, await be.cacheInfo());
     if (p === '/api/themes' || p === '/api/themes/full')
         return sendJson(res, be.themes());
     if (p === '/api/fonts')
@@ -507,7 +507,7 @@ async function routePost(req, res, p, _q, be, getWindow) {
     if (p === '/api/gamemode/restore')
         return sendJson(res, await be.gameModeRestore());
     if (p === '/api/cache/clear')
-        return sendJson(res, be.clearCache(b.what || []));
+        return sendJson(res, await be.clearCache(b.what || []));
     if (p === '/api/notifications/ack')
         return sendJson(res, be.notifAck(b.id, Boolean(b.clear)));
     // ---- seletores de arquivo ----
