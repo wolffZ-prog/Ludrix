@@ -13,7 +13,7 @@ build.bat                        = python tools\build.py all
 |---|---|
 | `check` | confere código, catálogos, interface e sobe o servidor num teste rápido |
 | `bump X.Y.Z` | grava a versão em `app/version.json` |
-| `exe` | PyInstaller: `Ludrix.exe`, `LudrixConsole.exe`, `updater.exe` → `build/exe`; embute o WebView2 Fixed Version |
+| `exe` | PyInstaller: `Ludrix.exe`, `LudrixConsole.exe`, `updater.exe` → `build/exe`; usa o WebView2 Runtime do Windows (instala pelo bootstrapper se faltar) |
 | `zip` | `release/<v>/Ludrix/` + `Ludrix-<v>.zip` (programa pronto, `app/` em bytecode) |
 | `src` | `Ludrix-<v>-src.zip` |
 | `patch [--min X]` | `ludrix-<v>-patch.lxup` |

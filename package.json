@@ -1,0 +1,30 @@
+{
+  "name": "ludrix",
+  "version": "4.0.0",
+  "productName": "LudrixHub",
+  "description": "LudrixHub - launcher de jogos portátil",
+  "main": "dist/main/boot.js",
+  "author": "WOLFFZ",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "tsc -p tsconfig.json && electron .",
+    "folder": "node tools/build.js folder",
+    "release": "node tools/build.js all",
+    "dist:linux": "tsc -p tsconfig.json && electron-builder --linux --x64"
+  },
+  "devDependencies": {
+    "electron": "33.2.0",
+    "electron-builder": "25.1.8",
+    "rcedit": "^4.0.1",
+    "rimraf": "6.0.1",
+    "typescript": "5.7.2",
+    "yazl": "^3.3.1"
+  },
+  "dependencies": {
+    "adm-zip": "0.5.16",
+    "electron-log": "5.2.4",
+    "webtorrent": "^2.5.2"
+  }
+}

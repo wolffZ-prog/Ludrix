@@ -1,5 +1,24 @@
 # Changelog
 
+## 4.0.0 — 2026-10-22 — Novo motor
+- Interface nova (Base): barra lateral com busca, seções e plataformas; biblioteca em ordem alfabética com divisórias por letra e atalhos Todos / Favoritos / Jogados esta semana / Nunca joguei; clicar numa capa abre o painel lateral do jogo (Jogar, favorito, tempo, última vez, sessões, executável, pasta, saves, mods, capa, editar); faixa "Continuar" com os três últimos jogados. Tela de detalhes e Ajustes refeitos no mesmo desenho. Dois temas, preto e branco, só cor sólida e linha fina: sem degradê, desfoque ou sombra.
+- Janela: redimensionar ou maximizar não deixa mais a janela presa ao mouse (o arrasto termina ao soltar o botão, e por segurança para sozinho depois de 15 s ou quando a janela perde o foco).
+- Depois de migrar do 3.0.x, o backup do motor antigo é apagado sozinho quando o 4.0.0 abre bem; cada atualização substitui o programa inteiro e deixa só os dados do usuário.
+- Build: pasta temporária e `dist\` apagadas ao final; cache de dependências fora da pasta do código; arquivo de categorias sem duplicata.
+- Ludrix inteiro reescrito em TypeScript sobre Electron: a janela não depende mais do WebView2 (nem do Edge) e funciona em qualquer Windows 10/11 x64.
+- Distribuído como pasta (Ludrix.exe + runtime\ + app\); nada é gravado fora dela. Quem está no 3.0.x recebe o 4.0.0 pelo "Checar atualizações" sem baixar nem reconfigurar nada.
+- Menu de contexto, bandeja, atalhos de controle, atualizador e modo console refeitos com o mesmo comportamento e aparência; configurações, biblioteca, temas e emuladores são lidos como estão.
+- Correções: o menu de contexto aparece onde foi clicado; a janela sem borda segue a configuração; prévia de temas; abrir Ajustes não consulta mais o WMI.
+- Pastas de jogos: escolher a pasta na configuração inicial ou adicionar uma pasta em Ajustes abre na hora a revisão dos jogos encontrados; a leitura de disco roda fora da interface e não trava em HD lento.
+- Leitura de pastas muito mais rápida: cada pasta de jogo é lida só até achar o executável (raiz, depois bin/Binaries), sem varrer os arquivos do jogo inteiro; em 300 pastas caiu de ~27 mil leituras de diretório para ~1 mil.
+- Menu de contexto: fechar o menu nativo não abre mais um segundo menu.
+- "Baixar metadados…": a fonte escolhida mostra uma lista de candidatos (nome, ano, plataformas, desenvolvedora) para escolher o jogo certo antes de aplicar. Nova fonte Wikidata, sem chave. Ajustes → Biblioteca → Fontes de metadados liga e desliga cada fonte.
+- Procurar capa/fundo na web: campo de busca editável, escolha do buscador (Automático, Google, Bing, DuckDuckGo, Yandex), resolução em cada imagem e "Carregar mais" sempre disponível.
+
+## 3.0.3 — 2026-10-13
+- Linux: a janela respeita o tamanho da tela (em telas pequenas e máquinas virtuais ela abria presa em tamanho cheio) e o ícone da bandeja passa a usar o Qt, que funciona no KDE e nos demais ambientes com área de notificação. `run.sh` avisa o que está fazendo na primeira vez.
+- Linux: rodar pelo código (`git clone` + `bash run.sh`) não deixa mais o repositório sujo; `git pull` atualiza sem erro.
+
 ## 3.0.2 — 2026-10-12
 - Mural: com ordem A–Z a parede fica alfabética de verdade (antes seguia a ordem inteligente do Início e o índice de letras não batia); o índice só aparece quando a ordem é mesmo alfabética.
 - Estante: texto do destaque legível também sobre artes claras.

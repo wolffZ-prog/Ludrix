@@ -6,15 +6,15 @@
 
 <p align="center">
   Launcher de jogos portátil para Windows.<br>
-  Biblioteca única para jogos de PC, emulados e rápidos · Store alimentada por listas que você escolhe · emuladores prontos · temas · Modo Console.
+  Jogos de PC, emulados e rápidos numa biblioteca só · Store alimentada por listas que você escolhe · emuladores prontos · Modo Console.
 </p>
 
 <p align="center">
-  <a href="https://github.com/wolffZ-prog/Ludrix/releases/latest"><img alt="Versão" src="https://img.shields.io/github/v/release/wolffZ-prog/Ludrix?label=vers%C3%A3o&color=5c6b82"></a>
-  <a href="https://github.com/wolffZ-prog/Ludrix/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/wolffZ-prog/Ludrix/total?color=5c6b82"></a>
-  <img alt="Windows 10/11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-5c6b82">
-  <img alt="Python" src="https://img.shields.io/badge/Python-3.11%E2%80%933.14-5c6b82">
-  <a href="LICENSE"><img alt="Licença" src="https://img.shields.io/github/license/wolffZ-prog/Ludrix?color=5c6b82"></a>
+  <a href="https://github.com/wolffZ-prog/Ludrix/releases/latest"><img alt="Versão" src="https://img.shields.io/github/v/release/wolffZ-prog/Ludrix?label=vers%C3%A3o&color=ff6a3d"></a>
+  <a href="https://github.com/wolffZ-prog/Ludrix/releases"><img alt="Downloads" src="https://img.shields.io/github/downloads/wolffZ-prog/Ludrix/total?color=ff6a3d"></a>
+  <img alt="Windows 10/11" src="https://img.shields.io/badge/Windows-10%20%7C%2011%20x64-ff6a3d">
+  <img alt="Electron" src="https://img.shields.io/badge/Electron-33-ff6a3d">
+  <a href="LICENSE"><img alt="Licença" src="https://img.shields.io/github/license/wolffZ-prog/Ludrix?color=ff6a3d"></a>
 </p>
 
 <p align="center">
@@ -22,7 +22,6 @@
   <a href="#o-que-ele-faz">O que ele faz</a> ·
   <a href="#capturas">Capturas</a> ·
   <a href="#fontes-de-jogos">Fontes</a> ·
-  <a href="#temas-e-ludrix-studio">Temas</a> ·
   <a href="#compilar">Compilar</a> ·
   <a href="docs/">Documentação</a> ·
   <a href="README.en.md">English</a>
@@ -40,36 +39,34 @@
 |---|---|
 | **`Ludrix-<versão>.zip`** | Programa pronto. Extrai em qualquer pasta (pode ser pendrive) e abre `Ludrix.exe`. Não instala nada no sistema. |
 | `ludrix-<versão>-patch.lxup` | Atualização. O Ludrix baixa e aplica sozinho em **Ajustes → Sistema → Checar atualizações**; também dá pra arrastar o arquivo pra janela. |
+| `ludrix-<versão>-full.lxup` | Atualização completa (programa + runtime). Só aparece quando o runtime muda — é a que leva o 3.0.x para o 4.0.0. |
 | `Ludrix-<versão>-src.zip` | Código-fonte desta mesma versão, pra compilar com `build.bat`. |
-| `LudrixHub-<versão>-x86_64.AppImage` | Linux. Dá permissão de execução e abre; nada é instalado. Dados em `~/.local/share/Ludrix`. |
+| `LudrixHub-<versão>-x86_64.AppImage` | Linux (experimental). Dá permissão de execução e abre; dados em `~/.local/share/Ludrix`. |
 
 Última versão: **[Releases](https://github.com/wolffZ-prog/Ludrix/releases/latest)**. Histórico completo em [CHANGELOG.md](CHANGELOG.md).
 
-Requisitos: Windows 10 ou 11, 64 bits. Usa o WebView2 Runtime do Windows (já vem no sistema; se faltar, o Ludrix instala sozinho na primeira abertura). Nada de conta, login ou cadastro.
+Requisitos: Windows 10 ou 11, 64 bits. Nada de conta, login, WebView2 ou instalação: o runtime vem dentro da pasta.
 
-### Linux
-
-O AppImage traz tudo (Python, Qt WebEngine). Jogos nativos (`.sh`, `.x86_64`, `.AppImage`, binários) abrem direto. Jogos de Windows (`.exe`) abrem pelo Proton: na primeira vez o Ludrix baixa o [umu-launcher](https://github.com/Open-Wine-Components/umu-launcher) e o GE-Proton (≈1 GB, uma vez só) e depois abre o jogo sozinho; o progresso aparece na Fila. Prefixo compartilhado em `data/pfx/shared` (ou um por jogo, em Editar → Instalação). Em Ajustes → Ao jogar dá pra trocar para o Wine do sistema. Precisa de `python3` na distro (o umu usa ele). Emuladores: os instalados na distro ou via Flatpak são usados; os de Windows abrem pelo Proton. Para rodar do código: `./run.sh` (cria um `.venv` com PyQt6).
+**Vindo do 3.0.x:** abra o Ludrix que você já usa → Ajustes → Checar atualizações. Ele baixa o 4.0.0, troca o motor e reabre com a mesma biblioteca, capas, configurações e emuladores. Nada precisa ser baixado nem configurado de novo.
 
 ## O que ele faz
 
 **Biblioteca**
 - Jogos de PC (`.exe`, atalhos, pastas inteiras), ROMs e jogos rápidos (Flash/HTML5) na mesma tela, com capas, categorias, filtros combináveis e busca com prefixos (`dev:`, `ano:`, `gen:`, `sis:`, `origem:`).
+- Grade em ordem alfabética com divisórias por letra e atalhos Todos / Favoritos / Jogados esta semana / Nunca joguei; faixa "Continuar" com os últimos jogados. Um clique abre o painel lateral do jogo (Jogar, tempo, última vez, pasta, saves, mods, capa); dois cliques ou botão direito abrem os detalhes. Temas escuro e claro, só cor sólida e linha fina.
 - Importa de Playnite, Steam, Epic, GOG, Ubisoft Connect, EA app, Battle.net, Amazon Games e itch.io. Os nomes que você digita nunca são alterados.
-- Capas, descrição, ano, desenvolvedora, screenshots e requisitos buscados automaticamente; tudo editável. Compara os requisitos com o seu PC.
-- Início em formato Estante: capa em pé com tempo jogado, nota e vezes, "Continuar jogando", "Adicionados há pouco", "Me surpreenda". Coleções (favoritos, jogando, zerados) e o último jogo aberto ficam no menu lateral.
-- Biblioteca em Mural: parede de capas com painel fixo ao lado — clica numa capa e vê arte, tempo, última vez, status, nota, capturas e resumo sem sair da tela. Grade de capas e lista com colunas continuam disponíveis.
+- Capas, descrição, ano, desenvolvedora, screenshots e requisitos buscados automaticamente (Steam, GOG, Wikipedia, Wikidata — sem chave), com lista de candidatos pra escolher o jogo certo; tudo editável. Compara os requisitos com o seu PC.
 - Status (planejo, jogando, zerado, 100%, em espera, abandonado) e nota de 1 a 10 por jogo; agrupar por status, nota, gênero, ano ou desenvolvedora. Backup automático de saves.
-- Clique com o botão direito em qualquer jogo: jogar, abrir pasta, trocar capa, mods, saves, atalho na área de trabalho, verificar arquivos.
+- Botão direito em qualquer jogo: jogar, abrir pasta, trocar capa, mods, saves, atalho na área de trabalho, verificar arquivos.
 
 **Store por fontes**
-- O Ludrix não traz nenhuma fonte de download embutida. Você adiciona listas `.json`, páginas de sites, coleções do archive.org, repositórios do GitHub ou pastas locais — e a Store passa a mostrar o que elas oferecem.
-- Baixa por link direto, hospedeiros (MEGA, MediaFire, Pixeldrain, Google Drive, itch.io e outros) ou torrent; downloads em etapas, pausa, fila com histórico.
+- Nenhuma fonte de download embutida. Você adiciona listas `.json`, páginas de sites, coleções do archive.org, repositórios do GitHub ou pastas locais — e a Store passa a mostrar o que elas oferecem.
+- Baixa por link direto, hospedeiros (MEGA, MediaFire, Pixeldrain, Google Drive, itch.io e outros) ou torrent (sem DHT, UPnP ou NAT-PMP); downloads em etapas, pausa, fila com histórico.
 - Instala o que baixou: extrai `.zip`/`.7z`/`.rar`, roda instaladores, monta imagens de disco, pede atalho na área de trabalho só se você quiser.
 - Recompilações e ports nativos (N64, Xbox 360, PS1…) vêm direto do GitHub, sempre na versão mais recente. Lista pronta: [`Recomps.json`](docs/FONTES.md#recomps).
 
 **Emuladores**
-- 25 sistemas e 45 emuladores catalogados (PCSX2, DuckStation, PPSSPP, Dolphin, melonDS, Xenia, mGBA, Snes9x, Rosalie's Mupen GUI, Eden…). Instala do site oficial com um clique, tudo portátil dentro da pasta do Ludrix.
+- 24 sistemas e 45 emuladores catalogados (PCSX2, DuckStation, PPSSPP, Dolphin, melonDS, Xenia, mGBA, Snes9x, Rosalie's Mupen GUI, Eden…). Instala do site oficial com um clique, tudo portátil dentro da pasta do Ludrix.
 - Aponta a pasta de ROMs de cada console e elas entram na Biblioteca. Vários emuladores por sistema; BIOS detectada.
 
 **Central**
@@ -78,40 +75,32 @@ O AppImage traz tudo (Python, Qt WebEngine). Jogos nativos (`.sh`, `.x86_64`, `.
 
 **Modo Console**
 - Interface separada para TV e controle: capas grandes, navegação por analógico/D-pad, mesmas tabs do launcher. Abre pelo ícone ou automaticamente com controle conectado.
-- Modo sofá no launcher normal: com um controle ligado, qualquer botão passa a navegação para ele (D-pad move, A seleciona, B volta, X menu, Y favorito, LB/RB abas, Start joga). A interface aumenta e o mouse devolve o modo normal.
+- Modo sofá no launcher normal: com um controle ligado, qualquer botão passa a navegação para ele (D-pad move, A seleciona, B volta, X menu, Y favorito, LB/RB abas, Start joga).
 
 **Aparência**
-- Tema escuro (padrão) e claro, cor de destaque, barra lateral ou inferior, escala adaptativa, intensidade de efeitos. Temas `.lxtheme` importáveis, feitos no [Ludrix Studio](#temas-e-ludrix-studio).
+- Tema escuro e claro. Fonte Rubik, ícones Tabler, escala adaptativa, opção de reduzir movimento.
 - Interface em português do Brasil e inglês.
 
 **Sistema**
-- Portátil de verdade: tudo fica na pasta (`data/`, `games/`, `emulation/`, `downloads/`, `themes/`). Nada é gravado fora dela.
-- Bandeja do sistema, iniciar com o Windows (opcional), instância única, autorreparo: cada arquivo do programa é conferido ao abrir e restaurado da própria cópia local se algo foi alterado.
-- Atualizações assinadas (Ed25519). Pacote sem assinatura válida não é aplicado. Se uma atualização não abrir duas vezes seguidas, o Ludrix volta sozinho pra versão anterior.
-- Exportar e importar a biblioteca inteira (configurações, capas, metadados) em um arquivo.
+- Portátil de verdade: tudo fica na pasta (`data/`, `games/`, `emulation/`, `downloads/`). Nada é gravado fora dela.
+- Bandeja do sistema, iniciar com o Windows (opcional), instância única por pasta.
+- Atualizações assinadas (Ed25519). Pacote sem assinatura válida não é aplicado. Se uma atualização não abrir duas vezes seguidas, o Ludrix volta sozinho pra versão anterior. Cada atualização substitui o programa inteiro — nada da versão antiga fica pra trás, só os seus dados.
+- Exportar e importar a biblioteca inteira (configurações, capas, metadados) em um arquivo. Exporta para a Steam.
 
 ## Capturas
 
 <table>
   <tr>
     <td><img src="docs/screenshots/02-detalhes.jpg" alt="Detalhes do jogo"><br><sub>Detalhes: descrição, metadados, screenshots, requisitos</sub></td>
-    <td><img src="docs/screenshots/01b-mural.jpg" alt="Mural com painel"><br><sub>Biblioteca em Mural: clique na capa abre o painel ao lado</sub></td>
+    <td><img src="docs/screenshots/03-claro.jpg" alt="Tema claro"><br><sub>Tema claro</sub></td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/04-emuladores.jpg" alt="Emuladores"><br><sub>Emuladores: instala, aponta ROMs, escolhe o núcleo</sub></td>
     <td><img src="docs/screenshots/05-central.jpg" alt="Central"><br><sub>Central: dependências, Modo Game, programas úteis</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/08-menu.jpg" alt="Menu de contexto"><br><sub>Menu do botão direito</sub></td>
-    <td><img src="docs/screenshots/06-aparencia.jpg" alt="Aparência"><br><sub>Aparência e temas importados</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/09-console.jpg" alt="Modo Console"><br><sub>Modo Console</sub></td>
-    <td><img src="docs/screenshots/10-claro.jpg" alt="Tema claro"><br><sub>Tema claro</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/00-abertura.jpg" alt="Abertura"><br><sub>Abertura</sub></td>
-    <td><img src="docs/screenshots/11-studio.jpg" alt="Ludrix Studio"><br><sub>Ludrix Studio</sub></td>
+    <td><img src="docs/screenshots/07-menu.jpg" alt="Menu de contexto"><br><sub>Menu do botão direito</sub></td>
+    <td><img src="docs/screenshots/06-ajustes.jpg" alt="Ajustes"><br><sub>Ajustes</sub></td>
   </tr>
 </table>
 
@@ -130,29 +119,26 @@ A Store só mostra o que as suas fontes trazem. Tipos aceitos em **Store → Fon
 
 Pacotes prontos ficam em cada release: `Colecoes.zip` com **PC Collections**, **ROMs Collection** e **Recomps** (91 recompilações/ports com build Windows, baseado no [Recompendium](https://github.com/Nio03/unricopie)).
 
-## Temas e Ludrix Studio
-
-O Ludrix traz um tema (claro e escuro) e importa temas `.lxtheme` em **Ajustes → Aparência → Importar**. Temas novos são feitos no **Ludrix Studio**, um programa separado do mesmo autor: escolhe um esqueleto entre dez, ajusta 300+ opções com visualização ao vivo e exporta o `.lxtheme`. O Studio não faz parte deste repositório. Detalhes em [docs/TEMAS.md](docs/TEMAS.md).
-
 ## Compilar
 
 ```bat
 git clone https://github.com/wolffZ-prog/Ludrix.git
 cd Ludrix
-pip install -r requirements.txt
-run.bat                      :: abre direto, sem compilar (janela nativa)
-python app\main.py --web 8000 :: modo navegador, pra desenvolver
-build.bat                    :: gera release\<versão>\Ludrix\ + zips + .lxup
+build.bat                     :: instala o Node se faltar, baixa as dependências e gera release\<versão>\Ludrix\
+node tools\build.js all       :: pasta + zip + patch + full + src + feed (assinados, se a chave existir)
 ```
 
-Precisa de Python 3.11 a 3.14 e Windows. `build.bat` confere o código, compila `Ludrix.exe`, `LudrixConsole.exe` e `updater.exe`, empacota tudo (o WebView2 não é embutido; `--com-webview2` embute o Fixed Version). Veja [docs/COMPILAR.md](docs/COMPILAR.md).
+Precisa de Windows e Node.js 20+ (`build.bat` instala pelo winget se não tiver). Detalhes em [docs/COMPILAR.md](docs/COMPILAR.md).
 
 Estrutura:
 
 ```
-app/            programa: core/ (Python), ui/ (HTML/CSS/JS), presets/ (catálogos de emuladores, dependências, categorias)
-tools/build.py  build, empacotamento, assinatura, feed de atualização, publicação
-docs/           documentação
+src/main/        processo principal (TypeScript): servidor local, biblioteca, Store, emuladores, atualizador, bandeja
+src/main/assets/ catálogos (emuladores, dependências, categorias), ícones, executáveis nativos
+src/renderer/    interface (HTML/CSS/JS) e modo console
+tools/build.js   build, empacotamento, assinatura, feed de atualização, publicação
+tools/native/    Ludrix.exe, LudrixConsole.exe e ludrix-gamepad.exe (C, mingw)
+docs/            documentação
 ```
 
 ## Atualizações
@@ -161,9 +147,9 @@ O Ludrix consulta este repositório (`releases/latest/download/ludrix-updates.js
 
 ## Segurança
 
-- Servidor local só em `127.0.0.1`, com token por sessão, checagem de origem e CSP.
-- Pacotes de atualização e temas assinados; a chave privada nunca está no código.
-- Temas não conseguem carregar nada da internet (`@import`, `url()` externo e similares são removidos).
+- Servidor local só em `127.0.0.1`, porta aleatória, token por sessão, checagem de origem e CSP; renderer em sandbox.
+- Pacotes de atualização assinados; a chave privada nunca está no código.
+- Torrent sem DHT, UPnP, NAT-PMP ou descoberta local.
 - Sem telemetria, sem conta, sem anúncios.
 
 Achou um problema? Veja [SECURITY.md](SECURITY.md).
@@ -176,6 +162,6 @@ Issues e pull requests são bem-vindos — leia [CONTRIBUTING.md](CONTRIBUTING.m
 
 **WOLFFZ — criador e idealizador do projeto.**
 
-Bibliotecas: [pywebview](https://github.com/r0x0r/pywebview), [Pillow](https://python-pillow.org/), [requests](https://requests.readthedocs.io/), [py7zr](https://github.com/miurahr/py7zr), [psutil](https://github.com/giampaolo/psutil), [pystray](https://github.com/moses-palmer/pystray), [PyInstaller](https://pyinstaller.org/), [libtorrent](https://libtorrent.org/) / [aria2](https://aria2.github.io/). Ícones baseados em [Tabler Icons](https://tabler.io/icons). Fonte [Rubik](https://fonts.google.com/specimen/Rubik).
+Bibliotecas: [Electron](https://www.electronjs.org/), [TypeScript](https://www.typescriptlang.org/), [webtorrent](https://webtorrent.io/), [adm-zip](https://github.com/cthackers/adm-zip), [electron-log](https://github.com/megahertz/electron-log). Ícones baseados em [Tabler Icons](https://tabler.io/icons). Fonte [Rubik](https://fonts.google.com/specimen/Rubik).
 
 Licença [MIT](LICENSE). Os jogos, capas e marcas pertencem aos seus donos; o Ludrix não distribui jogos.

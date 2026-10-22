@@ -1,22 +1,16 @@
 # Ludrix — nunca versionar
+node_modules/
+dist/
+release/
+build-cache/
 data/
 games/
 emulation/
 downloads/
-themes/*.lxtheme
-release/
-build/
-dist/
-__pycache__/
-*.pyc
-*.pyo
 *.log
-app/integrity.json
-app/pyc.json
 *.key
 chave/
-tools/cache/
-casca/
 *.lxup
 Thumbs.db
 desktop.ini
+.DS_Store

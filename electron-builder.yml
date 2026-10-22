@@ -1,0 +1,21 @@
+npmRebuild: false
+appId: com.ludrix.hub
+productName: LudrixHub
+copyright: Copyright (c) 2026 wolffZ-prog
+directories:
+  output: release
+files:
+  - dist/**/*
+  - package.json
+extraResources:
+  - from: src/renderer
+    to: renderer
+  - from: src/main/assets
+    to: assets
+linux:
+  target:
+    - AppImage
+  artifactName: LudrixHub-${version}-${arch}.${ext}
+  category: Game
+compression: normal
+asar: true
