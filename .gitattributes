@@ -1,6 +1,7 @@
 * text=auto
 *.sh text eol=lf
-*.py text eol=lf
+*.ts text eol=lf
+*.js text eol=lf
 *.bat text eol=crlf
 *.png binary
 *.ico binary

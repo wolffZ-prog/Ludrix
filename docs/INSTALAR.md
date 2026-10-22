@@ -3,21 +3,23 @@
 ## Instalar
 1. Baixe `Ludrix-<versão>.zip` em [Releases](https://github.com/wolffZ-prog/Ludrix/releases/latest).
 2. Extraia em qualquer pasta — `D:\Jogos\Ludrix`, um pendrive, um HD externo. Evite `Arquivos de Programas` (permissão).
-3. Abra `Ludrix.exe`. Na primeira vez ele termina os ajustes internos (barra "Aguarde, últimos ajustes finais..") e mostra as boas-vindas.
+3. Abra `Ludrix.exe`. Na primeira vez ele mostra as boas-vindas e pergunta a pasta dos seus jogos.
 
 Nada é gravado no registro nem fora da pasta. Pra "desinstalar", apague a pasta. Pra levar pra outro PC, copie a pasta.
+
+## Vindo do 3.0.x
+No Ludrix que você já usa: **Ajustes → Checar atualizações**. Ele baixa o `ludrix-4.0.0-full.lxup`, troca `app\` e `runtime\` (o motor Python sai, o Electron entra), mantém `data\`, `games\`, `emulation\` e reabre. Biblioteca, capas, configurações, emuladores e saves continuam onde estavam. Se o 4.0.0 não abrir duas vezes seguidas, o 3.0.x volta sozinho; quando abre bem, o backup do motor antigo é apagado.
 
 ## Pastas
 ```
 Ludrix\
-  Ludrix.exe  LudrixConsole.exe  updater.exe
-  app\          programa
-  runtime\      Python e WebView2 embutidos (não mexer)
+  Ludrix.exe  LudrixConsole.exe
+  app\          programa (código, interface, catálogos)
+  runtime\      Electron (não mexer)
   data\         configurações, biblioteca, capas, cache, logs, atualizações
   games\        jogos baixados pela Store (_recomp\ para recompilações)
-  emulation\    emuladores e BIOS
+  emulation\    emuladores, ROMs apontadas e BIOS
   downloads\    arquivos em andamento
-  themes\       temas importados
 ```
 
 ## Primeiro uso
@@ -33,9 +35,9 @@ Ludrix\
 - Modo Console: ícone na barra ou `LudrixConsole.exe`; abre sozinho com controle se você ligar isso.
 
 ## Atalhos
-`/` busca · `Esc` fecha · `F5` recarrega a biblioteca · `"` terminal interno · botão direito em qualquer jogo abre o menu completo.
+`/` busca · `Esc` fecha · `F5` recarrega a biblioteca · botão direito em qualquer jogo abre o menu completo.
 
 ## Problemas comuns
-- **"Arquivos alterados"** na abertura: o Ludrix restaura sozinho da cópia local. Se persistir, extraia o zip da mesma versão por cima (a pasta `data\` é preservada).
 - **Jogo não abre**: menu do jogo → Verificar arquivos; Central → Dependências.
-- **Antivírus**: executáveis feitos com PyInstaller às vezes são marcados por engano. Os pacotes são assinados; confira o hash na release.
+- **Pasta de jogos em HD lento**: a leitura roda fora da interface; o progresso aparece na Fila.
+- **Antivírus**: os executáveis são pequenos lançadores em C e o runtime é o Electron oficial. Os pacotes de atualização são assinados.
