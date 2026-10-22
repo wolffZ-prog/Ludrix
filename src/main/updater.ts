@@ -10,7 +10,7 @@ const SIG_NAME = 'signature.sig';
 const WIN = process.platform === 'win32';
 
 /* ------------------------------ zip mínimo ------------------------------ */
-type ZEntry = { name: string; method: number; csize: number; usize: number; offset: number; crc: number };
+type ZEntry = { name: string; method: number; csize: number; usize: number; offset: number; crc: number; mode: number };
 
 export class Zip {
     fd: number;
@@ -81,7 +81,8 @@ export class Zip {
                     q += 4 + sz;
                 }
             }
-            this.entries.push({ name, method, csize, usize, offset, crc });
+            const mode = (cd.readUInt32LE(p + 38) >>> 16) & 0o7777;
+            this.entries.push({ name, method, csize, usize, offset, crc, mode });
             p += 46 + nlen + elen + clen;
         }
         this.names = new Set(this.entries.map((e) => e.name));
@@ -110,6 +111,11 @@ export class Zip {
         const data = this.read(name);
         fs.mkdirSync(path.dirname(target), { recursive: true });
         fs.writeFileSync(target, data);
+        if (!WIN) {
+            const e = this.entries.find((x) => x.name === name);
+            if (e && e.mode & 0o111)
+                try { fs.chmodSync(target, e.mode | 0o100); } catch { /* ignore */ }
+        }
         return data;
     }
     test(): string {

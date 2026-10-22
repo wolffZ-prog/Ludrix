@@ -1,6 +1,6 @@
 {
   "name": "ludrix",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "productName": "LudrixHub",
   "description": "LudrixHub - launcher de jogos portátil",
   "main": "dist/main/boot.js",
@@ -15,7 +15,7 @@
     "dist:linux": "tsc -p tsconfig.json && electron-builder --linux --x64"
   },
   "devDependencies": {
-    "electron": "33.2.0",
+    "electron": "44.9.3",
     "electron-builder": "25.1.8",
     "rcedit": "^4.0.1",
     "rimraf": "6.0.1",

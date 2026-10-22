@@ -164,8 +164,8 @@ function applyTheme() {
   const isFile = t.startsWith('file:'), face = isFile ? '' : ((S.faces || []).some(f => f.id === S.config.face) || !(S.faces || []).length ? S.config.face || DEFAULT_FACE : DEFAULT_FACE), fm = isFile ? fileScheme() : '', tid = (face ? face + '-' + t : t) + (fm ? '|' + fm : '');
   if (face) { const f = faceInfo(face); themeAccent = f.accent || ''; }
   applyAccent(); applyLights();
-  document.body.classList.toggle('face', !isFile);
-  if (face) document.body.dataset.face = face; else delete document.body.dataset.face;
+  document.body.classList.add('face');
+  document.body.dataset.face = face || DEFAULT_FACE;
   if (!isFile || fm) document.documentElement.dataset.light = (isFile ? fm : t) === 'light' ? '1' : '0';
   if (face) setLayout(faceInfo(face).layout || '');
   if (tid === currentTheme) { applyChrome(); return; }
@@ -355,6 +355,7 @@ document.addEventListener('mousemove', e => {
 document.addEventListener('mouseout', e => { const c = e.target.closest && e.target.closest('.card'); if (c && !c.contains(e.relatedTarget)) { c.style.removeProperty('--rx'); c.style.removeProperty('--ry'); } });
 function applyChrome() {
   document.body.classList.toggle('frameless', !!S.config.frameless);
+  document.body.classList.toggle('acr', !!S.config.acrylic_on && !S.config.high_contrast);
   applyToolbar(); applyRailIcons(); applyNavItems(); applyMotion(); applyClock();
   document.body.dataset.status = S.config.status_position === 'top' ? 'top' : 'bottom';
   delete document.body.dataset.layout; document.body.dataset.nav = 'side';
@@ -477,7 +478,7 @@ function renderRailX() {
   for (const g of lib) { const id = g.system && g.system !== 'pc' ? g.system : 'pc'; m.set(id, (m.get(id) || 0) + 1); }
   const items = [...m.entries()].map(([id, n]) => [id, id === 'pc' ? 'PC' : (S.systems[id] || id), n]).sort((a, b) => a[0] === 'pc' ? -1 : b[0] === 'pc' ? 1 : b[2] - a[2]);
   const nb = rail.querySelector('.rb[data-view="home"] .n'); if (nb) nb.textContent = lib.length || ''; else { const hb = rail.querySelector('.rb[data-view="home"]'); if (hb) hb.insertAdjacentHTML('beforeend', `<span class="n">${lib.length || ''}</span>`); }
-  const h = items.length > 1 ? `<div class="rxh">Plataformas</div>${items.map(([id, l, n]) => `<button class="rb sm${railSysOn(id) ? ' on' : ''}" onclick="railSysGo(${jsq(id)})" title="${esc(l)}"><i class="sw" data-s="${esc(id)}"></i><span>${esc(l)}</span><span class="n">${n}</span></button>`).join('')}` : '';
+  const h = items.length > 1 ? `<div class="rxh">Plataformas</div>${items.map(([id, l, n]) => `<button class="rb sm${railSysOn(id) ? ' on' : ''}" onclick="railSysGo(${jsq(id)})" title="${esc(l)}"><i class="sw" data-s="${esc(id)}">${sysIcon(id) || sysIcon('pc')}</i><span>${esc(l)}</span><span class="n">${n}</span></button>`).join('')}` : '';
   if (box._h !== h) { box.innerHTML = h; box._h = h; }
   box.querySelectorAll('.rb').forEach(b => b.classList.toggle('on', railSysOn(b.querySelector('.sw').dataset.s)));
 }
@@ -546,6 +547,7 @@ function setView(v) {
   if (v === 'redists' || v === 'gamemode') { S.tab.central = v === 'redists' ? 'redists' : 'optimize'; v = 'central'; }
   if (v === 'central' && S.config.welcome_done && !(S.config.start_done || []).includes('central')) startGo('central');
   if (v === S.view && !S.current && !$('#modal').classList.contains('on')) { $('#view').scrollTop = 0; return; }
+  { const vw = $('#view'); vw.classList.remove('vin'); void vw.offsetWidth; vw.classList.add('vin'); clearTimeout(S._vinT); S._vinT = setTimeout(() => vw.classList.remove('vin'), 400); }
   if (S._metaDirty && ['home', 'store'].includes(v)) { S._metaDirty = false; api.get('/api/catalog').then(d => { if (d && !d.loading) { setGames(d.games || []); if (['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'home') refreshHome(); } }); }
   S.page = 1;
   if (v !== 'home') gameFocus(null);
@@ -814,7 +816,7 @@ function panelOpen(key) {
   if (S.panelKey === key && $('#gpanel')) return;
   S.panelKey = key;
   const wrap = $('#view .libwrap');
-  if (wrap && wrap.classList.contains('pw')) { const old = $('#gpanel'); if (old) old.outerHTML = gpanelHtml(key); gpanelFill(key); return; }
+  if (wrap && wrap.classList.contains('pw')) { const old = $('#gpanel'); if (old) old.outerHTML = gpanelHtml(key); gpanelFill(key); nowbarFill(); return; }
   renderLibrary();
 }
 function panelClose() { S.panelKey = ''; document.querySelectorAll('#view .card.sel').forEach(c => c.classList.remove('sel')); renderLibrary(); }
@@ -2055,7 +2057,19 @@ function themesHtml(c) {
       ${cfgSel('theme', [['system', 'Sistema'], ['dark', 'Escuro'], ['light', 'Claro']], c.theme || 'system')}</div>
     ${(c.theme || 'system') === 'system' ? `<div class="frow"><div class="l"><b>Quando "Sistema"</b><span>Seguir o ${OSN()} troca junto com o modo claro/escuro dele; por horário usa as horas abaixo</span></div>
       ${cfgSel('theme_schedule', [[false, 'Seguir o ' + OSN()], [true, 'Por horário']], !!c.theme_schedule)}${c.theme_schedule ? `<span class="mut">claro das</span><input class="mi" style="width:70px" value="${esc(c.theme_light_from || '07:00')}" onchange="setCfg({theme_light_from:this.value})"><span class="mut">às</span><input class="mi" style="width:70px" value="${esc(c.theme_light_to || '19:00')}" onchange="setCfg({theme_light_to:this.value})">` : ''}</div>` : ''}
+    ${themeListHtml(c)}
   </div>`;
+}
+function themeListHtml(c) {
+  if (!S.themes) { S.themes = []; api.get('/api/themes/full').then(r => { S.themes = Array.isArray(r) ? r : []; if (S.view === 'settings' && S.tab.settings === 'appearance') renderSettings(true); }); }
+  const list = (S.themes || []).filter(t => t.id && t.id.startsWith('file:')), cur = c.theme || 'system', usingFile = cur.startsWith('file:');
+  const card = t => { const on = cur === t.id; return `<div class="thcard${on ? ' on' : ''}" data-tid="${esc(t.id)}" oncontextmenu="event.preventDefault();themeMenu(${jsq(t.id)},event.clientX,event.clientY)" onclick="${on ? '' : `pickTheme(${jsq(t.id)})`}" title="${esc(t.description || t.name)}"><i class="thsw" style="${themeSwatch(t)}"></i><div class="tht"><b>${esc(t.name)}</b><small>${t.scheme === 'light' ? 'Claro' : 'Escuro'}${t.author ? ' · ' + esc(t.author) : ''}</small></div>${on ? `<span class="pill ok">Em uso</span>` : ''}<button class="ib" title="Opções" onclick="event.stopPropagation();themeMenu(${jsq(t.id)},this.getBoundingClientRect().left,this.getBoundingClientRect().bottom+4)">${I.dots}</button></div>`; };
+  return `<div class="frow" style="align-items:flex-start;flex-direction:column;gap:10px"><div class="l" style="width:100%;display:flex;align-items:center;gap:10px"><div style="flex:1"><b>Temas instalados</b><span>Arquivos <b style="display:inline;font-size:12px">.lxtheme</b> ou .zip de tema mudam as cores por cima do visual padrão. Botão direito num tema: exportar ou apagar.</span></div><button class="btn s xs" onclick="themeImport()">${I.dl}<span>Importar</span></button>${usingFile ? `<button class="btn s xs" onclick="pickTheme('dark')">Voltar ao padrão</button>` : ''}</div>
+    ${list.length ? `<div class="thlist">${list.map(card).join('')}</div>` : `<div class="mut" style="font-size:12px">Nenhum tema importado. Os temas ficam na pasta <b style="display:inline">themes</b> do Ludrix.</div>`}</div>`;
+}
+function themeSwatch(t) {
+  const v = t.vars || {}, bg = toHex(v.bg) || (t.scheme === 'light' ? '#f4f4f6' : '#141418'), card = toHex(v.card) || toHex(v.bg2) || (t.scheme === 'light' ? '#ffffff' : '#1e1e23'), acc = toHex(v.accent) || toHex(t.accent) || '#4f8df7';
+  return `background:linear-gradient(90deg,${bg} 0 50%,${card} 50% 100%);box-shadow:inset 0 0 0 1px rgba(128,128,128,.25);--thacc:${acc}`;
 }
 function selHtml(opts, cur, on, cls) { return `<select class="sel ${cls || ''}" onchange="${on}">${opts.map(([v, l]) => `<option value="${esc(JSON.stringify(v))}" ${v === cur ? 'selected' : ''}>${esc(String(l))}</option>`).join('')}</select>`; }
 function cfgSel(key, opts, cur, after) { return selHtml(opts, cur, `setCfg({${key}:JSON.parse(this.value)})${after || ''}`); }
@@ -2203,8 +2217,7 @@ async function renderSettings(fresh) {
     navegacao: () => sec('navegacao', 'Navegação', [`
         <div class="frow" style="align-items:flex-start;flex-direction:column;gap:8px"><div class="l"><b>Abas</b><span>Arraste para mudar a ordem e desligue o que você não usa. O que estiver desligado continua acessível pela busca e pelo menu do logo.</span></div>
     <div class="navedit" id="navEdit">${navOrder().map(v => { const it = NAV_ITEMS.find(x => x[0] === v), hid = (c.nav_hidden || []).includes(v), svg = ($('#rail .rb[data-view="' + v + '"] svg') || {}).outerHTML || ''; return `<div class="nrow${hid ? ' off' : ''}" draggable="true" data-v="${v}" ondragstart="navDrag(event)" ondragover="navOver(event)" ondragleave="this.classList.remove('dt','db')" ondrop="navDrop(event)"><i class="grip">${I.dots}</i><span class="ic">${svg}</span><b>${esc(it[1])}</b>${v === 'home' ? '<small>sempre visível</small>' : `<button class="sw ${hid ? '' : 'on'}" onclick="navToggle(${jsq(v)})"></button>`}</div>`; }).join('')}</div>
-    ${(c.nav_order || []).length || (c.nav_hidden || []).length ? `<button class="btn s xs" style="margin-top:10px" onclick="setCfg({nav_order:[],nav_hidden:[]})">Restaurar padrão</button>` : ''}</div>
-</div>`]),
+    ${(c.nav_order || []).length || (c.nav_hidden || []).length ? `<button class="btn s xs" style="margin-top:10px" onclick="setCfg({nav_order:[],nav_hidden:[]})">Restaurar padrão</button>` : ''}</div>`]),
     sofa: () => sec('sofa', 'Modo sofá', [`
     <div class="frow"><div class="l"><b>Controle</b><span>Com um controle ligado, qualquer botão passa a navegação para ele: direcional move, A seleciona, B volta, X abre o menu, Y favorita, LB/RB trocam de aba, Start joga. Mexer o mouse volta ao normal</span></div>
       ${cfgSel('gamepad', [['auto', 'Ligar quando um controle for usado'], ['off', 'Desligado']], c.gamepad || 'auto')}</div>
@@ -2217,6 +2230,7 @@ async function renderSettings(fresh) {
     <div class="frow"><div class="l"><b>Tamanho das capas</b><span>O mesmo controle disponível ao lado das listas</span></div><label class="zoom"><input type="range" min="100" max="300" step="10" value="${c.card_size || 136}" oninput="setCardSize(this.value,false)" onchange="setCardSize(this.value,true)"></label></div>
     <div class="frow"><div class="l"><b>Densidade</b><span>Compacto aproxima os cartões e reduz espaçamentos; útil em telas pequenas</span></div>${cfgSel('density', [['normal', 'Normal'], ['compact', 'Compacto']], c.density || 'normal')}</div>`], { p: 'Ajusta o tamanho de textos, botões e capas para qualquer tela, de um notebook 1366×768 a uma TV 4K. <b>Auto</b> acompanha o tamanho da janela.' }),
     efeitos: () => sec('efeitos', 'Efeitos', [`
+    ${c.os === 'windows' ? `<div class="frow"><div class="l"><b>Vidro fosco${restartTag('acrylic')}</b><span>Janela translúcida com desfoque do Windows 11 (acrílico), por trás de toda a interface. Em Windows 10 ou com alto contraste fica opaco</span></div><button class="sw ${c.acrylic !== false ? 'on' : ''}" onclick="setCfg({acrylic:!(S.config.acrylic!==false)})"></button></div>` : ''}
     ${sw('reduce_motion', 'Reduzir movimento', 'Corta transições e animações de uma vez. Liga sozinho quando o sistema pede menos movimento')}
     ${sw('high_contrast', 'Alto contraste', 'Bordas e textos mais fortes, sem transparência nem desfoque, foco bem marcado. Liga sozinho quando o Windows está em modo de alto contraste')}`]),
     cartoes: () => sec('cartoes', 'Cartões e listas', [`
@@ -2347,7 +2361,7 @@ function toggleAdv() {
 }
 const TAB_KEYS = {
   general: ['tray_enabled', 'close_action', 'popups', 'notify_sound', 'guides'],
-  appearance: ['gamepad', 'sofa_zoom', 'theme', 'theme_mode', 'face', 'accent', 'theme_schedule', 'theme_light_from', 'theme_light_to', 'frameless', 'frame_mode', 'frame_corners', 'status_position', 'clock', 'ctx_menu', 'layout', 'nav', 'nav_hidden', 'nav_order', 'rail_icons', 'toolbar', 'toolbar_items', 'ui_scale', 'text_size', 'card_size', 'density', 'animations', 'fx_type', 'fx_intensity', 'glass', 'card_hover', 'reduce_motion', 'parallax', 'high_contrast'],
+  appearance: ['gamepad', 'sofa_zoom', 'theme', 'theme_mode', 'face', 'accent', 'theme_schedule', 'theme_light_from', 'theme_light_to', 'frameless', 'frame_mode', 'frame_corners', 'status_position', 'clock', 'ctx_menu', 'layout', 'nav', 'nav_hidden', 'nav_order', 'rail_icons', 'toolbar', 'toolbar_items', 'ui_scale', 'text_size', 'card_size', 'density', 'acrylic', 'animations', 'fx_type', 'fx_intensity', 'glass', 'card_hover', 'reduce_motion', 'parallax', 'high_contrast'],
   library: ['home_spot', 'home_autoplay', 'fav_first', 'home_spot_style', 'home_rows', 'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'accent_from_cover', 'cover_slideshow', 'cover_slideshow_secs', 'view_mode', 'group_by', 'card_ribbons', 'card_playtime', 'detail_art', 'auto_metadata', 'web_covers', 'auto_rename'],
   play: ['after_launch', 'launch_splash', 'nav_hide_playing', 'save_auto_backup', 'game_mode_auto', 'game_mode_ask', 'emu_no_ask', 'gamepad_enabled', 'gamepad_speed', 'gamepad_wake'],
   store: ['hero_enabled', 'store_hide_installed', 'dim_not_installed', 'store_page_size', 'keep_archive', 'concurrent_downloads', 'shortcut_ask', 'repack_auto_open', 'torrent_max_down', 'torrent_max_up', 'torrent_seed_after'],
@@ -3166,10 +3180,39 @@ function stageHtml(hm) {
   if (st === 'duplo') return stageDuo(hm, pool, key, g);
   return stageSpot(key, g);
 }
+function nowKey(hm) {
+  hm = hm || S.home;
+  if (S.panelKey && S.byKey[S.panelKey]) return [S.panelKey, 'Selecionado'];
+  const rc = ((hm && hm.sections.recent) || []).find(k => S.byKey[k] && S.byKey[k].installed);
+  if (rc) return [rc, 'Último jogado'];
+  const any = S.games.find(g => g.installed && !g.hidden);
+  return any ? [any.key, 'Da biblioteca'] : ['', ''];
+}
+function nowbarInner(key, label) {
+  const g = S.byKey[key]; if (!g) return '';
+  const live = S.sessions && S.sessions[key], sys = g.system && g.system !== 'pc' ? (S.systems[g.system] || g.system) : 'PC';
+  const sub = [g.last_played ? cap(lastPlayedText(g.last_played)) : 'Nunca jogado', g.playtime >= 60 ? fmtTime(g.playtime) : '', sys, g.year || ''].filter(Boolean).join(' · ');
+  return `<div class="nbcov" onclick="openGame(${jsq(key)})"><div class="ph">${esc(g.title)}</div><img src="/thumb/${enc(key)}?v=${g.cv || 0}" alt="" decoding="async" onload="this.classList.add('ld');nbBand(this)" onerror="this.remove()"></div>
+    <div class="nbtxt"><small class="nbl">${label}</small><h2 onclick="openGame(${jsq(key)})" title="${esc(g.title)}">${esc(g.title)}</h2><div class="nbsub">${esc(sub)}</div>
+      <div class="nbacts"><button class="btn p xs" onclick="play(${jsq(key)})">${live ? I.x + ' Encerrar' : playLbl(key)}</button><button class="btn s xs" onclick="openGame(${jsq(key)})">${I.info}<span>Detalhes</span></button><button class="btn s xs" onclick="openPath(${jsq(g.dir || '')},${jsq(key)})">${I.folder}<span>Pasta</span></button><button class="btn s xs ic ${g.fav ? 'on' : ''}" title="Favorito" onclick="toggleFav(${jsq(key)});this.classList.toggle('on')">${I.star}</button></div></div>`;
+}
 function stageBase(hm) {
-  const keys = (hm.sections.recent || []).filter(k => hm.games[k] && hm.games[k].installed).slice(0, 3);
-  if (!keys.length) return '';
-  return `<div class="resume"><div class="sec"><b>Continuar</b><span>${pl(keys.length, 'jogo', 'jogos')} recentes</span></div><div class="rsw">${keys.map(k => wideCard(hm.games[k])).join('')}</div></div>`;
+  const [key, label] = nowKey(hm); if (!key) return '';
+  return `<div class="nowbar" id="nowbar" data-key="${esc(key)}" data-ctx="game">${nowbarInner(key, label)}</div>`;
+}
+function nowbarFill() {
+  const nb = $('#nowbar'); if (!nb || S.view !== 'home') return;
+  const [key, label] = nowKey(); if (!key) return;
+  if (nb.dataset.key === key && nb.dataset.label === label) return;
+  nb.dataset.key = key; nb.dataset.label = label; nb.style.background = '';
+  if (BAND[key]) nb.style.background = `color-mix(in srgb, ${BAND[key]} 14%, var(--card))`;
+  nb.classList.remove('sw'); void nb.offsetWidth; nb.classList.add('sw');
+  nb.innerHTML = nowbarInner(key, label);
+}
+function nbBand(img) {
+  const nb = img.closest('.nowbar'); if (!nb) return; const key = nb.dataset.key;
+  if (BAND[key] === undefined) { try { BAND[key] = dominantColor(img) || ''; } catch (_) { BAND[key] = ''; } }
+  if (BAND[key]) nb.style.background = `color-mix(in srgb, ${BAND[key]} 14%, var(--card))`;
 }
 function stageSpot(key, g) {
   return `<div class="stage spot" id="stage"><div class="sbg" style="background-image:url('/hero/${enc(key)}')"></div><div class="sgrad"></div>

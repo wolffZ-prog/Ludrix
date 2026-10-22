@@ -234,7 +234,8 @@ export function themeCss(themeId: string, scheme: string, cfg: Cfg) {
         try { t = readJsonBom(tj); } catch { return ''; }
         const own = t.scheme === 'light' ? 'light' : 'dark';
         const eff = scheme === 'light' || scheme === 'dark' ? scheme : own;
-        const base = faceVarsCss('padrao', eff);
+        const fcss = path.join(P.UI, 'themes', 'padrao', 'face.css');
+        const base = faceVarsCss('padrao', eff) + (exists(fcss) ? '\n' + fs.readFileSync(fcss, 'utf8') : '');
         let v: Record<string, any> = t.vars || {};
         if (eff !== own)
             v = t['vars_' + eff] || flipVars(v, own, eff);

@@ -119,7 +119,7 @@ function electronDist() {
         die('node_modules/electron/dist não encontrado — rode npm ci');
     return d;
 }
-function cmdRuntime(dst = path.join(OUT, 'stage', 'runtime')) {
+async function cmdRuntime(dst = path.join(OUT, 'stage', 'runtime')) {
     const src = electronDist();
     rmrf(dst);
     copyTree(src, dst, (p, e) => !(e.isFile() && e.name === 'default_app.asar'));
@@ -134,11 +134,11 @@ function cmdRuntime(dst = path.join(OUT, 'stage', 'runtime')) {
     shimPkg.version = version();
     fs.writeFileSync(path.join(shim, 'package.json'), JSON.stringify(shimPkg));
     if (WIN)
-        brandExe(target, 'LudrixHub', 'Ludrix.exe');
+        await brandExe(target, 'LudrixHub', 'Ludrix.exe');
     log('runtime:', dst);
     return dst;
 }
-function brandExe(exe, desc, orig) {
+async function brandExe(exe, desc, orig) {
     let rcedit;
     try {
         rcedit = require(path.join(ROOT, 'node_modules', 'rcedit'));
@@ -149,20 +149,30 @@ function brandExe(exe, desc, orig) {
     }
     const v = version();
     const icon = path.join(ROOT, 'src', 'main', 'assets', 'icons', 'icon.ico');
-    const done = rcedit(exe, {
+    const opts = {
         'version-string': { CompanyName: 'WOLFFZ', FileDescription: desc, ProductName: 'LudrixHub', OriginalFilename: orig, LegalCopyright: 'MIT', InternalName: 'Ludrix' },
         'file-version': v, 'product-version': v, icon,
-    });
-    if (done && typeof done.then === 'function')
-        return done.catch((e) => log('aviso: rcedit falhou:', e.message || e));
+    };
+    let last;
+    for (let i = 0; i < 5; i++) {
+        try {
+            await rcedit(exe, opts);
+            return;
+        }
+        catch (e) {
+            last = e;
+            await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+        }
+    }
+    die('rcedit falhou em ' + path.basename(exe) + ': ' + (last && last.message || last));
 }
-function cmdFolder() {
+async function cmdFolder() {
     const v = version();
     const folder = path.join(rel(), 'Ludrix');
     rmrf(folder);
     fs.mkdirSync(folder, { recursive: true });
     cmdApp(path.join(folder, 'app'));
-    cmdRuntime(path.join(folder, 'runtime'));
+    await cmdRuntime(path.join(folder, 'runtime'));
     const bin = path.join(ROOT, 'src', 'main', 'assets', 'bin');
     for (const f of ['Ludrix.exe', 'LudrixConsole.exe'])
         fs.copyFileSync(path.join(bin, f), path.join(folder, f));
@@ -257,7 +267,7 @@ async function cmdZip() {
     const v = version();
     const folder = path.join(rel(), 'Ludrix');
     if (!fs.existsSync(path.join(folder, 'runtime')))
-        cmdFolder();
+        await cmdFolder();
     const out = path.join(rel(), `Ludrix-${v}.zip`);
     const z = new ZipOut(out);
     z.tree(folder, 'Ludrix');
@@ -296,7 +306,7 @@ async function cmdPatch(minVersion) {
     const out = path.join(rel(), `ludrix-${v}-patch.lxup`);
     const seed = seedOrDie(true);
     const z = new ZipOut(out);
-    z.data('manifest.json', JSON.stringify(manifest('patch', ['app'], {}, minVersion || (v.startsWith('4.') ? '4.0.0' : '')), null, 1));
+    z.data('manifest.json', JSON.stringify(manifest('patch', ['app'], {}, minVersion || vinfo().patch_min || (v.startsWith('4.') ? '4.0.0' : '')), null, 1));
     z.tree(app, 'app');
     await z.write(seed);
     log('patch:', out, `(${Math.round(fs.statSync(out).size / 1024)} KB)`);
@@ -307,7 +317,7 @@ async function cmdFull() {
     const v = version();
     const folder = path.join(rel(), 'Ludrix');
     if (!fs.existsSync(path.join(folder, 'runtime')))
-        cmdFolder();
+        await cmdFolder();
     const out = path.join(rel(), `ludrix-${v}-full.lxup`);
     const seed = seedOrDie(true);
     const files = { 'Ludrix.exe': sha256File(path.join(folder, 'Ludrix.exe')), 'LudrixConsole.exe': sha256File(path.join(folder, 'LudrixConsole.exe')) };
@@ -437,7 +447,7 @@ function cmdPublish() {
 }
 async function cmdAll(minVersion) {
     cmdCheck();
-    cmdFolder();
+    await cmdFolder();
     await cmdZip();
     await cmdPatch(minVersion);
     await cmdFull();
@@ -468,8 +478,8 @@ const HELP = `uso: node tools/build.js <comando>
         case 'check': return cmdCheck();
         case 'build': return cmdBuild();
         case 'app': return void cmdApp();
-        case 'runtime': return void cmdRuntime();
-        case 'folder': return void cmdFolder();
+        case 'runtime': return void await cmdRuntime();
+        case 'folder': return void await cmdFolder();
         case 'zip': return cmdZip();
         case 'patch': return cmdPatch(args[0]);
         case 'full': return cmdFull();

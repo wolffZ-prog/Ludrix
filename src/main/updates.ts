@@ -5,9 +5,9 @@ import * as P from './paths';
 import * as log from './log';
 import * as crypto from './crypto';
 import * as util from './util';
-import { Zip, Restore, vcmp, sha256File } from './updater';
+import { Restore, vcmp } from './updater';
 
-export const PROTECTED = ['data', 'cache', 'games', 'emulation', 'downloads', 'themes', 'flash', 'bin', 'tools', 'updates'];
+export { PROTECTED } from './pkgCheck';
 export const MAX_UPDATE_BYTES = 600 * 1024 * 1024;
 export const DEFAULT_FEED = 'https://github.com/wolffZ-prog/Ludrix/releases/latest/download/ludrix-updates.json';
 const VERSION_FILE = path.join(P.APP_DIR, 'version.json');
@@ -29,52 +29,8 @@ export function currentVersion(): any {
     }
 }
 
-export function readManifest(pkg: string): any {
-    if (!fs.existsSync(pkg))
-        throw new Error('Arquivo não encontrado');
-    let z: Zip;
-    try {
-        z = new Zip(pkg);
-    }
-    catch {
-        throw new Error('O arquivo está danificado — baixe de novo');
-    }
-    try {
-        if (!z.names.has('manifest.json'))
-            throw new Error('Esse arquivo não é uma atualização do Ludrix');
-        let m: any;
-        try {
-            m = JSON.parse(z.read('manifest.json').toString('utf8'));
-        }
-        catch {
-            throw new Error('O arquivo está danificado — baixe de novo');
-        }
-        if (!m.version || !['patch', 'full'].includes(m.kind))
-            throw new Error('Pacote de atualização inválido — baixe de novo');
-        for (const d of m.dirs || []) {
-            if (PROTECTED.includes(d) || String(d).includes('/') || String(d).startsWith('.'))
-                throw new Error(`Pacote tenta mexer numa pasta protegida: ${d}`);
-            if (![...z.names].some((n) => n.startsWith(d + '/')))
-                throw new Error(`Pacote incompleto: falta a pasta ${d}/`);
-        }
-        for (const f of Object.keys(m.files || {}))
-            if (!z.names.has(f))
-                throw new Error(`Pacote incompleto: falta ${f}`);
-        if (m.kind === 'patch' && !(m.dirs || []).includes('app'))
-            throw new Error('Patch sem a pasta app/');
-        const signed = crypto.zipStatus(pkg);
-        if (signed === 'none')
-            throw new Error('Esse pacote não tem a assinatura do Ludrix — por segurança, não instalo');
-        if (signed !== 'ok')
-            throw new Error('A assinatura desse pacote não confere — o arquivo foi alterado ou não veio do Ludrix');
-        m._path = pkg;
-        m._size = fs.statSync(pkg).size;
-        return m;
-    }
-    finally {
-        z.close();
-    }
-}
+export { readManifest, readManifestAsync } from './pkgCheck';
+import { readManifestAsync } from './pkgCheck';
 
 export class UpdateManager {
     available: any = null;
@@ -141,7 +97,7 @@ export class UpdateManager {
                 const f = path.join(P.UPDATES, n);
                 let m: any;
                 try {
-                    m = readManifest(f);
+                    m = await readManifestAsync(f);
                 }
                 catch (e: any) {
                     log.info('ignorando %s: %s', n, e?.message || e);
@@ -233,12 +189,17 @@ export class UpdateManager {
             finally {
                 await new Promise<void>((res) => out.end(() => res()));
             }
-            if (rem.sha256 && sha256File(tmp).toLowerCase() !== String(rem.sha256).toLowerCase()) {
+            let m: any;
+            try {
+                m = await readManifestAsync(tmp, rem.sha256 ? String(rem.sha256) : '');
+            }
+            catch (e: any) {
                 fs.rmSync(tmp, { force: true });
-                throw new Error('O arquivo baixado veio diferente do esperado e foi descartado por segurança — tente de novo');
+                throw e;
             }
             fs.renameSync(tmp, dest);
-            this.available = readManifest(dest);
+            m._path = dest;
+            this.available = m;
             this.remote = null;
             return { ok: true, available: this.pub(this.available) };
         }
@@ -256,12 +217,12 @@ export class UpdateManager {
         }
     }
 
-    addFile(p: string | null | undefined) {
+    async addFile(p: string | null | undefined) {
         if (!p)
             return { error: 'Nenhum arquivo' };
         let m: any;
         try {
-            m = readManifest(p);
+            m = await readManifestAsync(p);
         }
         catch (e: any) {
             return { error: String(e?.message || e) };
@@ -274,8 +235,9 @@ export class UpdateManager {
         fs.mkdirSync(P.UPDATES, { recursive: true });
         const dest = path.join(P.UPDATES, path.basename(p));
         if (path.resolve(p) !== path.resolve(dest))
-            fs.copyFileSync(p, dest);
-        this.available = readManifest(dest);
+            await fs.promises.copyFile(p, dest);
+        m._path = dest;
+        this.available = m;
         return { ok: true, available: this.pub(this.available) };
     }
 

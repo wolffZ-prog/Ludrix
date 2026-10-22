@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.0.1 — 2026-10-22
+- Biblioteca: o topo mostra o jogo selecionado (capa, nome, última vez, tempo, plataforma) com Jogar, Detalhes, Pasta e Favorito; sem seleção, mostra o último jogado. Substitui a faixa "Continuar".
+- Capas: o botão de jogar aparece no canto inferior direito da capa, não no centro.
+- Barra lateral: cada plataforma tem o ícone do console.
+- Temas: Ajustes → Aparência → Tema lista os temas instalados e importa arquivos .lxtheme/.zip (botão direito: exportar, apagar). Um tema importado troca só as cores; o desenho da interface é o mesmo.
+- Vidro fosco: no Windows 11 a janela usa o acrílico do sistema (translúcida, com desfoque do que está atrás) nos temas escuro e claro. Ajustes → Aparência → Efeitos liga e desliga; Windows 10 e alto contraste ficam opacos.
+- Movimento leve: troca de tela, painel do jogo, menus, caixas de diálogo e avisos entram com uma transição curta; capas sobem um pouco ao passar o mouse. "Reduzir movimento" desliga tudo.
+- Ajustes → Aparência: a seção Navegação fechava uma div a mais e empurrava Modo sofá, Escala e Efeitos para a coluna da esquerda, com texto quebrado.
+- Motor: Electron 33 → 44 (correções do acrílico em janela sem moldura, Chromium e Node atuais). Por isso esta atualização vem completa (runtime novo), não só o app.
+- Atualizações: a conferência do pacote (assinatura e hash) roda fora do processo da interface; antes, um pacote completo guardado em data\updates prendia a janela por alguns segundos a cada verificação. No Linux, os binários do runtime mantêm a permissão de execução depois da troca.
+- Build: o nome, a descrição e o ícone do Ludrix passam a ser gravados no executável do runtime antes de empacotar (antes o Gerenciador de Tarefas mostrava "Electron"); se a gravação falhar, o build para em vez de seguir.
+- Ludrix-Dev: mostra o resultado de cada ação antes de voltar ao menu; faz login no GitHub quando falta; publica as notas da release por arquivo; no primeiro envio do código busca o histórico do repositório antes de enviar; aceita arquivos baixados com " (1)" no nome; ao importar o git-pack substitui a pasta docs inteira; atualiza descrição e tópicos do repositório.
+
 ## 4.0.0 — 2026-10-22 — Novo motor
 - Interface nova (Base): barra lateral com busca, seções e plataformas; biblioteca em ordem alfabética com divisórias por letra e atalhos Todos / Favoritos / Jogados esta semana / Nunca joguei; clicar numa capa abre o painel lateral do jogo (Jogar, favorito, tempo, última vez, sessões, executável, pasta, saves, mods, capa, editar); faixa "Continuar" com os três últimos jogados. Tela de detalhes e Ajustes refeitos no mesmo desenho. Dois temas, preto e branco, só cor sólida e linha fina: sem degradê, desfoque ou sombra.
 - Janela: redimensionar ou maximizar não deixa mais a janela presa ao mouse (o arrasto termina ao soltar o botão, e por segurança para sozinho depois de 15 s ou quando a janela perde o foco).

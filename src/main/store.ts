@@ -8,8 +8,9 @@
 import fs from 'node:fs';
 import * as P from './paths';
 import * as util from './util';
-const RUNTIME: { frameless: boolean | null } = { frameless: null };
+const RUNTIME: { frameless: boolean | null; acrylic: boolean } = { frameless: null, acrylic: false };
 function setRuntimeFrameless(v: boolean) { RUNTIME.frameless = Boolean(v); }
+function setRuntimeAcrylic(v: boolean) { RUNTIME.acrylic = Boolean(v); }
 /** Os padroes de fabrica, na mesma ordem do dicionario Python. */
 const DEFAULT_CONFIG = {
     native: true,
@@ -77,6 +78,7 @@ const DEFAULT_CONFIG = {
     look: 0,
     card_hover: 'lift',
     reduce_motion: false,
+    acrylic: true,
     parallax: true,
     high_contrast: false,
     home_rows: [],
@@ -419,8 +421,9 @@ class Store {
         c.os = process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'mac' : 'linux';
         c.appimage = false;
         c.frameless = RUNTIME.frameless ?? Boolean(this.config.frameless);
+        c.acrylic_on = RUNTIME.acrylic;
         return { ...c, ...extra };
     }
 }
 
-export { setRuntimeFrameless, DEFAULT_CONFIG, Store };
+export { setRuntimeFrameless, setRuntimeAcrylic, DEFAULT_CONFIG, Store };

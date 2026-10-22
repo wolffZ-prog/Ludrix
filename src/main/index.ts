@@ -5,6 +5,7 @@
  * garante instancia unica e sobe o servidor local que a interface consome.
  */
 import path from 'node:path';
+import os from 'node:os';
 import fs from 'node:fs';
 import * as electron from 'electron';
 import * as P from './paths';
@@ -94,6 +95,9 @@ function createWindow(url) {
     const icon = fs.existsSync(iconPath) ? electron.nativeImage.createFromPath(iconPath) : undefined;
     const frameless = Boolean(backend?.store.config.frameless ?? true) && process.platform === 'win32';
     store.setRuntimeFrameless(frameless);
+    const winBuild = process.platform === 'win32' ? Number((os.release().split('.')[2] || '0')) : 0;
+    const acrylic = process.platform === 'win32' && winBuild >= 22621 && backend?.store.config.acrylic !== false;
+    store.setRuntimeAcrylic(acrylic);
     const startHidden = process.argv.includes('--minimized') && backend?.store.config.tray_enabled !== false;
     const area = electron.screen.getPrimaryDisplay().workAreaSize;
     const width = Math.min(1380, Math.max(640, area.width - 60));
@@ -105,7 +109,7 @@ function createWindow(url) {
         minWidth: Math.min(1000, width),
         minHeight: Math.min(660, height),
         title: 'Ludrix',
-        backgroundColor: dark ? '#14161c' : '#e9eaee',
+        ...(acrylic ? { backgroundMaterial: 'acrylic' as const } : { backgroundColor: dark ? '#14161c' : '#e9eaee' }),
         frame: !frameless,
         show: false,
         autoHideMenuBar: true,
@@ -560,7 +564,7 @@ async function handleFileArg(file) {
     try {
         if (ext === '.lxup') {
             const front = server2.frontFor(backend);
-            const r: any = front.updates.addFile(file);
+            const r: any = await front.updates.addFile(file);
             if (r.error)
                 electron.dialog.showErrorBox('Atualização recusada', String(r.error));
             else

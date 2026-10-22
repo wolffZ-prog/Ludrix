@@ -53,7 +53,7 @@ Requisitos: Windows 10 ou 11, 64 bits. Nada de conta, login, WebView2 ou instala
 
 **Biblioteca**
 - Jogos de PC (`.exe`, atalhos, pastas inteiras), ROMs e jogos rápidos (Flash/HTML5) na mesma tela, com capas, categorias, filtros combináveis e busca com prefixos (`dev:`, `ano:`, `gen:`, `sis:`, `origem:`).
-- Grade em ordem alfabética com divisórias por letra e atalhos Todos / Favoritos / Jogados esta semana / Nunca joguei; faixa "Continuar" com os últimos jogados. Um clique abre o painel lateral do jogo (Jogar, tempo, última vez, pasta, saves, mods, capa); dois cliques ou botão direito abrem os detalhes. Temas escuro e claro, só cor sólida e linha fina.
+- Grade em ordem alfabética com divisórias por letra e atalhos Todos / Favoritos / Jogados esta semana / Nunca joguei; no topo, o jogo selecionado (capa, nome, última vez, tempo) com Jogar, Detalhes e Pasta. Um clique abre o painel lateral do jogo (Jogar, tempo, última vez, pasta, saves, mods, capa); dois cliques ou botão direito abrem os detalhes. Temas escuro e claro, só cor sólida e linha fina.
 - Importa de Playnite, Steam, Epic, GOG, Ubisoft Connect, EA app, Battle.net, Amazon Games e itch.io. Os nomes que você digita nunca são alterados.
 - Capas, descrição, ano, desenvolvedora, screenshots e requisitos buscados automaticamente (Steam, GOG, Wikipedia, Wikidata — sem chave), com lista de candidatos pra escolher o jogo certo; tudo editável. Compara os requisitos com o seu PC.
 - Status (planejo, jogando, zerado, 100%, em espera, abandonado) e nota de 1 a 10 por jogo; agrupar por status, nota, gênero, ano ou desenvolvedora. Backup automático de saves.
