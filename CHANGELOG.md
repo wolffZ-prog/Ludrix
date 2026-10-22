@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.0.2 — 2026-10-22
+- Vidro fosco refeito: na 4.0.1 o acrílico deixava Ajustes com blocos pretos, a tela de Detalhes mostrando a biblioteca por trás e temas escuros quebrados. Agora todas as superfícies do tema (fundo, barra lateral, painéis, cartões, menus, caixas) ficam translúcidas na mesma proporção sobre o acrílico do Windows 11, nos temas escuro, claro e importados; cabeçalhos fixos desfocam o que rola por baixo; a tela de Detalhes esconde a biblioteca enquanto está aberta; o tom do acrílico do sistema segue o tema escolhido.
+- Topo da Biblioteca: mostra o jogo selecionado em qualquer modo de exibição (antes só no modo mural, nos outros ficava no último jogado) e a capa ocupa a altura inteira da faixa.
+- Barra lateral: o ícone de cada plataforma aparecia com a bolinha de um interruptor por cima.
+
 ## 4.0.1 — 2026-10-22
 - Biblioteca: o topo mostra o jogo selecionado (capa, nome, última vez, tempo, plataforma) com Jogar, Detalhes, Pasta e Favorito; sem seleção, mostra o último jogado. Substitui a faixa "Continuar".
 - Capas: o botão de jogar aparece no canto inferior direito da capa, não no centro.

@@ -30,6 +30,7 @@ html body.bs[data-face] .rb.on svg{color:var(--accent)}
 html body.bs[data-face] .rb .dot{top:auto;right:12px;box-shadow:none}
 html body.bs[data-face] .rb.sm{height:30px;font-size:12.5px}
 html body.bs[data-face] .rb .sw{width:26px;height:17px;border-radius:4px;background:color-mix(in srgb,var(--text) 7%,transparent);margin:0 -2px 0 -4px;flex:none;border:0;display:inline-flex;align-items:center;justify-content:center;overflow:hidden;opacity:.8;transition:opacity .15s}
+html body.bs[data-face] .rb .sw::after,html body.bs[data-face] .rb .sw::before{display:none;content:none}
 html body.bs[data-face] .rb .sw .sysic{width:26px;height:17px;background:transparent;margin:0;border-radius:0}
 html body.bs[data-face] .rb .sw svg{width:24px;height:16px;display:block}
 html body.bs[data-face] .rb.on .sw,html body.bs[data-face] .rb:hover .sw{opacity:1}
@@ -264,9 +265,9 @@ html body.bs[data-face] .h1 .btn.xs.p{width:auto;padding:0 10px}
 }
 
 /* ---- nowbar (jogo selecionado) ---- */
-html body.bs[data-face] .nowbar{display:flex;gap:16px;align-items:center;height:118px;padding:12px 16px 12px 12px;margin:0 0 20px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);box-sizing:border-box;overflow:hidden;transition:background .35s}
-html body.bs[data-face] .nowbar .nbcov{position:relative;flex:none;width:62px;height:94px;border-radius:5px;overflow:hidden;background:var(--card2);cursor:pointer;outline:2px solid transparent;outline-offset:2px;transition:outline-color .15s}
-html body.bs[data-face] .nowbar .nbcov:hover{outline-color:var(--line2)}
+html body.bs[data-face] .nowbar{display:flex;gap:16px;align-items:center;height:118px;padding:0 16px 0 0;margin:0 0 20px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);box-sizing:border-box;overflow:hidden;transition:background .35s}
+html body.bs[data-face] .nowbar .nbcov{position:relative;flex:none;width:78px;height:100%;border-radius:0;overflow:hidden;background:var(--card2);cursor:pointer;border-right:1px solid var(--line)}
+html body.bs[data-face] .nowbar .nbcov:hover img{filter:brightness(1.08)}
 html body.bs[data-face] .nowbar .nbcov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .25s}
 html body.bs[data-face] .nowbar .nbcov img.ld{opacity:1}
 html body.bs[data-face] .nowbar .nbcov .ph{position:absolute;inset:0;display:flex;align-items:flex-end;padding:5px;font:600 9px/1.2 var(--font-text);color:var(--muted);overflow:hidden}
@@ -284,7 +285,7 @@ html body.bs[data-face] .nowbar .nbacts .btn.xs.p svg{color:var(--on-accent)}
 html body.bs[data-face] .nowbar .nbacts .btn.xs.p:hover{filter:brightness(1.08)}
 html body.bs[data-face] .nowbar .nbacts .btn.xs.ic{width:28px;padding:0;justify-content:center}
 html body.bs[data-face] .nowbar .nbacts .btn.xs.ic.on svg{fill:#f2b84b;stroke:#f2b84b;color:#f2b84b}
-html body.bs[data-face] .nowbar.sw>*{animation:nbIn .28s ease-out both}
+html body.bs[data-face] .nowbar.nbsw>*{animation:nbIn .28s ease-out both}
 @keyframes nbIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 @container (max-width:560px){html body.bs[data-face] .nowbar .nbacts .btn.xs:not(.p):not(.ic) span{display:none}html body.bs[data-face] .nowbar .nbacts .btn.xs:not(.p){width:28px;padding:0;justify-content:center}}
 
@@ -329,13 +330,12 @@ html body.bs[data-face] .dpane.on{animation:nbIn .22s ease-out both}
 html body.bs[data-face] .tile,html body.bs[data-face] .item{transition:transform .15s ease-out,border-color .15s,background .15s}
 html body.bs[data-face] .tile:hover,html body.bs[data-face] .item:hover{transform:translateY(-1px)}
 
-/* ---- vidro fosco (acrílico do Windows 11) ---- */
+/* ---- vidro fosco (acrílico do Windows 11): as variáveis de superfície viram translúcidas em applyGlass(); aqui só o que precisa de ajuste ---- */
 html:has(body.bs.acr){background:transparent}
-html body.bs.acr,html body.bs.acr #app,html body.bs.acr main,html body.bs.acr .rail,html body.bs.acr .titlebar,html body.bs.acr #view,html body.bs.acr .view,html body.bs.acr .detail,html body.bs.acr .status{background:transparent}
-html body.bs.acr{background:color-mix(in srgb,var(--bg) 72%,transparent)}
-html[data-light="1"] body.bs.acr{background:color-mix(in srgb,var(--bg) 66%,transparent)}
-html body.bs.acr .rail{background:color-mix(in srgb,var(--bg2) 55%,transparent)}
-html body.bs.acr .gpanel,html body.bs.acr .fpanel{background:color-mix(in srgb,var(--bg2) 78%,transparent)}
-html body.bs.acr .card .cov,html body.bs.acr .nowbar,html body.bs.acr .sec,html body.bs.acr .tile,html body.bs.acr .item,html body.bs.acr .thcard{background-color:color-mix(in srgb,var(--card) 82%,transparent)}
-html body.bs.acr .ctx,html body.bs.acr .modal .box,html body.bs.acr .toast,html body.bs.acr .dd .menu,html body.bs.acr .pop{background:color-mix(in srgb,var(--bg2) 92%,transparent)}
-html body.bs.acr .status{border-top-color:color-mix(in srgb,var(--line) 70%,transparent)}
+html body.bs.acr:has(.detail.on:not(.bar)) #view{visibility:hidden}
+html body.bs.acr :is(.chip.on,.tabs button.on,.azbar span.on,.sofabar kbd){color:var(--bg-solid)}
+html body.bs.acr[data-nav=bottom]>#app>.rail .rb.on,html body.bs.acr[data-nav=bottom]>#app>.rail .rb.on svg{color:var(--bg-solid)}
+html body.bs.acr .sw::after{background:var(--bg-solid)}
+html body.bs.acr .card .cov{background:var(--card2-solid)}
+html body.bs.acr .h1,html body.bs.acr .ggh,html body.bs.acr .gpanel .glinks{backdrop-filter:blur(14px) saturate(1.15);-webkit-backdrop-filter:blur(14px) saturate(1.15)}
+html body.bs.acr .gpanel .glinks{background:var(--bg2)}

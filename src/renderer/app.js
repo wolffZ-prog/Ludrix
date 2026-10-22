@@ -172,7 +172,7 @@ function applyTheme() {
   currentTheme = tid;
   const old = $('#themeLink'); const link = document.createElement('link');
   link.rel = 'stylesheet'; link.href = '/api/theme/' + enc(tid.split('|')[0]) + (fm ? '?s=' + fm : ''); link.id = 'themeLink';
-  link.onload = () => { old.remove(); applyAccent(); };
+  link.onload = () => { old.remove(); applyAccent(); applyGlass(); };
   old.id = 'themeLinkOld'; old.after(link);
   if (isFile) api.get('/api/theme/' + enc(t) + '/json').then(j => { if (currentTheme !== tid) return; themeAccent = (j && j.accent) || ''; if (!fm) document.documentElement.dataset.light = j && j.scheme === 'light' ? '1' : '0'; S.themeFx = (j && j.fx) || null; S.themeIcons = (j && j.icons) || ''; S.themeMenu = (j && j.menu) || ''; S.themeSearch = (j && j.search) || ''; S.themeNavLabels = !!(j && j.nav_labels); S.themeId = t; if (j && j.pointer) document.body.dataset.ptr = '1'; else delete document.body.dataset.ptr; S.themePlx = j && j.parallax ? (typeof j.parallax === 'number' ? Math.max(.2, Math.min(3, j.parallax)) : 1) : 0; setLayout((j && j.layout) || ''); applyTheme(); applyChrome(); applyAnim(); applyRailIcons(); });
   else { S.themeFx = null; S.themeId = ''; delete document.body.dataset.ptr; S.themePlx = 0; applyPlx(); if (S.themeIcons) { S.themeIcons = ''; applyRailIcons(); } if (S.themeMenu) { S.themeMenu = ''; } if (S.themeSearch || S.themeNavLabels) { S.themeSearch = ''; S.themeNavLabels = false; applyChrome(); } }
@@ -353,9 +353,24 @@ document.addEventListener('mousemove', e => {
   if (ptr) { c.style.setProperty('--mx', ((x + .5) * 100).toFixed(1) + '%'); c.style.setProperty('--my', ((y + .5) * 100).toFixed(1) + '%'); c.style.setProperty('--px', (e.clientX - r.left).toFixed(0) + 'px'); c.style.setProperty('--py', (e.clientY - r.top).toFixed(0) + 'px'); }
 }, { passive: true });
 document.addEventListener('mouseout', e => { const c = e.target.closest && e.target.closest('.card'); if (c && !c.contains(e.relatedTarget)) { c.style.removeProperty('--rx'); c.style.removeProperty('--ry'); } });
+const GLASS_VARS = ['bg', 'bg2', 'panel', 'card', 'card2', 'logo-bg'];
+function applyGlass() {
+  const on = !!S.config.acrylic_on && !S.config.high_contrast, st = document.body.style;
+  document.body.classList.toggle('acr', on);
+  const light = document.documentElement.dataset.light === '1', want = on && (S.config.theme || 'system') !== 'system' ? light : null;
+  if (S._glassLight !== want) { S._glassLight = want; api.post('/api/window', { cmd: 'scheme', light: want }); }
+  if (!on) { for (const n of GLASS_VARS) { st.removeProperty('--' + n); st.removeProperty('--' + n + '-solid'); } return; }
+  const cs = getComputedStyle(document.documentElement);
+  const A = light ? { bg: 60, bg2: 66, panel: 66, card: 74, card2: 80, 'logo-bg': 66 } : { bg: 62, bg2: 68, panel: 68, card: 76, card2: 82, 'logo-bg': 68 };
+  for (const n of GLASS_VARS) { const v = cs.getPropertyValue('--' + n).trim(); if (!v) continue; st.setProperty('--' + n + '-solid', v); st.setProperty('--' + n, `color-mix(in srgb, ${v} ${A[n]}%, transparent)`); }
+}
+function bandMix(c, pct, base) {
+  const m = `color-mix(in srgb, ${c} ${pct}%, var(--${base}-solid, var(--${base})))`;
+  return document.body.classList.contains('acr') ? `color-mix(in srgb, ${m} 74%, transparent)` : m;
+}
 function applyChrome() {
   document.body.classList.toggle('frameless', !!S.config.frameless);
-  document.body.classList.toggle('acr', !!S.config.acrylic_on && !S.config.high_contrast);
+  applyGlass();
   applyToolbar(); applyRailIcons(); applyNavItems(); applyMotion(); applyClock();
   document.body.dataset.status = S.config.status_position === 'top' ? 'top' : 'bottom';
   delete document.body.dataset.layout; document.body.dataset.nav = 'side';
@@ -808,8 +823,9 @@ function selectGame(key) {
   if (!S.byKey[key]) return;
   document.querySelectorAll('#view .card.sel').forEach(c => c.classList.remove('sel'));
   document.querySelectorAll(`#view .card[data-key="${CSS.escape(key)}"]`).forEach(c => c.classList.add('sel'));
+  S.nowKey = key;
   if ($('#stage')) stageSet(key); else { S.stageKey = key; gameFocus(key); }
-  if (muralMode()) panelOpen(key);
+  if (muralMode()) panelOpen(key); else nowbarFill();
 }
 const PANEL = {};
 function panelOpen(key) {
@@ -819,7 +835,7 @@ function panelOpen(key) {
   if (wrap && wrap.classList.contains('pw')) { const old = $('#gpanel'); if (old) old.outerHTML = gpanelHtml(key); gpanelFill(key); nowbarFill(); return; }
   renderLibrary();
 }
-function panelClose() { S.panelKey = ''; document.querySelectorAll('#view .card.sel').forEach(c => c.classList.remove('sel')); renderLibrary(); }
+function panelClose() { S.panelKey = ''; S.nowKey = ''; document.querySelectorAll('#view .card.sel').forEach(c => c.classList.remove('sel')); renderLibrary(); }
 function gpanelHtml(key) {
   const g = S.byKey[key]; if (!g) return '';
   const live = S.sessions && S.sessions[key], sys = g.system && g.system !== 'pc' ? (S.systems[g.system] || g.system) : 'PC';
@@ -839,12 +855,12 @@ const BAND = {};
 function dbandColor(img) {
   const key = S.det && S.det.key, hero = $('#dHero'); if (!key || !hero) return;
   if (BAND[key] === undefined) { try { BAND[key] = dominantColor(img) || ''; } catch (_) { BAND[key] = ''; } }
-  if (BAND[key]) hero.style.setProperty('--dband', `color-mix(in srgb, ${BAND[key]} 55%, var(--bg2))`);
+  if (BAND[key]) hero.style.setProperty('--dband', bandMix(BAND[key], 55, 'bg2'));
 }
 function gbandColor(img) {
   const key = img.closest('.gpanel').dataset.key, band = $('#gband'); if (!band) return;
   if (BAND[key] === undefined) { try { BAND[key] = dominantColor(img) || ''; } catch (_) { BAND[key] = ''; } }
-  if (BAND[key]) band.style.background = `color-mix(in srgb, ${BAND[key]} 55%, var(--bg2))`;
+  if (BAND[key]) band.style.background = bandMix(BAND[key], 55, 'bg2');
 }
 async function gpanelFill(key) {
   let d = PANEL[key];
@@ -3182,7 +3198,8 @@ function stageHtml(hm) {
 }
 function nowKey(hm) {
   hm = hm || S.home;
-  if (S.panelKey && S.byKey[S.panelKey]) return [S.panelKey, 'Selecionado'];
+  const sk = S.panelKey || S.nowKey;
+  if (sk && S.byKey[sk]) return [sk, 'Selecionado'];
   const rc = ((hm && hm.sections.recent) || []).find(k => S.byKey[k] && S.byKey[k].installed);
   if (rc) return [rc, 'Último jogado'];
   const any = S.games.find(g => g.installed && !g.hidden);
@@ -3205,14 +3222,14 @@ function nowbarFill() {
   const [key, label] = nowKey(); if (!key) return;
   if (nb.dataset.key === key && nb.dataset.label === label) return;
   nb.dataset.key = key; nb.dataset.label = label; nb.style.background = '';
-  if (BAND[key]) nb.style.background = `color-mix(in srgb, ${BAND[key]} 14%, var(--card))`;
-  nb.classList.remove('sw'); void nb.offsetWidth; nb.classList.add('sw');
+  if (BAND[key]) nb.style.background = bandMix(BAND[key], 14, 'card');
+  nb.classList.remove('nbsw'); void nb.offsetWidth; nb.classList.add('nbsw');
   nb.innerHTML = nowbarInner(key, label);
 }
 function nbBand(img) {
   const nb = img.closest('.nowbar'); if (!nb) return; const key = nb.dataset.key;
   if (BAND[key] === undefined) { try { BAND[key] = dominantColor(img) || ''; } catch (_) { BAND[key] = ''; } }
-  if (BAND[key]) nb.style.background = `color-mix(in srgb, ${BAND[key]} 14%, var(--card))`;
+  if (BAND[key]) nb.style.background = bandMix(BAND[key], 14, 'card');
 }
 function stageSpot(key, g) {
   return `<div class="stage spot" id="stage"><div class="sbg" style="background-image:url('/hero/${enc(key)}')"></div><div class="sgrad"></div>

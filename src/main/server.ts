@@ -546,6 +546,15 @@ async function windowCmd(b, getWindow, be) {
         case 'notify_ui':
             be.push({ type: 'ui', ui: b.ui || {} });
             return { ok: true };
+        case 'scheme': {
+            try {
+                const nt = require('electron').nativeTheme;
+                if (nt)
+                    nt.themeSource = b.light === true ? 'light' : b.light === false ? 'dark' : 'system';
+            }
+            catch { /* ignore */ }
+            return { ok: true };
+        }
         case 'minimize':
         case 'min':
             win.minimize();
