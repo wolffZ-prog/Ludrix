@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.0.4 — 2026-10-22
+- Temas: um tema importado volta a definir a posição da navegação (lateral, topo, embaixo ou só ícones) e o próprio desenho (cartões, painéis, menus, fontes, papel de parede), não só as cores. As regras do tema passam por cima das do motor, mantendo a estrutura da interface e os controles novos (busca no topo, painel do jogo, Ajustes).
+- Temas: cada posição de navegação tem o seu bloco no motor (ícones de plataforma, marca, sino e engrenagem no lugar certo; rótulos visíveis ou escondidos conforme o tema); o tema não precisa mais redesenhar isso.
+- Pacote de temas: os 66 temas do WOLFFZ (Clássico e Remaster) foram refeitos para o motor novo, cada um com o seu layout original, mais quatro novos (Jornal, Metrô, Cianotipo, Cabine), todos assinados — 70 no total. Importe pelo Ajustes › Aparência › Importar tema.
+- Ajustes › Aparência: botão "Apagar todos" remove de uma vez os temas importados (os temas Escuro e Claro ficam); o bloco de temas tinha os botões empilhados e centralizados, agora ficam ao lado do texto.
+- Menu de contexto nos temas importados: por enquanto usa o desenho do motor; o redesenho por tema vem numa atualização futura.
+
 ## 4.0.3 — 2026-10-22
 - Ajustes abre na hora: a tela esperava quatro consultas (temas, tamanho do cache, fontes, hardware) antes de desenhar qualquer coisa; medir o cache percorria todas as pastas de capas e downloads e ainda prendia o processo principal. Agora a tela aparece de imediato, o tamanho do cache é lido em segundo plano só na aba Ferramentas e o hardware só na aba Sistema.
 - Ajustes refeitos: cada opção é uma linha dentro de um bloco, com título e descrição à esquerda e o controle à direita, alinhados e com a mesma altura; seções com título e explicação fora do bloco; opções avançadas no mesmo bloco, com fundo levemente diferente; campos numéricos e de texto com largura fixa; coluna lateral mais enxuta. Vale para as sete abas, no tema escuro e no claro.

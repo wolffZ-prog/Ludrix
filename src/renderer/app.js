@@ -178,14 +178,10 @@ function applyTheme() {
   else { S.themeFx = null; S.themeId = ''; delete document.body.dataset.ptr; S.themePlx = 0; applyPlx(); if (S.themeIcons) { S.themeIcons = ''; applyRailIcons(); } if (S.themeMenu) { S.themeMenu = ''; } if (S.themeSearch || S.themeNavLabels) { S.themeSearch = ''; S.themeNavLabels = false; applyChrome(); } }
 }
 let themeLayout = '', themeAccent = '';
-const LAYOUTS = [['', 'Seguir o tema', 'padrão'], ['rail', 'Ícones à esquerda', 'barra fina'], ['side', 'Lateral', 'menu à esquerda, com nomes'], ['top', 'No topo', 'abas'], ['bottom', 'Embaixo', 'ícones, barra colada']];
-const LAYOUT_BASE = { top: 'side', side: 'side', dock: 'bottom', taskbar: 'bottom', rail: 'side', bottom: 'bottom' };
 const LAYOUT_ALIAS = { taskbar: 'bottom', dock: 'bottom' };
 function normLayout(l) { return LAYOUT_ALIAS[l] || l || ''; }
-const BASE_ONLY = { rail: 'side', bottom: 'bottom' };
-function setLayout(l) { if (l === themeLayout && document.body.dataset.layout === effLayout()) return; themeLayout = l; applyChrome(); }
-function effLayout() { const u = normLayout(S.config.layout); if (u) return (u === 'bottom' || u === 'rail') ? '' : u; const l = normLayout(themeLayout); if (l) return BASE_ONLY[l] ? '' : l; return ''; }
-function effNav() { const u = normLayout(S.config.layout); if (u === 'bottom' || u === 'side' || u === 'rail') return u === 'rail' ? 'side' : u; const l = u || normLayout(themeLayout); if (l) return LAYOUT_BASE[l] || 'side'; const n = S.config.nav || 'bottom'; return n === 'side' ? 'side' : 'bottom'; }
+function setLayout(l) { if (l === themeLayout) return; themeLayout = l; applyChrome(); }
+function themeLay() { const l = normLayout(themeLayout); return ['top', 'rail', 'bottom'].includes(l) ? l : 'side'; }
 mq.addEventListener('change', () => { if ((S.config.theme || 'system') === 'system' || S.config.theme_mode === 'system') applyTheme(); });
 function inLightWindow() {
   const [f, t] = [S.config.theme_light_from || '07:00', S.config.theme_light_to || '19:00'].map(x => { const [h, m] = String(x).split(':').map(Number); return (h || 0) * 60 + (m || 0); });
@@ -373,8 +369,9 @@ function applyChrome() {
   applyGlass();
   applyToolbar(); applyRailIcons(); applyNavItems(); applyMotion(); applyClock();
   document.body.dataset.status = S.config.status_position === 'top' ? 'top' : 'bottom';
-  delete document.body.dataset.layout; document.body.dataset.nav = 'side';
-  const qb = $('#qbox'), sp = 'rail'; if (qb) { const host = sp === 'titlebar' ? $('#titlebar') : sp === 'rail' ? $('#rail') : $('#brandBtn').parentElement; if (qb.parentElement !== host) { if (sp === 'titlebar') $('#tbStatus').after(qb); else if (sp === 'rail') $('#rail .brandrow').after(qb); else $('#brandBtn').after(qb); } document.body.dataset.search = sp; } document.body.dataset.navLabels = '1'; const tv = $('#tbVer'); if (tv) tv.textContent = S.config.version || '';
+  const lay = themeLay(); delete document.body.dataset.layout; document.body.dataset.nav = lay === 'bottom' ? 'bottom' : 'side';
+  if (lay === 'top' || lay === 'rail') document.body.dataset.layout = lay;
+  const qb = $('#qbox'), sp = lay === 'side' ? 'rail' : 'top'; if (qb) { const host = sp === 'titlebar' ? $('#titlebar') : sp === 'rail' ? $('#rail') : $('#brandBtn').parentElement; if (qb.parentElement !== host) { if (sp === 'titlebar') $('#tbStatus').after(qb); else if (sp === 'rail') $('#rail .brandrow').after(qb); else $('#brandBtn').after(qb); } document.body.dataset.search = sp; } document.body.dataset.navLabels = '1'; const tv = $('#tbVer'); if (tv) tv.textContent = S.config.version || '';
   const b = $('#brand'); if (b && !b.innerHTML) b.innerHTML = logoSvg(); const t = $('#tbBrand'); if (t && !t.innerHTML) { t.innerHTML = logoSvg(); t.onclick = e => { e.stopPropagation(); const r = t.getBoundingClientRect(); if ($('#ctx').classList.contains('on')) return closeCtx(); appMenu(r.left, r.bottom + 6); }; } const hb = $('#brandBtn'); if (hb && !hb.innerHTML) { hb.innerHTML = logoSvg() + '<svg class="car" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>'; hb.onclick = e => { e.stopPropagation(); const r = hb.getBoundingClientRect(); if ($('#ctx').classList.contains('on')) return closeCtx(); appMenu(r.left, r.bottom + 6); }; }
   if (b) { b.onclick = e => { e.stopPropagation(); const r = b.getBoundingClientRect(); if ($('#ctx').classList.contains('on')) return closeCtx(); appMenu(r.right + 6, r.top); }; b.style.cursor = 'pointer'; b.title = 'Menu do Ludrix'; }
 }
@@ -942,8 +939,8 @@ function applyPlaying() {
 }
 document.addEventListener('mousemove', e => {
   if (!document.body.classList.contains('playing')) return;
-  const nav = effNav(), lay = effLayout(), W = window.innerWidth, H = window.innerHeight; let near, far;
-  if (lay === 'top') { near = e.clientY < 12; far = e.clientY > 90; } else if (nav === 'side') { near = e.clientX < 12; far = e.clientX > 140; } else { near = e.clientY > H - 12; far = e.clientY < H - 110; }
+  const lay = themeLay(), W = window.innerWidth, H = window.innerHeight; let near, far;
+  if (lay === 'top') { near = e.clientY < 12; far = e.clientY > 90; } else if (lay !== 'bottom') { near = e.clientX < 12; far = e.clientX > 140; } else { near = e.clientY > H - 12; far = e.clientY < H - 110; }
   if (near) document.body.classList.add('peek'); else if (far) document.body.classList.remove('peek');
   void W;
 });
@@ -2079,7 +2076,7 @@ function themesHtml(c) {
 function themeListHtml(c) {
   const list = (S.themes || []).filter(t => t.id && t.id.startsWith('file:')), cur = c.theme || 'system', usingFile = cur.startsWith('file:');
   const card = t => { const on = cur === t.id; return `<div class="thcard${on ? ' on' : ''}" data-tid="${esc(t.id)}" oncontextmenu="event.preventDefault();themeMenu(${jsq(t.id)},event.clientX,event.clientY)" onclick="${on ? '' : `pickTheme(${jsq(t.id)})`}" title="${esc(t.description || t.name)}"><i class="thsw" style="${themeSwatch(t)}"></i><div class="tht"><b>${esc(t.name)}</b><small>${t.scheme === 'light' ? 'Claro' : 'Escuro'}${t.author ? ' · ' + esc(t.author) : ''}</small></div>${on ? `<span class="pill ok">Em uso</span>` : ''}<button class="ib" title="Opções" onclick="event.stopPropagation();themeMenu(${jsq(t.id)},this.getBoundingClientRect().left,this.getBoundingClientRect().bottom+4)">${I.dots}</button></div>`; };
-  return `<div class="frow" style="align-items:flex-start;flex-direction:column;gap:10px"><div class="l" style="width:100%;display:flex;align-items:center;gap:10px"><div style="flex:1"><b>Temas instalados</b><span>Arquivos <b style="display:inline;font-size:12px">.lxtheme</b> ou .zip de tema mudam as cores por cima do visual padrão. Botão direito num tema: exportar ou apagar.</span></div><button class="btn s xs" onclick="themeImport()">${I.dl}<span>Importar</span></button>${usingFile ? `<button class="btn s xs" onclick="pickTheme('dark')">Voltar ao padrão</button>` : ''}</div>
+  return `<div class="frow" style="align-items:flex-start;flex-direction:column;gap:10px"><div class="l" style="width:100%;display:flex;flex-direction:row;align-items:center;gap:10px"><div style="flex:1;min-width:0"><b>Temas instalados</b><span>Arquivos <b style="display:inline;font-size:12px">.lxtheme</b> ou .zip de tema trazem cores e desenho próprios. Botão direito num tema: exportar ou apagar.</span></div><div style="display:flex;gap:6px;flex:none;align-items:center">${list.length ? `<button class="btn s xs" onclick="themeDeleteAll()">${I.trash}<span>Apagar todos</span></button>` : ''}<button class="btn s xs" onclick="themeImport()">${I.dl}<span>Importar</span></button>${usingFile ? `<button class="btn s xs" onclick="pickTheme('dark')">Voltar ao padrão</button>` : ''}</div></div>
     ${list.length ? `<div class="thlist">${list.map(card).join('')}</div>` : `<div class="mut" style="font-size:12px">Nenhum tema importado. Os temas ficam na pasta <b style="display:inline">themes</b> do Ludrix.</div>`}</div>`;
 }
 function themeSwatch(t) {
@@ -2529,6 +2526,14 @@ function themeDeleteSel() {
     for (const id of ids) await api.post('/api/theme/delete', { id });
     if (ids.includes(S.config.theme)) S.config.theme = 'system';
     S._tsel.clear(); S._tselMode = false; reloadTheme(true); renderSettings(true); toast('ok', 'Apagados', `${ids.length} estilo${ids.length > 1 ? 's' : ''}`);
+  } });
+}
+function themeDeleteAll() {
+  const ids = (S.themes || []).filter(t => t.id && t.id.startsWith('file:')).map(t => t.id); if (!ids.length) return;
+  modal({ title: `Apagar os ${ids.length} temas importados?`, text: 'As pastas deles em themes serão removidas. Os temas Escuro e Claro continuam. É possível importar de novo depois.', ok: 'Apagar todos', danger: true, onOk: async () => {
+    for (const id of ids) await api.post('/api/theme/delete', { id });
+    if (ids.includes(S.config.theme)) { S.config.theme = 'dark'; await setCfg({ theme: 'dark' }); }
+    S.themes = await api.get('/api/themes/full'); reloadTheme(true); renderSettings(true); toast('ok', 'Temas apagados', pl(ids.length, 'tema', 'temas'));
   } });
 }
 function themeDelete(id, name) { modal({ title: `Apagar o estilo "${name}"?`, text: 'A pasta dele em themes será removida. É possível importar de novo depois.', ok: 'Apagar', danger: true, onOk: async () => { await api.post('/api/theme/delete', { id }); if (S.config.theme === id) S.config.theme = 'system'; reloadTheme(true); renderSettings(true); } }); }

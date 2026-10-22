@@ -1,6 +1,6 @@
 {
   "name": "ludrix",
-  "version": "4.0.3",
+  "version": "4.0.4",
   "productName": "LudrixHub",
   "description": "LudrixHub - launcher de jogos portátil",
   "main": "dist/main/boot.js",

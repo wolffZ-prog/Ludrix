@@ -192,20 +192,48 @@ function safeCss(css: string) {
     css = css.replace(/(?<![\w-])(src|image-set|-webkit-image-set)\s*:\s*(https?:|\/\/|file:|ftp:|javascript:)[^;}]*/gi, '');
     return css;
 }
-function glassCompat(css: string) {
-    return css.replace(/(?<![\w-])([^@{}]*?)\{([^{}]*)\}/g, (m0, sel: string, body: string) => {
-        const keep = body.split(';').filter((d) => /^\s*(background|backdrop-filter|-webkit-backdrop-filter)\s*:/.test(d)).join(';');
-        if (!keep) return m0;
-        const sels = sel.split(',').map((x) => x.trim());
-        if (!sels.length || !sels.every((x) => /(^|\s)(main\.glass|\.rail(\.glass)?|nav\.rail)$/.test(x)))
-            return m0;
-        const layer = sels.map((x) => x + '::before').join(',');
-        return m0 + layer + '{' + keep + '}' + sels.join(',') + '{background:transparent!important;backdrop-filter:none!important}';
-    });
+const BOOST = 'html body.bs.bs[data-face][data-face]';
+function boostSel(sel: string) {
+    sel = sel.trim();
+    if (!sel || sel.startsWith(':root') || /^(from|to|\d+%)$/.test(sel)) return sel;
+    const m = /^html((?:\[[^\]]*\]|\.[\w-]+|:[\w-]+(?:\([^)]*\))?)*)(.*)$/s.exec(sel);
+    if (m) {
+        const rest = m[2];
+        const bm = /^(\s*>?\s*)body((?:\[[^\]]*\]|\.[\w-]+)*)(.*)$/s.exec(rest);
+        if (bm) return `html${m[1]}${bm[1]}body.bs.bs[data-face][data-face]${bm[2]}${bm[3]}`;
+        if (!rest.trim() || /^::?[\w-]/.test(rest)) return sel;
+        return `html${m[1]} body.bs.bs[data-face][data-face] ${rest.trim()}`;
+    }
+    const b = /^body((?:\[[^\]]*\]|\.[\w-]+)*)(.*)$/s.exec(sel);
+    if (b) return `${BOOST}${b[1]}${b[2]}`;
+    return `${BOOST} ${sel}`;
+}
+function boostCss(css: string): string {
+    let out = '', i = 0;
+    const n = css.length;
+    while (i < n) {
+        const o = css.indexOf('{', i);
+        if (o < 0) { out += css.slice(i); break; }
+        const head = css.slice(i, o);
+        let depth = 1, j = o + 1;
+        while (j < n && depth) { if (css[j] === '{') depth++; else if (css[j] === '}') depth--; j++; }
+        const body = css.slice(o + 1, j - 1);
+        const semi = head.lastIndexOf(';');
+        const pre = semi >= 0 ? head.slice(0, semi + 1) : '';
+        const selText = semi >= 0 ? head.slice(semi + 1) : head;
+        const st = selText.trim();
+        if (st.startsWith('@')) {
+            if (/^@(media|supports|container|layer)\b/.test(st)) out += pre + selText + '{' + boostCss(body) + '}';
+            else out += pre + selText + '{' + body + '}';
+        } else
+            out += pre + st.split(',').map(boostSel).join(',') + '{' + body + '}';
+        i = j;
+    }
+    return out;
 }
 function scopeNavCss(css: string, layout: string) {
     const lay = ({ dock: 'bottom', taskbar: 'bottom' } as any)[layout || ''] ?? (layout || '');
-    const attr = ({ top: '[data-layout=top]', side: '[data-layout=side]', bottom: '[data-nav=bottom]', rail: ':not([data-layout])[data-nav=side]', '': ':not([data-layout])' } as any)[lay];
+    const attr = ({ top: '[data-layout=top]', side: ':not([data-layout]):not([data-nav=bottom])', bottom: '[data-nav=bottom]', rail: '[data-layout=rail]', '': ':not([data-layout]):not([data-nav=bottom])' } as any)[lay];
     if (!attr) return css;
     const fix = (g1: string) => {
         const out: string[] = [];
@@ -213,9 +241,9 @@ function scopeNavCss(css: string, layout: string) {
             if (sel.includes('[data-layout'))
                 out.push(sel);
             else if (/(^|[\s>+~,(])(\.rail|\.rb|\.gpind)(?![\w-])/.test(sel) || /body\[data-nav\]/.test(sel)) {
-                sel = sel.replace(/^html\s+body\[data-nav\]\s*/, '');
-                sel = sel.replace(/^body\b/, '').trim();
-                out.push((sel.includes('.gpind') ? `body${attr} ${sel}` : `html body${attr}>#app ${sel}`).trim());
+                const m = /^(html(?:\[[^\]]*\]|\.[\w-]+)*)?\s*(?:body((?:\[[^\]]*\]|\.[\w-]+)*))?\s*>?\s*(?:#app\s*>?\s*)?(.*)$/s.exec(sel) as RegExpExecArray;
+                const h = m[1] || 'html', b = (m[2] || '').replace(/\[data-nav[^\]]*\]|\[data-layout[^\]]*\]/g, ''), rest = m[3].trim();
+                out.push(rest.includes('.gpind') ? `${h} body${attr}${b} ${rest}` : `${h} body${attr}${b}>#app ${rest}`);
             } else
                 out.push(sel);
         }
@@ -248,7 +276,7 @@ export function themeCss(themeId: string, scheme: string, cfg: Cfg) {
             const a = x.indexOf('/* ---- parte 1: layout ---- */'), b = x.indexOf('/* ---- parte 2: visual ---- */');
             if (a >= 0 && a < b)
                 x = x.slice(0, a) + x.slice(b);
-            css += scopeNavCss(glassCompat(safeCss(x)), t.layout || '');
+            css += boostCss(scopeNavCss(safeCss(x), t.layout || ''));
         }
         return css;
     }

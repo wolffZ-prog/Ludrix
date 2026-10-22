@@ -123,7 +123,7 @@ html body.bs[data-face] .libwrap.pw{grid-template-columns:minmax(0,1fr) 344px}
 html body.bs[data-face] .view:has(>.libwrap.pw){padding-right:0}
 html body.bs[data-face] .libwrap .libmain{min-width:0}
 html body.bs[data-face] .libwrap.pw.fp{grid-template-columns:minmax(0,1fr) 268px 344px}
-html body.bs[data-face] .gpanel{position:sticky;top:0;max-height:calc(100vh - var(--tb,0px) - 26px);height:calc(100vh - var(--tb,0px) - 26px);overflow:auto;scrollbar-width:thin;margin:0;border-radius:0;background:var(--bg2);border:0;border-left:1px solid var(--line);display:flex;flex-direction:column;box-shadow:none}
+html body.bs[data-face] .gpanel{position:sticky;top:0;max-height:calc(100vh - var(--tb,0px) - var(--toph,0px) - var(--navh,0px) - 26px);height:calc(100vh - var(--tb,0px) - var(--toph,0px) - var(--navh,0px) - 26px);overflow:auto;scrollbar-width:thin;margin:0;border-radius:0;background:var(--bg2);border:0;border-left:1px solid var(--line);display:flex;flex-direction:column;box-shadow:none}
 html body.bs[data-face] .gpanel .gband{height:96px;flex:none;background:var(--card2);position:relative;transition:background .3s}
 html body.bs[data-face] .gpanel .gclose{position:absolute;top:10px;right:10px;width:28px;height:28px;border-radius:6px;border:0;background:rgba(0,0,0,.35);color:#fff;display:grid;place-items:center;cursor:pointer}
 html body.bs[data-face] .gpanel .gclose svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.2}
@@ -181,7 +181,7 @@ html body.bs[data-face] .fpanel{background:var(--bg2);border:1px solid var(--lin
 html body.bs[data-face] .detail{left:var(--side);background:var(--bg)}
 html body.bs[data-face] .dbg{display:none}
 html body.bs[data-face] .dwrap{display:block;max-width:none;margin:0;padding:0 0 60px}
-html body.bs[data-face] .dclose{position:fixed;top:calc(var(--tb,0px) + 14px);left:calc(var(--side) + 18px);height:30px;padding:0 10px 0 6px;border-radius:var(--r);background:rgba(0,0,0,.35);color:#fff;border:0;font:500 12.5px var(--font-text);z-index:6;display:flex;align-items:center;gap:4px;backdrop-filter:none}
+html body.bs[data-face] .dclose{position:fixed;top:calc(var(--tb,0px) + var(--toph,0px) + 14px);left:calc(var(--side) + 18px);height:30px;padding:0 10px 0 6px;border-radius:var(--r);background:rgba(0,0,0,.35);color:#fff;border:0;font:500 12.5px var(--font-text);z-index:6;display:flex;align-items:center;gap:4px;backdrop-filter:none}
 html body.bs[data-face] .dclose svg{width:16px;height:16px}
 html body.bs[data-face] .dhero{display:block;padding:0;min-height:0}
 html body.bs[data-face] .dhero::before{content:"";display:block;height:180px;background:var(--dband,var(--card2))}
@@ -353,6 +353,74 @@ html body.bs[data-face] #view.vin .dhero{animation:viewIn .25s ease-out both}
 html body.bs[data-face] .dpane.on{animation:nbIn .22s ease-out both}
 html body.bs[data-face] .tile,html body.bs[data-face] .item{transition:transform .15s ease-out,border-color .15s,background .15s}
 html body.bs[data-face] .tile:hover,html body.bs[data-face] .item:hover{transform:translateY(-1px)}
+
+/* ---- posições do menu (temas): topo, embaixo, ícones ---- */
+html body.bs[data-face][data-layout=top]{--side:0px;--toph:50px}
+html body.bs[data-face][data-layout=top] #app{grid-template-columns:1fr;grid-template-rows:var(--tb) var(--toph) 1fr}
+html body.bs[data-face][data-layout=top] .rail{grid-row:2;grid-column:1;position:relative;flex-direction:row;align-items:center;gap:2px;height:var(--toph);padding:0 14px;border-right:0;border-bottom:1px solid var(--line);overflow:visible}
+html body.bs[data-face][data-layout=top] main{grid-row:3}
+html body.bs[data-face][data-layout=top] .rail .brandrow{height:auto;padding:0 10px 0 2px;margin:0 6px 0 0}
+html body.bs[data-face][data-layout=top] .rail .rg{flex-direction:row;align-items:center;gap:2px}
+html body.bs[data-face][data-layout=top] .rail .rg+.rg{margin:0}
+html body.bs[data-face][data-layout=top] .rail .rsep{display:block;width:1px;height:18px;background:var(--line);margin:0 6px}
+html body.bs[data-face][data-layout=top] .rb,html body.bs[data-face][data-layout=top] .rail .rb{height:32px;padding:0 11px;gap:8px}
+html body.bs[data-face][data-layout=top] .rb span{flex:none}
+html body.bs[data-face][data-layout=top] .rb .n{display:none!important}
+html body.bs[data-face][data-layout=top] .rb .dot{top:6px;right:4px}
+html body.bs[data-face][data-layout=top] .rail .rx{display:none}
+html body.bs[data-face][data-layout=top] .rail .sp{flex:1}
+html body.bs[data-face][data-layout=top] .rail .rbot{flex-direction:row;border:0;padding:0;margin:0;gap:2px}
+html body.bs[data-face][data-layout=top] .rail .rbot .bell,html body.bs[data-face][data-layout=top] .rail .rbot .rb{width:34px;height:32px;padding:0;justify-content:center}
+html body.bs[data-face][data-layout=top] .rail .rbot .bell .hl,html body.bs[data-face][data-layout=top] .rail .rbot .rb span{display:none!important}
+html body.bs[data-face][data-layout=top] .rail #bell #bellN{right:4px;top:4px}
+html body.bs[data-face][data-layout=top] .bellpop,html body.bs[data-face][data-layout=top] .helppop{left:auto;right:16px;bottom:auto;top:calc(var(--tb,0px) + var(--toph) + 6px)}
+html body.bs[data-face][data-nav=bottom]{--side:0px;--navh:64px}
+html body.bs[data-face][data-nav=bottom] #app{grid-template-columns:1fr;grid-template-rows:var(--tb) 1fr var(--navh)}
+html body.bs[data-face][data-nav=bottom]>#app>.rail{grid-row:3;grid-column:1;position:relative;flex-direction:row;align-items:center;justify-content:center;gap:2px;height:var(--navh);padding:0 14px;border-right:0;border-top:1px solid var(--line);overflow:visible}
+html body.bs[data-face][data-nav=bottom] main{grid-row:2}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .brandrow{position:absolute;left:14px;top:0;bottom:0;height:auto;padding:0}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .rg{flex-direction:row;align-items:center;gap:2px}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .rg+.rg{margin:0}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .rsep{display:block;width:1px;height:22px;background:var(--line);margin:0 6px}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .rb{flex-direction:column;justify-content:center;gap:3px;height:50px;min-width:68px;padding:0 10px}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .rb svg{width:19px;height:19px}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .rb span{flex:none;font-size:10.5px;text-align:center}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .rb .n{display:none!important}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .rb .dot{top:6px;right:10px}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .rx,html body.bs[data-face][data-nav=bottom]>#app>.rail .sp{display:none}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .rbot{position:absolute;right:14px;top:0;bottom:0;flex-direction:row;align-items:center;border:0;padding:0;margin:0;gap:2px}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .rbot .bell,html body.bs[data-face][data-nav=bottom]>#app>.rail .rbot .rb{width:36px;height:36px;min-width:0;padding:0;justify-content:center;flex-direction:row}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .rbot .bell .hl,html body.bs[data-face][data-nav=bottom]>#app>.rail .rbot .rb span{display:none!important}
+html body.bs[data-face][data-nav=bottom]>#app>.rail #bell #bellN{right:4px;top:4px}
+html body.bs[data-face][data-nav=bottom] .bellpop,html body.bs[data-face][data-nav=bottom] .helppop{left:auto;right:16px;top:auto;bottom:calc(var(--navh) + 8px)}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .rb.on{background:var(--card2);color:var(--text)}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .rb.on svg{color:var(--accent)}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .rb:hover{background:var(--card2);color:var(--text)}
+html body.bs[data-face][data-nav=bottom]>#app>.rail .brand{display:block}
+html body.bs[data-face][data-layout=rail]{--side:64px}
+html body.bs[data-face][data-layout=rail] .rail{padding:0 10px 10px;align-items:center}
+html body.bs[data-face][data-layout=rail] .rail .brandrow{padding:0;justify-content:center;width:100%}
+html body.bs[data-face][data-layout=rail] .rail .bname{display:none}
+html body.bs[data-face][data-layout=rail] .rail .rg{width:100%;align-items:center}
+html body.bs[data-face][data-layout=rail] .rb,html body.bs[data-face][data-layout=rail] .rail .rb{width:44px;height:40px;justify-content:center;padding:0;gap:0}
+html body.bs[data-face][data-layout=rail] .rb>span,html body.bs[data-face][data-layout=rail] .rail .bell .hl{display:none!important}
+html body.bs[data-face][data-layout=rail] .rb .n{display:none!important}
+html body.bs[data-face][data-layout=rail] .rb>svg{width:19px;height:19px}
+html body.bs[data-face][data-layout=rail] .rb .dot{top:7px;right:8px}
+html body.bs[data-face][data-layout=rail] .rail .rx{width:100%;align-items:center;border-top:1px solid var(--line);margin-top:6px;padding-top:6px;overflow-x:hidden}
+html body.bs[data-face][data-layout=rail] .rail .rxh{display:none}
+html body.bs[data-face][data-layout=rail] .rb.sm{height:36px;width:44px}
+html body.bs[data-face][data-layout=rail] .rb .sw{margin:0}
+html body.bs[data-face][data-layout=rail] .rail .rbot{align-items:center}
+html body.bs[data-face][data-layout=rail] .rail .bell{width:44px;height:40px;padding:0;justify-content:center}
+html body.bs[data-face][data-layout=rail] .rail #bell #bellN{right:8px;top:6px}
+html body.bs[data-face][data-layout=top] header.top,html body.bs[data-face][data-layout=rail] header.top,html body.bs[data-face][data-nav=bottom] header.top{display:flex!important;align-items:center;gap:10px;padding:14px 22px 0;background:var(--bg);flex-wrap:nowrap}
+html body.bs[data-face][data-layout=top] header.top :is(.brandbtn,.chips,#sort,.bell),html body.bs[data-face][data-layout=rail] header.top :is(.brandbtn,.chips,#sort,.bell),html body.bs[data-face][data-nav=bottom] header.top :is(.brandbtn,.chips,#sort,.bell){display:none}
+html body.bs[data-face][data-layout=top] header.top .search,html body.bs[data-face][data-layout=rail] header.top .search,html body.bs[data-face][data-nav=bottom] header.top .search{flex:1;width:auto;max-width:none;margin:0;padding:0}
+html body.bs[data-face][data-layout=top] header.top .search input,html body.bs[data-face][data-layout=rail] header.top .search input,html body.bs[data-face][data-nav=bottom] header.top .search input{height:34px;width:100%;border-radius:var(--r);background:var(--bg2);border:1px solid var(--line);padding:0 34px;font-size:13px;color:var(--text)}
+html body.bs[data-face][data-layout=top] header.top .search input:focus,html body.bs[data-face][data-layout=rail] header.top .search input:focus,html body.bs[data-face][data-nav=bottom] header.top .search input:focus{border-color:var(--line2);box-shadow:none}
+html body.bs[data-face][data-layout=top] header.top .search svg,html body.bs[data-face][data-layout=rail] header.top .search svg,html body.bs[data-face][data-nav=bottom] header.top .search svg{left:11px;width:15px;height:15px;color:var(--muted2)}
+html body.bs[data-face][data-layout=top] header.top .search kbd,html body.bs[data-face][data-layout=rail] header.top .search kbd,html body.bs[data-face][data-nav=bottom] header.top .search kbd{display:block;right:10px;font:500 10.5px/1 var(--font-text);border:1px solid var(--line2);border-radius:4px;padding:2px 5px;color:var(--muted2);background:transparent}
 
 /* ---- vidro fosco (acrílico do Windows 11): as variáveis de superfície viram translúcidas em applyGlass(); aqui só o que precisa de ajuste ---- */
 html:has(body.bs.acr){background:transparent}
