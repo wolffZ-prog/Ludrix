@@ -3118,10 +3118,19 @@ function viewBtn() {
       ${lm ? '' : `<div class="fsec"><h5>Tamanho das capas</h5><label class="zoom vz"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><input type="range" min="100" max="300" step="10" value="${S.config.card_size || 136}" oninput="setCardSize(this.value,false)" onchange="setCardSize(this.value,true)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></label></div>`}
     </div></div>`;
 }
+function vpopPortal() { let w = $('#vpop-portal'); if (!w) { w = document.createElement('div'); w.id = 'vpop-portal'; w.className = 'filt'; document.body.appendChild(w); } return w; }
+function vpopClose() { const w = $('#vpop-portal'); if (!w) return; w.classList.remove('on'); const pop = w.querySelector('.pop'), f = $('#vpop'); if (pop) { pop.removeAttribute('style'); if (f && !f.querySelector('.pop')) f.appendChild(pop); else pop.remove(); } }
 function toggleFilt(force, id) {
   if (!id) return fpOpen(force);
   const f = $('#' + id); if (!f) return; const on = force !== undefined ? force : !f.classList.contains('on');
   if (on) document.querySelectorAll('.filt.on').forEach(x => { if (x !== f) x.classList.remove('on'); });
+  if (id === 'vpop') {
+    vpopClose(); f.classList.toggle('on', on); if (!on) return;
+    const w = vpopPortal(), pop = f.querySelector('.pop'); if (!pop) return;
+    w.innerHTML = ''; w.appendChild(pop); w.classList.add('on');
+    for (const [k, v] of [['position', 'fixed'], ['left', '50%'], ['top', '50%'], ['right', 'auto'], ['bottom', 'auto'], ['transform', 'translate(-50%,-50%)'], ['margin', '0'], ['max-height', 'min(78vh, 680px)'], ['overflow', 'auto'], ['z-index', '720']]) pop.style.setProperty(k, v, 'important');
+    return;
+  }
   f.classList.toggle('on', on); if (!on) return;
   const pop = f.querySelector('.pop'), b = f.querySelector('button').getBoundingClientRect();
   pop.style.maxHeight = ''; const r = pop.getBoundingClientRect(), pad = 8;
@@ -3419,7 +3428,8 @@ function welcomeGo(d) { const n = W_I + d; if (n >= W_STEPS.length) return welco
 function welcomeDone() { const el = $('#welcome'); if (el) { el.classList.remove('on'); setTimeout(() => el.remove(), 300); } if (!S.config.welcome_done) { S.config.welcome_done = true; api.post('/api/config', { welcome_done: true }); } if (S._tourDir) { const d = S._tourDir; S._tourDir = ''; setTimeout(() => scanRun('windows', d), 400); } }
 document.addEventListener('keydown', e => { const w = $('#welcome'); if (!w || !w.classList.contains('on') || $('#swBody')) return; if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); welcomeGo(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); welcomeGo(-1); } else if (e.key === 'Escape') { e.preventDefault(); welcomeDone(); } });
 function toggleToolbarItem(id, on) { const cur = new Set(S.config.toolbar_items || ['search', 'cats', 'sort', 'bell']); on ? cur.add(id) : cur.delete(id); setCfg({ toolbar_items: TOOLBAR_ITEMS.map(x => x[0]).filter(x => cur.has(x)) }); }
-document.addEventListener('click', e => { if (!e.target.closest('#filt')) $('#filt')?.classList.remove('on'); if (!e.target.closest('#vpop')) $('#vpop')?.classList.remove('on'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#vpop-portal.on')) { $('#vpop')?.classList.remove('on'); vpopClose(); } });
+document.addEventListener('click', e => { if (!e.target.closest('#filt')) $('#filt')?.classList.remove('on'); if (!e.target.closest('#vpop,#vpop-portal')) { $('#vpop')?.classList.remove('on'); vpopClose(); } });
 async function toggleHidden(key) { const r = await api.post('/api/hide', { key }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); const g = S.byKey[key]; if (g) { g.hidden = r.hidden; S._poolKey = ''; } if (S.home && S.home.games[key]) S.home.games[key].hidden = r.hidden; toast('ok', r.hidden ? 'Jogo oculto' : 'Jogo visível de novo', r.hidden ? 'Aparece de novo pelo filtro Situação › Ocultos ou pela busca.' : '', r.hidden ? [{ label: 'Desfazer', fn: () => toggleHidden(key) }] : undefined); if (S.view === 'home') { refreshHome(); renderLibrary(); } }
 async function toggleFav(key) { const r = await api.post('/api/fav', { key }); const g = S.byKey[key]; if (g) { g.fav = r.fav; S._poolKey = ''; } document.querySelectorAll(`[data-fav="${CSS.escape(key)}"]`).forEach(b => b.classList.toggle('on', r.fav)); if (S.home && S.home.games[key]) S.home.games[key].fav = r.fav; if (S.view === 'home') refreshHome(); }
 async function stopGame(key, force) {

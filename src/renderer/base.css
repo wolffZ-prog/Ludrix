@@ -429,7 +429,8 @@ html body.bs.acr :is(.chip.on,.tabs button.on,.azbar span.on,.sofabar kbd){color
 html body.bs.acr[data-nav=bottom]>#app>.rail .rb.on,html body.bs.acr[data-nav=bottom]>#app>.rail .rb.on svg{color:var(--bg-solid)}
 html body.bs.acr .sw::after{background:var(--bg-solid)}
 html body.bs.acr .card .cov{background:var(--card2-solid)}
-html body.bs.acr .h1,html body.bs.acr .ggh,html body.bs.acr .gpanel .glinks{backdrop-filter:blur(14px) saturate(1.15);-webkit-backdrop-filter:blur(14px) saturate(1.15)}
+html body.bs.acr .h1,html body.bs.acr .ggh,html body.bs.acr .gpanel .glinks,html body.bs.acr .pop,html body.bs.acr .ctx,html body.bs.acr .bellpop,html body.bs.acr .helppop,html body.bs.acr .modal .box{backdrop-filter:blur(14px) saturate(1.15);-webkit-backdrop-filter:blur(14px) saturate(1.15)}
+html body.bs[data-face] #vpop-portal{position:fixed;inset:auto;z-index:720}
 html body.bs.acr .gpanel .glinks{background:var(--bg2)}
 html body.bs[data-face] .sec>.btn,html body.bs[data-face] .sec>div[style*="display:flex"]{margin-top:2px}
 html body.bs[data-face] .sec>p+.btn{margin-top:0}

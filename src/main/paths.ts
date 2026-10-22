@@ -6,6 +6,7 @@
  */
 import path from 'node:path';
 import fs from 'node:fs';
+import os from 'node:os';
 let eapp: any = null;
 try {
     eapp = (require('electron') as any).app || null;
@@ -35,9 +36,16 @@ function appRoot() {
     const ad = appDir();
     if (path.basename(ad).toLowerCase() === 'app' && !fs.existsSync(path.join(ad, 'src')))
         return path.dirname(ad);
-    if (FROZEN)
-        return path.dirname(eapp.getPath('exe'));
+    if (FROZEN) {
+        const exeDir = path.dirname(eapp.getPath('exe'));
+        if (process.platform === 'linux' && (process.env.APPIMAGE || !writable(exeDir)))
+            return path.join(process.env.XDG_DATA_HOME || path.join(os.homedir(), '.local', 'share'), 'Ludrix');
+        return exeDir;
+    }
     return ad;
+}
+function writable(dir: string): boolean {
+    try { fs.accessSync(dir, fs.constants.W_OK); return true; } catch { return false; }
 }
 /** Raiz portatil da instalacao. */
 const ROOT = appRoot()

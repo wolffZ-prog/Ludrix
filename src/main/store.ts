@@ -419,7 +419,7 @@ class Store {
         c.root = P.ROOT;
         c.webview2 = 'electron';
         c.os = process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'mac' : 'linux';
-        c.appimage = false;
+        c.appimage = Boolean(process.env.APPIMAGE);
         c.frameless = RUNTIME.frameless ?? Boolean(this.config.frameless);
         c.acrylic_on = RUNTIME.acrylic;
         return { ...c, ...extra };

@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.0.5 — 2026-10-22
+- Biblioteca: o painel "Exibição" (ordem, grupos, modo, tamanho das capas) abre no centro da tela. Antes era posicionado a partir do botão e, com o vidro fosco ou em temas que desfocam o cabeçalho, ficava cortado na borda direita. Fecha com clique fora ou Esc.
+- Vidro fosco: menus, painéis flutuantes e caixas de diálogo desfocam o que está atrás; antes deixavam as capas aparecerem através.
+- Linux (AppImage): os dados ficam em ~/.local/share/Ludrix (ou $XDG_DATA_HOME/Ludrix). Antes o Ludrix tentava gravar dentro do próprio AppImage, que é somente leitura.
+- Linux (AppImage): o AppImage volta a sair em cada release. O build no GitHub parava porque o electron-builder tentava publicar sozinho sem token; agora só empacota (`--publish never`), com o ícone do Ludrix. Ajustes › Sistema reconhece o AppImage e mostra o botão para baixar a versão nova em vez do atualizador interno.
+
 ## 4.0.4 — 2026-10-22
 - Temas: um tema importado volta a definir a posição da navegação (lateral, topo, embaixo ou só ícones) e o próprio desenho (cartões, painéis, menus, fontes, papel de parede), não só as cores. As regras do tema passam por cima das do motor, mantendo a estrutura da interface e os controles novos (busca no topo, painel do jogo, Ajustes).
 - Temas: cada posição de navegação tem o seu bloco no motor (ícones de plataforma, marca, sino e engrenagem no lugar certo; rótulos visíveis ou escondidos conforme o tema); o tema não precisa mais redesenhar isso.

@@ -12,7 +12,9 @@ extraResources:
     to: renderer
   - from: src/main/assets
     to: assets
+publish: null
 linux:
+  icon: src/main/assets/icons/icon.png
   target:
     - AppImage
   artifactName: LudrixHub-${version}-${arch}.${ext}
