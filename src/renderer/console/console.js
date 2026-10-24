@@ -59,6 +59,7 @@ async function load(first) {
   S.byKey = {}; d.games.forEach(g => S.byKey[g.key] = g);
   document.body.dataset.theme = d.theme || 'noite';
   document.body.classList.toggle('nolegend', !d.config.console_hint);
+  document.body.classList.toggle('rm', !!d.config.reduce_motion || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches));
   document.body.dataset.cards = d.config.console_card_size || 'normal';
   clock(); idleArm();
   const pad = $('#padInd'); pad.classList.toggle('on', d.gamepad.connected > 0); $('#padN').textContent = d.gamepad.connected;
@@ -114,6 +115,7 @@ function render(keep) {
     <div class="head">${tabsHtml()}<span class="n">${S.games.length} ${S.games.length === 1 ? 'jogo' : 'jogos'}${S.q ? ` · busca “${esc(S.q)}”` : ''}</span><div class="sp"></div>${sysBar}<div class="sys tools"><button data-tool="sort" title="Ordenar">${IC.sort || ''}${esc(SORTN[S.data.config.console_sort] || 'A–Z')}</button><button data-tool="grid" title="Ver todos em grade">${IC.grid}Grade</button></div></div>
     <div class="strip" id="strip">${S.games.map((g, i) => card(g, i)).join('')}${more ? `<div class="card more" data-i="${S.games.length}">${IC.grid}Todos os jogos<small>+${S.data.games.length - S.games.length}</small></div>` : ''}</div>`;
   fitCards();
+  if (S.lastView !== S.view) { S.lastView = S.view; const st = $('#strip'); st.classList.add('swap'); st.addEventListener('animationend', () => st.classList.remove('swap'), {once: true}); }
   bindTabs();
   $$('#strip .card').forEach(c => { c.onclick = () => { const i = +c.dataset.i; if (c.classList.contains('more')) return setView('library'); if (S.focus !== 'strip') setFocus('strip', 0); if (i === S.sel) { const g = S.games[i]; if (S.data.sessions[g.key]) openMenu(); else play(g.key); } else select(i); }; c.ondblclick = () => { const i = +c.dataset.i; if (c.classList.contains('more')) return; const g = S.games[i]; if (g && !S.data.sessions[g.key]) play(g.key); }; c.oncontextmenu = e => { e.preventDefault(); if (c.classList.contains('more')) return; select(+c.dataset.i); openMenu(); }; });
   $$('.head .sys button[data-sys]').forEach(b => b.onclick = () => { S.sys = b.dataset.sys; render(); });
@@ -153,16 +155,21 @@ function select(i, silent) {
   if (!silent) tick();
 }
 
-let STG = {cur: 0, key: ''};
+let STG = {cur: 0, key: '', txt: '', t: 0};
 function stageClear() { ['#stbg', '#stbg2'].forEach(q => { const e = $(q); if (e) e.classList.remove('on'); }); STG.key = ''; }
 function stageBg(g) {
   if (STG.key === g.key) return;
   STG.key = g.key;
+  clearTimeout(STG.t);
+  STG.t = setTimeout(() => stageLoad(g), 90);
+}
+function stageLoad(g) {
+  if (STG.key !== g.key) return;
   const url = `/hero/${encodeURIComponent(g.key)}`;
   const show = src => {
     if (STG.key !== g.key) return;
     const next = STG.cur ? $('#stbg') : $('#stbg2'), prev = STG.cur ? $('#stbg2') : $('#stbg');
-    next.style.backgroundImage = `url("${src}")`; next.classList.add('on'); prev.classList.remove('on'); STG.cur = STG.cur ? 0 : 1;
+    next.style.backgroundImage = `url("${src}")`; next.style.animation = 'none'; void next.offsetWidth; next.style.animation = ''; next.classList.add('on'); prev.classList.remove('on'); STG.cur = STG.cur ? 0 : 1;
   };
   const img = new Image();
   img.onload = () => show(url);
@@ -180,6 +187,7 @@ function stage(g, keep) {
     <div class="meta">${meta.map(esc).join('<i>·</i>')}</div>
     <div class="acts">${live ? `<button class="btn d" data-act="stop">${IC.stop}Encerrar</button>` : `<button class="btn p" data-act="play">${IC.play}Jogar</button>`}<button class="btn" data-act="detail">${IC.info}Detalhes</button><button class="btn" data-act="menu">Opções</button></div>`;
   $$('#sttxt .btn').forEach(b => b.onclick = () => act(b.dataset.act));
+  if (STG.txt !== g.key) { STG.txt = g.key; txt.classList.remove('in'); void txt.offsetWidth; txt.classList.add('in'); }
   chip(g);
   if (wasActs >= 0) setFocus('acts', wasActs);
 }
@@ -575,7 +583,7 @@ function gpLoop() {
       const h = GP.held[k];
       if (pressed[k]) {
         if (!h) { GP.held[k] = {t0: now, t: now}; if (k === 'ok') rumble(); nav(k); GP.lastAny = now; }
-        else if (['left', 'right', 'up', 'down'].includes(k) && now - h.t0 > rep[0] && now - h.t > rep[1]) { h.t = now; nav(k); GP.lastAny = now; }
+        else if (['left', 'right', 'up', 'down'].includes(k) && now - h.t0 > rep[0] && now - h.t > rep[1] * (now - h.t0 > 1600 ? .55 : 1)) { h.t = now; nav(k); GP.lastAny = now; }
       } else if (h) delete GP.held[k];
     }
   }

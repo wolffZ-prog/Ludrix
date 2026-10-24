@@ -623,7 +623,7 @@ async function ctxMenu(b, win, be) {
         }
         head = { title: String(b.head.title || '').slice(0, 60), sub: String(b.head.sub || '').slice(0, 60), thumb };
     }
-    return menuMod.show({ items: b.items || [], title: String(b.title || ''), head, colors: b.colors || {}, light: String(b.light) === '1', x: Number(b.x || 0), y: Number(b.y || 0), atCursor: String(b.at_cursor) === '1', owner: win });
+    return menuMod.show({ items: b.items || [], title: String(b.title || ''), head, colors: b.colors || {}, ui: b.ui || {}, light: String(b.light) === '1', x: Number(b.x || 0), y: Number(b.y || 0), atCursor: String(b.at_cursor) === '1', owner: win });
 }
 /** Redimensionamento manual da janela sem moldura (arrastando as bordas). */
 function startResize(dir, win) {

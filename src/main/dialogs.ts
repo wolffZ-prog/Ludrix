@@ -15,6 +15,7 @@ const KINDS = {
     rom: [{ name: 'ROM / imagem de disco', extensions: ['iso', 'chd', 'cue', 'bin', 'img', 'gba', 'gb', 'gbc', 'sfc', 'smc', 'nes', 'md', 'gen', 'smd', 'gcm', 'rvz', 'wbfs', 'wad', 'gdi', 'cdi', 'xex', 'wua', 'wud', 'wux', 'rpx', 'nsp', 'xci', '3ds', 'cci', 'sms', 'gg', 'pce', 'a26', 'zip', '7z', 'conf'] }],
     image: [{ name: 'Imagem', extensions: ['png', 'jpg', 'jpeg', 'webp'] }],
     archive: [{ name: 'Arquivo de jogo', extensions: ['zip', '7z', 'rar', '001', 'iso'] }],
+    patch: [{ name: 'Patch de ROM', extensions: ['ips', 'bps', 'ups'] }],
     theme: [{ name: 'Tema do Ludrix', extensions: ['lxtheme', 'zip', 'json'] }],
     backup: [{ name: 'Backup do Ludrix', extensions: ['zip'] }],
     save: [{ name: 'Save / pacote', extensions: ['zip', '7z', 'rar', 'sav', 'b', 'dat', 'bin', 'ps2', 'mcd', 'mcr', 'srm', 'gci', 'eep', 'sra', 'fla', 'mpk', 'psu', 'max', 'cbs', 'dsv', 'state*'] }],

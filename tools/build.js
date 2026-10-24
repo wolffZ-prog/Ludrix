@@ -280,8 +280,9 @@ async function cmdSrc() {
     const out = path.join(rel(), `Ludrix-${v}-src.zip`);
     const z = new ZipOut(out);
     const skip = (p, e) => !(e.isDirectory() && ['node_modules', 'dist', 'release', 'build-cache', '.git'].includes(e.name));
-    for (const d of ['src', 'tools'])
-        z.tree(path.join(ROOT, d), `Ludrix-src/${d}`, skip);
+    for (const d of ['src', 'tools', 'docs'])
+        if (fs.existsSync(path.join(ROOT, d)))
+            z.tree(path.join(ROOT, d), `Ludrix-src/${d}`, skip);
     for (const f of ['package.json', 'package-lock.json', 'tsconfig.json', 'version.json', 'electron-builder.yml', 'build.bat', 'README.md', 'README.en.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md', 'LICENSE', '.gitignore'])
         if (fs.existsSync(path.join(ROOT, f)))
             z.file(`Ludrix-src/${f}`, path.join(ROOT, f));

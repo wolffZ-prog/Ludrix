@@ -8,6 +8,15 @@ import * as torrentMod from './torrent';
 import { RepoRegistry, Entry, FileRef, makeEntry, entryDict, basename, detectSource } from './repos';
 import { humanTime } from './sessions';
 
+const EDITION_RE = /\b(edi[cç][aã]o|edition|deluxe|ultimate|gold|complete|completa|definitive|definitiva|goty|game of the year|digital|premium|anniversary|collector'?s|director'?s cut|enhanced|repack|multi\d*|v?\d+(\.\d+)+[a-z]?|build \d+|dlcs?|bonus|update \d*|fitgirl|dodi|elamigos|codex|plaza|skidrow|gog|steam)\b/g;
+export function matchKey(title: string, system = 'pc'): string {
+    let t = String(title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    t = t.replace(/[([{][^)\]}]*[)\]}]/g, ' ');
+    t = t.replace(EDITION_RE, ' ').replace(/&/g, ' and ').replace(/\b(the|a|an|o|os|as|of|de|do|da|em|the)\b/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
+    t = t.replace(/\b(ii|iii|iv|v|vi|vii|viii|ix|x)\b/g, (r) => String({ ii: 2, iii: 3, iv: 4, v: 5, vi: 6, vii: 7, viii: 8, ix: 9, x: 10 }[r])).replace(/\s+/g, ' ');
+    return t ? `${t}|${system === 'local' || !system ? 'pc' : system}` : '';
+}
+
 export class Catalog {
     repos: RepoRegistry;
     entries: Map<string, Entry> = new Map();
@@ -209,7 +218,7 @@ export class Catalog {
             size: e.size, genres: genres.slice(0, 3), cats: this.categoryOf(e, m),
             installed: this.store.isInstalled(e.key) || Boolean(e.extra.local_path && this.existsCached(e.extra.local_path)), job: this.be.jobs.has(e.key),
             has_meta: Boolean(m), hero_ok: this.hasHero(m), thumb_ok: this.hasThumb(e.key) || Boolean(this.customPath(e.key)),
-            torrent: Boolean(e.magnet || e.torrent_url),
+            torrent: Boolean(e.magnet || e.torrent_url), direct: e.files.length > 0 || Boolean(e.extra.repo),
             playtime: info.playtime || 0, status: (m || {}).status || '', score: Math.trunc(Number((m || {}).score || 0)),
             last_played: info.last_played || 0,
             added_at: info.installed_at || e.extra.posted || 0,
@@ -307,7 +316,8 @@ export class Catalog {
                 source: info.source || '', store_src: info.store_src || '', play_count: info.play_count || 0, status: (m || {}).status || '', score: Math.trunc(Number((m || {}).score || 0)),
             });
         }
-        const all = games.concat(roms, this.localGames());
+        const locals = this.localGames();
+        const all = this.linkSources(games, roms.concat(locals));
         const hid = this.hidden;
         if (hid.size)
             for (const g of all)
@@ -336,6 +346,101 @@ export class Catalog {
         };
     }
 
+    sourceRank(g: any): number {
+        return (g.installed ? 0 : 8) + (g.direct ? 0 : 2) + (g.torrent ? 0 : 1);
+    }
+    linkSources(storeGames: any[], mine: any[]): any[] {
+        const groups = new Map<string, any[]>();
+        for (const g of storeGames) {
+            const k = matchKey(g.title, g.system);
+            if (!k)
+                continue;
+            const arr = groups.get(k);
+            if (arr)
+                arr.push(g);
+            else
+                groups.set(k, [g]);
+        }
+        const out: any[] = [];
+        const primaryOf = new Map<string, any>();
+        for (const [k, arr] of groups) {
+            if (arr.length === 1) {
+                primaryOf.set(k, arr[0]);
+                out.push(arr[0]);
+                continue;
+            }
+            arr.sort((a, b) => this.sourceRank(a) - this.sourceRank(b) || String(a.repo).localeCompare(String(b.repo)));
+            const prim = { ...arr[0], alts: arr.slice(1).map((x) => ({ key: x.key, repo: x.repo, torrent: Boolean(x.torrent), direct: Boolean(x.direct), size: x.size || 0 })), installed: arr.some((x) => x.installed) };
+            primaryOf.set(k, prim);
+            out.push(prim);
+            for (const x of arr.slice(1))
+                out.push({ ...x, dup_of: prim.key });
+        }
+        for (const g of mine) {
+            const k = matchKey(g.title, g.kind === 'rom' ? g.system : 'pc');
+            const prim = k ? primaryOf.get(k) : null;
+            if (!prim || prim.installed || prim.owned) {
+                out.push(g);
+                continue;
+            }
+            if (g.installed) {
+                const i = out.indexOf(prim);
+                if (i >= 0)
+                    out[i] = { ...prim, owned: g.key, dup_of: prim.dup_of || '' };
+                out.push(g);
+            }
+            else
+                out.push({ ...g, avail: prim.key, avail_torrent: Boolean(prim.torrent), avail_direct: Boolean(prim.direct) });
+        }
+        return out;
+    }
+    availFor(title: string, system: string): string {
+        const k = matchKey(title, system);
+        if (!k)
+            return '';
+        let best: Entry | null = null, br = 99;
+        for (const x of this.entries.values()) {
+            if (matchKey(x.title, x.system) !== k)
+                continue;
+            const r = (x.files.length || x.extra.repo ? 0 : 2) + (x.magnet || x.torrent_url ? 0 : 1);
+            if (r < br) {
+                br = r;
+                best = x;
+            }
+        }
+        return best ? best.key : '';
+    }
+    ownedBy(e: Entry): string {
+        const k = matchKey(e.title, e.system);
+        if (!k)
+            return '';
+        for (const [key, info] of Object.entries(this.be.store.library || {}) as any[]) {
+            if (!key.startsWith('local:') && !key.startsWith('rom:'))
+                continue;
+            if (matchKey(String(info.title || ''), key.startsWith('rom:') ? String(info.system || '') : 'pc') !== k)
+                continue;
+            const exe = String(info.exe || '');
+            if (exe && (exe.includes('://') || this.existsCached(exe)))
+                return key;
+        }
+        return '';
+    }
+    sourcesFor(e: Entry): any[] {
+        const k = matchKey(e.title, e.system);
+        if (!k)
+            return [];
+        const names: Record<string, string> = {};
+        for (const r of this.repos.list())
+            names[r.id] = r.name;
+        const out: any[] = [];
+        for (const x of this.entries.values()) {
+            if (matchKey(x.title, x.system) !== k)
+                continue;
+            out.push({ key: x.key, repo: x.repo, repo_name: names[x.repo] || x.repo, title: x.title, torrent: Boolean(x.magnet || x.torrent_url), direct: x.files.length > 0 || Boolean(x.extra.repo), files_n: x.files.length, size: x.size || 0, installed: this.store.isInstalled(x.key), me: x.key === e.key });
+        }
+        out.sort((a, b) => Number(b.me) - Number(a.me) || Number(b.installed) - Number(a.installed) || a.repo_name.localeCompare(b.repo_name));
+        return out.length > 1 ? out : [];
+    }
     entry(key: string): Entry | null {
         return this.entries.get(key) || null;
     }
@@ -428,6 +533,7 @@ export class Catalog {
                 dir: path.dirname(info.exe), exe: info.exe, args: this.be.gameArgs(key), system_name: sysname,
                 emu: sid in systems ? this.be.emu.systemStatus(sid) : {}, job: null,
                 playtime: info.playtime || 0, playtime_h: humanTime(info.playtime || 0), last_played: info.last_played || 0,
+                avail: ok ? '' : this.availFor(info.title || key.split(':').pop() || '', sid),
             };
         }
         if (key.startsWith('local:')) {
@@ -443,6 +549,7 @@ export class Catalog {
                 genres: ((m || {}).genres || []).length ? (m || {}).genres : (info.genres || []), mc: info.mc || '',
                 description: (m || {}).summary || info.description || '', size: 0, page_url: info.page_url || '', requires_rom: '', version: '',
                 playtime: info.playtime || 0, playtime_h: humanTime(info.playtime || 0), last_played: info.last_played || 0,
+                avail: this.existsCached(String(info.exe || '')) || String(info.exe || '').includes('://') ? '' : this.availFor(info.title || '', 'pc'),
             };
         }
         const e = this.entry(key);
@@ -474,6 +581,8 @@ export class Catalog {
             browser_only: Boolean(prov && typeof prov.browserUrl === 'function'),
             buy_only: e.extra.buy_only || '', steam_url: e.extra.steam_url || '',
             patches: [...(e.extra.patches || [])], prefer: e.extra.prefer || '',
+            sources: this.sourcesFor(e),
+            owned: this.ownedBy(e),
         };
     }
 

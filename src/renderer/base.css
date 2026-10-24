@@ -453,3 +453,10 @@ html body.bs[data-face] .stoc{margin:6px 0 0 12px;padding:6px 0 0 10px}
 html body.bs[data-face] .frow>input[type=number],html body.bs[data-face] .frow>input.inp[type=number]{width:96px;min-width:0}
 html body.bs[data-face] .frow>input[type=text],html body.bs[data-face] .frow>input.inp{width:220px;min-width:0}
 html body.bs[data-face] .frow>input[type=range]{width:160px}
+html body.bs[data-face] .card .sub.ci{display:flex;align-items:center;gap:5px;padding:2px 0 0;font-size:11px;color:var(--muted2);line-height:1.3}
+html body.bs[data-face] .card .sub.ci span{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body.bs[data-face] .card .sub.ci svg{width:12px;height:12px;flex:none;opacity:.8}
+html body.bs[data-face] .szoom{display:inline-flex;align-items:center;gap:6px;margin-left:14px}
+html body.bs[data-face] .szoom input{width:92px;height:3px;accent-color:var(--accent);cursor:pointer}
+html body.bs[data-face] .szoom button{all:unset;cursor:pointer;width:16px;height:16px;line-height:16px;text-align:center;border-radius:4px;color:var(--muted);font-size:13px}
+html body.bs[data-face] .szoom button:hover{background:var(--card2);color:var(--text)}

@@ -56,7 +56,33 @@ class StoreFront {
     }
     /* ------------------------------- catalogo ------------------------------- */
     repoList() {
-        return this.be.repos.list();
+        const counts: Record<string, number> = {};
+        for (const e of this.be.cat.entries.values())
+            counts[e.repo] = (counts[e.repo] || 0) + 1;
+        const errors = this.be.cat.state.errors || {};
+        return this.be.repos.list().map((r: any) => {
+            const prov = this.be.repos.providers[r.id];
+            return { ...r, count: counts[r.id] || 0, report: prov && prov.report ? prov.report : null, error: errors[r.id] ? errors[r.id].msg : '' };
+        });
+    }
+    async repoValidate(url: string) {
+        const src = String(url || '').trim();
+        if (!src)
+            return { error: 'Informe o link ou o caminho do .json' };
+        const { ManifestProvider } = require('./repos');
+        const { validateManifest, reportSummary } = require('./manifest');
+        const prov = new ManifestProvider({ id: '_validate', type: 'manifest', url: src, name: 'validação' }, this.be.repos.session, this.be.repos.cache);
+        let data: any;
+        try {
+            data = await prov.load(true);
+        }
+        catch (e: any) {
+            const msg = String(e?.message || e);
+            return { error: /JSON/i.test(msg) ? `O arquivo não é um JSON válido: ${msg.replace(/^.*JSON\.parse:?\s*/i, '')}` : msg };
+        }
+        const rep = validateManifest(data, this.be.emu.presets.systems);
+        const sample = rep.format === 'ludrix' ? (data.games || []).filter((g: any) => g && typeof g.title === 'string').slice(0, 8).map((g: any) => g.title) : rep.format === 'hydra' ? (data.downloads || []).slice(0, 8).map((d: any) => d && d.title).filter(Boolean) : [];
+        return { ...rep, summary: reportSummary(rep), name: String((data && data.name) || src.split(/[\\/]/).pop()!.replace(/\.json$/i, '')), sample };
     }
     repoErrors() {
         return this.be.cat.state.errors;

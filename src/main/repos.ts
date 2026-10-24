@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { validateManifest, sizeOf, reportSummary } from './manifest';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import * as P from './paths';
@@ -216,6 +217,7 @@ export class Provider {
     kind: string;
     system: string;
     store: any = null;
+    report: any = null;
     constructor(public cfg: Record<string, any>, public s: http.Session, public cache: Cache) {
         this.id = cfg.id;
         this.name = cfg.name || this.id;
@@ -681,11 +683,20 @@ export class ManifestProvider extends Provider {
 
     async catalog(force = false): Promise<Entry[]> {
         const data = await this.load(force);
+        const systems = (() => { try { return require('./presets').systems(); } catch { return {}; } })();
+        const rep = validateManifest(data, systems);
+        this.report = { ...rep, summary: reportSummary(rep), at: Date.now() / 1000 };
+        if (rep.format === 'unknown')
+            throw new Error(rep.errors.map((x) => `${x.at}: ${x.msg}`).join('; ') || 'JSON sem lista de jogos');
         if (data && typeof data === 'object' && 'downloads' in data && !('games' in data))
             return this.hydra(data);
+        const skip = new Set(rep.skipped);
         const out: Entry[] = [];
-        for (const g of data.games || []) {
-            const ident = g.id || strip(String(g.title).toLowerCase().replace(/[^a-z0-9]+/g, '-'), '-');
+        for (let gi = 0; gi < (data.games || []).length; gi++) {
+            const g = data.games[gi];
+            if (skip.has(gi))
+                continue;
+            const ident = (typeof g.id === 'string' && g.id.trim()) || strip(String(g.title).toLowerCase().replace(/[^a-z0-9]+/g, '-'), '-');
             const gh = strip(String(g.github || '').trim(), '/');
             if (gh && /^[\w.-]+\/[\w.-]+$/.test(gh)) {
                 out.push(makeEntry({
@@ -699,8 +710,8 @@ export class ManifestProvider extends Provider {
                 }));
                 continue;
             }
-            const files = (g.files || []).map((f: any) => fileRef(f.name, f.url, Number(f.size || 0)));
-            const patches = (g.patches || []).filter((x: any) => x && typeof x === 'object' && x.url).map((x: any) => ({
+            const files = (Array.isArray(g.files) ? g.files : []).filter((f: any) => f && typeof f === 'object' && typeof f.url === 'string').map((f: any) => fileRef(typeof f.name === 'string' && f.name.trim() ? f.name : String(f.url).split('/').pop()!.split('?')[0] || 'download', f.url, Math.max(0, sizeOf(f.size))));
+            const patches = (Array.isArray(g.patches) ? g.patches : []).filter((x: any) => x && typeof x === 'object' && x.url).map((x: any) => ({
                 name: String(x.name || String(x.url || '').split('/').pop()), url: x.url, size: Number(x.size || 0), note: String(x.note || ''),
             }));
             const kind = g.kind || data.kind || this.kind;
@@ -709,11 +720,11 @@ export class ManifestProvider extends Provider {
                 system = extSystem(...files.map((f: FileRef) => f.name)) || guessSystem(g.title, (g.tags || []).join(' '), ...files.map((f: FileRef) => f.name)) || 'pc';
             out.push(makeEntry({
                 key: `${this.id}:${ident}`, repo: this.id, id: ident, title: g.title, kind, system,
-                creator: g.creator || '', year: String(g.year ?? ''), size: Number(g.size || files.reduce((s: number, f: FileRef) => s + f.size, 0)),
+                creator: g.creator || g.developer || '', year: String(g.year ?? ''), size: Math.max(0, sizeOf(g.size)) || files.reduce((s: number, f: FileRef) => s + f.size, 0),
                 description: g.description || '', cover: g.cover || '', thumb: g.thumb || g.cover || '',
                 genres: g.genres || [], tags: g.tags || [], page_url: g.page_url || '',
-                magnet: g.magnet || '', torrent_url: g.torrent || '', files, files_loaded: true,
-                extra: { exe: g.exe || '', patches, hoster: String(g.host || ''), prefer: String(g.prefer || '') },
+                magnet: typeof g.magnet === 'string' ? g.magnet : '', torrent_url: typeof g.torrent === 'string' ? g.torrent : '', files, files_loaded: true,
+                extra: { exe: g.exe || '', patches, hoster: String(g.host || ''), prefer: String(g.prefer || ''), hero: typeof g.hero === 'string' ? g.hero : '' },
             }));
         }
         return sortTitle(out);
@@ -1182,8 +1193,15 @@ export function packResults(data: any, src: string): any {
         const kind = String(data.kind || 'pc');
         kinds.add(kind);
         const roms = fmt === 'manifest' ? data.games.filter((g: any) => g && typeof g === 'object' && (g.kind ?? kind) === 'rom').length : (kind === 'rom' ? n : 0);
+        let systems: any = {};
+        try {
+            systems = require('./presets').systems();
+        }
+        catch { /* sem presets */ }
+        const rep = validateManifest(data, systems);
         results.unshift({
-            title: name, detail: `${n} jogo${n === 1 ? '' : 's'} · lista ${fmt}` + (roms > 0 && roms < n ? ` · ${n - roms} PC + ${roms} ROMs` : ''), kind, count_pc: n - roms, count_rom: roms,
+            title: name, detail: `${rep.usable} de ${n} jogo${n === 1 ? '' : 's'} ok · lista ${fmt}` + (roms > 0 && roms < n ? ` · ${n - roms} PC + ${roms} ROMs` : ''), kind, count_pc: n - roms, count_rom: roms,
+            report: { ...rep, summary: reportSummary(rep) },
             cfg: { type: 'manifest', url: src, name, kind, system: String(data.system || (kind !== 'rom' ? 'pc' : '')) },
         });
     }

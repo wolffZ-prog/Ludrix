@@ -581,7 +581,7 @@ function setView(v) {
   if (v !== 'home') gameFocus(null);
   S.view = v; closeDetail();
   document.querySelectorAll('.rb').forEach(b => b.classList.toggle('on', b.dataset.view === v));
-  $('#view').scrollTop = 0; S._enter = true; guideDismiss(); renderView();
+  $('#view').scrollTop = 0; S._enter = true; guideDismiss(); renderView(); zoomVis();
 }
 function enterFx() { const v = $('#view'); if (S._enter) { S._enter = false; v.classList.add('enter'); clearTimeout(S._enterT); S._enterT = setTimeout(() => v.classList.remove('enter'), 700); } }
 let tsvMemo = null;
@@ -603,9 +603,9 @@ function renderView() {
 }
 
 const isRepoRom = g => g.kind === 'rom' && g.repo !== 'local' && !g.key.startsWith('rom:');
-const inStore = g => g.repo !== 'local' && !isRepoRom(g) && !(g.installed && !S.jobs[g.key] && S.config.store_hide_installed !== false);
+const inStore = g => g.repo !== 'local' && !isRepoRom(g) && !((g.installed || g.owned) && !S.jobs[g.key] && S.config.store_hide_installed !== false);
 const inEmu = g => isRepoRom(g) && (!g.installed || S.jobs[g.key]) && (!S.emuSys || g.system === S.emuSys);
-const inView = g => (g.hidden && !S.flt.flags.has('hidden') && !(S.q && S.view === 'home')) ? false : S.view === 'home' ? (g.installed || FLAG_TEST.broken(g)) : S.view === 'store' ? inStore(g) : S.view === 'emulation' ? inEmu(g) : true;
+const inView = g => g.dup_of ? false : (g.hidden && !S.flt.flags.has('hidden') && !(S.q && S.view === 'home')) ? false : S.view === 'home' ? (g.installed || FLAG_TEST.broken(g)) : S.view === 'store' ? inStore(g) : S.view === 'emulation' ? inEmu(g) : true;
 const COLL = new Intl.Collator('pt', { sensitivity: 'base', numeric: true });
 function sortedAZ() {
   if (!S._sorted) { S._sorted = [...S.games].sort((a, b) => COLL.compare(a.title, b.title)); S._sorted.forEach((g, i) => g._az = i); }
@@ -837,7 +837,7 @@ function selectGame(key) {
   document.querySelectorAll('#view .card.sel').forEach(c => c.classList.remove('sel'));
   document.querySelectorAll(`#view .card[data-key="${CSS.escape(key)}"]`).forEach(c => c.classList.add('sel'));
   S.nowKey = key;
-  if ($('#stage')) stageSet(key); else { S.stageKey = key; gameFocus(key); }
+  S.stageKey = key; gameFocus(key);
   if (muralMode()) panelOpen(key); else nowbarFill();
 }
 const PANEL = {};
@@ -980,10 +980,12 @@ function slideshowStart() {
 }
 function setViewMode(v) { S.config.view_mode = v; api.post('/api/config', { view_mode: v }); renderLibrary(); }
 function lastPlayedText(ts) { if (!ts) return ''; const d = (Date.now() / 1000 - ts) / 86400; return d < 1 ? 'hoje' : d < 2 ? 'ontem' : d < 30 ? `há ${pl(Math.floor(d), 'dia', 'dias')}` : d < 365 ? `há ${Math.floor(d / 30)} meses` : `há ${Math.floor(d / 365)} anos`; }
-$('#view').addEventListener('dblclick', e => { const c = e.target.closest('.card'); if (c && !e.target.closest('[data-qp],[data-fav]')) openGame(c.dataset.key); });
+$('#view').addEventListener('dblclick', e => { const c = e.target.closest('.card'); if (c && !e.target.closest('[data-qp],[data-dl],[data-fav]')) openGame(c.dataset.key); });
+function storeGet(key) { openGame(key); }
 $('#view').addEventListener('click', e => {
   const fv = e.target.closest('[data-fav]'); if (fv) { e.stopPropagation(); toggleFav(fv.dataset.fav); return; }
   const qp = e.target.closest('[data-qp]'); if (qp) { e.stopPropagation(); if (qp.classList.contains('live')) stopGame(qp.dataset.qp); else play(qp.dataset.qp); return; }
+  const dq = e.target.closest('[data-dl]'); if (dq) { e.stopPropagation(); storeGet(dq.dataset.dl); return; }
   const c = e.target.closest('.card'); if (c) { if (S.view === 'home' && (e.ctrlKey || e.metaKey || e.shiftKey || S.sel.size)) { msToggle(c.dataset.key, e.shiftKey); return; } if (S.view === 'home') selectGame(c.dataset.key); else openGame(c.dataset.key); return; }
   const hero = e.target.closest('#hero'); if (hero) { const g = S.hero[S.heroIdx]; if (!g) return; if (e.target.closest('#heroBtn') && g.installed) play(g.key); else openGame(g.key); }
 });
@@ -1015,6 +1017,12 @@ async function msPlayed() { const keys = [...S.sel].filter(k => /^(local|rom):/.
 async function msMeta() { const keys = [...S.sel]; msClear(); toast('', 'Atualizando metadados…', pl(keys.length, 'jogo', 'jogos')); let n = 0; for (const k of keys) { const m = await api.post('/api/metadata', { key: k, force: true }); if (!m.error) n++; } toast('ok', 'Metadados atualizados', `${n} de ${keys.length}`); loadCatalog(false); }
 function ringSvg(f) { const r = 24, c = 2 * Math.PI * r, off = f < 0 ? c * .75 : c * (1 - f); return `<div class="ring"><svg viewBox="0 0 56 56"><circle class="t" cx="28" cy="28" r="${r}"/><circle class="v" cx="28" cy="28" r="${r}" stroke-dasharray="${c}" stroke-dashoffset="${off}"/></svg><span>${f < 0 ? '…' : Math.round(f * 100) + '%'}</span></div>`; }
 const clock = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+function cardSub(g) {
+  if (S.config.card_playtime === false) { const a = g.genres && g.genres[0] ? g.genres[0] : g.kind === 'rom' && g.system ? (S.systems[g.system] || g.system) : (g.creator || g.fr || ''); return a ? `<div class="sub"><span class="g">${esc(a)}</span></div>` : ''; }
+  const t = g.playtime >= 60 ? fmtTime(g.playtime) : 'Não jogado';
+  const l2 = g.last_played ? cap(lastPlayedText(g.last_played)) : (g.genres && g.genres[0]) || (g.kind === 'rom' && g.system ? (S.systems[g.system] || g.system) : '') || (g.year ? String(g.year) : '');
+  return `<div class="sub ci"><span>${clock}${esc(t)}</span></div>${l2 ? `<div class="sub ci"><span>${g.last_played ? I.flag : I.tag}${esc(l2)}</span></div>` : ''}`;
+}
 function ptHtml(sec) { if (!sec || sec < 60) return ''; const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60); return `<span class="pt">${clock}${h ? h + ' h' : m + ' min'}</span>`; }
 const TH = { ok: new Set(), err: new Set(), tries: {} };
 function thumbFail(img, key) {
@@ -1027,14 +1035,14 @@ function thumbFail(img, key) {
 function cardHtml(g, i) {
   const job = S.jobs[g.key]; const live = S.sessions && S.sessions[g.key];
   const sys = g.system && g.system !== 'pc' ? `<span class="badge sys">${esc((S.systems[g.system] || g.system).toUpperCase().slice(0, 8))}</span>` : '';
-  const dim = S.view === 'store' && !g.installed && !job && S.config.dim_not_installed !== false && !/^(rom|local):/.test(g.key) ? ' dim' : '';
+  const dim = S.view === 'store' && !g.installed && !g.owned && !job && S.config.dim_not_installed !== false && !/^(rom|local):/.test(g.key) ? ' dim' : '';
   const lst = listMode() && ['home', 'store'].includes(S.view);
-  const now = Date.now() / 1000, rib = S.config.card_ribbons !== false && g.installed && !live && !g.mc_nolauncher ? (g.last_played && new Date(g.last_played * 1000).toDateString() === new Date().toDateString() ? '<span class="rib today">HOJE</span>' : g.added_at && now - g.added_at < 7 * 86400 && !g.playtime ? `<span class="rib new" title="Adicionado ${daysAgo(g.added_at)} e ainda não aberto">NOVO</span>` : '') : '';
-  const ptb = S.config.card_playtime && g.playtime >= 60 ? `<span class="ptb">${clock}${g.playtime >= 3600 ? Math.floor(g.playtime / 3600) + ' h' : Math.floor(g.playtime / 60) + ' min'}</span>` : '';
+  const now = Date.now() / 1000, rib = S.config.card_ribbons !== false && (g.installed || g.owned) && !live && !g.mc_nolauncher ? (g.owned ? '<span class="rib today">NO PC</span>' : g.last_played && new Date(g.last_played * 1000).toDateString() === new Date().toDateString() ? '<span class="rib today">HOJE</span>' : g.added_at && now - g.added_at < 7 * 86400 && !g.playtime ? `<span class="rib new" title="Adicionado ${daysAgo(g.added_at)} e ainda não aberto">NOVO</span>` : '') : '';
+  const ptb = '';
   const prog = job ? `<div class="cprog${job.fraction < 0 ? ' ind' : ''}"><i style="width:${job.fraction >= 0 ? Math.round(job.fraction * 100) : 40}%"></i></div>` : '';
   const favB = `<button class="fav ${g.fav ? 'on' : ''}" data-fav="${esc(g.key)}" title="Favorito">${I.star}</button>`;
   const srcB = S.view === 'store' && S._multiSrc && g.repo && g.repo !== 'local' ? `<span class="src" title="Fonte: ${esc(repoName(g.repo))}">${esc(repoName(g.repo))}</span>` : '';
-  const qpB = g.installed && !job ? `<button class="qp ${live ? 'live' : ''}" data-qp="${esc(g.key)}" title="${live ? 'Em execução — clique para encerrar' : 'Jogar'}">${live ? I.x : I.play}</button>` : '';
+  const qpB = (g.installed || g.owned) && !job ? `<button class="qp ${live ? 'live' : ''}" data-qp="${esc(g.owned || g.key)}" title="${live ? 'Em execução — clique para encerrar' : 'Jogar'}">${live ? I.x : I.play}</button>` : !g.installed && g.avail && !job ? `<button class="qp dl" data-dl="${esc(g.avail)}" title="Não está no PC — baixar pela Loja">${I.dl}</button>` : '';
   if (lst) return `<div class="card${dim}${S.sel.has(g.key) ? ' msel' : ''}" data-key="${esc(g.key)}">
     <div class="cov"><div class="ph">${esc(g.title)}</div><img loading="lazy" decoding="async" class="${TH.ok.has(g.key) ? 'ld inst' : TH.err.has(g.key) ? 'err' : ''}" src="/thumb/${enc(g.key)}?v=${g.cv || 0}" alt="" onload="this.classList.add('ld');TH.ok.add(${jsq(g.key)})" onerror="thumbFail(this,${jsq(g.key)})">${job ? ringSvg(job.fraction) : ''}</div>
     <h4>${esc(g.title)}${live ? '<span class="live">JOGANDO</span>' : ''}${g.mc_nolauncher ? '<span class="badge warn" title="Falta um launcher de Minecraft — clique em Jogar para escolher um">SEM LAUNCHER</span>' : g.repo === 'local' && !g.installed && !job ? '<span class="badge warn" title="O executável ou a ROM não está mais no lugar — clique em Jogar para apontar o novo caminho">NÃO ENCONTRADO</span>' : g.installed && S.view !== 'home' ? '<span class="badge ok">INSTALADO</span>' : ''}${sys}${srcB}</h4>
@@ -1048,7 +1056,7 @@ function cardHtml(g, i) {
       ${favB}${rib}${ptb}
       ${qpB}
       ${job ? ringSvg(job.fraction) + prog : ''}</div>
-    <h4 title="${esc([g.title, g.creator || g.fr, g.year, g.playtime >= 60 ? fmtTime(g.playtime) + ' jogados' : ''].filter(Boolean).join(' · '))}">${esc(g.title)}</h4><div class="sub">${g.genres && g.genres[0] ? `<span class="g">${esc(g.genres[0])}</span>` : g.kind === 'rom' && g.system ? `<span class="g">${esc(S.systems[g.system] || g.system)}</span>` : ''}${(g.creator || g.fr) ? `<span class="d">${esc(g.creator || g.fr)}</span>` : ''}${ptHtml(g.playtime)}${srcB}</div></div>`;
+    <h4 title="${esc([g.title, g.creator || g.fr, g.year, g.playtime >= 60 ? fmtTime(g.playtime) + ' jogados' : ''].filter(Boolean).join(' · '))}">${esc(g.title)}</h4>${cardSub(g)}${srcB ? `<div class="sub">${srcB}</div>` : ''}</div>`;
 }
 $('#sort').addEventListener('click', e => { e.stopPropagation(); sortMenu($('#sort')); });
 function sortMenu(btn) {
@@ -1250,7 +1258,7 @@ function renderDetail() {
       <div class="row"><button class="btn s sm" onclick="openPath(${jsq(d.dir)},${jsq(key)})">${I.folder} Pasta</button><button class="btn s sm" onclick="chooseExe(${jsq(key)})">${I.cog} Já instalei</button></div>
       <div class="row"><button class="btn s sm" onclick="api.post('/api/finish_repack',{key:${jsq(key)}}).then(()=>openGame(${jsq(key)}))">${I.check} Procurar instalação agora</button><button class="btn d sm" onclick="confirmUninstall(${jsq(key)})" title="Apagar o repack baixado">${I.trash}</button></div>`;
   } else if (d.installed || isRom) {
-    acts = `${d.crash_count ? `<button class="pill warn crashpill" onclick="crashDialog(${jsq(key)}, ${jsq(d.title)})" title="${esc(d.crash_why || '')}">${I.warn || '!'} Fechou sozinho ${d.crash_count > 1 ? d.crash_count + '× ' : ''}— por quê?</button>` : ''}${d.missing ? `<button class="btn p" onclick="play(${jsq(key)})">${I.folder} Apontar ${isRom ? 'arquivo' : 'pasta'}…</button>` : `<button class="btn g" ${live ? 'disabled' : ''} onclick="play(${jsq(key)})">${I.play} ${live ? 'Jogando…' : 'Jogar'}</button>`}
+    acts = `${d.missing && d.avail ? `<button class="btn p" onclick="openGame(${jsq(d.avail)})">${I.dl} Baixar da Loja</button><span class="pill" style="justify-content:center;white-space:normal;line-height:1.4;padding:6px 10px">O arquivo sumiu do PC, mas uma das suas fontes tem este jogo.</span>` : ''}${d.crash_count ? `<button class="pill warn crashpill" onclick="crashDialog(${jsq(key)}, ${jsq(d.title)})" title="${esc(d.crash_why || '')}">${I.warn || '!'} Fechou sozinho ${d.crash_count > 1 ? d.crash_count + '× ' : ''}— por quê?</button>` : ''}${d.missing ? `<button class="btn p" onclick="play(${jsq(key)})">${I.folder} Apontar ${isRom ? 'arquivo' : 'pasta'}…</button>` : `<button class="btn g" ${live ? 'disabled' : ''} onclick="play(${jsq(key)})">${I.play} ${live ? 'Jogando…' : 'Jogar'}</button>`}
       <div class="row">${d.dir && !isUri(d.exe) && !d.missing ? `<button class="btn s sm" onclick="openPath(${jsq(d.dir)},${jsq(key)})">${I.folder} Pasta</button>` : ''}
       <button class="btn s sm" onclick="savesPanel(${jsq(key)})" title="Saves">${I.save} Saves</button>
       <button class="btn s sm" onclick="editGame(${jsq(key)})" title="Editar detalhes do jogo (nome, capa, descrição, executável…)">${I.edit} Editar</button><button class="btn d sm" onclick="confirmUninstall(${jsq(key)})" title="${isLocal || isRom ? 'Remover da biblioteca' : 'Desinstalar'}">${I.trash}</button></div>`;
@@ -1258,6 +1266,7 @@ function renderDetail() {
     const multi = (d.files || []).length > 1;
     if (d.buy_only) acts = `<span class="pill warn" style="justify-content:center;white-space:normal;line-height:1.4;padding:8px 10px">Este jogo ainda está à venda — o site não distribui o arquivo. Veja em "Origem".</span>`;
     else if (d.browser_only) acts = `<button class="btn p" ${d.files?.length ? '' : 'disabled'} onclick="install(${jsq(key)},false)">${I.ext} Baixar pelo navegador</button><span class="pill" style="justify-content:center;white-space:normal;line-height:1.4;padding:6px 10px">${multi ? 'Escolha o mirror ao lado → ' : ''}O site pede verificação humana, então o download abre no navegador. Depois: Adicionar → Jogo de Windows.</span>${d.steam_url ? `<button class="btn s sm" onclick="api.post('/api/open_url',{url:${jsq(d.steam_url)}})">${I.ext} Página na Steam</button>` : ''}`;
+    else if (d.owned) acts = `<button class="btn p" onclick="play(${jsq(d.owned)})">${I.play} Jogar</button><button class="btn s sm" onclick="openGame(${jsq(d.owned)})">${I.info} Ver na biblioteca</button><span class="pill" style="justify-content:center">Já está no PC</span>`;
     else {
       const hasT = !!(d.magnet || d.torrent_url), hasF = !!(d.files && d.files.length);
       if (hasT && hasF && d.prefer === 'torrent') acts = `<button class="btn p" onclick="install(${jsq(key)},true)">${I.magnet} ${S.torrent ? 'Baixar via torrent' : 'Abrir no cliente de torrent'}</button>
@@ -1272,6 +1281,7 @@ function renderDetail() {
   const page = `<div class="row">${d.page_url ? `<button class="btn s sm" onclick="api.post('/api/open_url',{url:${jsq(d.page_url)}})">${I.ext} Origem</button>` : ''}<button class="btn s sm ${d.fav || (S.byKey[key] || {}).fav ? 'favon' : ''}" onclick="toggleFav(${jsq(key)});this.classList.toggle('favon')">${I.star} Favorito</button><button class="btn s sm" onclick="ctxMenu(${jsq(key)}, this.getBoundingClientRect().left, this.getBoundingClientRect().bottom + 6)">⋯</button></div>`;
   const metaBtn = d.kind !== 'emulator' ? `<button class="btn s sm" id="metaBtn" onclick="fetchMeta(${jsq(key)},true)">${I.spark} ${d.meta ? 'Atualizar metadados' : 'Buscar metadados'}</button>` : '';
 
+  const srcs = d.sources && d.sources.length > 1 ? `<div class="srcbar"><small>${d.sources.length} fontes têm este jogo</small><div class="srcpick">${d.sources.map(sx => `<button class="srcopt ${sx.me ? 'on' : ''}" ${sx.me ? 'disabled' : `onclick="openGame(${jsq(sx.key)})"`}><b>${esc(sx.repo_name)}</b><span>${[sx.direct ? (sx.files_n > 1 ? `${sx.files_n} arquivos` : 'direto') : '', sx.torrent ? 'torrent' : '', sx.size ? fmt(sx.size) : '', sx.installed ? 'instalado' : ''].filter(Boolean).join(' · ') || '—'}</span>${sx.me ? `<i>${I.check}</i>` : `<i>${I.chev}</i>`}</button>`).join('')}</div></div>` : '';
   let files = '';
   if (!d.installed && !isRom && d.files && d.files.length > 1) {
     const mirrors = d.mirrors;
@@ -1304,6 +1314,7 @@ function renderDetail() {
     <div class="dmain">
       ${d.requires_rom ? `<div class="note"><b>Precisa da ROM original.</b> ${esc(d.requires_rom)}. Recompilações não incluem dados do jogo — o launcher só baixa o executável.</div>` : ''}
       ${d.emu && !d.emu.installed ? `<div class="note"><b>${esc(d.emu.emulator_title)} não instalado.</b> <a href="#" onclick="setView('emulation');return false" style="color:var(--accent2)">Instalar na aba Emuladores</a> para jogar.</div>` : ''}
+      ${srcs}
       ${dtabsHtml(d, m)}
       <div class="dpane ${(S.dtab || 'about') === 'about' ? 'on' : ''}" data-pane="about">
       <div class="desc" style="margin-top:14px">${esc(m.summary || d.description || 'Sem descrição. Clique em "Buscar metadados".')}</div>
@@ -2303,7 +2314,7 @@ async function renderSettings(fresh) {
     <div class="frow"><div class="l"><b>Agrupar por</b><span>Cabeçalhos recolhíveis na Biblioteca e na Store; a ordenação vale dentro de cada grupo. Também no menu de ordenar</span></div>${cfgSel('group_by', GROUPS, c.group_by ?? 'letter')}</div>
     ${sw('fav_first', 'Favoritos primeiro', 'Mantém os favoritos no topo da lista em qualquer ordenação')}
     ${sw('card_ribbons', 'Fitas "Novo" e "Hoje" nas capas', '"Novo" marca jogos instalados há menos de 7 dias que você ainda não abriu; "Hoje" marca os que você jogou hoje')}
-    ${sw('card_playtime', 'Tempo jogado sobre a capa', 'Um selo discreto no canto da capa com as horas (ou minutos) que você já jogou')}
+    ${sw('card_playtime', 'Tempo e status embaixo da capa', 'Duas linhas sob o título: tempo jogado (ou "Não jogado") e quando foi a última vez; sem isso aparece só o gênero ou a plataforma')}
 `]),
     capas: () => sec('capas', 'Capas e informações', [`
     ${sw('auto_metadata', 'Buscar capas e metadados automaticamente', 'Procura capa, descrição, ano e gêneros na Steam, GOG e Wikipedia. Para consoles, usa as capas oficiais de cada sistema e a imagem de fundo do jogo. Roda em segundo plano e não repete buscas')}
@@ -2425,7 +2436,7 @@ function toggleAdv() {
 const TAB_KEYS = {
   general: ['tray_enabled', 'tray_sleep', 'close_action', 'hotkey_enabled', 'popups', 'notify_sound', 'ui_sounds', 'ui_sounds_level'],
   appearance: ['accent_from_cover', 'gamepad', 'sofa_zoom', 'theme', 'theme_mode', 'face', 'accent', 'theme_schedule', 'theme_light_from', 'theme_light_to', 'frameless', 'frame_mode', 'frame_corners', 'status_position', 'clock', 'ctx_menu', 'layout', 'nav', 'nav_hidden', 'nav_order', 'rail_icons', 'toolbar', 'toolbar_items', 'ui_scale', 'text_size', 'card_size', 'density', 'acrylic', 'animations', 'fx_type', 'fx_intensity', 'glass', 'card_hover', 'reduce_motion', 'parallax', 'high_contrast'],
-  library: ['home_spot', 'home_autoplay', 'fav_first', 'home_spot_style', 'home_rows', 'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'cover_slideshow', 'cover_slideshow_secs', 'view_mode', 'group_by', 'card_ribbons', 'card_playtime', 'detail_art', 'auto_metadata', 'web_covers', 'auto_rename'],
+  library: ['home_spot', 'fav_first', 'home_rows', 'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'cover_slideshow', 'cover_slideshow_secs', 'view_mode', 'group_by', 'card_ribbons', 'card_playtime', 'detail_art', 'auto_metadata', 'web_covers', 'auto_rename'],
   play: ['discord_enabled', 'after_launch', 'launch_splash', 'nav_hide_playing', 'save_auto_backup', 'emu_no_ask', 'gamepad_enabled', 'gamepad_speed', 'gamepad_wake'],
   store: ['hero_enabled', 'store_hide_installed', 'dim_not_installed', 'store_page_size', 'keep_archive', 'concurrent_downloads', 'shortcut_ask', 'repack_auto_open', 'torrent_max_down', 'torrent_max_up', 'torrent_seed_after'],
   system: ['bg_warmup', 'bg_sites', 'update_auto_check', 'terminal_enabled'],
@@ -2571,7 +2582,7 @@ function themeDelete(id, name) { modal({ title: `Apagar o estilo "${name}"?`, te
 function autoScale() { const r = Math.min(window.innerWidth / 1500, window.innerHeight / 860); const s = 1 + (r - 1) * 0.6; return Math.round(Math.min(1.35, Math.max(0.8, s)) * 20) / 20; }
 function applyScale() { const s = (S.config.ui_scale || autoScale()) * (document.body.classList.contains('sofa') ? (S.config.sofa_zoom || 1.15) : 1); document.documentElement.style.setProperty('--scale', s); document.documentElement.style.fontSize = ((13 + (S.config.text_size || 0)) * s) + 'px'; document.body.classList.toggle('compact', (S.config.density || 'normal') === 'compact'); document.body.classList.toggle('noglass', S.config.glass === false); }
 let rzT = 0; window.addEventListener('resize', () => { if (S.config.ui_scale) return; cancelAnimationFrame(rzT); rzT = requestAnimationFrame(() => { const s = autoScale(); if (String(s) !== document.documentElement.style.getPropertyValue('--scale')) applyScale(); }); });
-async function setCfg(patch) { const r = await api.post('/api/config', patch); if (r && !r.error) { S.config = r; api.emit('config', patch); if ('language' in patch) { location.reload(); return r; } applyTheme(); applyAnim(); applyScale(); if ('rail_icons' in patch) applyRailIcons(); if ('cursor' in patch) if ('game_backdrop' in patch || 'accent_from_cover' in patch || 'cover_slideshow' in patch || 'cover_slideshow_secs' in patch) gameFocus(S._focusKey || S.stageKey || null); if ('frame_mode' in patch || 'frame_corners' in patch) { frameLast = ''; applyFrame(); } if ('nav_hide_playing' in patch) applyPlaying(); if ('nav_hidden' in patch || 'nav_order' in patch) applyNavItems(); if ('card_hover' in patch || 'reduce_motion' in patch || 'detail_art' in patch || 'high_contrast' in patch || 'settings_adv' in patch) applyMotion(); if ('clock' in patch) applyClock(); if ('group_by' in patch && ['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'settings') renderSettings(); if (['home', 'store'].includes(S.view) && ('card_size' in patch || 'face' in patch || 'theme' in patch || 'home_spot' in patch || 'home_spot_style' in patch || 'home_rows' in patch || 'view_mode' in patch)) renderLibrary(); if ('toolbar' in patch || patch.toolbar_items) { applyToolbar(); if (['home', 'store'].includes(S.view)) renderLibrary(); } } }
+async function setCfg(patch) { const r = await api.post('/api/config', patch); if (r && !r.error) { S.config = r; api.emit('config', patch); if ('language' in patch) { location.reload(); return r; } applyTheme(); applyAnim(); applyScale(); if ('rail_icons' in patch) applyRailIcons(); if ('cursor' in patch) if ('game_backdrop' in patch || 'accent_from_cover' in patch || 'cover_slideshow' in patch || 'cover_slideshow_secs' in patch) gameFocus(S._focusKey || S.stageKey || null); if ('frame_mode' in patch || 'frame_corners' in patch) { frameLast = ''; applyFrame(); } if ('nav_hide_playing' in patch) applyPlaying(); if ('nav_hidden' in patch || 'nav_order' in patch) applyNavItems(); if ('card_hover' in patch || 'reduce_motion' in patch || 'detail_art' in patch || 'high_contrast' in patch || 'settings_adv' in patch) applyMotion(); if ('clock' in patch) applyClock(); if ('group_by' in patch && ['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'settings') renderSettings(); if (['home', 'store'].includes(S.view) && ('card_size' in patch || 'face' in patch || 'theme' in patch || 'home_spot' in patch || 'home_rows' in patch || 'view_mode' in patch)) renderLibrary(); if ('toolbar' in patch || patch.toolbar_items) { applyToolbar(); if (['home', 'store'].includes(S.view)) renderLibrary(); } } }
 async function setAutostart(on) { const r = await api.post('/api/autostart', { on }); if (r.error) return toast('err', r.error); S.config.autostart = !!r.enabled; renderSettings(); toast('ok', r.enabled ? 'O Ludrix vai abrir com o Windows' : 'Não abre mais com o Windows'); }
 async function chooseFolder() { const r = await api.post('/api/choose_folder', { what: 'games' }); if (r.native) { if (r.folder) { await loadCatalog(false); renderSettings(); scanRun('windows', r.folder); } return; } modal({ title: 'Pasta dos jogos', text: 'Digite o caminho completo (modo navegador não tem diálogo nativo).', input: S.config.games_dir || '', ok: 'Salvar', onOk: v => setCfg({ games_dir: v }) }); }
 function factoryReset() {
@@ -2642,7 +2653,13 @@ function addRepo() {
       if (t === 'archive_uploader') cfg.uploader = $('#rUploader').value.trim();
       if (t === 'archive_search') cfg.query = $('#rQuery').value.trim();
       if (t === 'github_release') cfg.items = [{ repo: $('#rRepo').value.trim(), title: $('#rTitle').value.trim() || $('#rRepo').value.split('/')[1], asset: $('#rAsset').value.trim() || 'Windows', kind: cfg.kind }];
-      if (t === 'manifest') cfg.url = $('#rUrl').value.trim();
+      if (t === 'manifest') {
+        cfg.url = $('#rUrl').value.trim();
+        const v = await api.post('/api/repos/validate', { url: cfg.url });
+        if (v.error) { toast('err', 'JSON não aceito', v.error); return false; }
+        if (!v.usable) { modal({ title: 'Nenhum jogo utilizável', wide: true, html: reportHtml(v), noCancel: true, ok: 'Fechar' }); return; }
+        if (v.errors.length || v.warnings.length) { modal({ title: `${v.name} — ${v.summary}`, wide: true, html: reportHtml(v), ok: 'Adicionar mesmo assim', onOk: async () => { const r2 = await api.post('/api/repos/add', cfg); if (r2.error) return toast('err', 'Não foi possível concluir', r2.error); toast('ok', 'Repositório adicionado', cfg.name); if (S.view === 'store') renderSources(); loadCatalog(false); } }); return; }
+      }
       const r = await api.post('/api/repos/add', cfg); if (r.error) return toast('err', 'Não foi possível concluir', r.error);
       toast('ok', 'Repositório adicionado', cfg.name); if (S.view === 'store') renderSources(); loadCatalog(false);
     } });
@@ -3245,46 +3262,12 @@ function homeTop() {
   return h + homeRows() + `</div>`;
 }
 const DESC = {};
-const STAGE_STYLES = [['auto', 'Como a aparência manda'], ['estante', 'Estante: capa em pé e seus números'], ['painel', 'Painel com fileira de capas'], ['banner', 'Banner largo com a arte'], ['duplo', 'Duplo: destaque e recentes'], ['simples', 'Simples']];
-const stageStyle = () => 'base';
-const stageOn = () => S.config.home_spot !== false && !!stageStyle();
+const stageOn = () => S.config.home_spot !== false;
 const short = (t, n = 220) => { t = (t || '').replace(/\s+/g, ' ').trim(); if (t.length <= n) return t; const cut = t.slice(0, n), i = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? ')); return i > 80 ? cut.slice(0, i + 1) : cut.replace(/\s\S*$/, '') + '…'; };
 const coverImg = (key, g) => `<div class="ph">${esc(g.title)}</div><img src="/thumb/${enc(key)}?v=${g.cv || 0}" alt="" loading="lazy" decoding="async" class="${TH.ok.has(key) ? 'ld' : ''}" onload="this.classList.add('ld')" onerror="this.remove()">`;
-const metaLine = g => [g.creator, g.year, fmt(g.size), g.genres && g.genres[0]].filter(Boolean).map(esc).join(' · ');
-function stagePool(hm) {
-  const playing = hm.sections.playing || [];
-  const all = Object.keys(hm.games).filter(k => hm.games[k] && !playing.includes(k));
-  if (!all.length) return [];
-  const keep = (S.showPick || []).filter(k => all.includes(k));
-  if (keep.length < Math.min(5, all.length)) S.showPick = shuffle(all).slice(0, 5); else S.showPick = keep;
-  return S.showPick;
-}
-function shuffle(a) { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-function rerollShowcase() {
-  const hm = S.home; if (!hm) return;
-  const playing = hm.sections.playing || [], all = Object.keys(hm.games).filter(k => hm.games[k] && !playing.includes(k));
-  const prev = new Set(S.showPick || []);
-  const fresh = shuffle(all.filter(k => !prev.has(k)));
-  S.showPick = (fresh.length >= 5 ? fresh : [...fresh, ...shuffle([...prev])]).slice(0, 5);
-  S.stageKey = S.showPick[0];
-  const st = $('#stage'); if (st) st.outerHTML = stageHtml(hm);
-}
-const diceCard = () => `<div class="scard dice sf" title="Sortear outros cinco jogos" onclick="rerollShowcase()"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></svg><span>Sortear</span></div>`;
 function gotoGrid() { if (S.view !== 'home') { setView('home'); setTimeout(gotoGrid, 350); return; } const g = $('#grid'); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 function playLbl(key) { const g = S.byKey[key]; return g && g.missing ? `${I.search} Localizar arquivo` : `${I.play} Jogar`; }
-function stageHtml(hm) {
-  const face = document.body.dataset.face || 'grafite', pool = stagePool(hm);
-  if (!pool.length || !stageOn()) return '';
-  if (!S.stageKey || !hm.games[S.stageKey]) { const rc = (hm.sections.recent || []).find(k => hm.games[k]); S.stageKey = rc || pool[0]; }
-  const key = S.stageKey, g = hm.games[key];
-  const st = stageStyle(face);
-  if (st === 'base') return stageBase(hm);
-  if (st === 'painel') return stageGrafite(hm, pool, key, g);
-  if (st === 'banner') return stageBanner(hm, pool, key, g);
-  if (st === 'estante') return stageEstante(hm, pool, key, g);
-  if (st === 'duplo') return stageDuo(hm, pool, key, g);
-  return stageSpot(key, g);
-}
+function stageHtml(hm) { return stageOn() ? stageBase(hm) : ''; }
 function nowKey(hm) {
   hm = hm || S.home;
   const sk = S.panelKey || S.nowKey;
@@ -3300,7 +3283,7 @@ function nowbarInner(key, label) {
   const sub = [g.last_played ? cap(lastPlayedText(g.last_played)) : 'Nunca jogado', g.playtime >= 60 ? fmtTime(g.playtime) : '', sys, g.year || ''].filter(Boolean).join(' · ');
   return `<div class="nbcov" onclick="openGame(${jsq(key)})"><div class="ph">${esc(g.title)}</div><img src="/thumb/${enc(key)}?v=${g.cv || 0}" alt="" decoding="async" onload="this.classList.add('ld')" onerror="this.remove()"></div>
     <div class="nbtxt"><small class="nbl">${label}</small><h2 onclick="openGame(${jsq(key)})" title="${esc(g.title)}">${esc(g.title)}</h2><div class="nbsub">${esc(sub)}</div>
-      <div class="nbacts"><button class="btn p xs" onclick="play(${jsq(key)})">${live ? I.x + ' Encerrar' : playLbl(key)}</button><button class="btn s xs" onclick="openGame(${jsq(key)})">${I.info}<span>Detalhes</span></button><button class="btn s xs" onclick="openPath(${jsq(g.dir || '')},${jsq(key)})">${I.folder}<span>Pasta</span></button><button class="btn s xs ic ${g.fav ? 'on' : ''}" title="Favorito" onclick="toggleFav(${jsq(key)});this.classList.toggle('on')">${I.star}</button></div></div>`;
+      <div class="nbacts">${!g.installed && g.avail ? `<button class="btn p xs" onclick="openGame(${jsq(g.avail)})">${I.dl} Baixar da Loja</button>` : `<button class="btn p xs" onclick="play(${jsq(key)})">${live ? I.x + ' Encerrar' : playLbl(key)}</button>`}<button class="btn s xs" onclick="openGame(${jsq(key)})">${I.info}<span>Detalhes</span></button><button class="btn s xs" onclick="openPath(${jsq(g.dir || '')},${jsq(key)})">${I.folder}<span>Pasta</span></button><button class="btn s xs ic ${g.fav ? 'on' : ''}" title="Favorito" onclick="toggleFav(${jsq(key)});this.classList.toggle('on')">${I.star}</button></div></div>`;
 }
 function nbHero(key) { const g = S.byKey[key]; return g && g.hero_ok ? `--nbimg:url('/hero/${enc(key)}?v=${g.cv || 0}')` : ''; }
 function stageBase(hm) {
@@ -3317,78 +3300,6 @@ function nowbarFill() {
   const h = nbHero(key); nb.style.cssText = h; nb.classList.toggle('hb', !!h);
   nb.classList.remove('nbsw'); void nb.offsetWidth; nb.classList.add('nbsw');
   nb.innerHTML = nowbarInner(key, label);
-}
-function stageSpot(key, g) {
-  return `<div class="stage spot" id="stage"><div class="sbg" style="background-image:url('/hero/${enc(key)}')"></div><div class="sgrad"></div>
-    <div class="scov" onclick="openGame(${jsq(key)})">${coverImg(key, g)}</div>
-    <div class="sinfo"><div class="stag">${g.last_played ? 'Continuar jogando' : 'Da sua biblioteca'}</div><h3 onclick="openGame(${jsq(key)})">${esc(g.title)}</h3>
-      <div class="smeta">${g.playtime ? `<div><b>Tempo</b><span>${fmtTime(g.playtime)}</span></div>` : ''}${g.last_played ? `<div><b>Última vez</b><span>${ago(g.last_played)}</span></div>` : ''}${g.genres && g.genres[0] ? `<div><b>Gênero</b><span>${esc(g.genres[0])}</span></div>` : ''}</div>
-      <div class="sacts"><button class="btn p" onclick="play(${jsq(key)})">${playLbl(key)}</button><button class="btn s" onclick="openGame(${jsq(key)})">Detalhes</button><button class="btn s" onclick="rerollShowcase()" title="Sortear outro">${I.dice}</button></div></div></div>`;
-}
-function gfocusHtml(key, g) {
-  return `<div class="gcov sf" onclick="openGame(${jsq(key)})">${coverImg(key, g)}</div><h3 onclick="openGame(${jsq(key)})">${esc(g.title)}</h3>
-    <button class="btn p gplay" onclick="play(${jsq(key)})">${playLbl(key)}</button>
-    <div class="gstats"><div>${clock}<div><b>Tempo</b><span>${g.playtime ? fmtTime(g.playtime) : '—'}</span></div></div><div>${I.cal}<div><b>Última vez</b><span>${g.last_played ? ago(g.last_played) : 'nunca'}</span></div></div></div>`;
-}
-function stageGrafite(hm, pool, key, g) {
-  const strip = pool.slice(0, 12), rec = (hm.sections.recent || []).slice(0, 8);
-  return `<div class="stage g-grafite" id="stage"><div class="gfocus" id="gfocus">${gfocusHtml(key, g)}</div>
-    <div class="gside${rec.length ? '' : ' solo'}"><div class="gstrip">${strip.map(k => `<div class="scard sf ${k === key ? 'sel' : ''}" data-sk="${esc(k)}" onclick="stageSet(${jsq(k)})" ondblclick="openGame(${jsq(k)})">${coverImg(k, hm.games[k])}</div>`).join('')}${diceCard()}</div>
-      <div class="gdots">${strip.map(k => `<i class="${k === key ? 'sel' : ''}" data-sk="${esc(k)}" onclick="stageSet(${jsq(k)})"></i>`).join('')}</div>
-      ${rec.length ? `<div class="grec"><h3>Recentes</h3><div class="grow">${rec.map(k => { const r = hm.games[k]; return `<div class="wcard sf" onclick="openGame(${jsq(k)})" style="background-image:url('/hero/${enc(k)}')"><span>${esc(r.title)}</span><small>${clock}${r.playtime ? fmtTime(r.playtime) : ago(r.last_played)}</small></div>`; }).join('')}</div></div>` : ''}</div></div>`;
-}
-function stageBanner(hm, pool, key, g) {
-  const cats = (g.cats || []).map(id => (S.cats.find(c => c.id === id) || {}).name).filter(Boolean);
-  const tags = [...new Set([...(g.genres || []).slice(0, 3), ...cats.slice(0, 2), g.system && g.system !== 'pc' ? (S.systems[g.system] || g.system) : 'PC'])].slice(0, 5);
-  if (DESC[key] === undefined) stageDesc(key);
-  return `<div class="stage g-banner" id="stage"><div class="bbg" style="background-image:url('/hero/${enc(key)}')"></div><div class="bgrad"></div>
-    <div class="btxt"><span class="btag">${g.last_played ? 'Continuar jogando' : 'Destaque'}</span><h1 onclick="openGame(${jsq(key)})">${esc(g.title)}</h1>
-      <div class="bmeta">${metaLine(g)}</div><p class="bdesc" data-desc="${esc(key)}">${esc(DESC[key] || '')}</p>
-      <div class="btags">${tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>
-      <div class="bacts"><button class="btn p" onclick="play(${jsq(key)})">${playLbl(key)}</button><button class="btn s" onclick="openGame(${jsq(key)})">${I.info} Detalhes</button></div></div>
-    <div class="bdots">${pool.slice(0, 5).map(k => `<i class="${k === key ? 'sel' : ''}" data-sk="${esc(k)}" onclick="stageSet(${jsq(k)})"></i>`).join('')}<button class="bdice" title="Sortear outros cinco" onclick="rerollShowcase()"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></svg></button></div></div>`;
-}
-function stageEstante(hm, pool, key, g) {
-  const cats = (g.cats || []).map(id => (S.cats.find(c => c.id === id) || {}).name).filter(Boolean);
-  const tags = [...new Set([...(g.genres || []).slice(0, 3), ...cats.slice(0, 2), g.system && g.system !== 'pc' ? (S.systems[g.system] || g.system) : 'PC'])].slice(0, 5);
-  if (DESC[key] === undefined) stageDesc(key);
-  const meta = [g.creator, g.year, g.last_played ? 'jogado por último ' + lastPlayedText(g.last_played) : ''].filter(Boolean).map(esc).join(' · ');
-  return `<div class="stage g-est" id="stage"><div class="ebg" style="background-image:url('/hero/${enc(key)}'),url('/cover/${enc(key)}')"></div><div class="egrad"></div>
-    <div class="ein"><div class="ecov" onclick="openGame(${jsq(key)})">${coverImg(key, g)}</div>
-      <div class="etxt"><span class="etag">${g.last_played ? 'Continuar jogando' : 'Destaque'}</span><h1 onclick="openGame(${jsq(key)})">${esc(g.title)}</h1>
-        <div class="emeta">${meta}</div><p class="edesc" data-desc="${esc(key)}">${esc(DESC[key] || '')}</p>
-        <div class="etags">${tags.map(t => `<span>${esc(t)}</span>`).join('')}</div>
-        <div class="eacts"><button class="btn p" onclick="play(${jsq(key)})">${playLbl(key)}</button><button class="btn s" onclick="openGame(${jsq(key)})">${I.info} Detalhes</button></div></div>
-      <div class="est"><div><b>${g.playtime >= 60 ? fmtTime(g.playtime) : '0 min'}</b><small>jogadas</small></div><div><b>${g.score ? g.score : '—'}</b><small>sua nota</small></div><div><b>${g.play_count || 0}</b><small>${g.play_count === 1 ? 'vez' : 'vezes'}</small></div></div></div>
-    <div class="bdots">${pool.slice(0, 5).map(k => `<i class="${k === key ? 'sel' : ''}" data-sk="${esc(k)}" onclick="stageSet(${jsq(k)})" title="${esc(hm.games[k].title)}"></i>`).join('')}<button class="bdice" title="Sortear outros cinco" onclick="rerollShowcase()"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></svg></button></div></div>`;
-}
-function stageDuo(hm, pool, key, g) {
-  return `<div class="stage g-duo" id="stage"><div class="dhead"><span class="dtag">${g.last_played ? 'Continuar jogando' : 'Em destaque'}</span><h3 id="dtitle" onclick="openGame(${jsq(key)})">${esc(g.title)}</h3><span class="sp"></span><button class="btn p sm" id="dplay" onclick="play(${jsq(key)})">${playLbl(key)}</button></div>
-    <div class="dtiles">${pool.slice(0, 10).map(k => `<div class="dtile sf ${k === key ? 'sel' : ''}" data-sk="${esc(k)}" onclick="stageSet(${jsq(k)})" ondblclick="openGame(${jsq(k)})">${coverImg(k, hm.games[k])}</div>`).join('')}<div class="dtile dice sf" title="Sortear outros cinco" onclick="rerollShowcase()"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8 8h.01M16 8h.01M12 12h.01M8 16h.01M16 16h.01"/></svg><span>Sortear</span></div></div></div>`;
-}
-async function stageDesc(key) {
-  DESC[key] = '';
-  try { const d = await api.get('/api/game/' + enc(key)); DESC[key] = short(d.description || ''); } catch (e) { return; }
-  document.querySelectorAll(`[data-desc="${CSS.escape(key)}"]`).forEach(el => el.textContent = DESC[key]);
-}
-let stageHold = 0;
-setInterval(() => {
-  if (S.view !== 'home' || document.hidden || !document.hasFocus() || S.config.reduce_motion || S.config.home_autoplay === false) return;
-  if (!$('#stage') || !S.showPick || S.showPick.length < 2 || Date.now() < stageHold) return;
-  if ($('#modal').classList.contains('on') || $('#detail').classList.contains('on') || $('#ctx')?.classList.contains('on')) return;
-  const i = S.showPick.indexOf(S.stageKey), next = S.showPick[(i + 1) % S.showPick.length];
-  if (next && next !== S.stageKey) stageSet(next, true);
-}, 12000);
-function stageSet(key, auto) {
-  const hm = S.home, st = $('#stage'); if (!hm || !hm.games[key] || !st) return; S.stageKey = key;
-  if (!auto) stageHold = Date.now() + 25000;
-  document.querySelectorAll('#grid .card.sel').forEach(c => c.classList.remove('sel')); document.querySelector(`#grid .card[data-key="${CSS.escape(key)}"]`)?.classList.add('sel');
-  if (st.classList.contains('g-banner') || st.classList.contains('g-est')) { st.outerHTML = stageHtml(hm); gameFocus(key); return; }
-  st.querySelectorAll('[data-sk]').forEach(el => el.classList.toggle('sel', el.dataset.sk === key));
-  const f = $('#gfocus'); if (f) f.innerHTML = gfocusHtml(key, hm.games[key]);
-  gameFocus(key);
-  const t = $('#dtitle'); if (t) { t.textContent = hm.games[key].title; t.onclick = () => openGame(key); $('#dplay').onclick = () => play(key); }
-  st.querySelector('.scard.sel, .dtile.sel')?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
 }
 const W_ART = {
   lib: `<svg viewBox="0 0 320 180"><rect x="18" y="26" width="92" height="128" rx="10" class="f1"/><rect x="26" y="34" width="76" height="92" rx="6" class="f2"/><rect x="34" y="132" width="60" height="12" rx="6" class="acc"/><g class="f1"><rect x="128" y="26" width="52" height="70" rx="6"/><rect x="190" y="26" width="52" height="70" rx="6"/><rect x="252" y="26" width="52" height="70" rx="6"/><rect x="128" y="106" width="52" height="48" rx="6"/><rect x="190" y="106" width="52" height="48" rx="6"/><rect x="252" y="106" width="52" height="48" rx="6"/></g><rect x="190" y="26" width="52" height="70" rx="6" class="sel"/></svg>`,
@@ -3647,14 +3558,26 @@ async function renderSources() {
   const typeName = { telegram: 'canal do Telegram (bot lê posts com .torrent)', webpage: 'página da web (links diretos / torrents)', archive_uploader: 'coleção de um uploader', archive_creator: 'coleção de um criador', archive_item: 'pacote (um arquivo por jogo)', archive_search: 'busca', github_release: 'releases do GitHub', manifest: 'lista .json', local_folder: 'pasta do PC' };
   $('#view').innerHTML = storeTabs() + `
     <div class="h1"><h2>Fontes de jogos</h2><span>${repos.length ? `${repos.filter(r => r.enabled).length} de ${repos.length} ligadas` : 'de onde a Store puxa o catálogo'}</span><div class="acts"><button class="btn s" onclick="addRepo()">${I.cog} Manual (avançado)</button></div></div>
-    <div class="hint">Cole um link ou escolha um arquivo .json com fontes de jogos ${help('Uma fonte é uma lista de jogos que a Store lê: um arquivo .json (local ou por link), uma coleção do archive.org, uma página com downloads, um repositório do GitHub ou uma pasta do PC.')}${ONLINE ? '' : ' <span class="offl">Sem internet — conecte-se para ligar fontes e baixar.</span>'}</div>
+    <div class="hint">Cole um link ou escolha um arquivo .json com fontes de jogos ${help('Uma fonte é uma lista de jogos que a Store lê: um arquivo .json (local ou por link), uma coleção do archive.org, uma página com downloads, um repositório do GitHub ou uma pasta do PC.')} <a href="#" class="fmtlink" onclick="api.post('/api/open_url',{url:'https://github.com/wolffZ-prog/Ludrix/blob/main/docs/FONTES.md'});return false">formato do .json</a>${ONLINE ? '' : ' <span class="offl">Sem internet — conecte-se para ligar fontes e baixar.</span>'}</div>
     <div class="detbox"><div class="mrow"><input class="mi" id="detq" placeholder="https://…/fontes.json  ·  archive.org/details/@usuario  ·  página com jogos  ·  GitHub  ·  pasta do PC" onkeydown="if(event.key==='Enter')doDetect()"><button class="btn p sm" onclick="doDetect()">${I.search} Analisar</button>${S.config.native ? `<button class="btn s sm" onclick="pickSourceJson()">${I.doc} Arquivo .json</button><button class="btn s sm" title="Pasta do PC com jogos ou ROMs" onclick="api.post('/api/choose_folder',{what:'any'}).then(r=>{if(r.folder){$('#detq').value=r.folder;doDetect()}})">${I.folder} Pasta</button>` : ''}</div>
     </div>
     <div class="browse" id="browse"></div>
     <div class="gh"><h3>Suas fontes</h3><span>botão direito numa fonte mostra mais opções</span></div>
     ${repos.length ? '' : `<div class="empty" style="padding:24px 0 16px"><b>Nenhuma fonte ainda</b>Cole um link acima ou use Manual (avançado).</div>`}
-    <div class="srcs">${repos.map(r => `<div class="src ${r.enabled ? 'on' : ''} ${!ONLINE && !r.enabled ? 'off' : ''}" data-repo="${esc(r.id)}" title="${ONLINE ? 'Botão direito: mais opções' : 'Sem internet'}"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b>${esc(r.name)}</b><button class="sw ${r.enabled ? 'on' : ''}" ${!ONLINE && !r.enabled ? 'disabled title="Sem conexão com a internet"' : ''} onclick="event.stopPropagation();if(!ONLINE&&!${r.enabled})return toast('err','Sem internet','Conecte-se para ligar essa fonte.');api.post('/api/repos/toggle',{id:${jsq(r.id)},enabled:${!r.enabled}}).then(()=>{renderSources();loadCatalog(false)})"></button></div><span>${esc(typeName[r.type] || r.type)} · ${esc(kindName[r.kind] || r.kind)}${r.system && r.system !== 'pc' ? ' · ' + esc(S.systems[r.system] || r.system) : ''}</span><span class="n">${r.count !== undefined ? `${r.count} ${r.count === 1 ? 'jogo' : 'jogos'}` : '—'}${r.builtin ? '' : `<button class="srcedit" title="Editar fonte" onclick="event.stopPropagation();editRepo(${jsq(r.id)})">${I.edit}</button>`}</span>${r.note ? `<span class="u" style="direction:ltr" title="${esc(r.note)}">${esc(r.note)}</span>` : ''}${r.url ? `<span class="u" title="${esc(r.url)}">${esc(r.url.replace(/^https?:\/\/(www\.)?/, '').replace(/^[A-Za-z]:\\/, ''))}</span>` : ''}</div>`).join('')}</div>`;
+    <div class="srcs">${repos.map(r => `<div class="src ${r.enabled ? 'on' : ''} ${!ONLINE && !r.enabled ? 'off' : ''}" data-repo="${esc(r.id)}" title="${ONLINE ? 'Botão direito: mais opções' : 'Sem internet'}"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b>${esc(r.name)}</b><button class="sw ${r.enabled ? 'on' : ''}" ${!ONLINE && !r.enabled ? 'disabled title="Sem conexão com a internet"' : ''} onclick="event.stopPropagation();if(!ONLINE&&!${r.enabled})return toast('err','Sem internet','Conecte-se para ligar essa fonte.');api.post('/api/repos/toggle',{id:${jsq(r.id)},enabled:${!r.enabled}}).then(()=>{renderSources();loadCatalog(false)})"></button></div><span>${esc(typeName[r.type] || r.type)} · ${esc(kindName[r.kind] || r.kind)}${r.system && r.system !== 'pc' ? ' · ' + esc(S.systems[r.system] || r.system) : ''}</span><span class="n">${r.error ? `<span class="rep bad" title="${esc(r.error)}">${I.warn} não carregou</span>` : r.report ? `<a href="#" class="rep ${r.report.errors.length ? 'bad' : r.report.warnings.length ? 'warn' : 'ok'}" onclick="event.stopPropagation();repoReport(${jsq(r.id)});return false" title="Ver relatório do JSON">${esc(r.report.summary)}</a>` : r.enabled ? `${r.count} ${r.count === 1 ? 'jogo' : 'jogos'}` : 'desligada'}${r.builtin ? '' : `<button class="srcedit" title="Editar fonte" onclick="event.stopPropagation();editRepo(${jsq(r.id)})">${I.edit}</button>`}</span>${r.note ? `<span class="u" style="direction:ltr" title="${esc(r.note)}">${esc(r.note)}</span>` : ''}${r.url ? `<span class="u" title="${esc(r.url)}">${esc(r.url.replace(/^https?:\/\/(www\.)?/, '').replace(/^[A-Za-z]:\\/, ''))}</span>` : ''}</div>`).join('')}</div>`;
   setTimeout(() => $('#detq')?.focus(), 50);
+}
+function reportHtml(rep) {
+  const li = (x, cls) => `<li class="${cls}"><span>${esc(x.at)}</span>${esc(x.msg)}</li>`;
+  return `<div class="repbox"><p class="repsum">${esc(rep.summary || '')}${rep.format === 'hydra' ? ' · formato Hydra' : ''}</p>
+    ${rep.errors.length ? `<h5>Erros — o item é ignorado</h5><ul class="replist">${rep.errors.map(x => li(x, 'bad')).join('')}</ul>` : ''}
+    ${rep.warnings.length ? `<h5>Avisos — entra mesmo assim</h5><ul class="replist">${rep.warnings.map(x => li(x, 'warn')).join('')}</ul>` : ''}
+    ${!rep.errors.length && !rep.warnings.length ? '<p class="mut">Nenhum problema encontrado.</p>' : ''}
+    <p class="mut" style="margin:10px 0 0;font-size:12px">Formato esperado: <a href="#" onclick="api.post('/api/open_url',{url:'https://github.com/wolffZ-prog/Ludrix/blob/main/docs/FONTES.md'});return false">docs/FONTES.md</a></p></div>`;
+}
+async function repoReport(id) {
+  const repos = await api.get('/api/repos'); const r = (repos || []).find(x => x.id === id); if (!r || !r.report) return toast('', 'Sem relatório', 'Essa fonte ainda não foi lida.');
+  modal({ title: `Relatório — ${r.name}`, wide: true, html: reportHtml(r.report), noCancel: true, ok: 'Fechar' });
 }
 async function doDetect() {
   const q = $('#detq').value.trim(); if (!q) return; const box = $('#browse'); box.innerHTML = '<div class="empty" style="padding:30px 0"><b>Analisando…</b>abrindo a página, lendo os links e classificando</div>';
@@ -3675,7 +3598,7 @@ async function doDetect() {
     return;
   }
   if (r.pack) {
-    const rows = S._det.map((x, i) => `<div class="brow"><div><b>${esc(x.title)}</b><span>${kindLabel(x.kind)} ${esc(x.detail || '')}</span></div><div class="ac"><button class="btn p sm" onclick="addSource(S._det[${i}].cfg)">+ Adicionar</button></div></div>`).join('');
+    const rows = S._det.map((x, i) => `<div class="brow"><div><b>${esc(x.title)}</b><span>${kindLabel(x.kind)} ${esc(x.detail || '')}${x.report && (x.report.errors.length || x.report.warnings.length) ? ` · <a href="#" onclick="modal({title:'Relatório do JSON',wide:true,html:reportHtml(S._det[${i}].report),noCancel:true,ok:'Fechar'});return false" style="color:var(${x.report.errors.length ? '--amber' : '--accent2'})">${x.report.errors.length ? pl(x.report.errors.length, 'erro', 'erros') : pl(x.report.warnings.length, 'aviso', 'avisos')}</a>` : ''}</span></div><div class="ac"><button class="btn p sm" onclick="addSource(S._det[${i}].cfg)">+ Adicionar</button></div></div>`).join('');
     box.innerHTML = (S._det.length > 1 ? `<div class="brow grp"><div><b>${esc(r.pack)}</b><span>${pl(S._det.length, 'fonte', 'fontes')}</span></div><div class="ac"><button class="btn p sm" onclick="addPack()">+ Adicionar tudo</button></div></div>` : '') + rows;
     return;
   }
@@ -3695,30 +3618,38 @@ async function pickSourceJson() { const r = await api.post('/api/pick_exe', { ki
 async function addSource(cfg) { const r = await api.post('/api/repos/add', cfg); if (r.error) return toast('err', 'Não foi possível concluir', r.error); toast('ok', 'Fonte adicionada', cfg.name + ' — carregando na Store…'); if (S.tab.store === 'sources') renderSources(); loadCatalog(false); }
 
 async function renderMods() {
-  $('#view').innerHTML = `<div class="h1"><h2>Mods e ferramentas</h2><span>carregando…</span></div>`;
+  $('#view').innerHTML = `<div class="h1"><h2>Mods</h2><span>carregando…</span></div>`;
   const m = await api.get('/api/mods'); S.mods = m; if (S.view !== 'mods') return;
   const cats = [...new Set(m.tools.map(t => t.category))];
-  let cur = S.tab.mods; if (!['mine', 'tools', 'sites'].includes(cur)) cur = cats.includes(cur) ? (S.modsCat = cur, 'tools') : 'mine'; S.tab.mods = cur;
+  let cur = S.tab.mods; if (!['mine', 'tools', 'learn'].includes(cur)) cur = cats.includes(cur) ? (S.modsCat = cur, 'tools') : 'mine'; S.tab.mods = cur;
   const nInst = m.tools.filter(t => t.installed).length, nMods = m.games.reduce((a, g) => a + g.count, 0);
-  const sub = cur === 'mine' ? `${nMods ? pl(nMods, 'mod', 'mods') + ' em ' + pl(m.games.length, 'jogo', 'jogos') : 'nenhum mod instalado ainda'}` : cur === 'tools' ? `${nInst} de ${m.tools.length} instaladas` : `${m.sites.length} sites`;
-  let h = `<div class="h1"><h2>Mods e ferramentas</h2><span>${sub}</span><div class="acts">${cur === 'tools' ? `<button class="btn s" onclick="openPath(${jsq(m.root)})" title="Pasta onde as ferramentas portáteis ficam">${I.folder} Pasta tools</button>` : cur === 'mine' ? `<button class="btn p" onclick="modInstallMenu(event)">${I.plus} Instalar mod</button>` : ''}</div></div>
-    <div class="tabs"><button class="${cur === 'mine' ? 'on' : ''}" onclick="S.tab.mods='mine';renderMods()">Meus mods${m.games.length ? ` <span class="n">${m.games.length}</span>` : ''}</button><button class="${cur === 'tools' ? 'on' : ''}" onclick="S.tab.mods='tools';renderMods()">Ferramentas${nInst ? ` <span class="n">${nInst}</span>` : ''}</button><button class="${cur === 'sites' ? 'on' : ''}" onclick="S.tab.mods='sites';renderMods()">Sites de mods</button></div>`;
+  const sub = cur === 'mine' ? `${nMods ? pl(nMods, 'mod', 'mods') + ' em ' + pl(m.games.length, 'jogo', 'jogos') : 'nenhum mod instalado ainda'}` : cur === 'tools' ? `${nInst} de ${m.tools.length} instaladas` : 'o básico em 2 minutos';
+  let h = `<div class="h1"><h2>Mods</h2><span>${sub}</span><div class="acts">${cur === 'tools' ? `<button class="btn s" onclick="openPath(${jsq(m.root)})" title="Pasta onde as ferramentas portáteis ficam">${I.folder} Pasta tools</button>` : ''}</div></div>
+    <div class="tabs"><button class="${cur === 'mine' ? 'on' : ''}" onclick="S.tab.mods='mine';renderMods()">Por jogo${m.games.length ? ` <span class="n">${m.games.length}</span>` : ''}</button><button class="${cur === 'tools' ? 'on' : ''}" onclick="S.tab.mods='tools';renderMods()">Ferramentas${nInst ? ` <span class="n">${nInst}</span>` : ''}</button><button class="${cur === 'learn' ? 'on' : ''}" onclick="S.tab.mods='learn';renderMods()">Entenda mods</button></div>`;
   if (cur === 'mine') { $('#view').innerHTML = h + `<div id="myMods"></div>`; return renderMyMods(); }
-  if (cur === 'sites') {
-    h += `<div class="hint">Sites conhecidos para baixar mods. O arquivo baixado entra pelo botão "Instalar mod" em Meus mods.</div><div class="sitegrid">${m.sites.map(s => `<button class="sitecard" onclick="api.post('/api/open_url',{url:${jsq(s.url.replace('{q}', ''))}})"><span class="ic">${I.ext}</span><b>${esc(s.name)}</b><small>${esc(s.desc)}</small></button>`).join('')}</div>`;
-    $('#view').innerHTML = h; return;
-  }
+  if (cur === 'learn') { $('#view').innerHTML = h + modsLearnHtml(); return; }
   const fc = S.modsCat || '';
   const chips = `<div class="chips" style="margin:0 0 14px"><button class="chip ${!fc ? 'on' : ''}" onclick="S.modsCat='';renderMods()">Todas <span class="n">${m.tools.length}</span></button><button class="chip ${fc === '__inst' ? 'on' : ''}" onclick="S.modsCat='__inst';renderMods()">Instaladas <span class="n">${nInst}</span></button>${cats.map(c => `<button class="chip ${fc === c ? 'on' : ''}" onclick="S.modsCat=${jsq(c)};renderMods()">${esc(c)} <span class="n">${m.tools.filter(t => t.category === c).length}</span></button>`).join('')}</div>`;
-  const card = t => { const job = S.jobs['tool:' + t.id]; return `<div class="toolc ${t.installed ? 'ok' : ''}"><div class="th"><span class="ic">${t.installed ? I.check : I.wrench}</span><div class="tt"><b>${esc(t.title)}</b><small>${esc(t.category)}</small></div>${t.installed ? `<span class="pill ok">Instalada${t.version ? ' · ' + esc(t.version) : ''}</span>` : t.type === 'github_release' ? `<span class="pill">Portátil</span>` : `<span class="pill">Site</span>`}</div>
+  const card = t => { const job = S.jobs['tool:' + t.id]; return `<div class="toolc ${t.installed ? 'ok' : ''}"><div class="th"><span class="ic">${t.installed ? I.check : I.wrench}</span><div class="tt"><b>${esc(t.title)}</b><small>${esc(t.category)}</small></div>${t.installed && t.version ? `<span class="pill">${esc(t.version)}</span>` : ''}</div>
     <p>${esc(t.desc)}</p><div class="for"><b>Para:</b> ${esc(t.for)}</div>
-    ${job ? progHtml(job, 'tool:' + t.id) : `<div class="ta">${t.installed ? `<button class="btn p sm" onclick="api.post('/api/tools/launch',{id:'${t.id}'})">${I.play} Abrir</button><button class="btn s sm ico" title="Abrir pasta" onclick="openPath(${jsq(t.dir)})">${I.folder}</button><button class="btn d sm ico" title="Remover" onclick="removeTool('${t.id}',${jsq(t.title)})">${I.trash}</button>` : t.type === 'github_release' ? `<button class="btn p sm" onclick="installTool('${t.id}')">${I.dl} Instalar</button><small class="mut">baixa do GitHub para tools\\</small>` : `<button class="btn s sm" onclick="api.post('/api/open_url',{url:${jsq(t.url || '')}})">${I.ext} Site oficial</button>`}</div>`}</div>`; };
+    ${job ? progHtml(job, 'tool:' + t.id) : `<div class="ta">${t.installed ? `<button class="btn p sm" onclick="api.post('/api/tools/launch',{id:'${t.id}'})">${I.play} Abrir</button><button class="btn s sm ico" title="Abrir pasta" onclick="openPath(${jsq(t.dir)})">${I.folder}</button><button class="btn s sm ico" title="Remover" onclick="removeTool('${t.id}',${jsq(t.title)})">${I.trash}</button>` : t.type === 'github_release' ? `<button class="btn p sm" onclick="installTool('${t.id}')">${I.dl} Baixar</button><span class="mut">portátil, fica em tools\\</span>` : `<button class="btn s sm" onclick="api.post('/api/open_url',{url:${jsq(t.url || '')}})">${I.ext} Site oficial</button>`}</div>`}</div>`; };
   const list = fc === '__inst' ? m.tools.filter(t => t.installed) : fc ? m.tools.filter(t => t.category === fc) : m.tools;
   h += chips;
   if (!list.length) h += emptyHtml(I.wrench, 'Nenhuma ferramenta instalada', 'As ferramentas do GitHub são baixadas pelo Ludrix e ficam portáteis em tools\\. Escolha uma categoria para ver as disponíveis.', [['Ver todas', "S.modsCat='';renderMods()", 1]]);
   else if (fc) h += `<div class="toolgrid">${list.map(card).join('')}</div>`;
   else h += cats.map(c => `<div class="tsec"><h4>${esc(c)}<span>${m.tools.filter(t => t.category === c).length}</span></h4><div class="toolgrid">${m.tools.filter(t => t.category === c).map(card).join('')}</div></div>`).join('');
   $('#view').innerHTML = h;
+}
+function modsLearnHtml() {
+  const c = (icon, t, b) => `<div class="mlearn"><span class="ic">${icon}</span><div><b>${t}</b><p>${b}</p></div></div>`;
+  return `<div class="mlgrid">
+    ${c(I.spark, 'O que é um mod', 'Arquivos feitos por jogadores que mudam algo no jogo: roupa, mapa, tradução, correção, conteúdo novo. Vêm quase sempre num .zip baixado de um site.')}
+    ${c(I.bolt, 'Carregador (loader)', 'Muitos jogos não leem mods sozinhos. Um carregador (BepInEx, MelonLoader, Script Hook, Frosty) entra na pasta do jogo e faz essa ponte. Quando o jogo precisa de um, o passo a passo mostra — e instala quando dá.')}
+    ${c(I.folder, 'Onde os arquivos vão', 'Cada jogo tem a sua pasta de mods (BepInEx/plugins, Data, Content/Paks/~mods, mods/…). O Ludrix detecta a pasta certa pela estrutura do jogo e copia para lá.')}
+    ${c(I.shield, 'Antes de instalar', 'Jogos online com anti-cheat podem banir por mod — use só no modo um jogador. Antivírus às vezes acusa carregadores (são injeções de código, por natureza). Baixe só dos sites listados aqui.')}
+    ${c(I.save, 'O que o Ludrix guarda', 'Tudo que um mod substitui é copiado antes. Desligar o mod devolve os originais; remover apaga a cópia. Em ROMs, o patch gera um arquivo novo e o original fica intacto.')}
+    ${c(I.help, 'Se não funcionar', 'Abra a página do mod: ela diz a versão do jogo e do carregador que ele espera. Mods que mexem na mesma coisa brigam — desligue um por vez para achar o culpado.')}
+  </div>`;
 }
 async function renderMyMods() {
   const el = $('#myMods'); if (!el) return;
@@ -3728,20 +3659,74 @@ async function renderMyMods() {
   if (!inst.length) { el.innerHTML = `${emptyHtml(I.wrench, 'Nenhum jogo instalado', 'Instale ou adicione um jogo na Biblioteca; depois volte aqui para colocar mods nele.', [['Abrir Store', "setView('store')", 1], ['Adicionar jogo', 'addLocal()']])}`; return; }
   const key = S.modsGame; const g = S.byKey[key] || inst.find(x => x.key === key);
   const qn = qnorm(S._modsQ || ''), ordered = inst.filter(x => !qn || qnorm(x.title).includes(qn)).sort((a, b) => (cnt[b.key] || 0) - (cnt[a.key] || 0) || COLL.compare(a.title, b.title));
-  el.innerHTML = `<div class="modwrap"><aside class="modgames"><input class="mgq" placeholder="Procurar jogo…" value="${esc(S._modsQ || '')}" oninput="S._modsQ=this.value;renderMyMods();const i=document.querySelector('.modgames .mgq');i.focus();i.setSelectionRange(i.value.length,i.value.length)" spellcheck="false">
-      <div class="mgl">${ordered.map(x => `<button class="mg ${x.key === key ? 'on' : ''}" onclick="S.modsGame=${jsq(x.key)};renderMyMods()"><img loading="lazy" src="/thumb/${enc(x.key)}?v=${x.cv || 0}" alt="" onerror="this.onerror=null;this.src=BLANK_GIF"><span>${esc(x.title)}</span>${cnt[x.key] ? `<i>${cnt[x.key]}</i>` : ''}</button>`).join('') || '<span class="fnone">Nenhum jogo com esse nome</span>'}</div></aside>
-    <div class="modmain"><div class="mghead"><img src="/thumb/${enc(key)}?v=${(g || {}).cv || 0}" alt="" onerror="this.onerror=null;this.src=BLANK_GIF"><div class="tx"><b>${esc(g ? g.title : key)}</b><span id="mgSub">${cnt[key] ? pl(cnt[key], 'mod instalado', 'mods instalados') : 'Sem mods'}</span></div>
-      <div class="ta"><button class="btn p sm" onclick="modInstallMenu(event)">${I.plus} Instalar mod</button><button class="btn s sm" onclick="openGame(${jsq(key)})">${I.info} Ficha</button></div></div>
-      <div id="mgList"><div class="hint">carregando…</div></div>
-      <p class="mgnote">Aponte o <b>.zip</b> (ou .7z/.rar ou pasta) do mod e o Ludrix copia os arquivos para a pasta certa. O que for substituído fica guardado: um mod pode ser desligado sem perder nada e religado depois. Friday Night Funkin' aceita mods soltos na pasta <span class="code">mods\\</span> do Psych Engine.</p></div></div>`;
-  const r = await api.get('/api/mods/game/' + enc(key)); if (S.modsGame !== key || !$('#mgList')) return;
-  S.modsTargets = r.targets || []; S.modsSuggest = r.suggest || '';
-  const job = S.jobs['mod:' + key];
-  if (!r.dir) { $('#mgList').innerHTML = `<div class="empty"><b>Sem pasta</b>${esc(g ? g.title : key)} não tem uma pasta instalada conhecida — o Ludrix precisa dela para copiar os arquivos do mod.</div>`; return; }
-  $('#mgList').innerHTML = (job ? `<div class="item"><div class="ic">${I.wrench}</div><div class="tx"><b>Instalando mod…</b>${progHtml(job, 'mod:' + key)}</div></div>` : '') + (r.mods.length ? `<div class="list">${r.mods.map(m => `<div class="item ${m.enabled ? '' : 'off'}"><div class="ic">${I.wrench}</div><div class="tx"><b>${esc(m.title)}</b><span>${pl(m.files.length, 'arquivo', 'arquivos')} · ${fmt(m.size)} · em ${esc(m.target ? m.target + '\\' : 'pasta do jogo')}${m.replaced.length ? ` · substituiu ${m.replaced.length} do jogo (guardados)` : ''}${m.enabled ? '' : ' · desligado'}</span></div>
-      <div class="ac"><button class="sw ${m.enabled ? 'on' : ''}" title="${m.enabled ? 'Desligar (tira os arquivos e devolve os originais)' : 'Ligar de novo'}" onclick="modToggle(${jsq(key)},${jsq(m.id)},${m.enabled ? 'false' : 'true'})"></button><button class="btn d ico" title="Remover de vez" onclick="modRemove(${jsq(key)},${jsq(m.id)},${jsq(m.title)})">${I.trash}</button></div></div>`).join('')}</div>`
-    : `${emptyHtml(I.wrench, `Nenhum mod em ${esc(g ? g.title : key)}`, 'Baixe o mod no site de sua preferência e aponte o arquivo aqui.', [['Instalar mod', `modInstallMenu(event)`, 1], ['Abrir pasta do jogo', `openPath(${jsq(r.dir)})`]])}`)
-    + `<p style="color:var(--muted2);font-size:12px;margin:14px 0 0">Pasta do jogo: <a href="#" onclick="openPath(${jsq(r.dir)});return false">${esc(r.dir)}</a>${r.targets.length > 1 ? ` · pastas de mods encontradas: ${r.targets.filter(t => t.path).map(t => `<span class="code">${esc(t.path)}</span>`).join(' ')}` : ''}</p>`;
+  el.innerHTML = `<div class="modwrap"><aside class="modgames"><input class="mgq" placeholder="Procurar jogo…" value="${esc(S._modsQ || '')}" oninput="S._modsQ=this.value;renderMyMods();const i=document.querySelector('.modgames .mgq');i.focus();i.setSelectionRange(99,99)">
+      <div class="mgl">${ordered.map(x => `<button class="mg ${x.key === key ? 'on' : ''}" onclick="S.modsGame=${jsq(x.key)};renderMyMods()"><img loading="lazy" src="/thumb/${enc(x.key)}?v=${x.cv || 0}" alt="" onerror="this.onerror=null;this.src=BLANK_GIF"><span>${esc(x.title)}</span>${cnt[x.key] ? `<i>${cnt[x.key]}</i>` : ''}</button>`).join('')}</div></aside>
+    <div class="modmain" id="mgMain"><div class="hint">lendo a pasta do jogo…</div></div></div>`;
+  const r = await api.get('/api/mods/inspect/' + enc(key)); if (S.modsGame !== key || !$('#mgMain')) return;
+  if (r.error) { $('#mgMain').innerHTML = emptyHtml(I.warn, 'Não deu para ler', r.error); return; }
+  S.modsInsp = r; S.modsTargets = r.targets || []; S.modsSuggest = r.suggest || '';
+  $('#mgMain').innerHTML = modGameHtml(r, g);
+}
+function modGameHtml(r, g) {
+  const key = r.key, job = S.jobs['mod:' + key], prof = r.profile || {}, n = (r.mods || []).length, on = (r.mods || []).filter(m => m.enabled).length;
+  const openUrl = u => `api.post('/api/open_url',{url:${jsq(u)}})`;
+  const siteBtns = (r.sites || []).slice(0, 6).map(s => `<button class="site ${s.specific ? 'sp' : ''}" onclick="${openUrl(s.url)}" title="${esc(s.desc)}">${I.ext} ${esc(s.name)}</button>`).join('');
+  const toolBtn = t => t.installed ? `<button class="btn s sm" onclick="api.post('/api/tools/launch',{id:'${t.id}'})">${I.play} Abrir ${esc(t.title)}</button>` : t.type === 'github_release' ? `<button class="btn p sm" onclick="installTool('${t.id}')">${I.dl} Baixar ${esc(t.title)}</button>` : `<button class="btn s sm" onclick="S.tab.mods='tools';S.modsCat='';renderMods()">${I.ext} ${esc(t.title)}</button>`;
+  const steps = [];
+  const facts = [];
+  if (r.rom) {
+    facts.push(['Tipo', `ROM · ${esc(S.systems[r.system] || r.system)}`], ['Arquivo', r.romOk ? `<a href="#" onclick="openPath(${jsq(r.dir)});return false">${esc(r.romPath.split(/[\\/]/).pop())}</a>` : 'não encontrado']);
+    steps.push({ t: 'Baixe o patch do hack ou da tradução', d: 'Arquivos .ips, .bps ou .ups. A página diz para qual versão da ROM (região/revisão) ele foi feito.', a: `<div class="sites">${siteBtns}</div>` });
+    steps.push({ t: 'Aplique o patch', d: 'O Ludrix gera uma cópia modificada ao lado da ROM original e coloca na biblioteca como outro jogo. A original não muda.', a: r.romOk ? `<button class="btn p sm" onclick="modPatchAsk()">${I.bolt} Aplicar patch…</button>` : `<span class="mut">a ROM original não está no lugar</span>` });
+    steps.push({ t: 'Jogue a versão nova', d: 'Ela aparece na Biblioteca com o nome do patch depois de um travessão; se der errado, é só apagar esse arquivo.' });
+  } else if (!r.dir) {
+    steps.push({ t: 'Pasta do jogo desconhecida', d: 'Sem a pasta instalada o Ludrix não tem onde copiar os arquivos. Abra a ficha e confira o executável.', a: `<button class="btn s sm" onclick="editGame(${jsq(key)})">${I.edit} Editar jogo</button>` });
+  } else {
+    facts.push(['Motor', esc(prof.name || 'não identificado')], ['Pasta', `<a href="#" onclick="openPath(${jsq(r.dir)});return false">${esc(r.dir)}</a>`]);
+    if (r.arch) facts.push(['Executável', r.arch === 'x64' ? '64 bits' : r.arch === 'x86' ? '32 bits' : esc(r.arch)]);
+    if (r.loader) facts.push([esc(r.loader.name), r.loader.installed ? `<span class="okt">${I.check} instalado</span>` : 'não instalado']);
+    if (r.modDir) facts.push(['Mods vão em', `<span class="code">${esc(r.modDir)}</span>${r.create ? ' <small>(ainda não existe — criada no primeiro mod)</small>' : ''}`]);
+    if (r.hooks && r.hooks.length) facts.push(['Na pasta', esc(r.hooks.join(' · '))]);
+    const L = r.loader;
+    if (L && !L.installed && L.id !== 'scriptextender') {
+      steps.push({ t: `Instale o ${esc(L.name)}`, d: L.auto ? 'É o carregador que faz o jogo ler mods. O Ludrix baixa a versão certa para o executável deste jogo e coloca na pasta; dá para desligar depois como qualquer mod.' : 'É o carregador que faz o jogo ler mods. Baixe, extraia o conteúdo na pasta do jogo (junto do executável) e abra o jogo uma vez.', a: job ? progHtml(job, 'mod:' + key) : L.auto ? `<button class="btn p sm" onclick="modLoaderInstall(${jsq(key)})">${I.dl} Instalar ${esc(L.name)}</button>` : `<button class="btn p sm" onclick="${openUrl(L.url)}">${I.ext} Baixar ${esc(L.name)}</button><button class="btn s sm" onclick="openPath(${jsq(r.dir)})">${I.folder} Pasta do jogo</button>${prof.alt ? `<button class="btn s sm" onclick="${openUrl(prof.alt.url)}">${I.ext} ou ${esc(prof.alt.name)}</button>` : ''}` });
+      steps.push({ t: 'Abra o jogo uma vez e feche', d: 'O carregador cria as pastas de configuração na primeira abertura.', a: `<button class="btn s sm" onclick="play(${jsq(key)})">${I.play} Jogar</button>` });
+    }
+    if (L && L.id === 'scriptextender') steps.push({ t: L.installed ? `${esc(L.name)} já está na pasta` : 'Se o mod pedir Script Extender', d: L.installed ? 'Abra o jogo pelo executável do extender quando usar mods com script.' : 'Mods com scripts (SKSE, F4SE, OBSE…) exigem o extender do jogo, baixado do site oficial e extraído na pasta do jogo. Mods simples (texturas, armaduras) não precisam.', a: L.installed ? '' : `<button class="btn s sm" onclick="${openUrl('https://www.nexusmods.com/')}">${I.ext} Nexus Mods</button>` });
+    const tl = (r.tools || []).find(t => t.id === prof.tool);
+    if (tl) steps.push({ t: `Use o ${esc(tl.title)}`, d: 'Ele cuida de instalar, ordenar e ligar/desligar os mods deste jogo; o jogo passa a ser aberto por ele quando houver mods ativos.', a: toolBtn(tl) });
+    steps.push({ t: 'Baixe o mod', d: `Sites confiáveis para ${esc(r.title)}. Guarde o .zip em Downloads — não precisa extrair.`, a: `<div class="sites">${siteBtns}</div>` });
+    if (!tl || prof.mod_dir) steps.push({ t: 'Aponte o arquivo para o Ludrix', d: `Os arquivos entram em <span class="code">${esc(r.modDir || 'pasta do jogo')}</span>; o que for substituído fica guardado. Mods de Unreal (.pak) e de Unity (.dll) entram direto; se o zip vier com a estrutura inteira do jogo, escolha a raiz.`, a: job && !(L && !L.installed) ? progHtml(job, 'mod:' + key) : `<button class="btn p sm" onclick="modInstallMenu(event)">${I.plus} Instalar mod</button>` });
+    steps.push({ t: 'Ligue, desligue ou remova aqui', d: 'A lista abaixo mostra o que está no jogo. Desligar tira os arquivos e devolve os originais, sem apagar o mod.' });
+    for (const nt of prof.notes || []) steps.push({ t: 'Atenção', d: esc(nt), w: 1 });
+  }
+  const modsList = (r.mods || []).length ? `<div class="list">${r.mods.map(m => `<div class="item ${m.enabled ? '' : 'off'}"><div class="ic">${I.wrench}</div><div class="tx"><b>${esc(m.title)}</b><span>${pl((m.files || []).length, 'arquivo', 'arquivos')} em ${esc(m.target || 'pasta do jogo')}${m.replaced && m.replaced.length ? ` · ${pl(m.replaced.length, 'original guardado', 'originais guardados')}` : ''} · ${fmt(m.size || 0)}</span></div>
+      <div class="ac"><button class="sw ${m.enabled ? 'on' : ''}" title="${m.enabled ? 'Desligar (tira os arquivos e devolve os originais)' : 'Ligar de novo'}" onclick="modToggle(${jsq(key)},${jsq(m.id)},${m.enabled ? 'false' : 'true'})"></button><button class="btn s sm ico" title="Remover" onclick="modRemove(${jsq(key)},${jsq(m.id)},${jsq(m.title)})">${I.trash}</button></div></div>`).join('')}</div>` : '';
+  const status = r.rom ? 'patches geram cópias novas da ROM' : n ? `${pl(n, 'mod', 'mods')} · ${on} ${on === 1 ? 'ligado' : 'ligados'}` : 'nenhum mod ainda';
+  return `<div class="mghead"><img src="/thumb/${enc(key)}?v=${(g || {}).cv || 0}" alt="" onerror="this.onerror=null;this.src=BLANK_GIF"><div class="tx"><b>${esc(r.title)}</b><span>${esc(prof.name || '')}${prof.name ? ' · ' : ''}${status}</span></div>
+      <div class="ta">${r.rom ? (r.romOk ? `<button class="btn p sm" onclick="modPatchAsk()">${I.bolt} Aplicar patch</button>` : '') : r.dir ? `<button class="btn p sm" onclick="modInstallMenu(event)">${I.plus} Instalar mod</button>` : ''}${r.dir ? `<button class="btn s sm ico" title="Abrir pasta" onclick="openPath(${jsq(r.dir)})">${I.folder}</button>` : ''}<button class="btn s sm ico" title="Ficha do jogo" onclick="openGame(${jsq(key)})">${I.info}</button></div></div>
+    <div class="mgrid">
+      <section class="mcard"><h4>Passo a passo</h4><ol class="msteps">${steps.map(st => `<li class="${st.w ? 'warn' : ''}"><b>${st.t}</b>${st.d ? `<p>${st.d}</p>` : ''}${st.a ? `<div class="ma">${st.a}</div>` : ''}</li>`).join('')}</ol></section>
+      <section class="mcard"><h4>Neste jogo</h4><dl class="mfacts">${facts.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>${prof.why ? `<p class="mwhy">${esc(prof.why)}</p>` : ''}${(r.tools || []).filter(t => t.id !== prof.tool).length ? `<h5>Ferramentas úteis</h5><div class="mtools">${(r.tools || []).filter(t => t.id !== prof.tool).slice(0, 4).map(t => `<div class="mtool"><span><b>${esc(t.title)}</b><small>${esc(t.for)}</small></span>${toolBtn(t)}</div>`).join('')}</div>` : ''}</section>
+    </div>
+    ${r.rom ? '' : `<section class="mcard" style="margin-top:12px"><h4>Instalados${n ? ` <span>${n}</span>` : ''}</h4>${job && !(r.loader && !r.loader.installed) ? `<div class="item"><div class="ic">${I.wrench}</div><div class="tx"><b>Instalando…</b>${progHtml(job, 'mod:' + key)}</div></div>` : ''}${modsList || `<p class="mut" style="margin:0">Nada instalado por aqui ainda.</p>`}</section>`}`;
+}
+async function modLoaderInstall(key) {
+  const r = await api.post('/api/mods/loader', { key }); if (r.error) return toast('err', 'Não foi possível concluir', r.error);
+  S.jobs['mod:' + key] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; pollSoon(); renderMyMods();
+}
+function modPatchAsk(force, pathIn) {
+  const key = S.modsGame, r = S.modsInsp || {};
+  const go = async (p, f) => {
+    const res = await api.post('/api/mods/patch', { key, path: p || '', force: !!f });
+    if (res.mismatch) return modal({ title: 'A ROM não bate com o patch', text: res.error + ' Aplicar mesmo assim pode gerar um arquivo que não abre.', ok: 'Aplicar assim mesmo', danger: true, onOk: () => go(res.path_in, true) });
+    if (res.error) return toast('err', 'Não foi possível aplicar', res.error);
+    if (res.ok === false) return;
+    toast('ok', 'Patch aplicado', `${res.path.split(/[\\/]/).pop()} · ${fmt(res.size)}${res.added && res.added.title ? ' · já está na biblioteca' : ''}`);
+    await loadCatalog(true); renderMyMods();
+  };
+  if (S.config.native || pathIn) return go(pathIn || '', force);
+  modal({ title: 'Aplicar patch', html: `<div class="fedit"><label style="grid-column:1/-1">Caminho do patch (.ips, .bps, .ups)<input class="mi" id="mdP"></label></div><p class="mut" style="font-size:12px;margin-top:8px">ROM original: ${esc(r.romPath || '')}</p>`, ok: 'Aplicar', onOk: () => go($('#mdP').value, false) });
 }
 function modInstallMenu(ev) {
   showCtx([{ label: 'Arquivo do mod (.zip, .7z, .rar)', icon: 'doc', fn: () => modInstallAsk('file') }, { label: 'Pasta já extraída', icon: 'folder', fn: () => modInstallAsk('dir') }], ev.clientX, ev.clientY, 'Instalar mod');
@@ -3749,7 +3734,7 @@ function modInstallMenu(ev) {
 function modInstallAsk(kind) {
   const key = S.modsGame; const tg = S.modsTargets || [{ path: '', label: 'Pasta do jogo (raiz)' }];
   const sel = `<label>Copiar para<select class="mi" id="mdT">${tg.map(t => `<option value="${esc(t.path)}" ${t.path === (S.modsSuggest || '') ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</select></label>`;
-  modal({ title: 'Instalar mod', wide: true, html: `<div class="fedit">${S.config.native ? '' : `<label style="grid-column:1/-1">${kind === 'dir' ? 'Caminho da pasta do mod' : 'Caminho do arquivo do mod'}<input class="mi" id="mdP"></label>`}<label>Nome (opcional)<input class="mi" id="mdN" placeholder="Como vai aparecer na lista"></label>${sel}</div>
+  modal({ title: 'Instalar mod', wide: true, html: `<div class="fedit">${S.config.native ? '' : `<label style="grid-column:1/-1">${kind === 'dir' ? 'Caminho da pasta do mod' : 'Caminho do arquivo do mod'}<input class="mi" id="mdP"></label>`}<label>Nome (opcional)<input class="mi" id="mdN" placeholder="como vai aparecer na lista"></label>${sel}</div>
     <p style="color:var(--muted);font-size:12px;margin-top:8px">Se o zip já vem com a pasta certa dentro (ex.: <span class="code">mods\\NomeDoMod\\</span>), escolha a raiz do jogo. Se vem só o conteúdo do mod, escolha a pasta de mods.</p>`,
     ok: 'Instalar', onOk: async () => {
       const r = await api.post('/api/mods/game/install', { key, path: $('#mdP') ? $('#mdP').value : '', title: $('#mdN').value, target: $('#mdT').value, kind });
@@ -3927,6 +3912,7 @@ function discToolAsk(key, r) {
 async function runRepack(key) { const r = await api.post('/api/repack/run', { key }); if (r.error) return toast('err', 'Não abriu o instalador', r.error); if (r.needs_tool) return discToolAsk(key, r); toast('', 'Instalador aberto', 'Quando ele terminar, o jogo entra na biblioteca automaticamente.'); $('#bellpop').classList.remove('on'); }
 function beep() { if (S.config.notify_sound === false) return; try { const a = new (window.AudioContext || window.webkitAudioContext)(); const o = a.createOscillator(), g = a.createGain(); o.connect(g); g.connect(a.destination); o.frequency.value = 880; g.gain.setValueAtTime(0.0001, a.currentTime); g.gain.exponentialRampToValueAtTime(0.12, a.currentTime + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + 0.35); o.start(); o.stop(a.currentTime + 0.4); } catch (e) { } }
 
+function zoomVis() { const z = $('#szoom'); if (z) z.style.display = ['home', 'store'].includes(S.view) && !listMode() && !(S.view === 'store' && S.tab.store === 'sources') ? '' : 'none'; }
 function statusBar(a, loading) {
   const t = $('#stext'), d = $('#sdot'), r = $('#sright'); if (!t) return;
   a = a || {};
@@ -3940,6 +3926,8 @@ function statusBar(a, loading) {
   const nb = S.games.filter(FLAG_TEST.broken).length;
   const right = [a.jobs ? `${a.jobs} na fila` : '', S.games.length ? `<a href="#" onclick="gotoGrid();return false">${pl(S.games.length, 'jogo', 'jogos')} no catálogo</a>` : '', nb ? `<a href="#" onclick="flagOnly('broken');return false" style="color:var(--amber)">${pl(nb, 'não encontrado', 'não encontrados')}</a>` : ''].filter(Boolean).join(' · ');
   if (r.innerHTML !== right) r.innerHTML = right;
+  let z = $('#szoom'); if (!z) { z = document.createElement('label'); z.id = 'szoom'; z.className = 'szoom'; z.title = 'Tamanho das capas'; z.innerHTML = `<button type="button" onclick="setCardSize(Math.max(100,(S.config.card_size||136)-10),true);$('#szoom input').value=S.config.card_size">−</button><input type="range" min="100" max="300" step="10" value="${S.config.card_size || 136}" oninput="setCardSize(this.value,false)" onchange="setCardSize(this.value,true)"><button type="button" onclick="setCardSize(Math.min(300,(S.config.card_size||136)+10),true);$('#szoom input').value=S.config.card_size">+</button>`; r.after(z); }
+  zoomVis();
   { const ks = Object.keys(S.sessions || {}); const n = S.games.filter(g => g.installed).length; const base = n ? `LudrixHub — ${pl(n, 'jogo', 'jogos')}` : 'LudrixHub'; const want = ks.length ? `${(S.byKey[ks[0]] || {}).title || 'Jogando'} — LudrixHub` : base; if (document.title !== want) document.title = want; }
 }
 
@@ -4015,31 +4003,28 @@ document.addEventListener('contextmenu', e => { ctxMouse = { x: e.clientX, y: e.
 function ctxMode() { return S.config.ctx_menu || S.themeMenu || 'windows'; }
 function ctxNativeOk() { return !!(S.config.native && S.config.frameless && ctxMode() === 'windows' && !GP.active && !ctxNative && window.screenX !== undefined); }
 const ctxIconCache = new Map();
-async function ctxIcon(name, color) {
+function ctxWarm() {
+  if (!ctxNativeOk()) return;
+  const c = ctxColors(); const names = ['play', 'info', 'edit', 'folder', 'star', 'trash', 'copy', 'dl', 'x', 'refresh', 'eye', 'tag', 'disc', 'cog', 'dots', 'doc', 'image', 'spark', 'wrench', 'plus', 'check', 'ext', 'shield', 'save', 'list', 'grid', 'filter', 'sort'];
+  const run = async () => { for (const n of names) { if (!I[n]) continue; ctxIcon(n, c.muted); } ctxIcon('play', c.onprimary); ctxIcon('trash', c.danger); };
+  (window.requestIdleCallback || (f => setTimeout(f, 50)))(() => { run().catch(() => {}); });
+}
+window.addEventListener('load', () => setTimeout(ctxWarm, 4000));
+function ctxIcon(name, color) {
   const svg = I[name]; if (!svg || !color) return null;
-  const s = Math.round(16 * (window.devicePixelRatio || 1));
-  const k = name + '|' + color + '|' + s;
+  const k = name + '|' + color;
   if (ctxIconCache.has(k)) return ctxIconCache.get(k);
-  const src = svg.replace(/currentColor/g, color).replace('<svg ', `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" `);
-  const img = new Image();
-  const ok = await new Promise(res => { img.onload = () => res(true); img.onerror = () => res(false); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src); });
-  let v = null;
-  if (ok) {
-    const c = document.createElement('canvas'); c.width = c.height = s; const g = c.getContext('2d'); g.drawImage(img, 0, 0, s, s);
-    const d = g.getImageData(0, 0, s, s).data; const out = new Uint8Array(d.length);
-    for (let i = 0; i < d.length; i += 4) { const a = d[i + 3]; out[i] = Math.round(d[i + 2] * a / 255); out[i + 1] = Math.round(d[i + 1] * a / 255); out[i + 2] = Math.round(d[i] * a / 255); out[i + 3] = a; }
-    let bin = ''; for (let i = 0; i < out.length; i += 0x8000) bin += String.fromCharCode.apply(null, out.subarray(i, i + 0x8000));
-    v = { w: s, data: btoa(bin) };
-  }
+  const src = svg.replace(/currentColor/g, color).replace('<svg ', `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" `);
+  const v = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src);
   ctxIconCache.set(k, v); return v;
 }
 async function ctxStrip(list, pre, colors) {
   const out = [];
   for (let i = 0; i < list.length; i++) {
     const it = list[i];
-    const color = it.danger ? colors.danger : it.primary ? colors.primary : colors.muted;
+    const color = it.danger ? colors.danger : it.primary ? colors.onprimary : colors.muted;
     out.push({ id: pre + i, sep: !!it.sep, label: it.label || '', hint: it.hint || '', primary: !!it.primary, danger: !!it.danger, disabled: !!it.disabled,
-      icon: it.icon && !it.sep ? await ctxIcon(it.icon, color) : null, sub: it.sub ? await ctxStrip(it.sub, pre + i + '.', colors) : null });
+      icon: it.icon && !it.sep ? ctxIcon(it.icon, color) : null, sub: it.sub ? await ctxStrip(it.sub, pre + i + '.', colors) : null });
   }
   return out;
 }
@@ -4055,8 +4040,12 @@ function ctxColors() {
   const mix = (p, q, k) => p && q ? [0, 1, 2].map(i => p[i] * (1 - k) + q[i] * k) : null;
   const bg0 = varRgb('--bg') || [24, 28, 34, 1], bg = mix(bg0, varRgb('--bg2') || bg0, (varRgb('--bg2') || [0, 0, 0, 1])[3]);
   const over = v => { const c = varRgb(v); return c ? mix(bg, c, c[3]) : null; };
-  const tx = over('--text');
-  return { bg: hex(bg), text: hex(tx), muted: hex(over('--muted2') || over('--muted')), primary: hex(over('--green2')), danger: hex(over('--red')), line: hex(over('--line')), hover: hex(mix(bg, tx, 0.09)) };
+  const tx = over('--text'), ac = over('--accent') || over('--green2') || tx;
+  return { bg: hex(bg), text: hex(tx), muted: hex(over('--muted2') || over('--muted')), primary: hex(ac), onprimary: hex(over('--on-accent') || (varRgb('--accent') ? [255, 255, 255] : bg)), danger: hex(over('--red')), line: hex(over('--line')), hover: hex(mix(bg, tx, 0.09)), card: hex(over('--card') || mix(bg, tx, 0.05)) };
+}
+function ctxUi() {
+  const cs = getComputedStyle(document.body), r = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--r')) || 12;
+  return { r: Math.round(r), font: (cs.fontFamily || '').split(',').slice(0, 2).join(','), rm: document.body.classList.contains('rm') ? '1' : '0', acr: document.body.classList.contains('acr') ? '1' : '0', light: document.documentElement.dataset.light || '0' };
 }
 async function showCtxNative(items, x, y, title, head) {
   ctxNative = true; ctxKey = null; $('#ctx').classList.remove('on');
@@ -4065,7 +4054,7 @@ async function showCtxNative(items, x, y, title, head) {
   try {
     const colors = ctxColors();
     const stripped = await ctxStrip(items, '', colors);
-    r = await api.post('/api/window', { cmd: 'ctx', items: stripped, title: head ? '' : (title || ''), head: head || null, colors, at_cursor: near ? '1' : '0', x: Math.round(window.screenX + x), y: Math.round(window.screenY + y), light: document.documentElement.dataset.light || '0' });
+    r = await api.post('/api/window', { cmd: 'ctx', items: stripped, title: head ? '' : (title || ''), head: head || null, colors, ui: ctxUi(), at_cursor: near ? '1' : '0', x: Math.round(window.screenX + x), y: Math.round(window.screenY + y), light: document.documentElement.dataset.light || '0' });
   } catch (e) { r = null; }
   ctxNative = false;
   if (r && r.cancelled) return true;

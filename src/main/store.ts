@@ -21,7 +21,6 @@ const DEFAULT_CONFIG = {
     accent: '',
     games_dir: '',
     shortcut_ask: true,
-    home_autoplay: true,
     bootstrap_done: false,
     pending_delete: [],
     keep_archive: false,
@@ -86,7 +85,6 @@ const DEFAULT_CONFIG = {
     parallax: true,
     high_contrast: false,
     home_rows: [],
-    home_spot_style: 'auto',
     clock: 'off',
     settings_adv: false,
     filter_panel: false,
@@ -250,8 +248,6 @@ class Store {
             [2, () => {
                     if (this.config.detail_art === 'blur')
                         this.config.detail_art = 'auto';
-                    if (this.config.home_spot_style === 'painel')
-                        this.config.home_spot_style = 'auto';
                     if (['taskbar', 'dock'].includes(this.config.nav))
                         this.config.nav = 'bottom';
                     if (['taskbar', 'dock'].includes(this.config.layout))
@@ -278,8 +274,6 @@ class Store {
                         this.config.theme = 'dark';
                     if (['', 'rail'].includes(this.config.layout) && ['bottom', 'side'].includes(this.config.nav))
                         this.config.layout = 'side';
-                    if (['banner', 'painel'].includes(this.config.home_spot_style))
-                        this.config.home_spot_style = 'auto';
                 }],
             [9, () => { this.config.update_auto_check = true; }],
             [10, () => {
@@ -287,8 +281,11 @@ class Store {
                         this.config.view_mode = 'grid';
                     this.config.home_rows = [];
                     this.config.layout = '';
-                    this.config.home_spot_style = 'auto';
                     this.config.cover_slideshow = false;
+                }],
+            [11, () => {
+                    for (const k of ['home_spot_style', 'home_autoplay', 'guides', 'guides_done', 'start_done', 'start_hide', 'game_mode_auto', 'game_mode_ask', 'game_mode_plan', 'game_mode_quiet', 'game_mode_power', 'game_mode_priority', 'game_mode_reopen', 'game_mode_close'])
+                        delete this.config[k];
                 }],
         ];
         for (const [target, fn] of (steps as any)) {

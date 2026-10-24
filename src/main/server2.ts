@@ -38,6 +38,8 @@ async function routeGet2(res, p, q, be, port) {
         return (0, server.sendJson)(res, { ...be.mods.status(), games: be.gmods.summary() }), true;
     if (p.startsWith('/api/mods/game/'))
         return (0, server.sendJson)(res, be.gmods.list(decodeURIComponent(p.slice(15)))), true;
+    if (p.startsWith('/api/mods/inspect/'))
+        return (0, server.sendJson)(res, be.modInspect(decodeURIComponent(p.slice(18)))), true;
     if (p.startsWith('/api/mods/for/')) {
         const g = be.store.lib(decodeURIComponent(p.slice(14))) || {};
         return (0, server.sendJson)(res, be.mods.forGame(String(g.title || ''), String(g.system || 'pc'))), true;
@@ -171,6 +173,10 @@ async function routePost2(res, p, b, be, getWindow, port) {
     /* -------------------------------- mods -------------------------------- */
     if (p === '/api/mods/game/install')
         return (0, server.sendJson)(res, await be.modInstall(String(b?.key || ''), b?.path || null, String(b?.title || ''), String(b?.target || ''), String(b?.kind || ''))), true;
+    if (p === '/api/mods/loader')
+        return (0, server.sendJson)(res, be.modLoaderInstall(String(b?.key || ''))), true;
+    if (p === '/api/mods/patch')
+        return (0, server.sendJson)(res, await be.modPatch(String(b?.key || ''), b?.path || null, Boolean(b?.force))), true;
     if (p === '/api/mods/game/toggle')
         return (0, server.sendJson)(res, be.gmods.setEnabled(String(b?.key || ''), String(b?.id || ''), Boolean(b?.on))), true;
     if (p === '/api/mods/game/remove')
@@ -268,6 +274,8 @@ async function routePost2(res, p, b, be, getWindow, port) {
     if (p === '/api/compat/layer')
         return (0, server.sendJson)(res, be.compatLayer(String(b?.key || ''), String(b?.layer || ''))), true;
     /* ------------------------------- detectar ------------------------------- */
+    if (p === '/api/repos/validate')
+        return (0, server.sendJson)(res, await front.repoValidate(String(b?.url || ''))), true;
     if (p === '/api/detect')
         return (0, server.sendJson)(res, await front.detect(String(b?.q || ''))), true;
     /* ------------------------------ minecraft ------------------------------ */

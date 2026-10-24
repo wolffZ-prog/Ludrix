@@ -27,7 +27,7 @@ Ludrix\
 - **Importar de outro launcher**: Playnite, Steam, Epic, GOG, Ubisoft Connect, EA app, Battle.net, Amazon Games, itch.io.
 - **Store → Fontes**: cole um link ou aponte um `.json`. Sem fonte a Store fica vazia — por escolha.
 - **Emuladores**: escolha o console, instale o emulador, aponte a pasta de ROMs.
-- **Central**: dependências que faltam, Modo Game, programas úteis.
+- **Central**: dependências que faltam e Minecraft.
 
 ## Janela e bandeja
 - O X da janela pergunta: fechar, minimizar pra bandeja ou nada. Dá pra fixar em Ajustes → Geral.

@@ -67,6 +67,22 @@ Em vez de `files` fixos, um jogo pode apontar pra um repositório. O Ludrix busc
 - `requires_rom`: aviso mostrado nos detalhes. Recompilações não incluem o jogo.
 - Disponível a partir do Ludrix 2.35.0.
 
+## Validação
+
+A Loja lê o arquivo jogo por jogo antes de aceitar. O relatório aparece ao adicionar, em **Store → Fontes** (resumo ao lado de cada fonte, clicável) e no resultado de **Analisar**.
+
+- **Erro** — o item é ignorado: sem `title`; nenhuma forma de download válida (`files`, `magnet`, `torrent` ou `github`); `url` que não começa com `http://` ou `https://`; `magnet` sem `xt=urn:btih:`; `github` fora de `dono/repo`; `id` repetido.
+- **Aviso** — entra mesmo assim: campo desconhecido; `size` ilegível; `system` desconhecido (deduzido pela extensão); `year` estranho; `cover` que não é link; título repetido dentro do mesmo arquivo.
+- Arquivo que não é JSON (vírgula sobrando, aspas erradas) é recusado com linha e coluna do problema.
+- `size` aceita bytes (número) ou texto como `"12.5 GB"`. Sem tamanho, o espaço necessário e o tempo estimado não aparecem antes de baixar.
+- `prefer`: `torrent` ou `direct` — qual botão fica em destaque quando o jogo tem os dois.
+
+## O mesmo jogo em várias fontes
+
+Títulos iguais (ignorando edição, região, pontuação e maiúsculas) viram **um** cartão na Loja. Na ficha, a faixa **N fontes têm este jogo** lista cada lugar com tipo (direto, torrent, partes) e tamanho; um clique troca. Prioridade do cartão principal: arquivo direto, depois torrent, depois GitHub.
+
+Jogo da Store que já está instalado no PC mostra **Jogar** em vez de **Baixar**. Jogo da biblioteca cujo arquivo sumiu ganha **Baixar da Loja** quando alguma fonte tem o título.
+
 ## Pacotes prontos
 
 Cada release traz `Colecoes.zip`:

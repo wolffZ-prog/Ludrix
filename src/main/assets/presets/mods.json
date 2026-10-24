@@ -8,6 +8,13 @@
    "match": ".*"
   },
   {
+   "id": "thunderstore",
+   "name": "Thunderstore",
+   "url": "https://thunderstore.io/search/?q={q}",
+   "desc": "Mods de jogos Unity (BepInEx), Lethal Company, Valheim, R.E.P.O.",
+   "match": "lethal company|valheim|r\\.e\\.p\\.o|risk of rain|content warning|^peak$|among us|subnautica|^rounds$|dyson sphere|cult of the lamb|inscryption|bopl|ultrakill|gtfo|h3vr|boneworks|bonelab|muck|titanfall|northstar|outward|enter the gungeon|dredge|lethal league|potion craft|timberborn|webfishing|vrising|v rising|balatro|sons of the forest"
+  },
+  {
    "id": "moddb",
    "name": "ModDB",
    "url": "https://www.moddb.com/games?filter=t&kw={q}",
@@ -280,6 +287,164 @@
    "for": "Jogos DX9",
    "desc": "Troca texturas em tempo real (base de muitos mods de PES/FIFA/NFS antigos).",
    "match": ".*"
+  },
+  {
+   "id": "undertalemodtool",
+   "title": "UndertaleModTool",
+   "type": "link",
+   "url": "https://github.com/UnderminersTeam/UndertaleModTool/releases",
+   "category": "Editores",
+   "desc": "Abre e edita o data.win de jogos feitos no GameMaker (Undertale, Deltarune, Pizza Tower, Hotline Miami).",
+   "for": "Jogos GameMaker",
+   "match": "undertale|deltarune|pizza tower|hotline miami|hyper light drifter|katana zero"
+  },
+  {
+   "id": "melonloader",
+   "title": "MelonLoader",
+   "type": "link",
+   "url": "https://github.com/LavaGang/MelonLoader/releases",
+   "category": "Gerenciadores",
+   "desc": "Carregador de mods para jogos Unity, inclusive IL2CPP. Alternativa ao BepInEx quando o mod pede.",
+   "for": "Jogos Unity",
+   "match": ".*"
   }
- ]
+ ],
+ "profiles": {
+  "unity-mono": {
+   "name": "Unity (Mono)",
+   "loader": {
+    "id": "bepinex",
+    "name": "BepInEx 5",
+    "auto": true,
+    "url": "https://github.com/BepInEx/BepInEx/releases"
+   },
+   "mod_dir": "BepInEx/plugins",
+   "sites": [
+    "thunderstore",
+    "nexus"
+   ],
+   "why": "Jogos Unity não têm sistema de mods próprio. O BepInEx é um carregador: ele entra na pasta do jogo e lê os mods (.dll) de BepInEx/plugins quando o jogo abre."
+  },
+  "unity-il2cpp": {
+   "name": "Unity (IL2CPP)",
+   "loader": {
+    "id": "bepinex6",
+    "name": "BepInEx 6 (IL2CPP)",
+    "auto": false,
+    "url": "https://builds.bepinex.dev/projects/bepinex_be"
+   },
+   "alt": {
+    "name": "MelonLoader",
+    "url": "https://github.com/LavaGang/MelonLoader/releases"
+   },
+   "mod_dir": "BepInEx/plugins",
+   "sites": [
+    "thunderstore",
+    "nexus"
+   ],
+   "why": "Este jogo Unity foi compilado em IL2CPP: o BepInEx 5 comum não serve, precisa da versão 6 (ou MelonLoader). A página do mod diz qual dos dois ele usa."
+  },
+  "unreal": {
+   "name": "Unreal Engine",
+   "mod_dir": "{paks}/~mods",
+   "kind": "pak",
+   "sites": [
+    "nexus"
+   ],
+   "why": "Mods de Unreal vêm como arquivos .pak (às vezes com .ucas e .utoc do mesmo nome). Eles vão numa pasta ~mods dentro de Content/Paks; o jogo carrega sozinho ao abrir.",
+   "notes": [
+    "Alguns jogos checam a assinatura dos .pak e precisam de um 'sig bypass' (geralmente um arquivo .sig copiado junto); a página do mod avisa.",
+    "Mods que trocam a mesma coisa brigam entre si — o último em ordem alfabética vence."
+   ]
+  },
+  "creation": {
+   "name": "Creation Engine (Bethesda)",
+   "mod_dir": "Data",
+   "sites": [
+    "nexus"
+   ],
+   "tool": "mod-organizer",
+   "why": "Jogos da Bethesda leem plugins (.esp/.esm/.esl) e arquivos da pasta Data. Com poucos mods dá para copiar direto; com muitos, um gerenciador (Mod Organizer 2 ou Vortex) evita bagunça e cuida da ordem de carga.",
+   "notes": [
+    "Mods com scripts pedem o Script Extender do jogo (SKSE, F4SE, OBSE); nesse caso o jogo passa a ser aberto pelo .exe do extender.",
+    "Ative o plugin na tela de mods do próprio jogo ou no gerenciador, senão ele fica na pasta sem fazer nada."
+   ]
+  },
+  "source": {
+   "name": "Source (Valve)",
+   "mod_dir": "{game}/custom",
+   "sites": [
+    "gamebanana"
+   ],
+   "why": "Jogos Source aceitam pastas ou .vpk dentro de custom/ (skins, sons, mapas). Cada mod fica numa pasta própria, fácil de tirar depois."
+  },
+  "gamemaker": {
+   "name": "GameMaker",
+   "sites": [
+    "gamebanana"
+   ],
+   "tool": "undertalemodtool",
+   "why": "Jogos GameMaker guardam tudo num data.win. Mods costumam vir como data.win pronto (substitui o original) ou como script para o UndertaleModTool aplicar.",
+   "notes": [
+    "Guarde uma cópia do data.win original; o Ludrix faz isso automaticamente quando o mod substitui o arquivo."
+   ]
+  },
+  "rpgmaker": {
+   "name": "RPG Maker MV/MZ",
+   "mod_dir": "www/js/plugins",
+   "why": "Plugins .js vão em www/js/plugins e precisam ser ligados no arquivo plugins.js; a maioria dos mods de tradução troca os arquivos de www/data."
+  },
+  "renpy": {
+   "name": "Ren'Py",
+   "mod_dir": "game",
+   "why": "Mods e traduções Ren'Py são arquivos .rpy/.rpyc colocados dentro da pasta game/ (ou game/tl/ para idiomas)."
+  },
+  "fnf": {
+   "name": "Friday Night Funkin' (Psych/outros)",
+   "mod_dir": "mods",
+   "sites": [
+    "gamebanana"
+   ],
+   "why": "Engines como Psych Engine leem mods soltos da pasta mods/, cada um na própria subpasta. Baixe no GameBanana e aponte o .zip."
+  },
+  "frostbite": {
+   "name": "Frostbite (EA)",
+   "tool": "frosty",
+   "sites": [
+    "nexus"
+   ],
+   "why": "Jogos Frostbite não aceitam arquivos soltos: os mods (.fbmod) são aplicados pelo Frosty Mod Manager, que gera uma cópia modificada e abre o jogo por ele."
+  },
+  "scripthook": {
+   "name": "ASI / Script Hook",
+   "mod_dir": "",
+   "sites": [
+    "gtainside",
+    "nexus",
+    "nfsmods"
+   ],
+   "why": "Este jogo usa mods .asi carregados por um ASI Loader (dinput8.dll ou similar) e scripts via Script Hook. Arquivos vão na raiz do jogo ou em scripts/."
+  },
+  "rom": {
+   "name": "ROM (console)",
+   "sites": [
+    "romhacking",
+    "cdromance"
+   ],
+   "why": "Mods de console são patches (.ips, .bps, .ups) feitos sobre a ROM original. O Ludrix aplica o patch numa cópia e deixa a ROM original intacta; a versão modificada entra na biblioteca como outro jogo.",
+   "notes": [
+    "O patch é feito para uma versão exata da ROM (região e revisão). Se o CRC não bater, pode travar ou nem abrir."
+   ]
+  },
+  "generic": {
+   "name": "Sem motor conhecido",
+   "mod_dir": "",
+   "sites": [
+    "nexus",
+    "moddb",
+    "gamebanana"
+   ],
+   "why": "Não foi possível identificar o motor deste jogo. A página do mod sempre diz onde os arquivos vão; na dúvida, a pasta do jogo (raiz) com a mesma estrutura do zip costuma ser o caminho."
+  }
+ }
 }

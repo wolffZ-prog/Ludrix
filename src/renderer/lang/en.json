@@ -1281,7 +1281,7 @@
   "Requer reinicialização": "Requires restart",
   "Manter aberto": "Keep open",
   "Recolher para a bandeja": "Hide to tray",
-  "Encerrar": "Quit",
+  "Encerrar": "Stop",
   "Sortear vitrine": "Shuffle showcase",
   "Sortear outros cinco jogos para a vitrine": "Pick five other games for the showcase",
   "Sortear outros cinco": "Pick five others",
@@ -2334,7 +2334,60 @@
   "edições e launchers encontrados neste PC": "editions and launchers found on this PC",
   "bibliotecas que os jogos pedem (Visual C++, DirectX, .NET…)": "libraries games require (Visual C++, DirectX, .NET…)",
   "Cor acompanha o jogo": "Color follows the game",
-  "Botões e realces tomam a cor dominante da capa do jogo selecionado ou aberto, com transição suave; volta à cor do tema ao sair": "Buttons and highlights take the dominant color of the selected or open game's cover, with a smooth transition; back to the theme color when you leave"
+  "Botões e realces tomam a cor dominante da capa do jogo selecionado ou aberto, com transição suave; volta à cor do tema ao sair": "Buttons and highlights take the dominant color of the selected or open game's cover, with a smooth transition; back to the theme color when you leave",
+  "Não jogado": "Not played",
+  "Tempo e status embaixo da capa": "Time and status under the cover",
+  "Duas linhas sob o título: tempo jogado (ou \"Não jogado\") e quando foi a última vez; sem isso aparece só o gênero ou a plataforma": "Two lines under the title: time played (or \"Not played\") and when you last played; otherwise only the genre or platform",
+  "Por jogo": "Per game",
+  "Entenda mods": "Understand mods",
+  "Passo a passo": "Step by step",
+  "Neste jogo": "This game",
+  "Aplicar patch": "Apply patch",
+  "Aplicar patch…": "Apply patch…",
+  "Baixe o mod": "Download the mod",
+  "Aponte o arquivo para o Ludrix": "Point Ludrix to the file",
+  "Ligue, desligue ou remova aqui": "Enable, disable or remove here",
+  "Abra o jogo uma vez e feche": "Open the game once and close it",
+  "Baixe o patch do hack ou da tradução": "Download the hack or translation patch",
+  "Jogue a versão nova": "Play the new version",
+  "Ferramentas úteis": "Useful tools",
+  "Motor": "Engine",
+  "Mods vão em": "Mods go in",
+  "Na pasta": "In the folder",
+  "64 bits": "64-bit",
+  "32 bits": "32-bit",
+  "o básico em 2 minutos": "the basics in 2 minutes",
+  "nenhum mod instalado ainda": "no mods installed yet",
+  "nenhum mod ainda": "no mods yet",
+  "O que é um mod": "What a mod is",
+  "Carregador (loader)": "Loader",
+  "Onde os arquivos vão": "Where the files go",
+  "Antes de instalar": "Before installing",
+  "O que o Ludrix guarda": "What Ludrix keeps",
+  "Se não funcionar": "If it doesn't work",
+  "A ROM não bate com o patch": "The ROM doesn't match the patch",
+  "Aplicar assim mesmo": "Apply anyway",
+  "Patch aplicado": "Patch applied",
+  "Baixar da Loja": "Get from Store",
+  "Ver na biblioteca": "Show in library",
+  "Já está no PC": "Already on this PC",
+  "O arquivo sumiu do PC, mas uma das suas fontes tem este jogo.": "The file is gone from this PC, but one of your sources has this game.",
+  "Não está no PC — baixar pela Loja": "Not on this PC — get it from the Store",
+  "formato do .json": ".json format",
+  "Erros — o item é ignorado": "Errors — item is skipped",
+  "Avisos — entra mesmo assim": "Warnings — still accepted",
+  "Nenhum problema encontrado.": "No problems found.",
+  "Formato esperado:": "Expected format:",
+  "Adicionar mesmo assim": "Add anyway",
+  "Nenhum jogo utilizável": "No usable game",
+  "Relatório do JSON": "JSON report",
+  "não carregou": "failed to load",
+  "Sem relatório": "No report",
+  "Essa fonte ainda não foi lida.": "This source has not been read yet.",
+  "JSON não aceito": "JSON rejected",
+  "Ver relatório do JSON": "View JSON report",
+  "direto": "direct",
+  "Trocar executável": "Change executable"
  },
  "patterns": [
   [
@@ -2956,6 +3009,34 @@
   [
    "^1 jogo adicionado$",
    "1 game added"
+  ],
+  [
+   "^(\\d+) fontes têm este jogo$",
+   "$1 sources have this game"
+  ],
+  [
+   "^Relatório — (.+)$",
+   "Report — $1"
+  ],
+  [
+   "^(\\d+) arquivos$",
+   "$1 files"
+  ],
+  [
+   "^(\\d+) de (\\d+) jogos? ok$",
+   "$1 of $2 games ok"
+  ],
+  [
+   "^(\\d+) de (\\d+) jogos? ok · (\\d+) erros?$",
+   "$1 of $2 games ok · $3 errors"
+  ],
+  [
+   "^(\\d+) de (\\d+) jogos? ok · (\\d+) avisos?$",
+   "$1 of $2 games ok · $3 warnings"
+  ],
+  [
+   "^(\\d+) de (\\d+) jogos? ok · (\\d+) erros? · (\\d+) avisos?$",
+   "$1 of $2 games ok · $3 errors · $4 warnings"
   ]
  ]
 }

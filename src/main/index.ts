@@ -18,6 +18,7 @@ import * as store from './store';
 import * as diagMod from './diag';
 import * as server2 from './server2';
 import * as trayMod from './tray';
+import * as menuMod from './menu';
 import * as gamepadMod from './gamepad';
 import * as imgdecode from './imgdecode';
 let win = null;
@@ -148,6 +149,7 @@ function createWindow(url, recreate = false) {
             if (recreate)
                 win?.focus();
         }
+        setTimeout(() => { if (win && !win.isDestroyed()) menuMod.warm(); }, 1500);
         if (backend)
             win?.setTitle(`Ludrix ${backend.publicConfig().version || ''}`.trim());
     });
@@ -272,6 +274,7 @@ function scheduleStandby() {
         const w = win;
         win = null;
         try {
+            menuMod.dispose();
             w.destroy();
             log.info('em espera na bandeja: janela liberada da memória');
         }

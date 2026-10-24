@@ -99,7 +99,11 @@ Requisitos: Windows 10 ou 11, 64 bits. Nada de conta, login, WebView2 ou instala
     <td><img src="docs/screenshots/05-central.jpg" alt="Central"><br><sub>Central: dependências e Minecraft</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/07-menu.jpg" alt="Menu de contexto"><br><sub>Menu do botão direito</sub></td>
+    <td><img src="docs/screenshots/09-store.jpg" alt="Store"><br><sub>Store: o mesmo jogo em várias fontes, escolha com um clique</sub></td>
+    <td><img src="docs/screenshots/08-mods.jpg" alt="Mods"><br><sub>Mods: guia por jogo, motor detectado, passo a passo</sub></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/07-menu.jpg" alt="Menu de contexto"><br><sub>Menu do botão direito, nas cores do tema</sub></td>
     <td><img src="docs/screenshots/06-ajustes.jpg" alt="Ajustes"><br><sub>Ajustes</sub></td>
   </tr>
 </table>

@@ -1,16 +1,37 @@
 import path from 'node:path';
+import fs from 'node:fs';
 import * as electron from 'electron';
 import * as log from './log';
+import * as P from './paths';
+function fontFace(): string {
+    try {
+        const b = fs.readFileSync(path.join(P.UI, 'fonts', 'rubik.woff2'));
+        return `@font-face{font-family:Rubik;src:url(data:font/woff2;base64,${b.toString('base64')}) format('woff2');font-weight:300 900}`;
+    }
+    catch {
+        return '';
+    }
+}
 
 export type MenuItem = { id?: string; sep?: boolean; label?: string; hint?: string; primary?: boolean; danger?: boolean; disabled?: boolean; icon?: string | null; sub?: MenuItem[] | null };
 export type MenuHead = { title?: string; sub?: string; thumb?: string | null };
-export type MenuOpts = { items: MenuItem[]; title?: string; head?: MenuHead | null; colors?: any; light?: boolean; x: number; y: number; atCursor?: boolean; owner?: electron.BrowserWindow | null };
+export type MenuOpts = { items: MenuItem[]; title?: string; head?: MenuHead | null; colors?: any; ui?: any; light?: boolean; x: number; y: number; atCursor?: boolean; owner?: electron.BrowserWindow | null };
 
-const DEF_DARK = { bg: '#1b1f26', text: '#e8ebf0', muted: '#8b93a1', primary: '#3ddc97', danger: '#ff6b6b', line: '#2c323c', hover: '#272d37' };
-const DEF_LIGHT = { bg: '#f4f5f7', text: '#1a1d22', muted: '#6b7280', primary: '#17a673', danger: '#d04545', line: '#dcdfe4', hover: '#e6e8ec' };
+const DEF_DARK = { bg: '#1b1f26', text: '#e8ebf0', muted: '#8b93a1', primary: '#5c6b82', onprimary: '#ffffff', danger: '#ff6b6b', line: '#2c323c', hover: '#272d37', card: '#222731' };
+const DEF_LIGHT = { bg: '#f4f5f7', text: '#1a1d22', muted: '#6b7280', primary: '#5c6b82', onprimary: '#ffffff', danger: '#d04545', line: '#dcdfe4', hover: '#e6e8ec', card: '#ffffff' };
+function uiOf(u: any) {
+    const o = u && typeof u === 'object' ? u : {};
+    const r = Math.max(0, Math.min(20, Math.round(Number(o.r)) || 12));
+    const font = String(o.font || '').replace(/[^\w\s,'"-]/g, '').slice(0, 120);
+    return { r, font, rm: String(o.rm) === '1' ? 1 : 0, acr: String(o.acr) === '1' ? 1 : 0, light: String(o.light) === '1' ? 1 : 0 };
+}
 
 let current: electron.BrowserWindow | null = null;
+let pool: electron.BrowserWindow | null = null;
+let poolReady = false;
 let seq = 0;
+let visible = false;
+let t0 = 0;
 
 export const available = () => process.platform === 'win32' || process.env.LUDRIX_POPUP_MENU === '1';
 
@@ -29,70 +50,159 @@ function strip(items: MenuItem[], pre = ''): MenuItem[] {
     }));
 }
 
-function page(o: MenuOpts, c: any, area: electron.Rectangle, x: number, y: number) {
+
+function page() {
     const css = `
-:root{--bg:${c.bg};--tx:${c.text};--mu:${c.muted};--pr:${c.primary};--dg:${c.danger};--ln:${c.line};--hv:${c.hover}}
+${fontFace()}
+:root{--bg:#1b1f26;--text:#e8ebf0;--muted:#8b93a1;--primary:#5c6b82;--onprimary:#fff;--danger:#ff6b6b;--line:#2c323c;--hover:#272d37;--card:#222731;--r:12px;--rr:7px;--font:Rubik,'Segoe UI',system-ui,sans-serif;--alpha:1;--sh:0 14px 34px rgba(0,0,0,.32),0 2px 6px rgba(0,0,0,.18)}
 *{box-sizing:border-box;user-select:none;-webkit-user-select:none}html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
-body{font:13px 'Segoe UI',Rubik,system-ui,sans-serif;color:var(--tx)}
-.m{position:absolute;min-width:236px;max-width:360px;background:var(--bg);border:1px solid var(--ln);border-radius:10px;padding:6px;box-shadow:0 8px 28px rgba(0,0,0,.35);opacity:0;transition:opacity .06s}
-.m.on{opacity:1}
-.r{position:relative;display:flex;align-items:center;gap:10px;height:32px;padding:0 12px 0 12px;margin:0 0;border-radius:9px;white-space:nowrap;cursor:default}
-.r .ic{width:16px;height:16px;flex:none;display:flex;align-items:center;justify-content:center}.r .ic img{width:16px;height:16px;display:block}
-.r .lb{flex:1;overflow:hidden;text-overflow:ellipsis}.r .ht{font-size:11px;color:var(--mu);margin-left:8px}.r .ar{color:var(--mu);font-size:11px;margin-left:4px}
-.r.primary{font-weight:600;color:var(--pr);background:color-mix(in srgb,var(--pr) 12%,transparent)}
-.r.danger{color:var(--dg)}.r.disabled{color:var(--mu);opacity:.6}
-.r.sel:not(.disabled){background:var(--hv)}.r.primary.sel{background:color-mix(in srgb,var(--pr) 22%,transparent)}
-.sep{height:1px;background:var(--ln);margin:4px 8px}
-.ttl{height:26px;line-height:26px;padding:0 12px;color:var(--mu);font-weight:600;font-size:12px}
-.hd{display:flex;gap:12px;align-items:center;height:72px;padding:0 12px;border-bottom:1px solid var(--ln);margin:0 0 4px}
-.hd img{width:42px;height:56px;border-radius:7px;object-fit:cover;flex:none;background:var(--hv)}
-.hd .t{min-width:0}.hd b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hd span{display:block;font-size:11px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sub{position:absolute;display:none}
+body{font:13px/1.25 var(--font);color:var(--text);-webkit-font-smoothing:antialiased}
+.m{position:absolute;min-width:232px;max-width:340px;padding:6px;background:color-mix(in srgb,var(--bg) calc(var(--alpha)*100%),transparent);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);opacity:0;transform:translateY(-4px) scale(.97);transform-origin:var(--ox,0) var(--oy,0);transition:opacity .09s ease-out,transform .14s cubic-bezier(.2,.85,.25,1.08)}
+.m.on{opacity:1;transform:none}
+html.rm .m,html.rm .r,html.rm .r .ic,html.rm .r .lb{transition:none!important}
+.hd{display:grid;grid-template-columns:auto 1fr;gap:11px;align-items:center;padding:5px 6px 9px;margin:0 2px 4px;border-bottom:1px solid var(--line)}
+.hd img{width:40px;height:54px;border-radius:calc(var(--rr) - 1px);object-fit:cover;background:var(--hover);display:block}
+.hd .t{min-width:0}.hd b{display:block;font-size:13.5px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd span{display:block;margin-top:3px;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ttl{padding:6px 10px 4px;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.r{position:relative;display:flex;align-items:center;gap:9px;height:30px;padding:0 10px 0 8px;border-radius:var(--rr);white-space:nowrap;cursor:default;transition:background .1s}
+.r .ic{width:22px;min-width:22px;height:22px;flex:none;display:grid;place-items:center;border-radius:6px;transition:background .12s,transform .14s cubic-bezier(.2,.85,.25,1.2)}.r .ic img{width:16px;height:16px;display:block}
+.r .lb{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;transition:transform .14s cubic-bezier(.2,.85,.25,1)}
+.r .ht{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;margin-left:10px}
+.r .ar{width:14px;height:14px;color:var(--muted);margin-left:2px;margin-right:-3px}.r .ar svg{width:14px;height:14px;display:block}
+.r.sel:not(.disabled){background:var(--hover)}
+.r.sel:not(.disabled) .ic{background:color-mix(in srgb,var(--primary) 16%,transparent);transform:scale(1.06)}
+.r.sel:not(.disabled) .lb{transform:translateX(2px)}
+.r.danger{color:var(--danger)}.r.danger.sel:not(.disabled){background:color-mix(in srgb,var(--danger) 12%,transparent)}.r.danger.sel .ic{background:color-mix(in srgb,var(--danger) 16%,transparent)}
+.r.disabled{opacity:.45}
+.r.primary{height:34px;margin:2px 0 4px;background:var(--primary);color:var(--onprimary);font-weight:700;letter-spacing:-.005em}
+.r.primary .ht{color:var(--onprimary);opacity:.75}.r.primary .ic{background:color-mix(in srgb,var(--onprimary) 14%,transparent)}
+.r.primary.sel{background:color-mix(in srgb,var(--primary) 88%,var(--text))}.r.primary.sel .ic{background:color-mix(in srgb,var(--onprimary) 24%,transparent);transform:scale(1.06)}
+.sep{height:1px;background:var(--line);margin:4px 10px}
+.sub{transform:translateX(-6px) scale(.98)}
 `;
-    const data = JSON.stringify({ items: o.items, title: String(o.title || '').slice(0, 60), head: o.head || null, x, y, area });
     const js = `
-const D=${data};const send=(t,v)=>window.lxm.send(t,v);
-const rowHtml=(it)=>it.sep?'<div class="sep"></div>':'<div class="r '+(it.primary?'primary ':'')+(it.danger?'danger ':'')+(it.disabled?'disabled ':'')+'" data-id="'+it.id+'"><span class="ic">'+(it.icon?'<img src="'+it.icon+'">':'')+'</span><span class="lb">'+esc(it.label)+'</span>'+(it.hint?'<span class="ht">'+esc(it.hint)+'</span>':'')+(it.sub?'<span class="ar">&#9656;</span>':'')+'</div>';
+let D=null,U={};const send=(t,v)=>window.lxm.send(t,v);
+const CHEV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+const rowHtml=(it)=>it.sep?'<div class="sep"></div>':'<div class="r '+(it.primary?'primary ':'')+(it.danger?'danger ':'')+(it.disabled?'disabled ':'')+'" data-id="'+it.id+'"><span class="ic">'+(it.icon?'<img src="'+it.icon+'" alt="">':'')+'</span><span class="lb">'+esc(it.label)+'</span>'+(it.hint?'<span class="ht">'+esc(it.hint)+'</span>':'')+(it.sub?'<span class="ar">'+CHEV+'</span>':'')+'</div>';
 function build(items,cls){const m=document.createElement('div');m.className='m '+cls;m.innerHTML=items.map(rowHtml).join('');return m}
-const root=build(D.items,'root');
-if(D.head){const h=document.createElement('div');h.className='hd';h.innerHTML=(D.head.thumb?'<img src="'+D.head.thumb+'">':'')+'<div class="t"><b>'+esc(D.head.title)+'</b>'+(D.head.sub?'<span>'+esc(D.head.sub)+'</span>':'')+'</div>';root.prepend(h)}
-else if(D.title){const t=document.createElement('div');t.className='ttl';t.textContent=D.title;root.prepend(t)}
-document.body.appendChild(root);
-const A=D.area;const pad=6;
-function place(el,x,y,flipW){const r=el.getBoundingClientRect();let l=x,t=y;if(l+r.width>A.width-pad)l=Math.max(pad,(flipW?x-flipW-r.width:x-r.width));if(t+r.height>A.height-pad)t=Math.max(pad,A.height-pad-r.height);el.style.left=l+'px';el.style.top=t+'px'}
-place(root,D.x,D.y);requestAnimationFrame(()=>root.classList.add('on'));
-let openSub=null,subOwner=null,subT=null;
+let root=null,A=null,openSub=null,subOwner=null,subT=null,cur=-1;const pad=6;
+function place(el,x,y,flipW){const r=el.getBoundingClientRect();let l=x,t=y,ox='0',oy='0';if(l+r.width>A.width-pad){l=Math.max(pad,(flipW?x-flipW-r.width:x-r.width));ox='100%'}if(t+r.height>A.height-pad){t=Math.max(pad,A.height-pad-r.height);oy='100%'}el.style.left=l+'px';el.style.top=t+'px';el.style.setProperty('--ox',ox);el.style.setProperty('--oy',oy)}
 function closeSub(){if(openSub){openSub.remove();openSub=null;subOwner&&subOwner.classList.remove('sel');subOwner=null}}
 function find(id){const [a,b]=id.split('.');const it=D.items[+a];return b===undefined?it:(it.sub||[])[+b]}
-function showSub(row){const it=find(row.dataset.id);if(!it||!it.sub)return;if(subOwner===row)return;closeSub();const m=build(it.sub,'sub');m.style.display='block';document.body.appendChild(m);const rr=row.getBoundingClientRect();place(m,rr.right+2,rr.top-6,rr.width+4);requestAnimationFrame(()=>m.classList.add('on'));openSub=m;subOwner=row;row.classList.add('sel');wire(m)}
+function showSub(row){const it=find(row.dataset.id);if(!it||!it.sub)return;if(subOwner===row)return;closeSub();const m=build(it.sub,'sub');document.body.appendChild(m);const rr=row.getBoundingClientRect();place(m,rr.right+4,rr.top-7,rr.width+8);requestAnimationFrame(()=>m.classList.add('on'));openSub=m;subOwner=row;row.classList.add('sel');wire(m)}
 function wire(m){m.querySelectorAll('.r').forEach(r=>{r.addEventListener('mouseenter',()=>{m.querySelectorAll('.r.sel').forEach(z=>{if(z!==subOwner||m!==root)z.classList.remove('sel')});if(m===root&&subOwner&&subOwner!==r){clearTimeout(subT);subT=setTimeout(()=>{if(!r.matches(':hover'))return;closeSub();r.classList.add('sel')},120)}r.classList.add('sel');const it=find(r.dataset.id);if(it&&it.sub){clearTimeout(subT);subT=setTimeout(()=>showSub(r),140)}});
 r.addEventListener('mouseup',e=>{if(e.button!==0&&e.button!==2)return;const it=find(r.dataset.id);if(!it||it.disabled)return;if(it.sub){showSub(r);return}send('pick',it.id)})})}
-wire(root);
+function clear(){closeSub();if(root){root.remove();root=null}cur=-1;clearTimeout(subT)}
+function theme(c,u){const st=document.documentElement.style;for(const k in c)st.setProperty('--'+k,c[k]);const r=Math.max(4,Math.min(20,+u.r||12));st.setProperty('--r',r+'px');st.setProperty('--rr',Math.max(4,r-5)+'px');if(u.font)st.setProperty('--font',u.font+",Rubik,'Segoe UI',system-ui,sans-serif");st.setProperty('--alpha',u.acr?'.9':'1');st.setProperty('--sh',u.light?'0 14px 34px rgba(0,0,0,.16),0 2px 6px rgba(0,0,0,.08)':'0 14px 34px rgba(0,0,0,.32),0 2px 6px rgba(0,0,0,.18)');document.documentElement.classList.toggle('rm',!!u.rm)}
+function render(d){D=d;A=d.area;U=d.ui||{};clear();theme(d.colors||{},U);
+root=build(D.items,'root');
+if(D.head){const h=document.createElement('div');h.className='hd';h.innerHTML=(D.head.thumb?'<img src="'+D.head.thumb+'" alt="">':'')+'<div class="t"><b>'+esc(D.head.title)+'</b>'+(D.head.sub?'<span>'+esc(D.head.sub)+'</span>':'')+'</div>';root.prepend(h)}
+else if(D.title){const t=document.createElement('div');t.className='ttl';t.textContent=D.title;root.prepend(t)}
+document.body.appendChild(root);place(root,D.x,D.y);wire(root);requestAnimationFrame(()=>{root&&root.classList.add('on');send('ready',d.seq)})}
+window.lxm.on(d=>{if(d&&d.items)render(d);else clear()});
 document.addEventListener('mousedown',e=>{if(!e.target.closest('.m'))send('cancel')});
 document.addEventListener('contextmenu',e=>e.preventDefault());
-let cur=-1;const rows=()=>[...(openSub||root).querySelectorAll('.r:not(.disabled)')];
-document.addEventListener('keydown',e=>{const rs=rows();if(e.key==='Escape'){if(openSub){closeSub();return}send('cancel');return}
+const rows=()=>[...(openSub||root||document).querySelectorAll('.r:not(.disabled)')];
+document.addEventListener('keydown',e=>{if(!root)return;const rs=rows();if(e.key==='Escape'){if(openSub){closeSub();return}send('cancel');return}
 if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();rs.forEach(r=>r.classList.remove('sel'));cur=(cur+(e.key==='ArrowDown'?1:-1)+rs.length)%rs.length;rs[cur]&&rs[cur].classList.add('sel');return}
 if(e.key==='ArrowRight'){const r=rs[cur];const it=r&&find(r.dataset.id);if(it&&it.sub){showSub(r);cur=-1}return}
 if(e.key==='ArrowLeft'){if(openSub){closeSub();cur=-1}return}
 if(e.key==='Enter'||e.key===' '){const r=rs[cur];if(!r)return;const it=find(r.dataset.id);if(!it)return;if(it.sub){showSub(r);cur=-1;return}send('pick',it.id)}});
-send('ready');
+send('loaded');
 `;
-    return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'unsafe-inline'"><style>${css}</style></head><body><script>${js}</script></body></html>`;
+    return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; script-src 'unsafe-inline'"><style>${css}</style></head><body><script>${js}</script></body></html>`;
 }
 
-export const activeWindow = () => current;
-export function close() {
-    if (current) {
+let pending: ((r: any) => void) | null = null;
+function hideNow(r: any) {
+    const w = current;
+    visible = false;
+    current = null;
+    const fin = pending;
+    pending = null;
+    if (w && !w.isDestroyed()) {
         try {
-            current.close();
+            w.webContents.send('lxm-show', null);
+            w.hide();
         }
         catch { /* */ }
-        current = null;
+    }
+    if (fin)
+        fin(r);
+}
+function ensureWin(): electron.BrowserWindow {
+    if (pool && !pool.isDestroyed())
+        return pool;
+    poolReady = false;
+    const area = electron.screen.getPrimaryDisplay().workArea;
+    const w = new electron.BrowserWindow({
+        x: area.x, y: area.y, width: area.width, height: area.height, show: false, frame: false, transparent: true, resizable: false, movable: false,
+        minimizable: false, maximizable: false, fullscreenable: false, skipTaskbar: true, alwaysOnTop: true, hasShadow: false, focusable: true, title: '',
+        backgroundColor: '#00000000',
+        webPreferences: { preload: path.join(__dirname, 'menuPreload.js'), sandbox: true, contextIsolation: true, nodeIntegration: false, devTools: false, backgroundThrottling: false },
+    });
+    w.setMenuBarVisibility(false);
+    w.setAlwaysOnTop(true, 'pop-up-menu');
+    w.on('closed', () => {
+        if (pool === w) {
+            pool = null;
+            poolReady = false;
+        }
+        if (current === w)
+            hideNow({ ok: false, cancelled: true });
+    });
+    w.on('blur', () => { if (visible && current === w) setTimeout(() => { if (visible && current === w) hideNow({ ok: false, cancelled: true }); }, 60); });
+    w.loadURL('data:text/html;charset=utf-8;base64,' + Buffer.from(page(), 'utf8').toString('base64')).catch((e) => log.warn('menu popup: %s', e));
+    pool = w;
+    return w;
+}
+electron.ipcMain.on('lxm', (e, t: string, v: any) => {
+    if (!pool || pool.isDestroyed() || e.sender !== pool.webContents)
+        return;
+    if (t === 'loaded') {
+        poolReady = true;
+        return;
+    }
+    if (t === 'ready') {
+        if (Number(v) === seq && current === pool && !visible) {
+            visible = true;
+            pool.show();
+            pool.focus();
+            log.debug('menu popup: %d ms', Date.now() - t0);
+        }
+        return;
+    }
+    if (current !== pool)
+        return;
+    if (t === 'pick')
+        hideNow({ ok: true, pick: String(v) });
+    else if (t === 'cancel')
+        hideNow({ ok: false, cancelled: true });
+});
+export function warm() {
+    if (!available())
+        return;
+    try {
+        ensureWin();
+    }
+    catch (e) {
+        log.warn('menu popup warm: %s', e);
     }
 }
-
+export function dispose() {
+    close();
+    const w = pool;
+    pool = null;
+    poolReady = false;
+    if (w && !w.isDestroyed()) {
+        try {
+            w.destroy();
+        }
+        catch { /* */ }
+    }
+}
 export function show(o: MenuOpts): Promise<any> {
     return new Promise((resolve) => {
         close();
@@ -107,55 +217,36 @@ export function show(o: MenuOpts): Promise<any> {
         let pt = { x: Math.round(Number(o.x) || 0), y: Math.round(Number(o.y) || 0) };
         if (o.atCursor)
             pt = electron.screen.getCursorScreenPoint();
-        const disp = electron.screen.getDisplayNearestPoint(pt);
-        const area = disp.workArea;
+        const area = electron.screen.getDisplayNearestPoint(pt).workArea;
+        const w = ensureWin();
+        const b = w.getBounds();
+        if (b.x !== area.x || b.y !== area.y || b.width !== area.width || b.height !== area.height)
+            w.setBounds({ x: area.x, y: area.y, width: area.width, height: area.height });
         const my = ++seq;
-        let done = false;
-        const finish = (r: any) => {
-            if (done)
+        t0 = Date.now();
+        current = w;
+        pending = resolve;
+        const payload = { seq: my, items, title: String(o.title || '').slice(0, 60), head: o.head || null, x: pt.x - area.x, y: pt.y - area.y, area: { width: area.width, height: area.height }, colors: c, ui: uiOf(o.ui) };
+        const go = () => {
+            if (seq !== my || current !== w)
                 return;
-            done = true;
-            if (current === win)
-                current = null;
             try {
-                win.close();
+                w.webContents.send('lxm-show', payload);
             }
-            catch { /* */ }
-            resolve(r);
-        };
-        const win = new electron.BrowserWindow({
-            x: area.x, y: area.y, width: area.width, height: area.height, show: false, frame: false, transparent: true, resizable: false, movable: false,
-            minimizable: false, maximizable: false, fullscreenable: false, skipTaskbar: true, alwaysOnTop: true, hasShadow: false, focusable: true,
-            backgroundColor: '#00000000', parent: o.owner || undefined, title: '',
-            webPreferences: { preload: path.join(__dirname, 'menuPreload.js'), sandbox: true, contextIsolation: true, nodeIntegration: false, devTools: false, backgroundThrottling: false },
-        });
-        current = win;
-        win.setMenuBarVisibility(false);
-        win.setAlwaysOnTop(true, 'pop-up-menu');
-        const onMsg = (e: electron.IpcMainEvent, t: string, v: any) => {
-            if (e.sender !== win.webContents)
-                return;
-            if (t === 'ready') {
-                win.show();
-                win.focus();
+            catch (e) {
+                log.warn('menu popup: %s', e);
+                hideNow({ ok: false });
             }
-            else if (t === 'pick')
-                finish({ ok: true, pick: String(v) });
-            else if (t === 'cancel')
-                finish({ ok: false, cancelled: true });
         };
-        electron.ipcMain.on('lxm', onMsg);
-        win.on('blur', () => setTimeout(() => { if (seq === my && !done) finish({ ok: false, cancelled: true }); }, 60));
-        win.on('closed', () => {
-            electron.ipcMain.removeListener('lxm', onMsg);
-            if (!done)
-                finish({ ok: false, cancelled: true });
-        });
-        const html = page({ ...o, items, head: o.head || null }, c, area, pt.x - area.x, pt.y - area.y);
-        win.loadURL('data:text/html;charset=utf-8;base64,' + Buffer.from(html, 'utf8').toString('base64')).catch((e) => {
-            log.warn('menu popup: %s', e);
-            finish({ ok: false });
-        });
-        setTimeout(() => { if (!done && !win.isVisible()) finish({ ok: false }); }, 2500);
+        if (poolReady)
+            go();
+        else
+            w.webContents.once('did-finish-load', () => setTimeout(go, 0));
+        setTimeout(() => { if (seq === my && current === w && !visible) hideNow({ ok: false }); }, 2500);
     });
+}
+export const activeWindow = () => current;
+export function close() {
+    if (current)
+        hideNow({ ok: false, cancelled: true });
 }

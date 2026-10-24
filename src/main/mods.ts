@@ -7,6 +7,7 @@ import { fileRef } from './repos';
 import { prog } from './jobs';
 import type { Cancel, Progress } from './jobs';
 import * as compat from './compat';
+import { applyPatch, describeMismatch, outputName, patchKind } from './rompatch';
 
 export const MOD_DIRS = ['mods', 'Mods', 'mod', 'BepInEx/plugins', 'Data', 'data', 'plugins', 'addons', 'Addons', 'maps', 'Maps', 'Content/Paks/~mods'];
 const SKIP_NAMES = new Set(['readme.txt', 'readme.md', 'leia-me.txt', 'leiame.txt', 'thumbs.db', '.ds_store', 'desktop.ini']);
@@ -81,10 +82,10 @@ export class ModsManager {
     load(): any {
         try {
             const p = presets.mods();
-            return p && typeof p === 'object' ? { sites: p.sites || [], tools: p.tools || [] } : { sites: [], tools: [] };
+            return p && typeof p === 'object' ? { sites: p.sites || [], tools: p.tools || [], profiles: p.profiles || {} } : { sites: [], tools: [], profiles: {} };
         }
         catch {
-            return { sites: [], tools: [] };
+            return { sites: [], tools: [], profiles: {} };
         }
     }
     root(): string {
@@ -217,8 +218,236 @@ export class ModsManager {
     }
 }
 
+function ls(d: string): string[] {
+    try {
+        return fs.readdirSync(d);
+    }
+    catch {
+        return [];
+    }
+}
+function peArch(exe: string): string {
+    try {
+        const fd = fs.openSync(exe, 'r');
+        const b = Buffer.alloc(4096);
+        const n = fs.readSync(fd, b, 0, 4096, 0);
+        fs.closeSync(fd);
+        if (n < 64 || b.toString('latin1', 0, 2) !== 'MZ')
+            return '';
+        const pe = b.readUInt32LE(0x3c);
+        if (pe + 6 > n || b.toString('latin1', pe, pe + 4) !== 'PE\0\0')
+            return '';
+        const m = b.readUInt16LE(pe + 4);
+        return m === 0x8664 ? 'x64' : m === 0x14c ? 'x86' : m === 0xaa64 ? 'arm64' : '';
+    }
+    catch {
+        return '';
+    }
+}
+
+export interface Inspection {
+    dir: string; exe: string; arch: string; engine: string; profile: any; modDir: string; create: boolean;
+    loader: { id: string; name: string; installed: boolean; auto: boolean; url: string } | null;
+    hooks: string[]; paks: string; game: string;
+}
+
 export class GameMods {
-    constructor(private store: any) {}
+    constructor(private store: any, private mm: ModsManager, private emu: any = null) {}
+    profile(id: string) {
+        const p = this.mm.presets.profiles || {};
+        return { id, ...(p[id] || p.generic || {}) };
+    }
+    inspectDir(root: string, exe: string, title: string): Inspection {
+        const top = ls(root);
+        const low = new Set(top.map((x) => x.toLowerCase()));
+        const has = (n: string) => low.has(n.toLowerCase());
+        const dirs = top.filter((x) => isDir(path.join(root, x)));
+        const t = String(title || '').toLowerCase();
+        const r: Inspection = { dir: root, exe, arch: exe ? peArch(exe) : '', engine: 'generic', profile: null, modDir: '', create: false, loader: null, hooks: [], paks: '', game: '' };
+        const hooks: string[] = [];
+        if (has('dinput8.dll'))
+            hooks.push('dinput8.dll (ASI Loader / Script Hook)');
+        if (has('version.dll'))
+            hooks.push('version.dll (loader)');
+        if (has('dxgi.dll') || has('d3d11.dll') || has('d3d9.dll'))
+            hooks.push(has('ReShade.ini') ? 'ReShade' : 'dxgi/d3d (ReShade ou wrapper)');
+        if (has('winmm.dll'))
+            hooks.push('winmm.dll (loader)');
+        if (has('xinput1_3.dll') && !has('dinput8.dll'))
+            hooks.push('xinput1_3.dll (hook)');
+        r.hooks = hooks;
+        const dataDir = dirs.find((d) => /_data$/i.test(d) && (isDir(path.join(root, d, 'Managed')) || isDir(path.join(root, d, 'il2cpp_data')) || exists(path.join(root, d, 'globalgamemanagers')) || exists(path.join(root, d, 'data.unity3d'))));
+        if (dataDir || has('UnityPlayer.dll')) {
+            const il2 = has('GameAssembly.dll') || Boolean(dataDir && isDir(path.join(root, dataDir, 'il2cpp_data')));
+            r.engine = il2 ? 'unity-il2cpp' : 'unity-mono';
+            r.modDir = 'BepInEx/plugins';
+            r.create = !isDir(path.join(root, 'BepInEx', 'plugins'));
+            const bep = isDir(path.join(root, 'BepInEx', 'core'));
+            const melon = isDir(path.join(root, 'MelonLoader'));
+            r.loader = melon ? { id: 'melon', name: 'MelonLoader', installed: true, auto: false, url: 'https://github.com/LavaGang/MelonLoader/releases' }
+                : { id: il2 ? 'bepinex6' : 'bepinex', name: il2 ? 'BepInEx 6 (IL2CPP)' : 'BepInEx 5', installed: bep, auto: !il2, url: il2 ? 'https://builds.bepinex.dev/projects/bepinex_be' : 'https://github.com/BepInEx/BepInEx/releases' };
+            if (melon)
+                r.modDir = 'Mods';
+        }
+        else if (has('Engine') && dirs.some((d) => d !== 'Engine' && isDir(path.join(root, d, 'Content')) && isDir(path.join(root, d, 'Binaries')))) {
+            const proj = dirs.find((d) => d !== 'Engine' && isDir(path.join(root, d, 'Content')) && isDir(path.join(root, d, 'Binaries'))) || '';
+            r.engine = 'unreal';
+            r.game = proj;
+            r.paks = `${proj}/Content/Paks`;
+            r.modDir = `${proj}/Content/Paks/~mods`;
+            r.create = !isDir(path.join(root, r.modDir));
+        }
+        else if (isDir(path.join(root, 'Data')) && ls(path.join(root, 'Data')).some((f) => /\.esm$/i.test(f))) {
+            r.engine = 'creation';
+            r.modDir = 'Data';
+            const se = top.find((f) => /^(skse64?|f4se|obse|nvse|fose|sfse)_loader\.exe$/i.test(f));
+            r.loader = { id: 'scriptextender', name: se ? se.replace(/_loader\.exe$/i, '').toUpperCase() : 'Script Extender', installed: Boolean(se), auto: false, url: 'https://www.nexusmods.com/' };
+        }
+        else if (has('bin') && dirs.some((d) => exists(path.join(root, d, 'gameinfo.txt')))) {
+            const g = dirs.find((d) => exists(path.join(root, d, 'gameinfo.txt'))) || '';
+            r.engine = 'source';
+            r.game = g;
+            r.modDir = `${g}/custom`;
+            r.create = !isDir(path.join(root, r.modDir));
+        }
+        else if (has('data.win') || has('game.unx')) {
+            r.engine = 'gamemaker';
+            r.modDir = '';
+        }
+        else if (isDir(path.join(root, 'www')) && isDir(path.join(root, 'www', 'js')) || has('nw.dll') && isDir(path.join(root, 'js', 'plugins'))) {
+            r.engine = 'rpgmaker';
+            r.modDir = isDir(path.join(root, 'www')) ? 'www/js/plugins' : 'js/plugins';
+        }
+        else if (isDir(path.join(root, 'renpy')) && isDir(path.join(root, 'game'))) {
+            r.engine = 'renpy';
+            r.modDir = 'game';
+        }
+        else if (/friday night funkin|fnf|psych engine/.test(t) || (isDir(path.join(root, 'mods')) && isDir(path.join(root, 'assets')) && has('lime.ndll'))) {
+            r.engine = 'fnf';
+            r.modDir = 'mods';
+            r.create = !isDir(path.join(root, 'mods'));
+        }
+        else if (/fifa (1[7-9]|2[0-3])|fc 2[4-9]|battlefield (1|v|4|2042|hardline)|need for speed (2015|payback|heat|unbound)|mass effect.*(andromeda|legendary)|star wars battlefront|dragon age inquisition|anthem|mirror's edge catalyst|plants vs. zombies garden/.test(t) || has('bf1.exe') || has('bfv.exe') || has('Data') && has('Update') && top.some((f) => /\.toc$/i.test(f))) {
+            r.engine = 'frostbite';
+            r.modDir = '';
+        }
+        else if (hooks.some((h) => /dinput8|ASI/.test(h)) || isDir(path.join(root, 'scripts')) && top.some((f) => /\.asi$/i.test(f))) {
+            r.engine = 'scripthook';
+            r.modDir = isDir(path.join(root, 'scripts')) ? 'scripts' : '';
+        }
+        else if (isDir(path.join(root, 'mods')) || isDir(path.join(root, 'Mods'))) {
+            r.engine = 'generic';
+            r.modDir = isDir(path.join(root, 'mods')) ? 'mods' : 'Mods';
+        }
+        r.profile = this.profile(r.engine);
+        return r;
+    }
+    inspect(key: string) {
+        const info = this.store.lib(key) || {};
+        const title = String(info.title || key);
+        const romKey = /^rom:([^:]+):/.exec(key);
+        const system = String(info.system || (romKey ? romKey[1] : 'pc'));
+        const isRom = info.kind === 'rom' || Boolean(romKey);
+        const found = this.mm.forGame(title, system);
+        const mods = this.read(key);
+        if (isRom) {
+            const rom = String(info.exe || info.path || '');
+            const prof = this.profile('rom');
+            return { key, title, system, rom: true, romPath: rom, romOk: Boolean(rom && exists(rom)), engine: 'rom', profile: prof, loader: null, hooks: [], modDir: '', dir: rom ? path.dirname(rom) : '', targets: [], mods, sites: found.sites, tools: ['flips', 'delta-patcher'].map((id) => this.mm.presets.tools.find((x: any) => x.id === id)).filter(Boolean).map((t: any) => ({ id: t.id, title: t.title, for: t.for || '', installed: Boolean(this.mm.toolExe(t.id)), type: t.type })), patchable: /\.(nes|sfc|smc|gb|gbc|gba|nds|md|gen|smd|bin|z64|n64|v64|pce|sms|gg|ws|wsc|ngp|ngc|a26|lnx|col|int|vb|32x|rom)$/i.test(rom) };
+        }
+        const root = this.gameDir(key);
+        if (!root)
+            return { key, title, system, rom: false, dir: '', engine: 'generic', profile: this.profile('generic'), loader: null, hooks: [], modDir: '', targets: [], mods, sites: found.sites, tools: found.tools, create: false };
+        const insp = this.inspectDir(root, String(info.exe || ''), title);
+        const targets = this.targets(key);
+        if (insp.modDir && !targets.some((x) => x.path === insp.modDir))
+            targets.splice(1, 0, { path: insp.modDir, label: `${insp.modDir}/${insp.create ? ' (será criada)' : ''}` });
+        const tools = found.tools.slice();
+        const want = insp.profile && insp.profile.tool;
+        if (want && !tools.some((x: any) => x.id === want)) {
+            const t = this.mm.presets.tools.find((x: any) => x.id === want);
+            if (t)
+                tools.unshift({ id: t.id, title: t.title, for: t.for || '', installed: Boolean(this.mm.toolExe(t.id)), type: t.type });
+        }
+        const sites = found.sites.slice();
+        for (const sid of (insp.profile && insp.profile.sites) || []) {
+            if (sites.some((x: any) => x.id === sid))
+                continue;
+            const sdef = this.mm.presets.sites.find((x: any) => x.id === sid);
+            if (sdef)
+                sites.push({ id: sdef.id, name: sdef.name, url: String(sdef.url).replace('{q}', encodeURIComponent(title)), desc: sdef.desc || '', specific: false });
+        }
+        const order = (insp.profile && insp.profile.sites) || [];
+        sites.sort((a: any, b: any) => Number(!a.specific) - Number(!b.specific) || (order.indexOf(a.id) < 0 ? 99 : order.indexOf(a.id)) - (order.indexOf(b.id) < 0 ? 99 : order.indexOf(b.id)));
+        return { ...insp, key, title, system, rom: false, targets, mods, sites, tools, suggest: insp.modDir || this.suggestTarget(key) };
+    }
+    async installLoader(key: string, cb: Cb, cancel: Cancel) {
+        const root = this.gameDir(key);
+        if (!root)
+            throw new Error('Esse jogo não tem pasta instalada');
+        const info = this.store.lib(key) || {};
+        const insp = this.inspectDir(root, String(info.exe || ''), String(info.title || ''));
+        if (!insp.loader || insp.loader.id !== 'bepinex')
+            throw new Error('Instalação automática só para BepInEx 5 (jogos Unity Mono)');
+        if (insp.loader.installed)
+            throw new Error('BepInEx já está nesse jogo');
+        const arch = insp.arch === 'x86' ? 'x86' : 'x64';
+        let rels = await this.mm['cache'].getJson('gh_BepInEx/BepInEx', 'https://api.github.com/repos/BepInEx/BepInEx/releases?per_page=10', 6 * 3600);
+        rels = Array.isArray(rels) ? rels.filter((r: any) => !r.draft && !r.prerelease && /^v?5\./.test(String(r.tag_name || ''))) : [];
+        if (!rels.length)
+            throw new Error('Nenhuma versão 5.x do BepInEx encontrada no GitHub');
+        const rel = rels[0];
+        const a = (rel.assets || []).find((x: any) => new RegExp(`^BepInEx_win_${arch}_5\\.`, 'i').test(x.name)) || (rel.assets || []).find((x: any) => new RegExp(`^BepInEx_${arch}_5\\.`, 'i').test(x.name));
+        if (!a)
+            throw new Error(`O release ${rel.tag_name} não tem o pacote Windows ${arch}`);
+        const tmp = path.join(P.DOWNLOADS, 'loader_bepinex');
+        fs.mkdirSync(tmp, { recursive: true });
+        const archive = path.join(tmp, a.name);
+        cb(prog('download', 0, `Baixando BepInEx ${rel.tag_name} (${arch})…`));
+        await new Downloader(this.mm['s']).download(fileRef(a.name, a.browser_download_url, Number(a.size || 0)) as any, archive, cb, cancel);
+        const r = await this.install(key, archive, `BepInEx ${String(rel.tag_name).replace(/^v/, '')}`, '', cb, cancel);
+        fs.rmSync(tmp, { recursive: true, force: true });
+        fs.mkdirSync(path.join(root, 'BepInEx', 'plugins'), { recursive: true });
+        cb(prog('done', 1.0, 'BepInEx instalado. Abra o jogo uma vez para ele criar as pastas de configuração.'));
+        return r;
+    }
+    applyRomPatch(key: string, patchPath: string, force = false) {
+        const info = this.store.lib(key) || {};
+        const rom = String(info.exe || info.path || '');
+        const rk = /^rom:([^:]+):/.exec(key);
+        const system = String(info.system || (rk ? rk[1] : ''));
+        if (!rom || !exists(rom))
+            return { error: 'A ROM desse jogo não foi encontrada' };
+        const pp = String(patchPath || '').trim().replace(/^"|"$/g, '');
+        if (!pp || !exists(pp))
+            return { error: 'Arquivo do patch não encontrado' };
+        if (!patchKind(pp))
+            return { error: 'Formato de patch não reconhecido (aceita .ips, .ups e .bps)' };
+        let res;
+        try {
+            res = applyPatch(rom, pp);
+        }
+        catch (e: any) {
+            return { error: String(e?.message || e) };
+        }
+        if (res.mismatch && !force)
+            return { mismatch: true, error: describeMismatch(res) };
+        const out = outputName(rom, pp);
+        fs.writeFileSync(out, res.out);
+        let added: any = null;
+        try {
+            added = this.emu && system ? this.emu.addRomFile(out, system) : null;
+            if (added && added.key) {
+                const ov = { ...(this.store.config.title_overrides || {}) };
+                const tag = path.basename(pp, path.extname(pp)).replace(/[_]+/g, ' ').trim();
+                ov[added.key] = `${String(info.title || added.title || '').trim()} — ${tag}`;
+                this.store.setConfig({ title_overrides: ov });
+                added.title = ov[added.key];
+            }
+        }
+        catch { /* ignore */ }
+        return { ok: true, path: out, kind: res.kind, size: res.out.length, mismatch: res.mismatch, added };
+    }
     base(key: string) {
         return path.join(P.DATA, 'mods', safeFolderName(key.replace(/:/g, '_')));
     }

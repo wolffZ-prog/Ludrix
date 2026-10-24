@@ -103,7 +103,6 @@ class Backend {
         this.repack = new Repack(this);
         this.terminal = new Terminal(this);
         this.mods = new ModsManager(this.store, http.shared, webcache.shared);
-        this.gmods = new GameMods(this.store);
         this.flash = new FlashManager(this.store, http.shared, webcache.shared);
         this.flash.onCover = (gid) => this.push({ type: 'flash_cover', id: gid });
         this.customUX = new CustomUX(this.store);
@@ -119,6 +118,7 @@ class Backend {
         if (process.platform !== 'win32')
             this.sessions.linuxWrap = (cmd, key) => this.linuxWrap(cmd, key);
         this.emu = new EmulationManager(this.store, http.shared, webcache.shared);
+        this.gmods = new GameMods(this.store, this.mods, this.emu);
         this.saves = new SaveManager(this.store, this.emu);
         this.emu.ensureGameDirs();
         this.cat = new Catalog(this);
@@ -285,7 +285,7 @@ class Backend {
         const live = this.sessions.keys().includes(key);
         const acts = [];
         if (g?.installed) {
-            acts.push({ id: live ? 'stop' : 'play', label: live ? 'Parar' : 'Jogar', icon: live ? 'stop' : 'play' });
+            acts.push({ id: live ? 'stop' : 'play', label: live ? 'Encerrar' : 'Jogar', icon: live ? 'x' : 'play', primary: true, danger: live });
             acts.push({ id: 'open_folder', label: 'Abrir pasta', icon: 'folder' });
         }
         acts.push({ id: 'cover_set', label: 'Trocar capa', icon: 'image' });
@@ -295,9 +295,9 @@ class Backend {
         acts.push({ sep: true });
         acts.push({ id: 'fav', label: g?.fav ? 'Tirar dos favoritos' : 'Favoritar', icon: 'star' });
         acts.push({ id: 'hide', label: g?.hidden ? 'Mostrar na biblioteca' : 'Esconder', icon: 'eye' });
-        acts.push({ id: 'shortcut', label: 'Atalho na area de trabalho', icon: 'link' });
+        acts.push({ id: 'shortcut', label: 'Atalho na área de trabalho', icon: 'ext' });
         if (String(info.exe || ''))
-            acts.push({ id: 'set_exe', label: 'Trocar executavel', icon: 'exe' });
+            acts.push({ id: 'set_exe', label: 'Trocar executável', icon: 'doc' });
         acts.push({ sep: true });
         acts.push({ id: 'uninstall', label: 'Remover da biblioteca', icon: 'trash', danger: true });
         return acts;
@@ -1951,6 +1951,40 @@ class Backend {
             this.store.freeze();
         return r;
     }
+    modInspect(key: string) {
+        if (!this.store.lib(key))
+            return { error: 'Jogo não instalado' };
+        try {
+            return this.gmods.inspect(key);
+        }
+        catch (e: any) {
+            return { error: String(e?.message || e) };
+        }
+    }
+    modLoaderInstall(key: string) {
+        const info = this.store.lib(key);
+        if (!info)
+            return { error: 'Jogo não instalado' };
+        const jkey = `mod:${key}`;
+        if (this.jobs.has(jkey))
+            return { error: 'Já estou instalando algo nesse jogo' };
+        return this.jobs.run(jkey, `${info.title || key} — BepInEx`, 'tool', (cb, cancel) => this.gmods.installLoader(key, cb, cancel));
+    }
+    async modPatch(key: string, file: string | null, force = false) {
+        const info = this.store.lib(key);
+        if (!info)
+            return { error: 'Jogo não instalado' };
+        let p = file;
+        if (!p) {
+            p = await dialogs.pickFile('patch', path.join(os.homedir(), 'Downloads'));
+            if (!p)
+                return { ok: false };
+        }
+        const r = this.gmods.applyRomPatch(key, String(p), force);
+        if ((r as any).ok)
+            this.emu.invalidateScan();
+        return { ...r, path_in: String(p) };
+    }
     async modInstall(key: string, file: string | null, title = '', target = '', kind = '') {
         const info = this.store.lib(key);
         if (!info)
@@ -2050,7 +2084,7 @@ class Backend {
             systems: cat.systems, sessions: this.sessions.status(), gamepad: gamepadMod.connectedNow(),
             theme: get('console_theme', 'noite'), themes: this.CONSOLE_THEMES, language: get('language', 'pt-BR'),
             config: {
-                console_gamepad_speed: get('gamepad_speed', 'normal'),
+                console_gamepad_speed: get('gamepad_speed', 'normal'), reduce_motion: Boolean(c.reduce_motion),
                 console_sound: get('console_sound', true), game_mode_auto: Boolean(c.game_mode_auto), after_launch: get('after_launch', 'ask'),
                 console_hint: get('console_hint', true), console_card_size: get('console_card_size', 'normal'),
                 console_clock24: get('console_clock24', true), console_start_view: get('console_start_view', 'library'),
