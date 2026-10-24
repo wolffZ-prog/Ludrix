@@ -42,7 +42,6 @@ const emulators = () => load('emulators.json');
 const redists = () => load('redists.json');
 const saves = () => load('saves.json');
 const mods = () => load('mods.json');
-const optionals = () => load('optionals.json');
 const flash = () => load('flash.json');
 function systems() {
     return ((0, exports.emulators)()?.systems || {});
@@ -81,4 +80,4 @@ function allRomExts() {
     return [...set];
 }
 
-export { reload, systems, emulatorList, systemName, systemExts, emulatorsFor, allRomExts, categories, emulators, redists, saves, mods, optionals, flash };
+export { reload, systems, emulatorList, systemName, systemExts, emulatorsFor, allRomExts, categories, emulators, redists, saves, mods, flash };

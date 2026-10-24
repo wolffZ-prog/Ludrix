@@ -10,7 +10,7 @@ const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 export type Session = {
     key: string; title: string; pid: number; rootPid: number; child?: cp.ChildProcess; started: number;
-    after: string | null; optimize: boolean; external?: boolean; elevated?: boolean; killed?: boolean;
+    after: string | null; external?: boolean; elevated?: boolean; killed?: boolean;
     rc?: number | null; exited?: boolean; last_save?: number; crashed?: boolean;
 };
 
@@ -18,10 +18,8 @@ export class SessionManager {
     active = new Map<string, Session>();
     onStart: ((s: Session) => void) | null = null;
     onEnd: ((s: Session, elapsed: number) => void) | null = null;
-    onBoost: ((pid: number) => void) | null = null;
     linuxWrap: ((cmd: string[], key: string) => { cmd: string[]; env?: any }) | null = null;
     nextAfter: string | null = null;
-    nextOptimize = false;
     private extSeen = new Set<number>();
     private extTimer: NodeJS.Timeout | null = null;
     constructor(private store: any) { }
@@ -79,7 +77,7 @@ export class SessionManager {
     private adopt(key: string, pid: number, started: number) {
         const info = this.store.lib(key) || {};
         this.extSeen.add(pid);
-        const sess: Session = { key, title: info.title || key, pid, rootPid: pid, started: Math.max(started, now() - 120), after: 'none', optimize: false, external: true };
+        const sess: Session = { key, title: info.title || key, pid, rootPid: pid, started: Math.max(started, now() - 120), after: 'none', external: true };
         if (this.active.has(key))
             return;
         this.active.set(key, sess);
@@ -109,11 +107,6 @@ export class SessionManager {
                     cmd = w.cmd;
                     env = w.env || undefined;
                 }
-                if (this.nextOptimize) {
-                    const gm = require('./compat').gamemodePath();
-                    if (gm)
-                        cmd = [gm, ...cmd];
-                }
             }
             child = spawnGame(cmd, cwd, env);
             if (!child.pid)
@@ -133,9 +126,8 @@ export class SessionManager {
             }
             return { error: String(e?.message || e) };
         }
-        const sess: Session = { key, title, pid: child.pid!, rootPid: child.pid!, child, started: now(), after: this.nextAfter, optimize: this.nextOptimize };
+        const sess: Session = { key, title, pid: child.pid!, rootPid: child.pid!, child, started: now(), after: this.nextAfter };
         this.nextAfter = null;
-        this.nextOptimize = false;
         child.on('exit', (code, sig) => {
             sess.rc = code ?? (sig ? 1 : 0);
             sess.exited = true;
@@ -152,9 +144,8 @@ export class SessionManager {
     }
 
     launchPid(key: string, pid: number, title: string) {
-        const sess: Session = { key, title, pid, rootPid: pid, started: now(), after: this.nextAfter, optimize: this.nextOptimize, elevated: true };
+        const sess: Session = { key, title, pid, rootPid: pid, started: now(), after: this.nextAfter, elevated: true };
         this.nextAfter = null;
-        this.nextOptimize = false;
         this.active.set(key, sess);
         this.store.patchLib(key, { last_played: sess.started });
         void this.watch(sess);
@@ -181,12 +172,6 @@ export class SessionManager {
             const child = await this.findChild(sess);
             if (child) {
                 sess.pid = child;
-                if (sess.optimize && this.onBoost) {
-                    try {
-                        this.onBoost(child);
-                    }
-                    catch { /* ignore */ }
-                }
                 while (procs.alive(child)) {
                     await sleep(2000);
                     this.tick(key);

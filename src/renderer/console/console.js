@@ -303,7 +303,6 @@ function renderSettings() {
     ${swRow('console_dl_pill', 'Download no topo', 'Enquanto algo baixa ou instala, a porcentagem aparece ao lado do relógio em qualquer aba. Toque nela para abrir a Fila.')}
     ${segRow('console_dim_idle', 'Escurecer quando parado', 'Sem ninguém mexer por esse tempo, a tela escurece para poupar a TV. Qualquer botão acende de novo.')}
     <h2>Ao jogar</h2>
-    ${swRow('game_mode_auto', 'Otimizar antes de jogar', 'Aplica o plano de energia e as prioridades do Ludrix ao abrir um jogo e desfaz ao fechar.')}
     ${segRow('after_launch', 'Enquanto o jogo roda', 'O que fazer com o Modo Console depois que o jogo abre.')}
     ${segRow('launch_splash', 'Tela de abertura', 'A capa do jogo em tela cheia enquanto ele carrega.')}
     ${swRow('save_auto_backup', 'Backup automático dos saves', 'Guarda uma cópia dos saves quando o jogo fecha, para recuperar depois pelo Ludrix em janela.')}
@@ -361,7 +360,7 @@ async function play(key, extra) {
   const c = S.data.config;
   if (!extra && c.after_launch === 'ask') return askAfter(key);
   S.busy[key] = true;
-  const r = await api('/api/play', {key, after: (extra && extra.after) || (c.after_launch === 'ask' ? 'minimize' : c.after_launch), emulator: extra && extra.emulator, optimize: extra && 'optimize' in extra ? extra.optimize : undefined});
+  const r = await api('/api/play', {key, after: (extra && extra.after) || (c.after_launch === 'ask' ? 'minimize' : c.after_launch), emulator: extra && extra.emulator});
   S.busy[key] = false;
   if (r.choose_emulator) return chooseEmu(key, r);
   if (r.error === 'emu_missing') return toast('Emulador não instalado', 'Instale o emulador deste sistema pelo Ludrix em janela (aba Emuladores).', 'err');

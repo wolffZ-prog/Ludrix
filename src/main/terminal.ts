@@ -413,7 +413,7 @@ cmd('debuglaunch', 'Mostra exatamente como o Ludrix abriria um jogo (comando, pa
         out.push('Argumentos extras: ' + (t.n.gameArgs(key) || '(nenhum)'));
         out.push('Comando: ' + list2cmdline([exe, ...t.n.splitArgs(t.n.gameArgs(key))]));
     }
-    out.push(`Modo Game automático: ${t.n.store.config.game_mode_auto ? 'sim' : 'não'}   Depois de abrir: ${t.n.store.config.after_launch || 'ask'}`);
+    out.push(`Depois de abrir: ${t.n.store.config.after_launch || 'ask'}`);
     return out.join('\n');
 }, { args: [['jogo', 'pedaço do nome ou chave', true]], examples: ['/debuglaunch "need for speed"', '/debuglaunch rom:ps2:Shadow'] });
 
@@ -588,7 +588,7 @@ cmd('dupes', 'Jogos duplicados na biblioteca (mesmo nome ou mesmo executável)',
 
 cmd('config', 'Lê ou altera uma configuração do Ludrix', (t, a) => {
     const cfg = t.n.store.config;
-    const hidden = new Set(['sgdb_key', 'notifications', 'flash_stats', 'title_overrides', 'game_args']);
+    const hidden = new Set(['notifications', 'flash_stats', 'title_overrides', 'game_args']);
     const DC: any = DEFAULT_CONFIG;
     if (!a.length) {
         const keys = Object.keys(DC).filter((k) => !hidden.has(k)).sort();
@@ -770,14 +770,6 @@ cmd('emulators', 'Emuladores por console (instalados e padrão)', (t, a) => {
     return rows.join('\n') + '\n(* = padrão do console. Pra vários emuladores no mesmo console: Emular → ⚙ do console.)';
 }, { args: [['console', 'id do sistema, ex.: nds', false]], examples: ['/emulators', '/emulators nds'], aliases: ['emu'] });
 
-cmd('gamemode', 'Modo Game: /gamemode on liga agora (plano de energia, apps da lista, Ludrix quieto), /gamemode off desliga', async (t, a) => {
-    const act = (a[0] || 'status').toLowerCase();
-    if (act === 'on')
-        return JSON.stringify(await t.n.gameModeRun());
-    if (act === 'off')
-        return JSON.stringify(await t.n.gameModeRestore());
-    return `Modo Game ${t.n.gamemode.active ? 'ATIVO' : 'inativo'}. ` + JSON.stringify(await t.n.gameModeStatus()).slice(0, 600);
-}, { args: [['on|off|status', 'ação', false]], examples: ['/gamemode on', '/gamemode status'] });
 
 cmd('hardware', 'Resumo do PC (CPU, RAM, GPU, discos)', async (t) => {
     const hw = await t.n.hardware();

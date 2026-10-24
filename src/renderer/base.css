@@ -1,3 +1,4 @@
+:root{--spring:linear(0,.009 1.1%,.035 2.3%,.141 4.8%,.723 12.9%,.938 17.5%,1.017 20.4%,1.077 23.8%,1.096 27.6%,1.086 31.3%,1.028 40.2%,.998 49%,.992 58.4%,1)}
 html body.bs[data-face]{--r:7px;--rail:220px;--side:220px}
 html body.bs[data-face],html body.bs[data-face] #app,html body.bs[data-face] main{background:var(--bg)}
 html body.bs[data-face] #app{grid-template-columns:var(--side) minmax(0,1fr)}
@@ -97,13 +98,15 @@ html body.bs[data-face] .ggrp .grid{margin:6px 0 16px}
 html body.bs[data-face] .grid{grid-template-columns:repeat(auto-fill,minmax(calc(var(--cw,150px) * .74),1fr));gap:16px 12px}
 html body.bs[data-face] .card{background:transparent;border:0;padding:0;border-radius:0;contain-intrinsic-size:auto 160px auto 220px}
 html body.bs[data-face] .card:hover,html body.bs[data-face] .card.gp-focus{transform:none;background:transparent;box-shadow:none}
-html body.bs[data-face] .card .cov{aspect-ratio:2/3;border-radius:6px;outline:2px solid transparent;outline-offset:2px;box-shadow:none;background:var(--card2);transition:outline-color .12s}
-html body.bs[data-face] .card:hover .cov,html body.bs[data-face] .card.gp-focus .cov{outline-color:var(--line2);box-shadow:none}
+html body.bs[data-face] .card .cov{aspect-ratio:2/3;border-radius:6px;outline:2px solid transparent;outline-offset:2px;box-shadow:none;background:var(--card2);transition:outline-color .12s,transform .55s var(--spring),box-shadow .3s;will-change:transform}
+html body.bs[data-face] .card:hover .cov,html body.bs[data-face] .card.gp-focus .cov{outline-color:var(--line2);transform:translateY(-4px) scale(1.02);box-shadow:0 14px 28px -16px rgba(0,0,0,.55)}
+html body.bs[data-face] .card:active .cov{transform:translateY(-1px) scale(.99);transition-duration:.12s}
+html[data-anim="off"] body.bs[data-face] .card:hover .cov,html[data-anim="off"] body.bs[data-face] .card.gp-focus .cov{transform:none;box-shadow:none}
 html body.bs[data-face] .card.sel .cov{outline:2px solid var(--accent);outline-offset:2px;box-shadow:none}
 html body.bs[data-face] .card .cov .sh,html body.bs[data-face] .card .cov .info{display:none}
 html body.bs[data-face] .card h4{text-align:left;padding:7px 0 0;font-size:12.5px;font-weight:500;line-height:1.3}
 html body.bs[data-face] .card .sub{justify-content:flex-start;padding:1px 0 0;font-size:11px;color:var(--muted2)}
-html body.bs[data-face] .card .qp{left:auto;top:auto;right:8px;bottom:8px;transform:translateY(6px) scale(.9);width:34px;height:34px;border-radius:50%;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+html body.bs[data-face] .card .qp{left:auto;top:auto;right:8px;bottom:8px;transform:translateY(6px) scale(.9);width:34px;height:34px;border-radius:50%;box-shadow:0 4px 14px rgba(0,0,0,.35);transition:transform .45s var(--spring),opacity .18s}
 html body.bs[data-face] .card:hover .qp,html body.bs[data-face] .card.gp-focus .qp{transform:none;opacity:1}
 html body.bs[data-face] .card .qp:hover{transform:scale(1.08)}
 html body.bs[data-face] .card .qp.live{transform:none;opacity:1}
@@ -174,7 +177,11 @@ html body.bs[data-face] .pop,html body.bs[data-face] .ctx,html body.bs[data-face
 html body.bs[data-face] .ctx button:hover{background:var(--card2);color:var(--text)}
 html body.bs[data-face] .ctx button:hover svg{color:var(--text)}
 html body.bs[data-face] .toast{border-radius:10px;background:var(--bg2);border:1px solid var(--line);backdrop-filter:none;box-shadow:0 16px 40px -20px rgba(0,0,0,.6)}
-html body.bs[data-face] .start{background:var(--bg2);border:1px solid var(--line);border-radius:10px;box-shadow:none}
+html body.bs[data-face] .toast.sess{cursor:pointer;padding:10px 14px 10px 10px;gap:12px;border-left-width:1px}
+html body.bs[data-face] .toast.sess img{width:46px;height:62px;object-fit:cover;border-radius:6px;background:var(--card2);flex:none}
+html body.bs[data-face] .toast.sess small{display:block;font-size:11.5px;color:var(--muted2,var(--muted));margin-top:2px}
+html body.bs[data-face] .toast.sess:hover{border-color:var(--accent)}
+html body.bs[data-face] .toast.out{opacity:0;transform:translateY(-6px);transition:opacity .25s,transform .25s}
 html body.bs[data-face] .now{background:var(--bg2);border:1px solid var(--line);border-radius:10px}
 html body.bs[data-face] .fpanel{background:var(--bg2);border:1px solid var(--line);border-radius:10px;box-shadow:none}
 
@@ -185,7 +192,9 @@ html body.bs[data-face] .dclose{position:fixed;top:calc(var(--tb,0px) + var(--to
 html body.bs[data-face] .dclose svg{width:16px;height:16px}
 html body.bs[data-face] .dhero{display:block;padding:0;min-height:0}
 html body.bs[data-face] .dhero::before{content:"";display:block;height:180px;background:var(--dband,var(--card2))}
+html body.bs[data-face] .dhero.himg::before{height:220px;background-color:var(--dband,var(--card2));background-image:var(--dimg)!important;background-size:cover!important;background-position:center 30%!important;background-repeat:no-repeat!important;box-shadow:inset 0 0 0 999px color-mix(in srgb,var(--bg) 18%,transparent)}
 html body.bs[data-face] .dhero .dcov{position:relative;top:auto;width:170px;flex:none;float:left;margin:-96px 24px 0 36px}
+html body.bs[data-face] .dhero.himg .dcov{margin-top:-110px}
 html body.bs[data-face] .dcov img,html body.bs[data-face] .dcov .dph{border-radius:8px;box-shadow:none;outline:4px solid var(--bg);background:var(--card2)}
 html body.bs[data-face] .dcov .dph{font-size:54px;background:var(--card2)}
 html body.bs[data-face] .dhead{display:flex;flex-direction:column;gap:12px;padding:16px 40px 0 0;min-height:112px}

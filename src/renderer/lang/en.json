@@ -5,7 +5,6 @@
   "Emular": "Emulate",
   "Mods": "Mods",
   "Redists": "Redists",
-  "Modo Game": "Game Mode",
   "Rápidos": "Quick",
   "Fila": "Queue",
   "Ajustes": "Settings",
@@ -13,7 +12,6 @@
   "Emulação": "Emulation",
   "Mods e ferramentas": "Mods and tools",
   "Redists — dependências (Visual C++, DirectX…)": "Redists — dependencies (Visual C++, DirectX…)",
-  "Modo Game — otimizar o PC pra jogar": "Game Mode — tune the PC for gaming",
   "Jogos Rápidos (Flash)": "Quick Games (Flash)",
   "Downloads": "Downloads",
   "Configurações": "Settings",
@@ -221,7 +219,6 @@
   "Mata o launcher da memória. O tempo dessa sessão não é contado.": "Frees the launcher from memory. This session's playtime is not tracked.",
   "Só abrir o jogo": "Just open the game",
   "O launcher continua aberto normalmente.": "The launcher stays open as usual.",
-  "Otimizar e abrir": "Optimize and open",
   "Lembrar minha escolha (dá pra mudar em Ajustes)": "Remember my choice (you can change it in Settings)",
   "Jogar com qual emulador?": "Play with which emulator?",
   "Não perguntar mais — usar sempre o padrão": "Don't ask again — always use the default",
@@ -382,8 +379,6 @@
   "Re-checar instalados": "Re-check installed",
   "Já está tudo instalado": "Everything's already installed",
   "Instalando": "Installing",
-  "Modo Game ligado": "Game Mode on",
-  "Modo Game desligado": "Game Mode off",
   "Memória": "Memory",
   "em uso": "in use",
   "O que o modo faz": "What the mode does",
@@ -394,11 +389,7 @@
   "Nenhum dos apps comuns está aberto.": "None of the usual apps are open.",
   "Só o que estiver nesta lista é fechado. Nada de serviços do Windows.": "Only what's on this list gets closed. No Windows services.",
   "O que ele faz e quais apps fecha": "What it does and which apps it closes",
-  "Configure na aba Modo Game": "Set it up in the Game Mode tab",
-  "Mostrar \"Otimizar e abrir\" ao abrir um jogo": "Show \"Optimize and open\" when starting a game",
   "Aparece como opção no diálogo de abrir": "Shows up as an option in the launch dialog",
-  "Otimizar sempre": "Always optimize",
-  "Liga o Modo Game em todo jogo sem perguntar": "Turns Game Mode on for every game without asking",
   "Esvazia o working set de todos os processos antes de abrir o jogo": "Trims every process's working set before starting the game",
   "Prioridade alta pro jogo": "High priority for the game",
   "O processo do jogo recebe prioridade Alta no Windows": "The game process gets High priority in Windows",
@@ -543,7 +534,6 @@
   "Onde os jogos baixados ficam": "Where downloaded games go",
   "Capas e informações": "Covers and info",
   "Buscar capas e metadados automaticamente": "Fetch covers and info automatically",
-  "Procura capa, descrição, ano e gêneros na Steam, GOG e Wikipedia (e no SteamGridDB se você tiver chave). Pra consoles usa as capas oficiais de cada sistema. Roda em segundo plano e não busca duas vezes": "Looks up cover, description, year and genres on Steam, GOG and Wikipedia (and SteamGridDB if you have a key). For consoles it uses each system's official covers. Runs in the background and never fetches twice",
   "Corrigir nomes automaticamente (estilo Playnite)": "Fix names automatically (Playnite style)",
   "Ao achar o jogo nas fontes, troca \"Atalho para Sleeping Dogs\" / \"SleepingDogs_x64\" pelo nome oficial. Nomes que você digitou à mão nunca são alterados": "When the game is found in the sources, replaces \"Shortcut to Sleeping Dogs\" / \"SleepingDogs_x64\" with the official name. Names you typed by hand are never changed",
   "Atualizar metadados de tudo": "Refresh all metadata",
@@ -552,7 +542,6 @@
   "Metadados atualizados": "Metadata updated",
   "Metadados": "Metadata",
   "configurada": "set",
-  "SteamGridDB é um site com capas e artes em alta resolução feitas pela comunidade. Pra usar, crie uma conta grátis lá, vá em Perfil → Preferences → API e copie a chave que aparece.": "SteamGridDB is a site with high-resolution covers and art made by the community. To use it, create a free account there, go to Profile → Preferences → API and copy the key shown.",
   "Guardada em data\\\\covers — vale pra sempre, mesmo atualizando metadados.": "Kept in data\\\\covers — stays forever, even after refreshing metadata.",
   "Informações dos jogos": "Game info",
   "Listas das fontes": "Source lists",
@@ -953,7 +942,6 @@
   "Perguntar": "Ask",
   "Sempre": "Always",
   "Nunca": "Never",
-  "Sempre otimiza": "Always optimizes",
   "Senhor dos Anéis": "Lord of the Rings",
   "estratégia": "strategy",
   "simulação": "simulation",
@@ -1113,7 +1101,6 @@
   "Plano de energia e prioridade só funcionam no Windows.": "Power plan and priority only work on Windows.",
   "Quando ligar": "When to turn on",
   "Liga em todo jogo, sem perguntar": "Turns on for every game, no questions asked",
-  "Aparece como \"Otimizar e abrir\" no botão direito do jogo": "Shows up as \"Optimize and open\" in the game's right-click menu",
   "Só quando você clicar em \"Ligar agora\"": "Only when you click \"Turn on now\"",
   "No menu do jogo": "In the game menu",
   "Plano de energia de desempenho": "Performance power plan",
@@ -1145,7 +1132,6 @@
   "Emular: consoles antigos sem dor de cabeça": "Emulate: old consoles without the headache",
   "Instale emuladores com um clique e traga suas ROMs. O Ludrix configura o caminho, guarda seus saves e abre cada jogo no emulador certo.": "Install emulators with one click and bring your ROMs. Ludrix sets the paths, keeps your saves and opens each game in the right emulator.",
   "Mods, redists e ferramentas": "Mods, redists and tools",
-  "Ferramentas de mod, os VC++ e DirectX que os jogos pedem, e o Modo Game — que deixa o PC (e o próprio Ludrix) focado no jogo enquanto você joga.": "Modding tools, the VC++ and DirectX packages games ask for, and Game Mode — which keeps the PC (and Ludrix itself) focused on the game while you play.",
   "Modo Console e controle": "Console mode and controller",
   "Escolha a cara do Ludrix": "Pick Ludrix's look",
   "Bem-vindo ao LudrixHub!": "Welcome to LudrixHub!",
@@ -1158,9 +1144,7 @@
   "Ver de novo": "See again",
   "Ligar em todo jogo": "Turn on for every game",
   "Plano de energia de desempenho, prioridade alta pro jogo e o Ludrix quieto — sem perguntar": "Performance power plan, high priority for the game and Ludrix kept quiet — no questions asked",
-  "Oferecer \"Otimizar e abrir\" no menu do jogo": "Offer \"Optimize and open\" in the game menu",
   "Aparece no botão direito do jogo, pra ligar só quando você quiser": "Shows in the game's right-click menu, so you turn it on only when you want",
-  "Modo Game: plano de energia de desempenho, prioridade alta e Ludrix em silêncio": "Game Mode: performance power plan, high priority and Ludrix kept quiet",
   "Tela cheia · aperte F11 para sair": "Full screen · press F11 to leave",
   "sai do modo e volta pra ele.": "leaves the mode and brings it back.",
   "F11 liga e desliga a tela cheia fora do Console também": "F11 toggles full screen outside Console too",
@@ -1207,15 +1191,12 @@
   "Atalho na área de trabalho": "Desktop shortcut",
   "Filtrar…": "Filter…",
   "Procurar capa na web…": "Search cover on the web…",
-  "Procura imagens com o nome do jogo no Google Imagens, Bing e Yandex e deixa você escolher a capa": "Searches Google Images, Bing and Yandex for the game name and lets you pick the cover",
   "Procurando na web…": "Searching the web…",
   "Escolha a capa": "Pick the cover",
   "Clique na imagem que quer usar como capa. A imagem original é baixada e guardada com o jogo.": "Click the image you want as cover. The original image is downloaded and kept with the game.",
   "Capa escolhida": "Cover picked",
   "imagens da web": "web images",
-  "Imagens da web (Google, Bing…)": "Web images (Google, Bing…)",
   "Capa por busca de imagens na web": "Cover from web image search",
-  "Quando Steam, GOG, Wikipedia e as capas de console não têm o jogo, procura no Google Imagens, Bing e Yandex e usa a melhor imagem vertical. Bom pra mods e jogos raros; pode errar — troque na edição do jogo se precisar": "When Steam, GOG, Wikipedia and console box art don't have the game, searches Google Images, Bing and Yandex and uses the best portrait image. Great for mods and rare games; may miss — change it in the game editor if needed",
   "Nenhuma imagem parecida com esse nome — tente um nome mais simples ou em inglês": "No image matching that name — try a simpler or English name",
   "Fechar o Ludrix?": "Close Ludrix?",
   "O que fazer quando você clicar no X?": "What should the X button do?",
@@ -1234,7 +1215,6 @@
   "Biblioteca — seus jogos": "Library — your games",
   "Store — baixar jogos das fontes": "Store — download games from sources",
   "Redists — Visual C++, DirectX e outras dependências": "Redists — Visual C++, DirectX and other dependencies",
-  "Modo Game — preparar o PC antes de jogar": "Game Mode — prepare the PC before playing",
   "Jogos rápidos (Flash)": "Quick games (Flash)",
   "Precisa de ajuda?": "Need help?",
   "Todas as categorias": "All categories",
@@ -1326,10 +1306,6 @@
   "Central": "Central",
   "Central Ludrix": "Ludrix Central",
   "tudo o que o PC precisa antes de jogar": "everything the PC needs before playing",
-  "Central Ludrix — otimizar antes de jogar, dependências e programas úteis": "Ludrix Central — optimize before playing, dependencies and useful programs",
-  "Otimizar agora": "Optimize now",
-  "Desligar otimização": "Turn optimization off",
-  "Otimizar antes de jogar": "Optimize before playing",
   "Dependências dos jogos": "Game dependencies",
   "Programas úteis": "Useful programs",
   "ligado": "on",
@@ -1352,8 +1328,6 @@
   "Programas opcionais": "Optional programs",
   "Launchers das lojas, bibliotecas atuais e utilitários. Nada aqui é obrigatório: instale pelo winget ou abra na Microsoft Store.": "Store launchers, current runtimes and utilities. Nothing here is required: install through winget or open in the Microsoft Store.",
   "Três partes": "Three parts",
-  "\"Otimizar antes de jogar\" prepara o PC enquanto o jogo roda; \"Dependências\" resolve jogo que não abre; \"Programas úteis\" é a lista completa dos opcionais.": "\"Optimize before playing\" prepares the PC while the game runs; \"Dependencies\" fixes games that will not open; \"Useful programs\" is the full optional list.",
-  "Liga a otimização na hora, sem abrir jogo nenhum. Ao desligar, tudo volta como estava.": "Turns optimization on right now, without opening a game. Turning it off restores everything.",
   "Jogar ou baixar": "Play or download",
   "O botão principal abre o jogo (ou baixa, se ele ainda não está no PC). Botão direito na capa mostra mais ações.": "The main button opens the game (or downloads it if it is not on the PC yet). Right-click the cover for more actions.",
   "Pasta, saves e edição": "Folder, saves and editing",
@@ -1376,9 +1350,6 @@
   "Rever": "Review",
   "Guias reativados": "Guides re-enabled",
   "Os balões voltam a aparecer na primeira vez que você usar cada parte do Ludrix.": "The balloons will show again the first time you use each part of Ludrix.",
-  "Configure na Central Ludrix, em \"Otimizar antes de jogar\"": "Set it up in Ludrix Central, under \"Optimize before playing\"",
-  "Deixa o PC pronto para jogar: otimização durante o jogo, dependências que os jogos pedem e programas úteis.": "Gets the PC ready to play: optimization while gaming, the dependencies games ask for and useful programs.",
-  "\"Otimizar antes de jogar\" troca o plano de energia e dá prioridade ao jogo; tudo volta ao normal quando ele fecha.": "\"Optimize before playing\" switches the power plan and prioritizes the game; everything returns to normal when it closes.",
   "Se um jogo fecha na hora ou reclama de .dll, instale as dependências marcadas como faltando.": "If a game closes right away or complains about a .dll, install the dependencies marked as missing.",
   "O cartão Opcionais instala launchers e utilitários pelo winget ou abre a página na Microsoft Store.": "The Optional card installs launchers and utilities through winget or opens the Microsoft Store page.",
   "Dependência": "Dependency",
@@ -1627,8 +1598,6 @@
   "Pasta de downloads (temporária)": "Downloads folder (temporary)",
   "Os arquivos chegam em": "Files arrive in",
   ", são extraídos ou instalados e essa pasta é limpa sozinha. O que sobrar de downloads cancelados é apagado quando o Ludrix abre.": ", get extracted or installed and this folder cleans itself. Leftovers from cancelled downloads are deleted when Ludrix opens.",
-  "Procura capa, descrição, ano e gêneros na Steam, GOG e Wikipedia (e no SteamGridDB, se houver chave). Para consoles, usa as capas oficiais de cada sistema. Roda em segundo plano e não repete buscas": "Looks up cover, description, year and genres on Steam, GOG and Wikipedia (and SteamGridDB, if there is a key). For consoles, uses each system's official covers. Runs in the background and never repeats searches",
-  "Quando Steam, GOG, Wikipedia e as capas de console não têm o jogo, procura no Google Imagens, Bing e Yandex e usa a melhor imagem vertical. Útil para mods e jogos raros; pode errar, e a capa pode ser trocada na edição do jogo": "When Steam, GOG, Wikipedia and console covers do not have the game, searches Google Images, Bing and Yandex and uses the best vertical image. Handy for mods and rare games; it can be wrong, and the cover can be changed in the game editor",
   "Refaz capa, nome e informações de toda a biblioteca. Roda em segundo plano; a barra de status mostra o andamento": "Redoes cover, name and info for the whole library. Runs in the background; the status bar shows progress",
   "Atualizar tudo": "Refresh everything",
   "Opcional. Capas e artes em alta resolução": "Optional. High-resolution covers and art",
@@ -2331,7 +2300,41 @@
   "Sem status": "No status",
   "Jogando": "Playing",
   "Zerados": "Beaten",
-  "status": "status"
+  "status": "status",
+  "Procura capa, descrição, ano e gêneros na Steam, GOG e Wikipedia. Para consoles, usa as capas oficiais de cada sistema e a imagem de fundo do jogo. Roda em segundo plano e não repete buscas": "Looks up cover, description, year and genres on Steam, GOG and Wikipedia. For consoles, uses each system's official box art and the game's background image. Runs in the background and never repeats a lookup",
+  "Quando Steam, GOG, Wikipedia e as capas de console não têm o jogo, procura no Bing, DuckDuckGo e Yandex e usa a melhor imagem vertical. Útil para mods e jogos raros; pode errar, e a capa pode ser trocada na edição do jogo": "When Steam, GOG, Wikipedia and console box art don't have the game, searches Bing, DuckDuckGo and Yandex and uses the best vertical image. Useful for mods and rare games; it can be wrong, and the cover can be changed when editing the game",
+  "Nenhuma precisa de chave.": "None needs a key.",
+  "Procura imagens com o nome do jogo no Bing, DuckDuckGo e Yandex e deixa você escolher a capa": "Searches Bing, DuckDuckGo and Yandex for the game name and lets you pick the cover",
+  "Bing, DuckDuckGo e Yandex quando as outras fontes não têm a capa": "Bing, DuckDuckGo and Yandex when the other sources don't have the cover",
+  "Atalho de teclado global": "Global keyboard shortcut",
+  "Mostra ou esconde o Ludrix de qualquer lugar, mesmo com um jogo aberto": "Shows or hides Ludrix from anywhere, even while a game is open",
+  "Tecla do atalho": "Shortcut key",
+  "Clique no campo e pressione a combinação (precisa de Ctrl, Alt, Shift ou Win).": "Click the field and press the combination (needs Ctrl, Alt, Shift or Win).",
+  "pressione as teclas": "press the keys",
+  "Mostrar o jogo no Discord": "Show the game on Discord",
+  "Enquanto um jogo estiver aberto, seu perfil do Discord mostra o nome do jogo, a plataforma, a capa e há quanto tempo você está jogando. Usa o Discord aberto no computador; nada é enviado para fora": "While a game is open, your Discord profile shows the game name, platform, cover and how long you have been playing. Uses the Discord app running on this computer; nothing is sent elsewhere",
+  "ID do aplicativo": "Application ID",
+  "O Discord exige um \"aplicativo\" para mostrar a atividade. É grátis e leva um minuto: entre em discord.com/developers/applications, clique em New Application, dê o nome LudrixHub e copie o Application ID. O nome do aplicativo é o que aparece em \"Jogando\".": "Discord requires an \"application\" to show activity. It is free and takes a minute: open discord.com/developers/applications, click New Application, name it LudrixHub and copy the Application ID. The application name is what shows under \"Playing\".",
+  "conectado ao Discord": "connected to Discord",
+  "Cole o Application ID (só números).": "Paste the Application ID (digits only).",
+  "Criar aplicativo": "Create application",
+  "Sons da interface": "Interface sounds",
+  "Cliques, abrir e fechar com sons curtos e suaves, estilo console": "Short, soft sounds for clicks, opening and closing, console style",
+  "Volume dos sons": "Sound volume",
+  "Toca uma amostra ao escolher.": "Plays a sample when chosen.",
+  "Baixo": "Low",
+  "Não foi possível adicionar": "Could not add",
+  "Jogo de PC": "PC game",
+  "Instalar como jogo de PC? O arquivo é extraído para a pasta de jogos e o jogo entra na biblioteca.": "Install as a PC game? The file is extracted to the games folder and the game joins the library.",
+  "Não foi possível instalar": "Could not install",
+  "Aceito: .exe, .lnk, .url, ROMs, .zip/.7z/.rar ou uma pasta.": "Accepted: .exe, .lnk, .url, ROMs, .zip/.7z/.rar or a folder.",
+  ".exe, .lnk, ROMs, .zip/.7z/.rar ou uma pasta de jogos": ".exe, .lnk, ROMs, .zip/.7z/.rar or a games folder",
+  "Dormir na bandeja": "Sleep in the tray",
+  "Recolhido há mais de 25 s, o Ludrix libera a janela da memória e fica só com o ícone (uns 50 MB em vez de centenas). Downloads, tempo de jogo, Discord e atalho continuam; a janela volta em 1 s": "Hidden for more than 25 s, Ludrix frees the window from memory and keeps only the icon (about 50 MB instead of hundreds). Downloads, playtime, Discord and the shortcut keep working; the window is back in 1 s",
+  "edições e launchers encontrados neste PC": "editions and launchers found on this PC",
+  "bibliotecas que os jogos pedem (Visual C++, DirectX, .NET…)": "libraries games require (Visual C++, DirectX, .NET…)",
+  "Cor acompanha o jogo": "Color follows the game",
+  "Botões e realces tomam a cor dominante da capa do jogo selecionado ou aberto, com transição suave; volta à cor do tema ao sair": "Buttons and highlights take the dominant color of the selected or open game's cover, with a smooth transition; back to the theme color when you leave"
  },
  "patterns": [
   [
@@ -2695,8 +2698,8 @@
    "Found on $1"
   ],
   [
-   "^Imagens para \"(.+)\" no Google Imagens, Bing e Yandex\\.$",
-   "Images for \"$1\" on Google Images, Bing and Yandex."
+   "^Imagens para \"(.+)\" no Bing, DuckDuckGo e Yandex\\.$",
+   "Images for \"$1\" on Bing, DuckDuckGo and Yandex."
   ],
   [
    "^Falta: (.*)\\. O botão Preparar resolve tudo de uma vez; se preferir, isso também é feito na primeira vez que você clicar em Jogar num \\.exe\\.$",
@@ -2909,6 +2912,50 @@
   [
    "^Reinstalar a versão (.*)\\?$",
    "Reinstall version $1?"
+  ],
+  [
+   "^Você jogou (.*)$",
+   "You played $1"
+  ],
+  [
+   "^Total (.*) · desde (.*)$",
+   "Total $1 · since $2"
+  ],
+  [
+   "^Total (.*)$",
+   "Total $1"
+  ],
+  [
+   "^Não reconheci (.*)$",
+   "Did not recognize $1"
+  ],
+  [
+   "^(\\d+) arquivos não reconhecidos$",
+   "$1 files not recognized"
+  ],
+  [
+   "^Esse arquivo pode ser uma ROM de (.*) ou um jogo de PC compactado\\. O que é\\?$",
+   "This file may be a $1 ROM or a packed PC game. Which is it?"
+  ],
+  [
+   "^ROM de (.*)$",
+   "$1 ROM"
+  ],
+  [
+   "^(.*) — acompanhe em Downloads\\.$",
+   "$1 — follow it in Downloads."
+  ],
+  [
+   "^Sessão de (.*)$",
+   "Session of $1"
+  ],
+  [
+   "^(\\d+) jogos adicionados$",
+   "$1 games added"
+  ],
+  [
+   "^1 jogo adicionado$",
+   "1 game added"
   ]
  ]
 }

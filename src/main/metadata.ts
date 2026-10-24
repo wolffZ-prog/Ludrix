@@ -10,9 +10,23 @@ import { WebImageSearch } from './websearch';
 const WIKIDATA_API = 'https://www.wikidata.org/w/api.php';
 const WIKI_API = 'https://en.wikipedia.org/w/api.php';
 const WIKI_API_PT = 'https://pt.wikipedia.org/w/api.php';
-const SGDB = 'https://www.steamgriddb.com/api/v2';
 const PCGW_API = 'https://www.pcgamingwiki.com/w/api.php';
-const PCGW_HEADERS = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) LudrixHub', Accept: 'application/json', 'Accept-Language': 'en-US,en;q=0.9' };
+function appVersion(): string {
+    try {
+        return String(require('./updates').currentVersion().version || '4');
+    }
+    catch {
+        return '4';
+    }
+}
+const PCGW_HEADERS = { 'User-Agent': `LudrixHub/${appVersion()} (https://github.com/wolffZ-prog/Ludrix) Electron`, Accept: 'application/json', 'Accept-Language': 'en-US,en;q=0.9' };
+let pcgwLast = 0;
+async function pcgwSlot() {
+    const wait = pcgwLast + 1100 - Date.now();
+    pcgwLast = Math.max(Date.now(), pcgwLast + 1100);
+    if (wait > 0)
+        await new Promise((r) => setTimeout(r, wait));
+}
 const REQ_PT: Record<string, string> = { OS: 'SO', Processor: 'Processador', Memory: 'Memória', Graphics: 'Placa de vídeo', Storage: 'Armazenamento', 'Hard Drive': 'Espaço em disco', 'Sound Card': 'Placa de som', Sound: 'Som', 'Additional Notes': 'Observações', Network: 'Rede', 'Video Card': 'Placa de vídeo' };
 const PCGW_LABELS: Record<string, string> = { OS: 'SO', CPU: 'Processador', RAM: 'Memória', HD: 'Espaço em disco', GPU: 'Placa de vídeo', VRAM: 'Memória de vídeo', DX: 'DirectX', audio: 'Som', other: 'Outros', notes: 'Observação' };
 
@@ -147,7 +161,7 @@ export class MetadataService {
     static WIKI_MIN_GAP = 0.25;
     static USER_FIELDS = ['developer', 'publisher', 'year', 'genres', 'summary', 'series', 'modes', 'links', 'notes',
         'cover_url', 'cover_src', 'hero_url', 'background_file', 'platforms', 'status', 'score'];
-    static SOURCES = ['steam', 'gog', 'wikipedia', 'wikidata', 'steamgriddb', 'libretro', 'web'];
+    static SOURCES = ['steam', 'gog', 'wikipedia', 'wikidata', 'libretro', 'web'];
     static WIKI_PROPS = { action: 'query', generator: 'search', gsrlimit: 6, gsrprop: 'snippet',
         prop: 'pageimages|extracts|revisions|info|pageprops', ppprop: 'wikibase_item', exintro: 1, explaintext: 1, exlimit: 'max',
         piprop: 'original', pilicense: 'any', rvprop: 'content', rvslots: 'main', rvsection: 0,
@@ -233,7 +247,6 @@ export class MetadataService {
         const clean = normalizeTitle(title);
         const q = cleanTitle(clean) || clean;
         meta.query = q;
-        const sgdbKey = String(this.store.config.sgdb_key || '').trim();
         const wmeta: any = { source: [], system };
         const timing: Record<string, number> = {};
         const t0 = Date.now();
@@ -246,14 +259,8 @@ export class MetadataService {
             jobs.push(['cover_error', () => this.covers!.resolve(meta, q, system, year)]);
         if (this.srcOn('wikipedia'))
             jobs.push(['wiki_error', () => this.wikipedia(wmeta, q, year, system)]);
-        if (sgdbKey && this.srcOn('steamgriddb'))
-            jobs.push(['sgdb_error', () => this.sgdb(meta, q, sgdbKey)]);
         await Promise.all(jobs.map(([errk, fn]) => { const ts = Date.now(); return fn().catch((e: any) => { meta[errk] = String(e?.message || e); }).finally(() => { timing[errk.replace('_error', '')] = Date.now() - ts; }); }));
         tPrev = Date.now();
-        if (meta.grid && system === 'pc' && !['steam', 'gog'].includes(meta.cover_src)) {
-            meta.cover_url = meta.grid;
-            meta.cover_src = 'steamgriddb';
-        }
         if (wmeta.wiki_title) {
             for (const [k, v] of Object.entries(wmeta)) {
                 if (k === 'source' || k === 'system')
@@ -369,6 +376,16 @@ export class MetadataService {
         return meta;
     }
 
+    patch(key: string, fields: any): any | null {
+        const meta = this.get(key);
+        if (!meta)
+            return null;
+        Object.assign(meta, fields);
+        MetadataService.applyUser(meta, meta.user);
+        this.write(key, meta);
+        return meta;
+    }
+
     private write(key: string, meta: any) {
         fs.mkdirSync(path.dirname(this.path(key)), { recursive: true });
         fs.writeFileSync(this.path(key), JSON.stringify(meta, null, 1), 'utf8');
@@ -451,16 +468,6 @@ export class MetadataService {
         }
         else if (source === 'gog' && this.covers) {
             await this.covers.gog(meta, q, year, 0.6);
-        }
-        else if (source === 'steamgriddb') {
-            const sgdbKey = String(this.store.config.sgdb_key || '').trim();
-            if (!sgdbKey)
-                return { error: 'Informe a chave do SteamGridDB em Ajustes → Biblioteca' };
-            await this.sgdb(meta, q, sgdbKey);
-            if (meta.grid) {
-                meta.cover_url = meta.grid;
-                meta.cover_src = 'steamgriddb';
-            }
         }
         else if (source === 'libretro' && this.covers) {
             await this.covers.libretro(meta, q, system !== 'pc' ? system : 'xbox', 0.7);
@@ -692,7 +699,7 @@ export class MetadataService {
 
     static pickCanonical(meta: any, clean: string, system: string) {
         const cands: Array<[number, number, string]> = [];
-        const order: Record<string, number> = { wiki_title: 0, wikidata_title: 1, steam_name: 2, gog_name: 3, sgdb_name: 4, libretro_name: 5 };
+        const order: Record<string, number> = { wiki_title: 0, wikidata_title: 1, steam_name: 2, gog_name: 3, libretro_name: 4 };
         if (system === 'pc')
             delete order.libretro_name;
         for (const [field, pri] of Object.entries(order)) {
@@ -726,7 +733,7 @@ export class MetadataService {
             });
             this.wikiChain = run.catch(() => undefined);
             await run;
-            r = await this.s.get(url, { timeout: 20_000, ...opts });
+            r = await this.s.get(url, { timeout: 20_000, ...opts, headers: { 'User-Agent': PCGW_HEADERS['User-Agent'], ...(opts.headers || {}) } });
             if (r.status === 429 && attempt === 0) {
                 await sleep(Number(r.headers.get('Retry-After') || 3) * 1000);
                 continue;
@@ -819,6 +826,7 @@ export class MetadataService {
     private async pcgw(meta: any, q: string, year = '') {
         let best = meta.pcgw_page || '';
         if (!best) {
+            await pcgwSlot();
             const r = await this.s.get(PCGW_API, { params: { action: 'opensearch', search: q, limit: 6, format: 'json' }, headers: PCGW_HEADERS, timeout: 12_000 });
             if (!r.ok)
                 throw new Error(`HTTP ${r.status}`);
@@ -841,6 +849,7 @@ export class MetadataService {
     }
 
     private async pcgwPage(meta: any, best: string) {
+        await pcgwSlot();
         const r = await this.s.get(PCGW_API, { params: { action: 'parse', page: best, prop: 'wikitext', format: 'json', redirects: 1 }, headers: PCGW_HEADERS, timeout: 15_000 });
         if (!r.ok)
             throw new Error(`HTTP ${r.status}`);
@@ -1012,32 +1021,5 @@ export class MetadataService {
         }
         catch { /* sem infobox */ }
         return box;
-    }
-
-    private async sgdb(meta: any, q: string, key: string) {
-        const h = { Authorization: `Bearer ${key}` };
-        const r = await this.s.get(`${SGDB}/search/autocomplete/${encodeURIComponent(q)}`, { headers: h, timeout: 20_000 });
-        if (!r.ok)
-            throw new Error(`HTTP ${r.status}`);
-        const data: any[] = ((await r.json()).data) || [];
-        if (!data.length)
-            return;
-        const gid = data[0].id;
-        meta.sgdb_id = gid;
-        meta.sgdb_name = data[0].name;
-        const one = async (kind: string, params: any, field: string) => {
-            const rr = await this.s.get(`${SGDB}/${kind}/game/${gid}`, { headers: h, params, timeout: 20_000 });
-            const items: any[] = rr.ok ? (((await rr.json()).data) || []) : [];
-            if (items.length) {
-                meta[field] = items[0].url;
-                meta[field + '_thumb'] = items[0].thumb || items[0].url;
-            }
-        };
-        await Promise.all([
-            one('grids', { dimensions: '600x900', types: 'static', nsfw: 'false' }, 'grid'),
-            one('heroes', { types: 'static', nsfw: 'false' }, 'hero'),
-            one('logos', { types: 'static', nsfw: 'false' }, 'logo'),
-        ].map((p) => p.catch(() => undefined)));
-        meta.source.push('steamgriddb');
     }
 }

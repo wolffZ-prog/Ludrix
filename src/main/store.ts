@@ -32,7 +32,6 @@ const DEFAULT_CONFIG = {
     bg_sites: false,
     auto_rename: true,
     title_overrides: {},
-    sgdb_key: '',
     meta_sources: {},
     torrent_enabled: true,
     torrent_max_down: 0,
@@ -45,6 +44,11 @@ const DEFAULT_CONFIG = {
     dim_not_installed: true,
     home_spot: true,
     tray_enabled: true,
+    tray_sleep: true,
+    hotkey_enabled: true,
+    hotkey: 'Ctrl+Shift+L',
+    discord_enabled: false,
+    discord_app_id: '',
     close_action: 'ask',
     autostart: false,
     rom_dirs: {},
@@ -63,7 +67,7 @@ const DEFAULT_CONFIG = {
     game_backdrop: '',
     backdrop_blur: 10,
     backdrop_dim: 42,
-    accent_from_cover: false,
+    accent_from_cover: true,
     theme_schedule: false,
     theme_light_from: '07:00',
     theme_light_to: '19:00',
@@ -115,8 +119,6 @@ const DEFAULT_CONFIG = {
     game_args: {},
     repos_default_off: true,
     repos_initialized: false,
-    game_mode_auto: false,
-    game_mode_ask: true,
     welcome_done: false,
     console_theme: 'noite',
     console_sound: true,
@@ -129,16 +131,6 @@ const DEFAULT_CONFIG = {
     console_confirm_quit: true,
     console_sort: 'title',
     console_dl_pill: true,
-    guides: true,
-    guides_done: [],
-    start_done: [],
-    start_hide: false,
-    game_mode_plan: 'high',
-    game_mode_quiet: true,
-    game_mode_power: true,
-    game_mode_priority: true,
-    game_mode_reopen: true,
-    game_mode_close: [],
     emu_no_ask: false,
     ui_scale: 0,
     density: 'normal',
@@ -149,6 +141,8 @@ const DEFAULT_CONFIG = {
     language: 'pt-BR',
     popups: true,
     notify_sound: true,
+    ui_sounds: true,
+    ui_sounds_level: 'low',
     repack_auto_open: false,
     notifications: [],
     notif_seen: [],
@@ -412,12 +406,17 @@ class Store {
     /** Config publicado para a interface (sem segredos). */
     publicConfig(extra: any = {}) {
         const c = { ...this.config };
-        c.sgdb_key_set = Boolean(c.sgdb_key);
-        c.sgdb_key = '';
         c.games_dir_effective = this.gamesDir();
         c.downloads_dir = P.DOWNLOADS;
         c.root = P.ROOT;
         c.webview2 = 'electron';
+        c.discord_status = (this as any).discordStatus ? (this as any).discordStatus() : { connected: false, error: '' };
+        try {
+            c.hotkey_status = require('./index').hotkeyStatus;
+        }
+        catch {
+            c.hotkey_status = { ok: false, error: '', accel: '' };
+        }
         c.os = process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'mac' : 'linux';
         c.appimage = Boolean(process.env.APPIMAGE);
         c.frameless = RUNTIME.frameless ?? Boolean(this.config.frameless);

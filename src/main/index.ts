@@ -90,7 +90,12 @@ else {
     });
 }
 /* ------------------------------- janelas ------------------------------- */
-function createWindow(url) {
+let mainUrl = '';
+let standby = false;
+let standbyTimer: any = null;
+let pendingJs: string[] = [];
+function createWindow(url, recreate = false) {
+    mainUrl = url;
     const iconPath = path.join(P.UI, 'icon.png');
     const icon = fs.existsSync(iconPath) ? electron.nativeImage.createFromPath(iconPath) : undefined;
     const frameless = Boolean(backend?.store.config.frameless ?? true) && process.platform === 'win32';
@@ -98,7 +103,7 @@ function createWindow(url) {
     const winBuild = process.platform === 'win32' ? Number((os.release().split('.')[2] || '0')) : 0;
     const acrylic = process.platform === 'win32' && winBuild >= 22621 && backend?.store.config.acrylic !== false;
     store.setRuntimeAcrylic(acrylic);
-    const startHidden = process.argv.includes('--minimized') && backend?.store.config.tray_enabled !== false;
+    const startHidden = !recreate && process.argv.includes('--minimized') && backend?.store.config.tray_enabled !== false;
     const area = electron.screen.getPrimaryDisplay().workAreaSize;
     const width = Math.min(1380, Math.max(640, area.width - 60));
     const height = Math.min(880, Math.max(480, area.height - 110));
@@ -115,6 +120,7 @@ function createWindow(url) {
         autoHideMenuBar: true,
         icon,
         webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
             contextIsolation: true,
             nodeIntegration: false,
             sandbox: true,
@@ -137,8 +143,11 @@ function createWindow(url) {
         }
     });
     win.once('ready-to-show', () => {
-        if (!startHidden)
+        if (!startHidden) {
             win?.show();
+            if (recreate)
+                win?.focus();
+        }
         if (backend)
             win?.setTitle(`Ludrix ${backend.publicConfig().version || ''}`.trim());
     });
@@ -150,9 +159,15 @@ function createWindow(url) {
     });
     win.on('closed', () => {
         win = null;
+        if (standby) {
+            standby = false;
+            return;
+        }
         allowClose = true;
         electron.app.quit();
     });
+    win.on('show', () => { clearTimeout(standbyTimer); standbyTimer = null; });
+    win.on('hide', () => scheduleStandby());
     void win.loadURL(url);
     // erros de JS da interface vao para o mesmo log do launcher
     win.webContents.on('console-message', (_e, level, message, line, sourceId) => {
@@ -162,6 +177,10 @@ function createWindow(url) {
     win.webContents.on('did-fail-load', (_e, code, desc) => log.error('falha ao carregar a interface: %s %s', code, desc));
     // a interface sem moldura avisa quando o mouse solta, para parar o resize
     win.webContents.on('did-finish-load', () => {
+        if (pendingJs.length) {
+            const codes = pendingJs.splice(0);
+            setTimeout(() => { for (const c of codes) win?.webContents.executeJavaScript(c, true).catch((e) => log.warn('bandeja js: %s', e)); }, 900);
+        }
         win?.webContents.executeJavaScript(`
       window.addEventListener('mouseup', function () {
         try {
@@ -237,16 +256,87 @@ function createConsoleWindow(url) {
 let trayTold = false;
 export let frameLast: any = {};
 export function setFrameLast(v: any) { frameLast = v; }
-function showWindow() {
-    if (!win)
+function scheduleStandby() {
+    clearTimeout(standbyTimer);
+    standbyTimer = null;
+    if (!win || CONSOLE)
         return;
+    const cfg = backend?.store.config || {};
+    if (cfg.tray_sleep === false || !canTray())
+        return;
+    standbyTimer = setTimeout(() => {
+        standbyTimer = null;
+        if (!win || win.isVisible() || !canTray() || (backend?.store.config || {}).tray_sleep === false)
+            return;
+        standby = true;
+        const w = win;
+        win = null;
+        try {
+            w.destroy();
+            log.info('em espera na bandeja: janela liberada da memória');
+        }
+        catch (e) {
+            standby = false;
+            win = w;
+            log.warn('em espera: %s', e);
+        }
+    }, 25_000);
+    standbyTimer.unref?.();
+}
+function showWindow() {
+    if (!win) {
+        if (mainUrl && !CONSOLE)
+            createWindow(mainUrl, true);
+        return;
+    }
     if (!win.isVisible())
         win.show();
     if (win.isMinimized())
         win.restore();
     win.focus();
 }
+function runJs(code: string) {
+    if (win && !win.webContents.isLoading())
+        win.webContents.executeJavaScript(code, true).catch((e) => log.warn('bandeja js: %s', e));
+    else
+        pendingJs.push(code);
+}
 let quitting = false;
+export let hotkeyStatus: { ok: boolean; error: string; accel: string } = { ok: false, error: '', accel: '' };
+function applyHotkey() {
+    const gs = electron.globalShortcut;
+    if (!gs)
+        return hotkeyStatus;
+    try {
+        gs.unregisterAll();
+    }
+    catch { /* nada */ }
+    const cfg = backend?.store.config || {};
+    const accel = String(cfg.hotkey || '').trim();
+    if (cfg.hotkey_enabled === false || !accel || CONSOLE) {
+        hotkeyStatus = { ok: false, error: '', accel };
+        return hotkeyStatus;
+    }
+    try {
+        const ok = gs.register(accel, () => {
+            if (!win) {
+                showWindow();
+                return;
+            }
+            if (win.isVisible() && win.isFocused() && !win.isMinimized())
+                hideWindow();
+            else
+                showWindow();
+        });
+        hotkeyStatus = ok ? { ok: true, error: '', accel } : { ok: false, error: 'Esse atalho já está em uso por outro programa.', accel };
+    }
+    catch (e: any) {
+        hotkeyStatus = { ok: false, error: 'Atalho inválido.', accel };
+    }
+    if (!hotkeyStatus.ok && hotkeyStatus.error)
+        log.warn('atalho global %s: %s', accel, hotkeyStatus.error);
+    return hotkeyStatus;
+}
 function canTray() {
     return Boolean(backend && backend.store.config.tray_enabled !== false && trayMod.present());
 }
@@ -457,12 +547,14 @@ async function main() {
             return { ok: true };
         },
         show: () => showWindow(),
+        hotkey: () => applyHotkey(),
     };
     if (CONSOLE)
         createConsoleWindow(`http://127.0.0.1:${server.port}/console`);
     else {
         createWindow(`http://127.0.0.1:${server.port}/index.html`);
-        trayMod.build({ be: backend, show: () => showWindow(), quit: () => quitApp(), js: (code) => { showWindow(); win?.webContents.executeJavaScript(code, true).catch((e) => log.warn('bandeja js: %s', e)); }, frameLast: () => frameLast });
+        applyHotkey();
+        trayMod.build({ be: backend, show: () => showWindow(), quit: () => quitApp(), js: (code) => { showWindow(); runJs(code); }, frameLast: () => frameLast });
     }
     // prepara as pastas e a biblioteca em segundo plano
     setTimeout(() => backend?.bootstrapRun(), 800);
@@ -485,7 +577,7 @@ async function main() {
         try {
             backend.gamepad = new gamepadMod.GamepadWatcher(backend.store, (why) => {
                 showWindow();
-                win?.webContents.executeJavaScript(`window.onGamepadWake && onGamepadWake('${why}')`, true).catch(() => undefined);
+                runJs(`window.onGamepadWake && onGamepadWake('${why}')`);
             });
             gamepadMod.setWatcher(backend.gamepad);
             if (backend.store.config.gamepad_wake)
@@ -531,6 +623,10 @@ async function main() {
     electron.app.on('before-quit', () => {
         allowClose = true;
         quitting = true;
+        try {
+            electron.globalShortcut.unregisterAll();
+        }
+        catch { /* nada */ }
         imgdecode.shutdown();
         backend?.shutdown();
         server?.close();
@@ -545,6 +641,8 @@ async function main() {
 process.on('SIGTERM', () => quitApp());
 process.on('SIGINT', () => quitApp());
 electron.app.on('window-all-closed', () => {
+    if (standby || (!win && mainUrl && !allowClose))
+        return;
     electron.app.quit();
 });
 /* --------------------- arquivos abertos no launcher --------------------- */

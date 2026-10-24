@@ -355,8 +355,6 @@ async function routeGet(req, res, p, q, be, getWindow) {
         return sendJson(res, be.contextActions(decodeURIComponent(p.slice(13))));
     if (p.startsWith('/api/exes/'))
         return sendJson(res, be.exesOf(decodeURIComponent(p.slice(10))));
-    if (p === '/api/gamemode')
-        return sendJson(res, await be.gameModeStatus());
     if (p === '/api/hardware')
         return sendJson(res, await be.hardware(q.get('force') === '1'));
     if (p === '/api/bootstrap')
@@ -394,6 +392,8 @@ async function routePost(req, res, p, _q, be, getWindow) {
     // ---- configuracao ----
     if (p === '/api/config')
         return sendJson(res, be.setConfig(b || {}));
+    if (p === '/api/discord/test')
+        return sendJson(res, await be.discord.test());
     if (p === '/api/config/reset')
         return sendJson(res, be.resetConfig(b?.keys || []));
     if (p === '/api/autostart')
@@ -419,6 +419,8 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, be.toggleHidden(b.key));
     if (p === '/api/local/add')
         return sendJson(res, await be.addLocalGame(b.exe, b.title));
+    if (p === '/api/drop/classify')
+        return sendJson(res, be.classifyDrop(Array.isArray(b.paths) ? b.paths : []));
     if (p === '/api/local/guess')
         return sendJson(res, be.localGuess(b.path || ''));
     if (p === '/api/rename')
@@ -502,10 +504,6 @@ async function routePost(req, res, p, _q, be, getWindow) {
     if (p === '/api/custom/export')
         return sendJson(res, be.customUX.export(String(b?.name || ''), String(b?.dest || '')));
     // ---- sistema ----
-    if (p === '/api/gamemode/run')
-        return sendJson(res, await be.gameModeRun());
-    if (p === '/api/gamemode/restore')
-        return sendJson(res, await be.gameModeRestore());
     if (p === '/api/cache/clear')
         return sendJson(res, await be.clearCache(b.what || []));
     if (p === '/api/notifications/ack')
@@ -540,6 +538,10 @@ async function windowCmd(b, getWindow, be) {
     const cmd = String(b?.cmd || '');
     if (cmd === 'ctx')
         return ctxMenu(b, win, be);
+    if (cmd === 'show') {
+        be.windowHooks?.show?.();
+        return { ok: true };
+    }
     if (!win)
         return { ok: false, error: 'janela indisponivel' };
     switch (cmd) {

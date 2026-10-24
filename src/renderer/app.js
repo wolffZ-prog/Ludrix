@@ -45,8 +45,6 @@ const api = (() => {
       'app.url': url => A.post('/api/open_url', { url }),
       'window': cmd => winCmd(cmd),
       'theme.set': id => setCfg({ theme: id }),
-      'gamemode.run': () => A.post('/api/gamemode/run', {}),
-      'gamemode.restore': () => A.post('/api/gamemode/restore', {}),
       'backup.export': () => A.post('/api/backup/export', {}),
       'backup.import': path => A.post('/api/backup/import', { path }),
       'search': q => { S.q = q || ''; const i = $('#q'); if (i) i.value = S.q; if (!['home', 'store'].includes(S.view)) setView('home'); else renderLibrary(); return Promise.resolve({ ok: true, count: visible().length }); },
@@ -62,6 +60,25 @@ const SEP = () => S.config.os === 'windows' ? '\\' : '/';
 const STATUS = [['plan', 'Planejo jogar'], ['playing', 'Jogando'], ['played', 'Jogado'], ['beaten', 'Zerado'], ['completed', 'Completado 100%'], ['on_hold', 'Em espera'], ['abandoned', 'Abandonado']];
 const statusName = id => (STATUS.find(x => x[0] === id) || [])[1] || '';
 const scoreHtml = (n, cls) => n ? `<span class="score ${cls || ''}" title="Sua nota">${'★'}${n}</span>` : '';
+async function discordTest() {
+  const r = await api.post('/api/discord/test', {});
+  if (r && r.ok) toast('ok', 'Discord conectado', 'A atividade aparece quando um jogo abrir.'); else toast('warn', 'Discord', (r && r.error) || 'Não conectou.');
+  renderSettings();
+}
+function hotkeyCapture(e, el) {
+  e.preventDefault(); e.stopPropagation();
+  const k = e.key;
+  if (['Control', 'Shift', 'Alt', 'Meta', 'OS'].includes(k)) return;
+  const mods = []; if (e.ctrlKey) mods.push('Ctrl'); if (e.altKey) mods.push('Alt'); if (e.shiftKey) mods.push('Shift'); if (e.metaKey) mods.push('Super');
+  if (k === 'Escape' && !mods.length) { el.blur(); return; }
+  if (!mods.length) { toast('warn', 'Use um modificador', 'Combine com Ctrl, Alt, Shift ou Win.'); return; }
+  const map = { ' ': 'Space', ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right', Escape: 'Esc', Enter: 'Return', '+': 'Plus' };
+  let key = map[k] || k;
+  if (key.length === 1) key = key.toUpperCase();
+  if (!/^([A-Z0-9]|F[1-9]|F1[0-9]|F2[0-4]|Space|Up|Down|Left|Right|Esc|Return|Tab|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Plus|[-=,.;'`\\/\[\]])$/.test(key)) { toast('warn', 'Tecla não aceita', 'Use letra, número, F1–F24 ou setas.'); return; }
+  const accel = [...mods, key].join('+'); el.value = accel; el.dataset.old = accel; el.blur();
+  setCfg({ hotkey: accel }).then(r => { const st = r && r.hotkey_status; if (st && st.error) toast('err', 'Atalho não registrado', st.error); else toast('ok', 'Atalho salvo', accel); renderSettings(); });
+}
 async function setStatus(key, status) { const r = await api.post('/api/edit/save', { key, data: { status } }); if (r.error) return toast('err', 'Não foi possível salvar', r.error); const g = S.byKey[key]; if (g) { g.status = status; S._poolKey = ''; } if (S.det && S.det.key === key) { S.det.meta = { ...(S.det.meta || {}), status }; renderDetail(); } toast('ok', status ? statusName(status) : 'Sem status', g ? g.title : ''); loadCatalog(); }
 const OSN = () => S.config.os === 'windows' ? 'Windows' : S.config.os === 'mac' ? 'macOS' : 'Linux';
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -395,7 +412,7 @@ function appMenu(x, y) {
     { label: 'Emuladores', icon: 'gamepad', sub: [
       { label: 'Emuladores e consoles', icon: 'gamepad', fn: go('emulation') }, { label: 'Meu próprio emulador…', icon: 'plus', fn: () => addCustomEmu() }, { label: 'Pasta emulation\\games', icon: 'folder', fn: () => openPath(S.emu?.games_root || 'emulation/games') }, { label: 'Pasta de BIOS', icon: 'folder', fn: () => openPath(S.emu?.bios_dir || 'emulation/bios') }] },
     { label: 'Ferramentas', icon: 'wrench', sub: [
-      { label: 'Mods e ferramentas', icon: 'wrench', fn: go('mods') }, { label: 'Central Ludrix', icon: 'chip', fn: go('central') }, { label: 'Otimizar agora', icon: 'bolt', fn: gamemodeRun }, { label: 'Jogos Rápidos', icon: 'play', fn: go('flash') }] },
+      { label: 'Mods e ferramentas', icon: 'wrench', fn: go('mods') }, { label: 'Central Ludrix', icon: 'chip', fn: go('central') }, { label: 'Jogos Rápidos', icon: 'play', fn: go('flash') }] },
     { label: 'Aparência', icon: 'image', sub: [
       { label: 'Aparência e temas…', icon: 'image', fn: set('appearance') },
       ...(S.config.os === 'windows' ? [{ label: S.config.frameless ? 'Usar moldura do Windows' : 'Janela sem moldura', icon: 'win', fn: () => setCfg({ frameless: !S.config.frameless }) }] : []), { sep: true },
@@ -417,7 +434,7 @@ function viewMenu(view, x, y) {
     emulation: [{ label: 'Meu próprio emulador…', icon: 'plus', fn: () => addCustomEmu() }, { label: 'Pasta emulation', icon: 'folder', fn: () => openPath(S.emu?.games_root) }],
     flash: [{ label: 'Adicionar jogo rápido…', icon: 'plus', fn: () => setTimeout(() => addFlashMenu({ clientX: x, clientY: y }), 30) }, { label: 'Baixar mais', icon: 'dl', fn: () => { S.tab.flash = 'more'; S.flashF = 'all'; renderFlash(); } }],
     downloads: [{ label: 'Baixar de link…', icon: 'dl', fn: linkDownload }, { label: 'Abrir pasta downloads', icon: 'folder', fn: () => openPath('downloads') }],
-    central: [{ label: 'Otimizar agora', icon: 'bolt', fn: gamemodeRun }, { label: 'Abrir pasta redists', icon: 'folder', fn: () => api.post('/api/redist/open', {}) }, { label: 'Re-checar instalados', icon: 'refresh', fn: () => { S.opt = null; renderCentral(); } }],
+    central: [{ label: 'Abrir pasta redists', icon: 'folder', fn: () => api.post('/api/redist/open', {}) }, { label: 'Re-checar instalados', icon: 'refresh', fn: () => renderCentral() }],
     settings: [{ label: 'Abrir pasta data', icon: 'folder', fn: () => openPath('data') }, { label: 'Abrir log', icon: 'ext', fn: () => openPath('data/ludrix.log') }],
   }[view] || [];
   const base = [{ label: 'Atualizar esta tela', icon: 'refresh', fn: renderView }];
@@ -556,8 +573,7 @@ async function quietCatalogRefresh() {
 
 document.querySelectorAll('.rb').forEach(b => b.onclick = () => setView(b.dataset.view));
 function setView(v) {
-  if (v === 'redists' || v === 'gamemode') { S.tab.central = v === 'redists' ? 'redists' : 'optimize'; v = 'central'; }
-  if (v === 'central' && S.config.welcome_done && !(S.config.start_done || []).includes('central')) startGo('central');
+  if (v === 'redists' || v === 'gamemode') { S.tab.central = 'redists'; v = 'central'; }
   if (v === S.view && !S.current && !$('#modal').classList.contains('on')) { $('#view').scrollTop = 0; return; }
   { const vw = $('#view'); vw.classList.remove('vin'); void vw.offsetWidth; vw.classList.add('vin'); clearTimeout(S._vinT); S._vinT = setTimeout(() => vw.classList.remove('vin'), 400); }
   if (S._metaDirty && ['home', 'store'].includes(v)) { S._metaDirty = false; api.get('/api/catalog').then(d => { if (d && !d.loading) { setGames(d.games || []); if (['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'home') refreshHome(); } }); }
@@ -1193,19 +1209,34 @@ function setHero(key, url) {
   const det = $('#detail'); det.classList.remove('nohero'); $('#dBg').style.backgroundImage = `url(${url})`;
   const im = new Image(); im.onerror = () => { if (S.current === key) det.classList.add('nohero'); }; im.src = url;
 }
+function vtRun(fn, tag) {
+  const off = document.documentElement.dataset.anim === 'off' || !document.startViewTransition;
+  if (off) { fn(); return Promise.resolve(); }
+  document.documentElement.dataset.vt = tag || '';
+  let t; try { t = document.startViewTransition(fn); } catch (_) { fn(); return Promise.resolve(); }
+  return t.finished.catch(() => undefined).finally(() => { delete document.documentElement.dataset.vt; });
+}
+function cardImg(key) { return document.querySelector(`.card[data-key="${CSS.escape(key)}"] img, .srow[data-key="${CSS.escape(key)}"] img`); }
 async function openGame(key) {
+  uiSound('open');
   S.current = key; S.dtab = 'about'; const g = S.byKey[key] || { title: '...' };
   if (S.config.accent_from_cover) { S._focusKey = key; dynAccent(key); }
   setHero(key, `/hero/${enc(key)}`);
-  $('#dWrap').innerHTML = `<div class="dcov"><img src="/cover/${enc(key)}" alt="${esc((g.title || '?').trim().charAt(0).toUpperCase())}" onerror="dph(this)"></div><div class="dmain"><h1>${esc(g.title)}</h1><div class="meta"><span class="pill">carregando…</span></div></div>`;
-  $('#detail').classList.add('on'); $('#detail').scrollTop = 0;
+  const src = cardImg(key); if (src) src.style.viewTransitionName = 'gcov';
+  await vtRun(() => {
+    if (src) src.style.viewTransitionName = '';
+    $('#dWrap').innerHTML = `<div class="dcov"><img src="/cover/${enc(key)}" alt="${esc((g.title || '?').trim().charAt(0).toUpperCase())}" onerror="dph(this)"></div><div class="dmain"><h1>${esc(g.title)}</h1><div class="meta"><span class="pill">carregando…</span></div></div>`;
+    $('#detail').classList.add('on'); $('#detail').scrollTop = 0;
+  }, 'open');
+  if (S.current !== key) return;
   const d = await api.get('/api/game/' + enc(key));
   if (S.current !== key) return;
   if (d.error) { toast('err', 'Não foi possível concluir', d.error); return; }
   S.det = d; renderDetail(); guide('detail');
   if (!d.meta && S.config.auto_metadata && d.kind !== 'emulator') fetchMeta(key, false, true);
 }
-function closeDetail() { const was = S.current; S.current = null; $('#detail').classList.remove('on'); $('#detail').classList.remove('bar'); if (S._dObs) { S._dObs.disconnect(); S._dObs = null; } if (G.id === 'detail') guideDismiss(); if (was && S.config.accent_from_cover) { if (S.view === 'home' && S.stageKey) gameFocus(S.stageKey); else { S._focusKey = ''; dynAccent(null); } } }
+function closeDetail() { if (!S.current) return closeDetailNow(); uiSound('back'); const was = S.current; const src = cardImg(was); vtRun(() => { closeDetailNow(); if (src) src.style.viewTransitionName = 'gcov'; }, 'close').then(() => { if (src) src.style.viewTransitionName = ''; }); }
+function closeDetailNow() { const was = S.current; S.current = null; $('#detail').classList.remove('on'); $('#detail').classList.remove('bar'); if (S._dObs) { S._dObs.disconnect(); S._dObs = null; } if (was && S.config.accent_from_cover) { if (S.view === 'home' && S.stageKey) gameFocus(S.stageKey); else { S._focusKey = ''; dynAccent(null); } } }
 $('#dClose').onclick = closeDetail;
 function renderDetail() {
   const d = S.det; if (!d) return; const key = d.key, job = S.jobs[key], m = d.meta || {};
@@ -1263,8 +1294,9 @@ function renderDetail() {
   ].filter(x => x && x[1]);
   const lbl = [d.system_name || 'PC', m.developer || d.creator, m.year || d.year].filter(Boolean).map(esc).join(' &nbsp;·&nbsp; ') + (live ? ' &nbsp;·&nbsp; <b>Jogando agora</b>' : d.missing ? ' &nbsp;·&nbsp; <b style="color:var(--amber)">Arquivo não encontrado</b>' : d.installed || isRom ? ' &nbsp;·&nbsp; <b>Instalado</b>' : '');
   $('#detail').classList.toggle('art', !!(m.hero || m.hero_url || m.background_file));
+  const dimg = !!((S.byKey[key] || {}).hero_ok || m.hero || m.hero_url || m.background_file) && (S.config.detail_art || 'auto') !== 'off';
   $('#dWrap').innerHTML = `
-    <div class="dhero" id="dHero"><div class="dcov"><img src="/cover/${enc(key)}?v=${(S.byKey[key] || {}).cv || m.fetched_at || 0}" alt="${esc((d.title || '?').trim().charAt(0).toUpperCase())}" onload="dbandColor(this)" onerror="dph(this)"><div class="covedit"><button class="btn s xs" onclick="setCover(${jsq(key)})" title="Usar uma imagem minha como capa">${I.image} Trocar capa</button>${d.custom_cover ? `<button class="btn s xs" onclick="resetCover(${jsq(key)})" title="Voltar à capa original">${I.refresh}</button>` : ''}</div></div>
+    <div class="dhero${dimg ? ' himg' : ''}" id="dHero"${dimg ? ` style="--dimg:url('/hero/${enc(key)}?v=${(S.byKey[key] || {}).cv || 0}')"` : ''}><div class="dcov"><img src="/cover/${enc(key)}?v=${(S.byKey[key] || {}).cv || m.fetched_at || 0}" alt="${esc((d.title || '?').trim().charAt(0).toUpperCase())}" onload="dbandColor(this)" onerror="dph(this)"><div class="covedit"><button class="btn s xs" onclick="setCover(${jsq(key)})" title="Usar uma imagem minha como capa">${I.image} Trocar capa</button>${d.custom_cover ? `<button class="btn s xs" onclick="resetCover(${jsq(key)})" title="Voltar à capa original">${I.refresh}</button>` : ''}</div></div>
     <div class="dhead"><div class="dlbl">${lbl}</div><h1>${esc(d.title)}</h1>
       <div class="meta">${isLocal ? `<span class="pill">${d.source === 'playnite' ? 'Importado do Playnite' : 'Adicionado manualmente'}</span>` : ''}${d.playtime > 60 ? `<span class="pill">${clock} ${esc(d.playtime_h)}</span>` : ''}${isRecomp ? '<span class="pill ac">Recompilação nativa</span>' : ''}${isRom ? `<span class="pill ac">${esc(d.system_name)}</span>` : ''}
         ${genres.slice(0, 3).map(x => `<span class="pill">${esc(x)}</span>`).join('')}${m.year || d.year ? `<span class="pill">${esc(m.year || d.year)}</span>` : ''}${d.size ? `<span class="pill">${fmt(d.size)}</span>` : ''}${d.meta ? `<span class="pill" title="${esc([].concat(m.source || []).join(', '))}">${I.spark} meta</span>` : ''}</div>
@@ -1416,18 +1448,17 @@ async function installNow(key, torrent, picked, where) {
   S.jobs[key] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on');
   if (S.det && S.det.key === key) renderDetail(); pollSoon();
 }
-async function play(key, after, emulator, optimize, force) {
+async function play(key, after, emulator, _unused, force) {
   const mode = S.config.after_launch || 'ask';
   if (!after && mode === 'ask') return askAfter(key);
   S._after = after;
-  if (optimize === undefined) optimize = S._optimize; S._optimize = undefined;
   busyCursor(true); const busyT = setTimeout(() => busyCursor(false), 8000);
-  const r = await api.post('/api/play', { key, after: after || undefined, emulator: emulator || undefined, optimize, force: force || undefined }).catch(() => ({ error: 'offline' }));
+  const r = await api.post('/api/play', { key, after: after || undefined, emulator: emulator || undefined, force: force || undefined }).catch(() => ({ error: 'offline' }));
   clearTimeout(busyT); if (r.ok) { setTimeout(() => busyCursor(false), 2500); launchShow(key); } else busyCursor(false);
   if (r.missing) return missingDialog(key, r);
   if (r.running) return toast('warn', 'Já está aberto', (S.byKey[key] || {}).title || '', [{ label: 'Encerrar o jogo', fn: () => stopGame(key) }, { label: 'OK', fn: () => {} }]);
   if (r.need_mc_launcher) return mcNeedLauncher(r); if (r.mc_missing === 'bedrock') return mcNeedBedrock(r);
-  if (r.choose_emulator) { S._optimize = optimize; return chooseEmulator(key, r.choose_emulator, r.default, r.missing_default); } if (r.error === 'emu_missing') { modal({ title: 'Emulador necessário', text: r.message, ok: 'Ir para Emuladores', cancel: 'Não fazer nada', onOk: () => setView('emulation') }); } else if (r.error === 'needs_setup') { modal({ title: 'Falta configurar o emulador', text: r.message, ok: 'Abrir guia', cancel: 'Não fazer nada', onOk: () => emuGuide(r.system, () => {}), buttons: [{ label: 'Abrir mesmo assim', fn: () => play(key, after, emulator, optimize, true) }] }); } else if (r.error && r.linux_runner) { modal({ title: 'Falta um componente do sistema', text: r.error, ok: 'Ajustes', cancel: 'Fechar', onOk: () => { setView('settings'); S.tab.settings = 'play'; renderSettings(true); } }); } else if (r.error) toast('err', 'Não foi possível abrir', r.error); else if (r.preparing) { toast('info', 'Preparando o Proton', r.hint, [{ label: 'Ver fila', fn: () => setView('queue') }]); } else { toast('ok', 'Jogo aberto', r.hint || (r.tracked ? 'Contando o tempo de jogo…' : '')); S.sessions = S.sessions || {}; S.sessions[key] = { since: Date.now() / 1000 }; applyPlaying(); if (S.det && S.det.key === key) renderDetail(); pollSoon(); } }
+  if (r.choose_emulator) { return chooseEmulator(key, r.choose_emulator, r.default, r.missing_default); } if (r.error === 'emu_missing') { modal({ title: 'Emulador necessário', text: r.message, ok: 'Ir para Emuladores', cancel: 'Não fazer nada', onOk: () => setView('emulation') }); } else if (r.error === 'needs_setup') { modal({ title: 'Falta configurar o emulador', text: r.message, ok: 'Abrir guia', cancel: 'Não fazer nada', onOk: () => emuGuide(r.system, () => {}), buttons: [{ label: 'Abrir mesmo assim', fn: () => play(key, after, emulator, optimize, true) }] }); } else if (r.error && r.linux_runner) { modal({ title: 'Falta um componente do sistema', text: r.error, ok: 'Ajustes', cancel: 'Fechar', onOk: () => { setView('settings'); S.tab.settings = 'play'; renderSettings(true); } }); } else if (r.error) toast('err', 'Não foi possível abrir', r.error); else if (r.preparing) { toast('info', 'Preparando o Proton', r.hint, [{ label: 'Ver fila', fn: () => setView('queue') }]); } else { toast('ok', 'Jogo aberto', r.hint || (r.tracked ? 'Contando o tempo de jogo…' : '')); S.sessions = S.sessions || {}; S.sessions[key] = { since: Date.now() / 1000 }; applyPlaying(); if (S.det && S.det.key === key) renderDetail(); pollSoon(); } }
 
 async function linuxStatus() {
   const el = $('#lxst'); if (!el) return; const st = await api.get('/api/linux'); if (!st || !st.linux) return;
@@ -1517,7 +1548,7 @@ function edRender() {
     h = `<div class="gmedia">
       <div class="gmi"><b>Capa</b><div class="gmimg cov"><img src="${f.cover_url && f.cover_url !== (i.cover_src === 'manual' ? i.cover_url : '') ? esc(f.cover_url) : `/cover/${enc(i.key)}?v=${cv}`}" referrerpolicy="no-referrer" onerror="if(ED.webThumb&&this.src!==ED.webThumb){this.src=ED.webThumb}else{this.style.opacity=.15}"></div>
         <span class="gsub">${i.custom_cover ? 'imagem sua' : i.cover_src ? 'de ' + esc({ steam: 'Steam', gog: 'GOG', wikipedia: 'Wikipedia', libretro: 'boxart', steamgriddb: 'SteamGridDB', manual: 'link seu', web: 'imagens da web' }[i.cover_src] || i.cover_src) : 'sem capa'}</span>
-        <div class="row">${i.native ? `<button class="btn s xs" onclick="edPickCover()">${I.image} Escolher imagem…</button>` : ''}<button class="btn s xs" onclick="edWebCovers()" title="Procura imagens com o nome do jogo no Google Imagens, Bing e Yandex e deixa você escolher a capa">${I.search} Procurar capa na web…</button>${i.custom_cover ? `<button class="btn s xs" onclick="resetCover(ED.key).then(()=>editGame(ED.key,'midia'))">${I.refresh} Remover a minha</button>` : ''}</div>
+        <div class="row">${i.native ? `<button class="btn s xs" onclick="edPickCover()">${I.image} Escolher imagem…</button>` : ''}<button class="btn s xs" onclick="edWebCovers()" title="Procura imagens com o nome do jogo no Bing, DuckDuckGo e Yandex e deixa você escolher a capa">${I.search} Procurar capa na web…</button>${i.custom_cover ? `<button class="btn s xs" onclick="resetCover(ED.key).then(()=>editGame(ED.key,'midia'))">${I.refresh} Remover a minha</button>` : ''}</div>
         <label class="gr"><span>ou link da imagem</span>${inp('cover_url', 'https://…/capa.jpg')}</label></div>
       <div class="gmi"><b>Fundo (hero)</b><div class="gmimg hero"><img src="${f.hero_url && f.hero_url !== (i.user.includes('hero_url') ? i.hero_url : '') ? esc(f.hero_url) : `/hero/${enc(i.key)}?v=${cv}`}" referrerpolicy="no-referrer" onerror="if(ED.heroThumb&&this.src!==ED.heroThumb){this.src=ED.heroThumb}else{this.style.opacity=.15}"></div>
         <span class="gsub">aparece atrás da página do jogo e no palco</span>
@@ -1632,9 +1663,9 @@ async function edProbe(source) {
   edProbeShow(source, r, () => edProbeMenu());
 }
 function edProbeShow(source, r, back) {
-  const name = r.canonical_title || r.wiki_title || r.wikidata_title || r.steam_name || r.gog_name || r.sgdb_name || r.libretro_name || '';
+  const name = r.canonical_title || r.wiki_title || r.wikidata_title || r.steam_name || r.gog_name || r.libretro_name || '';
   const fields = [['title', 'Nome', name], ['developer', 'Desenvolvedora', r.developer], ['publisher', 'Publicadora', r.publisher], ['year', 'Ano', r.year], ['genres', 'Gêneros', (r.genres || []).join(', ')], ['series', 'Série', r.series], ['modes', 'Modos', r.modes], ['summary', 'Descrição', r.summary], ['cover', 'Capa', r.cover_url && 'imagem encontrada'], ['hero', 'Fundo', r.hero_url && 'imagem encontrada']].filter(x => x[2]);
-  const SRC_NAME = { steam: 'Steam', gog: 'GOG', wikipedia: 'Wikipedia', wikidata: 'Wikidata', steamgriddb: 'SteamGridDB', libretro: 'boxart de console', web: 'imagens da web' };
+  const SRC_NAME = { steam: 'Steam', gog: 'GOG', wikipedia: 'Wikipedia', wikidata: 'Wikidata', libretro: 'boxart de console', web: 'imagens da web' };
   modal({ title: `Encontrado em ${SRC_NAME[source] || source}`, wide: true, ok: 'Aplicar marcados', cancel: 'Voltar', onCancel: back,
     html: `<div class="gprobe">${r.cover_url ? `<img src="${esc(r.cover_url)}" referrerpolicy="no-referrer">` : '<div></div>'}<div class="gpf">${fields.map(([k, l, v]) => `<label><input type="checkbox" data-pf="${k}" checked><b>${l}</b><span>${esc(String(v)).slice(0, 400)}</span></label>`).join('')}</div></div>`,
     onOk: () => {
@@ -1656,7 +1687,7 @@ async function edWebCovers(kind) {
   ED.ws = { kind, q: kind === 'hero' ? `"${title}" wallpaper` : `"${title}" cover`, engine: 'auto', page: 0, more: false, busy: false, hits: [] };
   ED.web = []; ED.webKind = kind;
   modal({ title: kind === 'hero' ? 'Escolha o fundo' : 'Escolha a capa', wide: true, noOk: true, cancel: 'Voltar', onCancel: () => edReopen('midia'),
-    html: `<div class="wsbar"><input class="mi" id="wsQ" value="${esc(ED.ws.q)}" placeholder="O que procurar…"><select class="mi" id="wsE"><option value="auto">Automático</option><option value="google">Google</option><option value="bing">Bing</option><option value="duckduckgo">DuckDuckGo</option><option value="yandex">Yandex</option></select><button class="btn p sm" onclick="edWebGo()">${I.search} Buscar</button></div>
+    html: `<div class="wsbar"><input class="mi" id="wsQ" value="${esc(ED.ws.q)}" placeholder="O que procurar…"><select class="mi" id="wsE"><option value="auto">Automático</option><option value="bing">Bing</option><option value="duckduckgo">DuckDuckGo</option><option value="yandex">Yandex</option></select><button class="btn p sm" onclick="edWebGo()">${I.search} Buscar</button></div>
       <p class="mut" style="font-size:12px;margin:6px 0 0">Clique na imagem. Ela é baixada ao salvar e fica guardada com o jogo.</p>
       <div class="gweb${kind === 'hero' ? ' wide' : ''}" id="wsGrid"></div><div class="wsfoot" id="wsFoot"></div>` });
   $('#modalBox').classList.add('ged-box');
@@ -1669,7 +1700,7 @@ async function edWebCovers(kind) {
 function edWebRender() {
   const g = $('#wsGrid'), f = $('#wsFoot'); if (!g || !ED.ws) return;
   const hits = ED.ws.hits; ED.web = hits;
-  g.innerHTML = hits.map((h, n) => `<button class="gwc" onclick="edWebPick(${n})" title="${esc(h.title || '')}${h.w ? ' · ' + h.w + '×' + h.h : ''}"><img src="${esc(h.thumb || h.url)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.style.display='none'"><span>${h.w ? h.w + '×' + h.h : ''}${h.engine ? ` · ${({ google: 'Google', bing: 'Bing', duckduckgo: 'DDG', yandex: 'Yandex' })[h.engine] || esc(h.engine)}` : ''}</span></button>`).join('') || `<p class="ghelp">${ED.ws.busy ? 'Procurando…' : 'Nada encontrado. Tente outro nome, em inglês, ou outro buscador.'}</p>`;
+  g.innerHTML = hits.map((h, n) => `<button class="gwc" onclick="edWebPick(${n})" title="${esc(h.title || '')}${h.w ? ' · ' + h.w + '×' + h.h : ''}"><img src="${esc(h.thumb || h.url)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.style.display='none'"><span>${h.w ? h.w + '×' + h.h : ''}${h.engine ? ` · ${({ bing: 'Bing', duckduckgo: 'DDG', yandex: 'Yandex' })[h.engine] || esc(h.engine)}` : ''}</span></button>`).join('') || `<p class="ghelp">${ED.ws.busy ? 'Procurando…' : 'Nada encontrado. Tente outro nome, em inglês, ou outro buscador.'}</p>`;
   f.innerHTML = ED.ws.busy ? '<span class="mut">Procurando…</span>' : (ED.ws.more ? `<button class="btn s sm" onclick="edWebMore()">Carregar mais</button>` : (hits.length ? '<span class="mut">Fim dos resultados</span>' : ''));
 }
 async function edWebGo() {
@@ -1786,7 +1817,7 @@ async function scanPick(mode) {
   modal({ title: mode === 'roms' ? 'Pasta de ROMs' : 'Pasta de jogos', html: `<label class="ml">Caminho da pasta (modo navegador)</label><input class="mi" id="scPath" placeholder="${mode === 'roms' ? 'D:\\\\ROMs\\\\PS2' : 'D:\\\\Jogos'}">`, ok: 'Escanear', onOk: () => scanRun(mode, $('#scPath').value.trim()) });
 }
 async function gameDirAdd() { const r = await api.post('/api/dirs/add', {}); if (r.error) return toast('err', 'Não foi possível adicionar', r.error); if (r.native === false || (!r.ok && !r.dirs)) return modal({ title: 'Outra pasta com jogos', text: 'Digite o caminho completo (modo navegador não tem diálogo nativo).', input: '', ok: 'Adicionar', onOk: async v => { if (!v) return; const x = await api.post('/api/dirs/add', { path: v }); if (x.error) return toast('err', 'Não foi possível adicionar', x.error); S.config.game_dirs = x.dirs; renderSettings(true); if (!x.dup) scanRun('windows', v); } }); if (r.dirs) { S.config.game_dirs = r.dirs; renderSettings(true); if (r.dup) toast('', 'Essa pasta já está na lista', ''); else if (r.dirs.length) scanRun('windows', r.dirs[r.dirs.length - 1]); } }
-const META_SRC = [['steam', 'Steam', 'Loja Steam: capa, descrição, gêneros, requisitos e capturas'], ['gog', 'GOG', 'Catálogo GOG: capa, fundo, desenvolvedora e ano'], ['wikipedia', 'Wikipedia', 'Artigo do jogo: descrição, ano, desenvolvedora, série e modos'], ['wikidata', 'Wikidata', 'Base estruturada: desenvolvedora, publicadora, ano, gêneros, plataformas e série; lista grande de candidatos'], ['libretro', 'Boxart de console', 'Capas oficiais por sistema para jogos emulados'], ['steamgriddb', 'SteamGridDB', 'Capas e artes da comunidade (precisa de chave)'], ['web', 'Imagens da web', 'Google, Bing, DuckDuckGo e Yandex quando as outras fontes não têm a capa']];
+const META_SRC = [['steam', 'Steam', 'Loja Steam: capa, descrição, gêneros, requisitos e capturas'], ['gog', 'GOG', 'Catálogo GOG: capa, fundo, desenvolvedora e ano'], ['wikipedia', 'Wikipedia', 'Artigo do jogo: descrição, ano, desenvolvedora, série e modos'], ['wikidata', 'Wikidata', 'Base estruturada: desenvolvedora, publicadora, ano, gêneros, plataformas e série; lista grande de candidatos'], ['libretro', 'Boxart de console', 'Capas oficiais por sistema para jogos emulados'], ['web', 'Imagens da web', 'Bing, DuckDuckGo e Yandex quando as outras fontes não têm a capa']];
 async function metaSrcToggle(id, on) { const m = { ...(S.config.meta_sources || {}) }; if (on) delete m[id]; else m[id] = false; await setCfg({ meta_sources: m }); renderSettings(true); }
 async function gameDirRemove(d) { const r = await api.post('/api/dirs/remove', { path: d }); if (r.dirs) { S.config.game_dirs = r.dirs; renderSettings(true); } }
 function newGamesToast(ev) {
@@ -2085,8 +2116,7 @@ function themeSwatch(t) {
 }
 function selHtml(opts, cur, on, cls) { return `<select class="sel ${cls || ''}" onchange="${on}">${opts.map(([v, l]) => `<option value="${esc(JSON.stringify(v))}" ${v === cur ? 'selected' : ''}>${esc(String(l))}</option>`).join('')}</select>`; }
 function cfgSel(key, opts, cur, after) { return selHtml(opts, cur, `setCfg({${key}:JSON.parse(this.value)})${after || ''}`); }
-function gmWhen(v) { v = JSON.parse(v); setCfg({ game_mode_auto: v === 'auto', game_mode_ask: v !== 'off' }).then(renderCentral); }
-function settingsTab(id, jump) { S.tab.settings = id; if (jump) S._settingsJump = jump; if (id === 'appearance' && !(S.config.start_done || []).includes('look')) startGo('look'); renderSettings(); }
+function settingsTab(id, jump) { S.tab.settings = id; if (jump) S._settingsJump = jump; renderSettings(); }
 async function cset(patch) { const r = await api.post('/api/custom/set', patch); if (r.error) return toast('err', 'Personalizar', r.error); S.custom = r; applyCustom(); if (S.view === 'settings' && S.tab.settings === 'custom') renderSettings(); }
 async function cpick(what, path) { if (!path && !S.config.native) return modal({ title: 'Imagem', text: 'Caminho completo do arquivo de imagem:', input: '', ok: 'Usar', onOk: v => v && cpick(what, v) }); const r = await api.post(path ? '/api/custom/add' : '/api/custom/pick', path ? { what, path } : { what }); if (r.error) return toast('err', 'Personalizar', r.error); if (r.cancel) return; S.custom = r; applyCustom(); renderSettings(); }
 async function cremove(what, name) { const r = await api.post('/api/custom/remove', { what, name }); if (r.error) return toast('err', 'Personalizar', r.error); S.custom = r; applyCustom(); renderSettings(); }
@@ -2211,7 +2241,7 @@ async function renderSettings(fresh) {
     ['general', 'Geral', 'cog', ['idioma', 'janela_geral', 'notificacoes', 'orientacao']],
     ['appearance', 'Aparência', 'image', ['tema', 'janela', 'navegacao', 'sofa', 'escala', 'efeitos']],
     ['library', 'Biblioteca', 'home', ['cartoes', 'capas', 'pastas']],
-    ['play', 'Ao jogar', 'play', ['ao_abrir', 'linux', 'saves', 'otimizar', 'emuladores', 'controle', 'console']],
+    ['play', 'Ao jogar', 'play', ['ao_abrir', 'discord', 'linux', 'saves', 'emuladores', 'controle', 'console']],
     ['store', 'Store e downloads', 'dl', ['fontes', 'store', 'instalacao', 'torrent']],
     ['tools', 'Ferramentas', 'wrench', ['verificar', 'importar', 'exportar', 'metadados', 'dados', 'diagnostico', 'limpeza']],
     ['system', 'Sistema', 'cpu', ['pc', 'segundo_plano', 'atualizacoes', 'avancado', 'perigo', 'sobre']],
@@ -2227,16 +2257,18 @@ async function renderSettings(fresh) {
     janela_geral: () => sec('janela_geral', 'Abrir e fechar', [`
     <div class="frow"><div class="l"><b>Abrir com o ${OSN()}</b><span>Inicia junto com o sistema, recolhido na bandeja</span></div><button class="sw ${c.autostart ? 'on' : ''}" onclick="setAutostart(!S.config.autostart)"></button></div>
     ${sw('tray_enabled', 'Ícone na bandeja', 'Mantém o launcher acessível ao lado do relógio quando recolhido. Botão direito no ícone: jogar um dos últimos jogos, ir direto a uma tela, ver a fila, verificar atualizações ou sair. Desligado, ele apenas minimiza para a barra de tarefas')}
+    ${c.tray_enabled !== false ? sw('tray_sleep', 'Dormir na bandeja', 'Recolhido há mais de 25 s, o Ludrix libera a janela da memória e fica só com o ícone (uns 50 MB em vez de centenas). Downloads, tempo de jogo, Discord e atalho continuam; a janela volta em 1 s') : ''}
     <div class="frow"><div class="l"><b>Ao fechar a janela</b><span>${{ ask: 'Mostra as opções ao clicar no X e memoriza a escolha.', tray: 'Sai da barra de tarefas e fica no ícone ao lado do relógio.', quit: 'Fecha por completo, inclusive o ícone da bandeja.' }[c.close_action || 'ask']} Com um jogo aberto e a bandeja ligada, o Ludrix apenas se recolhe para continuar contando o tempo.</span></div>${cfgSel('close_action', [['ask', 'Perguntar'], ['tray', 'Bandeja'], ['quit', 'Encerrar']], c.close_action || 'ask')}</div>
-    ${c.tray_enabled === false ? '<p>Sem o ícone na bandeja, o X sempre encerra o launcher.</p>' : ''}`]),
+    ${c.tray_enabled === false ? '<p>Sem o ícone na bandeja, o X sempre encerra o launcher.</p>' : ''}
+    ${sw('hotkey_enabled', 'Atalho de teclado global', 'Mostra ou esconde o Ludrix de qualquer lugar, mesmo com um jogo aberto')}
+    ${c.hotkey_enabled !== false ? `<div class="frow"><div class="l"><b>Tecla do atalho</b><span>${c.hotkey_status && c.hotkey_status.error ? `<span style="color:var(--amber)">${esc(c.hotkey_status.error)}</span>` : 'Clique no campo e pressione a combinação (precisa de Ctrl, Alt, Shift ou Win).'}</span></div><input class="mi" readonly value="${esc(c.hotkey || '')}" placeholder="pressione as teclas" style="width:170px;text-align:center;cursor:pointer" onkeydown="hotkeyCapture(event,this)" onfocus="this.dataset.old=this.value;this.value='…'" onblur="if(this.value==='…')this.value=this.dataset.old||''"></div>` : ''}`]),
     notificacoes: () => sec('notificacoes', 'Notificações', [`
     ${sw('popups', 'Avisos dentro do app', 'Download concluído, erros e pendências aparecem como cartão no canto; o sino guarda o histórico')}
-    ${sw('notify_sound', 'Som ao concluir download', 'Um aviso sonoro curto quando um jogo termina de instalar')}`]),
+    ${sw('notify_sound', 'Som ao concluir download', 'Um aviso sonoro curto quando um jogo termina de instalar')}
+    ${sw('ui_sounds', 'Sons da interface', 'Cliques, abrir e fechar com sons curtos e suaves, estilo console')}
+    ${c.ui_sounds !== false ? `<div class="frow"><div class="l"><b>Volume dos sons</b><span>Toca uma amostra ao escolher.</span></div>${cfgSel('ui_sounds_level', [['low', 'Baixo'], ['mid', 'Médio'], ['high', 'Alto']], c.ui_sounds_level || 'low', ";setTimeout(()=>uiSound('done'),300)")}</div>` : ''}`]),
     orientacao: () => sec('orientacao', 'Orientação', [`
-    ${sw('guides', 'Balões de orientação', 'Na primeira vez que você usa cada parte do Ludrix, balões curtos explicam cada parte. Somem ao terminar e não repetem')}
-    <div class="frow"><div class="l"><b>"Comece por aqui" na Biblioteca</b><span>Lista curta dos primeiros passos (fonte, jogo, aparência, dependências); some sozinha quando tudo estiver feito</span></div><button class="sw ${!c.start_hide ? 'on' : ''}" onclick="setCfg({start_hide:!S.config.start_hide})"></button></div>
-    <div class="frow"><div class="l"><b>Rever os guias</b><span>Volta a mostrar os balões de todas as telas, como no primeiro uso${(c.guides_done || []).length ? ` · ${(c.guides_done || []).length} já vistos` : ''}</span></div><button class="btn s sm" onclick="guidesReset()">${I.refresh} Rever</button></div>
-    <div class="frow" style="margin-top:12px"><div class="l"><b>Tour de boas-vindas</b><span>As telas da primeira abertura</span></div><button class="btn s sm" onclick="welcomeTour()">Ver de novo</button></div>`]),
+    <div class="frow"><div class="l"><b>Tour de boas-vindas</b><span>As telas da primeira abertura</span></div><button class="btn s sm" onclick="welcomeTour()">Ver de novo</button></div>`]),
     tema: () => themesHtml(c),
     janela: () => sec('janela', 'Janela', [`
     ${S.config.os === 'windows' ? sw('frameless', 'Janela sem moldura do Windows', 'A barra de título segue o tema, com os botões de minimizar, maximizar e fechar desenhados pelo launcher. Vale após reabrir.') : ''}
@@ -2263,6 +2295,7 @@ async function renderSettings(fresh) {
     <div class="frow"><div class="l"><b>Densidade</b><span>Compacto aproxima os cartões e reduz espaçamentos; útil em telas pequenas</span></div>${cfgSel('density', [['normal', 'Normal'], ['compact', 'Compacto']], c.density || 'normal')}</div>`], { p: 'Ajusta o tamanho de textos, botões e capas para qualquer tela, de um notebook 1366×768 a uma TV 4K. <b>Auto</b> acompanha o tamanho da janela.' }),
     efeitos: () => sec('efeitos', 'Efeitos', [`
     ${c.os === 'windows' ? `<div class="frow"><div class="l"><b>Vidro fosco${restartTag('acrylic')}</b><span>Janela translúcida com desfoque do Windows 11 (acrílico), por trás de toda a interface. Em Windows 10 ou com alto contraste fica opaco</span></div><button class="sw ${c.acrylic !== false ? 'on' : ''}" onclick="setCfg({acrylic:!(S.config.acrylic!==false)})"></button></div>` : ''}
+    ${sw('accent_from_cover', 'Cor acompanha o jogo', 'Botões e realces tomam a cor dominante da capa do jogo selecionado ou aberto, com transição suave; volta à cor do tema ao sair')}
     ${sw('reduce_motion', 'Reduzir movimento', 'Corta transições e animações de uma vez. Liga sozinho quando o sistema pede menos movimento')}
     ${sw('high_contrast', 'Alto contraste', 'Bordas e textos mais fortes, sem transparência nem desfoque, foco bem marcado. Liga sozinho quando o Windows está em modo de alto contraste')}`]),
     cartoes: () => sec('cartoes', 'Cartões e listas', [`
@@ -2273,11 +2306,10 @@ async function renderSettings(fresh) {
     ${sw('card_playtime', 'Tempo jogado sobre a capa', 'Um selo discreto no canto da capa com as horas (ou minutos) que você já jogou')}
 `]),
     capas: () => sec('capas', 'Capas e informações', [`
-    ${sw('auto_metadata', 'Buscar capas e metadados automaticamente', 'Procura capa, descrição, ano e gêneros na Steam, GOG e Wikipedia (e no SteamGridDB, se houver chave). Para consoles, usa as capas oficiais de cada sistema. Roda em segundo plano e não repete buscas')}
-    ${sw('web_covers', 'Capa por busca de imagens na web', 'Quando Steam, GOG, Wikipedia e as capas de console não têm o jogo, procura no Google Imagens, Bing e Yandex e usa a melhor imagem vertical. Útil para mods e jogos raros; pode errar, e a capa pode ser trocada na edição do jogo')}
-    <div class="frow"><div class="l"><b>Fontes de metadados</b><span>De onde vêm capa, descrição, ano e gêneros — na busca automática e em "Baixar metadados…". Nenhuma precisa de chave, exceto o SteamGridDB.</span><div class="mchk">${META_SRC.map(([id, n, d]) => `<label class="${(c.meta_sources || {})[id] !== false ? 'on' : ''}" title="${d}"><input type="checkbox" ${(c.meta_sources || {})[id] !== false ? 'checked' : ''} onchange="metaSrcToggle('${id}',this.checked)">${n}</label>`).join('')}</div></div></div>
-    ${sw('auto_rename', 'Corrigir nomes automaticamente', 'Ao encontrar o jogo nas fontes, substitui nomes como "Atalho para Sleeping Dogs" ou "SleepingDogs_x64" pelo nome oficial. Só renomeia quando o nome encontrado bate com segurança (mesmo título e mesma numeração); em dúvida, mantém o atual. Nomes digitados por você nunca são alterados')}`], { adv: [`
-    <div class="frow"><div class="l"><b>Chave SteamGridDB ${help('SteamGridDB é um site com capas e artes em alta resolução feitas pela comunidade. Pra usar, crie uma conta grátis lá, vá em Perfil → Preferences → API e copie a chave que aparece.')}</b><span>Opcional. Capas e artes em alta resolução ${c.sgdb_key_set ? '· <span style="color:var(--green2)">configurada</span>' : ''}</span></div><input type="password" placeholder="cole a chave" onchange="setCfg({sgdb_key:this.value})" style="min-width:220px"></div>`] }),
+    ${sw('auto_metadata', 'Buscar capas e metadados automaticamente', 'Procura capa, descrição, ano e gêneros na Steam, GOG e Wikipedia. Para consoles, usa as capas oficiais de cada sistema e a imagem de fundo do jogo. Roda em segundo plano e não repete buscas')}
+    ${sw('web_covers', 'Capa por busca de imagens na web', 'Quando Steam, GOG, Wikipedia e as capas de console não têm o jogo, procura no Bing, DuckDuckGo e Yandex e usa a melhor imagem vertical. Útil para mods e jogos raros; pode errar, e a capa pode ser trocada na edição do jogo')}
+    <div class="frow"><div class="l"><b>Fontes de metadados</b><span>De onde vêm capa, descrição, ano e gêneros — na busca automática e em "Baixar metadados…". Nenhuma precisa de chave.</span><div class="mchk">${META_SRC.map(([id, n, d]) => `<label class="${(c.meta_sources || {})[id] !== false ? 'on' : ''}" title="${d}"><input type="checkbox" ${(c.meta_sources || {})[id] !== false ? 'checked' : ''} onchange="metaSrcToggle('${id}',this.checked)">${n}</label>`).join('')}</div></div></div>
+    ${sw('auto_rename', 'Corrigir nomes automaticamente', 'Ao encontrar o jogo nas fontes, substitui nomes como "Atalho para Sleeping Dogs" ou "SleepingDogs_x64" pelo nome oficial. Só renomeia quando o nome encontrado bate com segurança (mesmo título e mesma numeração); em dúvida, mantém o atual. Nomes digitados por você nunca são alterados')}`]),
     pastas: () => sec('pastas', 'Pastas', [`
     <div class="frow"><div class="l"><b>Pasta de jogos instalados</b><span>Destino definitivo dos jogos baixados e extraídos. Atual: ${esc(c.games_dir_effective)}</span></div><button class="btn s sm" onclick="openPath(${jsq(c.games_dir_effective)})">${I.folder} Abrir</button><button class="btn s sm" onclick="chooseFolder()">Alterar</button>${c.games_dir ? `<button class="btn s sm" onclick="setCfg({games_dir:''})">Padrão</button>` : ''}</div>
     <div class="frow"><div class="l"><b>Outras pastas com jogos</b><span>Pastas de outros discos ou de outros launchers. O Ludrix procura jogos novos nelas (e na pasta de instalados) ao abrir e no botão abaixo.${(c.game_dirs || []).length ? '' : ' Nenhuma adicionada.'}</span>${(c.game_dirs || []).length ? `<div class="dirlist">${c.game_dirs.map(d => `<div><code>${esc(d)}</code><button class="btn s xs" onclick="openPath(${jsq(d)})">${I.folder}</button><button class="btn s xs" onclick="gameDirRemove(${jsq(d)})">${I.x}</button></div>`).join('')}</div>` : ''}</div><button class="btn s sm" onclick="gameDirAdd()">${I.plus} Adicionar pasta</button><button class="btn s sm" onclick="scanRun('windows','*')">${I.search} Procurar jogos novos</button></div>
@@ -2296,12 +2328,11 @@ async function renderSettings(fresh) {
     <div class="frow"><div class="l"><b>Proton e prefixo</b><span id="lxst">Verificando…</span></div><div style="display:flex;gap:6px"><button class="btn s sm" onclick="linuxPrepare()">${I.dl} Baixar/atualizar agora</button><button class="btn s sm" onclick="openPath(S.config.root+'/data/pfx')">${I.folder} Prefixos</button></div></div>`]),
     saves: () => sec('saves', 'Saves', [`
     ${sw('save_auto_backup', 'Guardar cópia dos saves ao fechar o jogo', `Depois de cada sessão, copia a pasta de saves do jogo para data${SEP()}save_backups (até 5 cópias por jogo, só quando algo mudou; pastas acima de 512 MB são puladas). Restaure em Saves, no menu do jogo`)}`]),
-    otimizar: () => sec('otimizar', 'Otimizar antes de jogar', [`
-    ${sw('game_mode_auto', 'Ativar em todo jogo', 'Plano de energia de desempenho, prioridade alta para o jogo e o Ludrix em silêncio, sem perguntar')}
-    ${sw('game_mode_ask', 'Oferecer "Otimizar e abrir" no menu do jogo', 'Aparece no menu do botão direito do jogo, para ativar apenas quando quiser')}
-    <div class="frow"><div class="l"><b>Ações e programas fechados</b><span>Configure na Central Ludrix, em "Otimizar antes de jogar"</span></div><button class="btn s sm" onclick="setView('gamemode')">${I.bolt} Abrir</button></div>`]),
     emuladores: () => sec('emuladores', 'Emuladores', [`
     ${sw('emu_no_ask', 'Não perguntar qual emulador', 'Em consoles com mais de um emulador instalado, usa sempre o padrão em vez de perguntar ao jogar')}`]),
+    discord: () => sec('discord', 'Discord', [`
+    ${sw('discord_enabled', 'Mostrar o jogo no Discord', 'Enquanto um jogo estiver aberto, seu perfil do Discord mostra o nome do jogo, a plataforma, a capa e há quanto tempo você está jogando. Usa o Discord aberto no computador; nada é enviado para fora')}
+    ${c.discord_enabled ? `<div class="frow"><div class="l"><b>ID do aplicativo</b><span>${help('O Discord exige um "aplicativo" para mostrar a atividade. É grátis e leva um minuto: entre em discord.com/developers/applications, clique em New Application, dê o nome LudrixHub e copie o Application ID. O nome do aplicativo é o que aparece em "Jogando".')} ${c.discord_status && c.discord_status.connected ? '<span style="color:var(--green2)">conectado ao Discord</span>' : c.discord_status && c.discord_status.error ? `<span style="color:var(--amber)">${esc(c.discord_status.error)}</span>` : 'Cole o Application ID (só números).'}</span></div><input class="mi" value="${esc(c.discord_app_id || '')}" placeholder="ex.: 1234567890123456789" inputmode="numeric" style="width:220px" onchange="setCfg({discord_app_id:this.value.replace(/\\D/g,'')}).then(()=>discordTest())"><button class="btn s sm" onclick="discordTest()">Testar</button><button class="btn s sm" onclick="api.post('/api/open_url',{url:'https://discord.com/developers/applications'})">${I.ext} Criar aplicativo</button></div>` : ''}`]),
     controle: () => sec('controle', 'Controle', [`
     ${sw('gamepad_enabled', 'Navegar com controle', 'Direcional ou analógico move, A abre, B volta, X abre o menu de opções, Y busca, LB/RB trocam de aba, LT/RT ou analógico direito rolam a página, Start joga o jogo em foco, Back volta à Biblioteca. Em listas e controles deslizantes, A entra no ajuste e o direcional muda o valor')}
     ${sw('gamepad_wake', 'Controle chama o launcher', 'Ao conectar um controle, ou segurar o botão Guide/Xbox por 1 s, o launcher sai da bandeja e vem para a frente. Mantém um monitor leve do controle enquanto o Ludrix estiver aberto')}`], { adv: [`
@@ -2392,10 +2423,10 @@ function toggleAdv() {
   });
 }
 const TAB_KEYS = {
-  general: ['tray_enabled', 'close_action', 'popups', 'notify_sound', 'guides'],
-  appearance: ['gamepad', 'sofa_zoom', 'theme', 'theme_mode', 'face', 'accent', 'theme_schedule', 'theme_light_from', 'theme_light_to', 'frameless', 'frame_mode', 'frame_corners', 'status_position', 'clock', 'ctx_menu', 'layout', 'nav', 'nav_hidden', 'nav_order', 'rail_icons', 'toolbar', 'toolbar_items', 'ui_scale', 'text_size', 'card_size', 'density', 'acrylic', 'animations', 'fx_type', 'fx_intensity', 'glass', 'card_hover', 'reduce_motion', 'parallax', 'high_contrast'],
-  library: ['home_spot', 'home_autoplay', 'fav_first', 'home_spot_style', 'home_rows', 'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'accent_from_cover', 'cover_slideshow', 'cover_slideshow_secs', 'view_mode', 'group_by', 'card_ribbons', 'card_playtime', 'detail_art', 'auto_metadata', 'web_covers', 'auto_rename'],
-  play: ['after_launch', 'launch_splash', 'nav_hide_playing', 'save_auto_backup', 'game_mode_auto', 'game_mode_ask', 'emu_no_ask', 'gamepad_enabled', 'gamepad_speed', 'gamepad_wake'],
+  general: ['tray_enabled', 'tray_sleep', 'close_action', 'hotkey_enabled', 'popups', 'notify_sound', 'ui_sounds', 'ui_sounds_level'],
+  appearance: ['accent_from_cover', 'gamepad', 'sofa_zoom', 'theme', 'theme_mode', 'face', 'accent', 'theme_schedule', 'theme_light_from', 'theme_light_to', 'frameless', 'frame_mode', 'frame_corners', 'status_position', 'clock', 'ctx_menu', 'layout', 'nav', 'nav_hidden', 'nav_order', 'rail_icons', 'toolbar', 'toolbar_items', 'ui_scale', 'text_size', 'card_size', 'density', 'acrylic', 'animations', 'fx_type', 'fx_intensity', 'glass', 'card_hover', 'reduce_motion', 'parallax', 'high_contrast'],
+  library: ['home_spot', 'home_autoplay', 'fav_first', 'home_spot_style', 'home_rows', 'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'cover_slideshow', 'cover_slideshow_secs', 'view_mode', 'group_by', 'card_ribbons', 'card_playtime', 'detail_art', 'auto_metadata', 'web_covers', 'auto_rename'],
+  play: ['discord_enabled', 'after_launch', 'launch_splash', 'nav_hide_playing', 'save_auto_backup', 'emu_no_ask', 'gamepad_enabled', 'gamepad_speed', 'gamepad_wake'],
   store: ['hero_enabled', 'store_hide_installed', 'dim_not_installed', 'store_page_size', 'keep_archive', 'concurrent_downloads', 'shortcut_ask', 'repack_auto_open', 'torrent_max_down', 'torrent_max_up', 'torrent_seed_after'],
   system: ['bg_warmup', 'bg_sites', 'update_auto_check', 'terminal_enabled'],
 };
@@ -2649,7 +2680,6 @@ async function poll() {
     if (before !== after) { if (S.det && (S.view !== 'downloads')) renderDetail(); if (['downloads', 'emulation'].includes(S.view)) renderView(); else document.querySelectorAll('.ring').forEach(r => { const k = r.closest('.card')?.dataset.key; if (k && !S.jobs[k]) r.remove(); }); }
     if (s.gamepad) gpIndicator(s.gamepad);
     if (s.online !== undefined) setOnline(!!s.online && navigator.onLine !== false);
-    document.body.classList.toggle('gm', !!s.gamemode);
     S.metaPending = s.meta_pending || 0; statusBar(s.activity, s.loading);
     for (const ev of (s.events || [])) handleEvent(ev);
   } catch (e) { }
@@ -2708,7 +2738,7 @@ async function handleEvent(ev) {
   } else if (ev.type === 'new_games') {
     newGamesToast(ev);
   } else if (ev.type === 'session_end') {
-    const g = S.byKey[ev.key]; if (!ev.crashed) toast('ok', `${ev.title}`, `Sessão de ${ev.elapsed_h}` + (g && (g.playtime || 0) + ev.elapsed >= 3600 ? ` · total ${fmtTime((g.playtime || 0) + ev.elapsed)}` : '')); if (g) { S._poolKey = ''; g.playtime = (g.playtime || 0) + ev.elapsed; g.last_played = Date.now() / 1000; }
+    const g = S.byKey[ev.key]; if (!ev.crashed) { if (g && ev.elapsed >= 60) sessionCard(ev, g); else toast('ok', `${ev.title}`, `Sessão de ${ev.elapsed_h}`); } if (g) { S._poolKey = ''; g.playtime = (g.playtime || 0) + ev.elapsed; g.last_played = Date.now() / 1000; }
     if (ev.crashed) crashDialog(ev.key, ev.title);
     if (S.det && S.det.key === ev.key) { const d = await api.get('/api/game/' + enc(ev.key)); S.det = d; renderDetail(); } loadCatalog(false);
   } else if (ev.type === 'thumb_ready') {
@@ -2718,7 +2748,8 @@ async function handleEvent(ev) {
     metaReloadSoon(); if (ev.count > 3) toast('ok', 'Capas e informações atualizadas', pl(ev.count, 'jogo', 'jogos'));
   } else if (ev.type === 'meta_ready') {
     metaReloadSoon();
-    const g = S.byKey[ev.key]; if (g) { g.cv = ev.cv; g.has_meta = true; if (ev.genres && ev.genres.length) g.genres = ev.genres; if (ev.year) g.year = ev.year; if (ev.creator) g.creator = ev.creator; }
+    const g = S.byKey[ev.key]; if (g) { g.cv = ev.cv; g.has_meta = true; if (ev.genres && ev.genres.length) g.genres = ev.genres; if (ev.year) g.year = ev.year; if (ev.creator) g.creator = ev.creator; if (ev.hero_ok) g.hero_ok = true; }
+    if (ev.hero_ok) { const nb = $('#nowbar'); if (nb && nb.dataset.key === ev.key) { nb.dataset.cv = ''; nowbarFill(); } if (S.det && S.det.key === ev.key && $('#detail').classList.contains('on')) { const h = $('#dHero'); if (h && !h.classList.contains('himg')) { const d = await api.get('/api/game/' + enc(ev.key)); S.det = d; renderDetail(); } } }
     if (S.home && S.home.games && S.home.games[ev.key]) S.home.games[ev.key].cv = ev.cv;
     TH.err.delete(ev.key); TH.tries[ev.key] = 0;
     if (ev.found === false && ev.mine && S.config.auto_metadata !== false && !S._askedMeta?.has(ev.key)) {
@@ -2732,10 +2763,6 @@ async function handleEvent(ev) {
       const yr = c.querySelector('.info span'); if (yr) yr.textContent = g.year || '';
     });
     if (S.det && S.det.key === ev.key && !S.det.meta) { const d = await api.get('/api/game/' + enc(ev.key)); if (S.current === ev.key) { S.det = d; renderDetail(); } }
-  } else if (ev.type === 'gamemode') {
-    if (ev.on) toast('ok', 'Modo Game ligado', gmSummary(ev));
-    else toast('', 'Modo Game desligado', [ev.reopened?.length ? `reabri ${ev.reopened.join(', ')}` : '', ev.power ? 'plano de energia restaurado' : ''].filter(Boolean).join(' · ') || 'tudo de volta ao normal');
-    if (S.view === 'central') renderCentral();
   } else if (ev.type === 'notify') {
     loadNotifs();
     if (ev.kind === 'repack') toast('', ev.title, ev.text, [{ label: 'Abrir instalador', fn: () => runRepack(ev.key) }, { label: 'Depois', fn: () => { } }]);
@@ -2775,18 +2802,29 @@ function modal(o) {
 $('#modal').addEventListener('click', e => { if (e.target === $('#modal')) $('#modal').classList.remove('on'); });
 (() => {
   let ov = null, t = 0;
-  const show = () => { if (!ov) { ov = document.createElement('div'); ov.className = 'dropov'; ov.innerHTML = `<div>${I.plus}<b>Solte para adicionar à biblioteca</b><span>.exe, .lnk, .url, ROMs ou uma pasta de jogo</span></div>`; document.body.appendChild(ov); } clearTimeout(t); t = setTimeout(hide, 1200); };
+  const show = () => { if (!ov) { ov = document.createElement('div'); ov.className = 'dropov'; ov.innerHTML = `<div>${I.plus}<b>Solte para adicionar à biblioteca</b><span>.exe, .lnk, ROMs, .zip/.7z/.rar ou uma pasta de jogos</span></div>`; document.body.appendChild(ov); } clearTimeout(t); t = setTimeout(hide, 1200); };
   const hide = () => { if (ov) { ov.remove(); ov = null; } };
   document.addEventListener('dragover', e => { if (!e.dataTransfer || ![...e.dataTransfer.types].includes('Files')) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; show(); });
   document.addEventListener('dragleave', e => { if (!e.relatedTarget) hide(); });
   document.addEventListener('drop', async e => {
     if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
     e.preventDefault(); hide();
-    const paths = [...e.dataTransfer.files].map(f => f.pywebviewFullPath || f.path || '').filter(Boolean);
+    const paths = [...e.dataTransfer.files].map(f => (window.lxn && window.lxn.pathFor(f)) || f.path || '').filter(Boolean);
     if (!paths.length) return toast('warn', 'Não deu para ler o caminho do arquivo', 'Use + Adicionar jogo e escolha o arquivo.');
+    const r = await api.post('/api/drop/classify', { paths });
+    const items = (r && r.items) || [];
+    const exes = items.filter(x => x.kind === 'exe'), roms = items.filter(x => x.kind === 'rom'), dirs = items.filter(x => x.kind === 'dir'), arcs = items.filter(x => x.kind === 'archive'), unk = items.filter(x => x.kind === 'unknown' || x.kind === 'missing');
     let ok = 0, last = null;
-    for (const p of paths) { const r = await api.post('/api/local/add', { exe: p }); if (r && !r.error) { ok++; last = r; } else if (r && r.error && paths.length === 1) toast('err', 'Não foi possível adicionar', r.error); }
+    for (const x of exes) { const a = await api.post('/api/local/add', { exe: x.path }); if (a && !a.error) { ok++; last = a; } else if (a && a.error) toast('err', 'Não foi possível adicionar', `${x.name}: ${a.error}`); }
     if (ok) { toast('ok', ok === 1 && last && last.title ? last.title : pl(ok, 'jogo adicionado', 'jogos adicionados'), ok === 1 ? 'Adicionado à biblioteca' : '', ok === 1 && last && last.key ? [{ label: 'Detalhes', fn: () => openGame(last.key) }] : undefined); S.home = null; await loadCatalog(false); }
+    for (const x of roms) await addRom(x.path, x.system);
+    for (const x of arcs) {
+      await new Promise(res => modal({ title: x.name, text: x.system ? `Esse arquivo pode ser uma ROM de ${S.systems[x.system] || x.system} ou um jogo de PC compactado. O que é?` : 'Instalar como jogo de PC? O arquivo é extraído para a pasta de jogos e o jogo entra na biblioteca.', ok: x.system ? 'Jogo de PC' : 'Instalar', cancel: x.system ? `ROM de ${S.systems[x.system] || x.system}` : 'Cancelar', onClose: () => res(),
+        onOk: async () => { const a = await api.post('/api/local/install_file', { file: x.path }); if (a && a.error) toast('err', 'Não foi possível instalar', a.error); else if (a && a.ok !== false) { S.jobs[a.key] = { stage: 'extract', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on'); toast('ok', 'Instalando', `${a.title} — acompanhe em Downloads.`); pollSoon(); } },
+        onCancel: async () => { if (x.system) await addRom(x.path, x.system); } }));
+    }
+    for (const d of dirs) { SC.mode = d.mode; await scanRun(d.mode, d.path); }
+    if (unk.length) toast('warn', unk.length === 1 ? `Não reconheci ${unk[0].name}` : `${unk.length} arquivos não reconhecidos`, 'Aceito: .exe, .lnk, .url, ROMs, .zip/.7z/.rar ou uma pasta.');
   });
 })();
 function integrityLine(i) {
@@ -2892,6 +2930,44 @@ function toast(type, title, msg, actions) {
   if (actions) { const t = document.createElement('div'); t.className = 'toast ' + type + ' act'; t.innerHTML = `<div><b>${esc(title)}</b><span>${esc(msg || '')}</span><div class="ta">${actions.map((a, i) => `<button class="btn ${i === 0 ? 'p' : 's'} xs" data-i="${i}">${esc(a.label)}</button>`).join('')}</div></div><button class="x">${I.x}</button>`; t.querySelectorAll('[data-i]').forEach(b => b.onclick = () => { actions[+b.dataset.i].fn(); t.remove(); }); t.querySelector('.x').onclick = () => t.remove(); $('#toasts').appendChild(t); setTimeout(() => t.remove(), 20000); return; }
   return toastPlain(type, title, msg);
 }
+const SND = { ctx: null, last: 0 };
+function uiSound(kind) {
+  if (S.config.ui_sounds === false) return;
+  const now = performance.now(); if (kind === 'click' && now - SND.last < 70) return; SND.last = now;
+  try {
+    if (!SND.ctx) SND.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const c = SND.ctx; if (c.state === 'suspended') c.resume();
+    const vol = { low: .045, mid: .09, high: .16 }[S.config.ui_sounds_level || 'low'] || .045;
+    const tone = (f0, f1, dur, at, type = 'sine', g = 1) => {
+      const o = c.createOscillator(), a = c.createGain(), t = c.currentTime + at;
+      o.type = type; o.frequency.setValueAtTime(f0, t); if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+      a.gain.setValueAtTime(0, t); a.gain.linearRampToValueAtTime(vol * g, t + .006); a.gain.exponentialRampToValueAtTime(.0001, t + dur);
+      o.connect(a).connect(c.destination); o.start(t); o.stop(t + dur + .02);
+    };
+    if (kind === 'click') tone(1900, 1300, .045, 0, 'sine', .9);
+    else if (kind === 'toggle') { tone(1400, 1400, .03, 0, 'square', .35); tone(1900, 1900, .035, .06, 'square', .35); }
+    else if (kind === 'open') tone(560, 840, .09, 0, 'sine', 1);
+    else if (kind === 'back') tone(840, 560, .09, 0, 'sine', 1);
+    else if (kind === 'done') { tone(523, 523, .14, 0, 'triangle', .8); tone(659, 659, .14, .11, 'triangle', .8); tone(784, 784, .22, .22, 'triangle', .8); }
+  } catch (_) { /* sem áudio */ }
+}
+document.addEventListener('pointerdown', e => {
+  if (S.config.ui_sounds === false || e.button !== 0) return;
+  const t = e.target.closest && e.target.closest('.sw, .btn, .rb, .card, .tabs > *, .seg > *, .chip, .mlist button, .addmenu button, .ctx .it, .thcard, .gwc, select, .frow input[type=checkbox]');
+  if (!t || t.disabled) return;
+  uiSound(t.classList.contains('sw') ? 'toggle' : 'click');
+}, true);
+function sessionCard(ev, g) {
+  if (S.config.popups === false) return;
+  const total = (g.playtime || 0) + ev.elapsed, lang = (S.config.language || 'pt-BR');
+  const since = g.added_at ? new Date(g.added_at * 1000).toLocaleDateString(lang, { month: 'short', year: 'numeric' }).replace('.', '') : '';
+  const t = document.createElement('div'); t.className = 'toast ok sess'; t.dataset.key = ev.key;
+  t.innerHTML = `<img src="/thumb/${enc(ev.key)}?v=${g.cv || 0}" alt="" onerror="this.style.visibility='hidden'"><div><b>${esc(ev.title)}</b><span>Você jogou ${esc(ev.elapsed_h)}</span><small>Total ${fmtTime(total)}${since ? ` · desde ${esc(since)}` : ''}</small></div>`;
+  t.onclick = () => { t.remove(); openGame(ev.key); };
+  const box = $('#toasts'); box.appendChild(t); while (box.children.length > 5) box.firstElementChild.remove();
+  setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, 9000);
+  uiSound('done');
+}
 function toastPlain(type, title, msg) { const t = document.createElement('div'); t.className = 'toast ' + type; t.innerHTML = `<div><b>${esc(title)}</b><span>${esc(msg || '')}</span></div>`; const box = $('#toasts'); box.appendChild(t); while (box.children.length > 5) box.firstElementChild.remove(); let left = 5000, tm, t0 = Date.now(); const go = () => { t0 = Date.now(); tm = setTimeout(() => { t.style.transition = '.3s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, left); }; t.onmouseenter = () => { clearTimeout(tm); left = Math.max(1500, left - (Date.now() - t0)); }; t.onmouseleave = go; t.onclick = () => { clearTimeout(tm); t.remove(); }; go(); }
 
 function applyAnim() {
@@ -2954,12 +3030,12 @@ function applyAnim() {
 }
 const ICON_SETS = [['solid', 'Cheio'], ['line', 'Linha'], ['duo', 'Duotom'], ['arcade', 'Arcade'], ['pixel', 'Pixel'], ['color', 'Colorido'], ['neon', 'Neon']];
 const ICON_COLORS = {
-  color: { home: '#5c6b82', store: '#3b82f6', emulation: '#a855f7', mods: '#f59e0b', redists: '#14b8a6', gamemode: '#14b8a6', flash: '#ec4899', downloads: '#22c55e', settings: '#94a3b8' },
-  neon: { home: '#ff5e00', store: '#00c8ff', emulation: '#c000ff', mods: '#ffe600', redists: '#00ffc3', gamemode: '#00ffc3', flash: '#ff00d4', downloads: '#39ff14', settings: '#9be2ff' }
+  color: { home: '#5c6b82', store: '#3b82f6', emulation: '#a855f7', mods: '#f59e0b', redists: '#14b8a6', flash: '#ec4899', downloads: '#22c55e', settings: '#94a3b8' },
+  neon: { home: '#ff5e00', store: '#00c8ff', emulation: '#c000ff', mods: '#ffe600', redists: '#00ffc3', flash: '#ff00d4', downloads: '#39ff14', settings: '#9be2ff' }
 };
 const ICON_BASE = { color: 'solid', neon: 'line' };
 function iconSet(id) { if (id && typeof id === 'object') return id.icons ? id : null; if (ICON_COLORS[id]) { const b = iconSet(ICON_BASE[id]); return b ? { ...b, colors: ICON_COLORS[id], glow: id === 'neon' } : null; } return (typeof RAIL_ICON_SETS !== 'undefined' && RAIL_ICON_SETS[id]) || null; }
-const RAIL_ALIAS = { central: 'gamemode' };
+const RAIL_ALIAS = { central: 'redists' };
 function sysIcon(id, cls) { const d = typeof SYS_ICONS !== 'undefined' && SYS_ICONS[id]; return d ? `<span class="sysic ${cls || ''}"><svg viewBox="0 0 48 32">${d}</svg></span>` : ''; }
 function busyCursor(on) { document.documentElement.classList.toggle('busy', !!on); }
 function applyRailIcons() {
@@ -3166,28 +3242,8 @@ function homeTop() {
     const playing = hm.sections.playing || [];
     h += playing.map(k => { const g = hm.games[k], sess = S.sessions[k] || {}; if (!g) return ''; return `<div class="now"><img src="/thumb/${enc(k)}?v=${g.cv || 0}" onerror="this.remove()"><div style="flex:1"><b>${esc(g.title)}</b><span>Jogando agora · sessão de ${fmtTime(Date.now() / 1000 - (sess.since || Date.now() / 1000))} · total ${fmtTime(g.playtime)}</span></div><button class="btn s sm" onclick="openGame(${jsq(k)})">Detalhes</button><button class="btn d sm" onclick="stopGame(${jsq(k)})">Fechar jogo</button></div>`; }).join('');
   }
-  return h + startHtml() + homeRows() + `</div>`;
+  return h + homeRows() + `</div>`;
 }
-function startSteps() {
-  const c = S.config, done = new Set(c.start_done || []);
-  const theme = (c.theme && c.theme !== 'system') || c.accent || (c.face && c.face !== 'grafite');
-  return [
-    ['source', 'Ligue uma fonte de jogos', 'A Store lê listas de jogos (sites, archive.org, GitHub, .json). Sem fonte ela fica vazia.', S.repos.some(r => r.enabled), 'Abrir Fontes', "S.tab.store='sources';setView('store')"],
-    ['game', 'Traga o primeiro jogo', 'Baixe pela Store ou adicione um que você já tem: .exe, atalho, ROM ou uma pasta inteira. Arrastar o arquivo para a janela também funciona.', S.games.some(g => g.installed || g.repo === 'local'), 'Adicionar jogo', 'addLocal()'],
-    ['look', 'Ajuste a aparência', 'Tema escuro ou claro, escala e efeitos — tudo em Aparência.', !!theme || done.has('look'), 'Abrir Aparência', "settingsTab('appearance');if(S.view!=='settings')setView('settings')"],
-    ['central', 'Confira as dependências', 'Visual C++, DirectX e .NET evitam jogo que fecha na hora. A Central mostra o que falta.', done.has('central'), 'Abrir Central', "setView('central')"],
-  ];
-}
-function startHtml() {
-  const c = S.config; if (c.start_hide || !c.welcome_done) return '';
-  const steps = startSteps(), left = steps.filter(x => !x[3]);
-  if (!left.length) return '';
-  const n = steps.length - left.length;
-  return `<div class="start" id="start"><div class="sh"><b>Comece por aqui</b><span>${n} de ${steps.length} ${n === 1 ? 'feito' : 'feitos'}</span><i class="bar"><i style="width:${Math.round(n / steps.length * 100)}%"></i></i><span class="sp"></span><button class="btn s xs" onclick="startHide()" title="Some daqui; volta em Ajustes › Geral">Não mostrar mais</button></div>
-    <div class="sl">${steps.map(([id, t, d, ok, lbl, fn]) => `<div class="si ${ok ? 'ok' : ''}"><i>${ok ? I.check : ''}</i><div><b>${t}</b><span>${d}</span></div>${ok ? '' : `<button class="btn p xs" onclick="startGo(${jsq(id)});${esc(fn)}">${lbl}</button>`}</div>`).join('')}</div></div>`;
-}
-function startGo(id) { const d = new Set(S.config.start_done || []); if (id === 'central' || id === 'look') { d.add(id); S.config.start_done = [...d]; api.post('/api/config', { start_done: [...d] }); } }
-function startHide() { setCfg({ start_hide: true }).then(() => { const el = $('#start'); if (el) el.remove(); }); }
 const DESC = {};
 const STAGE_STYLES = [['auto', 'Como a aparência manda'], ['estante', 'Estante: capa em pé e seus números'], ['painel', 'Painel com fileira de capas'], ['banner', 'Banner largo com a arte'], ['duplo', 'Duplo: destaque e recentes'], ['simples', 'Simples']];
 const stageStyle = () => 'base';
@@ -3255,8 +3311,9 @@ function stageBase(hm) {
 function nowbarFill() {
   const nb = $('#nowbar'); if (!nb || S.view !== 'home') return;
   const [key, label] = nowKey(); if (!key) return;
-  if (nb.dataset.key === key && nb.dataset.label === label) return;
-  nb.dataset.key = key; nb.dataset.label = label;
+  const cvNow = String((S.byKey[key] || {}).cv || 0);
+  if (nb.dataset.key === key && nb.dataset.label === label && nb.dataset.cv === cvNow) return;
+  nb.dataset.key = key; nb.dataset.label = label; nb.dataset.cv = cvNow;
   const h = nbHero(key); nb.style.cssText = h; nb.classList.toggle('hb', !!h);
   nb.classList.remove('nbsw'); void nb.offsetWidth; nb.classList.add('nbsw');
   nb.innerHTML = nowbarInner(key, label);
@@ -3346,7 +3403,7 @@ const W_STEPS = [
   { art: 'lib', t: 'Biblioteca', d: 'O Ludrix junta num lugar só os jogos que você já tem no PC, os que baixar por aqui e as suas ROMs. Um clique seleciona o jogo e mostra a capa grande com o botão Jogar; botão direito abre os detalhes, favoritos, pasta e mais.' },
   { art: 'store', t: 'Store', d: 'Adicione fontes de jogos (sites, coleções do archive.org, listas .json). A Store mostra o que elas oferecem; baixou, o jogo entra na biblioteca sozinho — com capa e descrição buscadas automaticamente.' },
   { art: 'emu', t: 'Emuladores', d: 'Instale emuladores com um clique e traga suas ROMs. O Ludrix configura o caminho, guarda seus saves e abre cada jogo no emulador certo.' },
-  { art: 'mods', t: 'Mods, redists e ferramentas', d: 'Ferramentas de mod, os VC++ e DirectX que os jogos pedem, e o Modo Game — que deixa o PC (e o próprio Ludrix) focado no jogo enquanto você joga.' },
+  { art: 'mods', t: 'Mods, redists e ferramentas', d: 'Ferramentas de mod e os VC++ e DirectX que os jogos pedem — tudo verificado e instalado daqui.' },
   { art: 'console', t: 'Modo Console e controle', d: 'Um programa à parte para a TV: monitor inteiro, capas numa esteira, temas próprios. Controle, teclado ou mouse. Abra em Ajustes › Ao jogar › Modo Console (ou pelo LudrixConsole.exe).' },
   { art: 'look', pick: true, t: 'Tema', d: 'Cada tema tem cor própria, organização da Biblioteca e versão clara e escura. Clique em um para aplicar na hora; dá para trocar depois em Ajustes › Aparência.' },
   { art: 'hub', t: 'Pronto', d: 'Para começar, adicione um jogo que já está no PC ou ligue uma fonte na Store. Cada botão mostra uma explicação ao passar o mouse; este tour fica em Ajustes › Sistema › Sobre.', last: true },
@@ -3487,11 +3544,10 @@ function askAfter(key) {
     <button onclick="askGo(${jsq(key)},'minimize')">${I.tray}<div><b>Minimizar para a bandeja</b><small>Fica no ícone perto do relógio e volta quando o jogo fechar. Conta o tempo jogado.</small></div></button>
     <button onclick="askGo(${jsq(key)},'close')">${I.power}<div><b>Fechar o launcher</b><small>Mata o launcher da memória. O tempo dessa sessão não é contado.</small></div></button>
     <button onclick="askGo(${jsq(key)},'none')">${I.play}<div><b>Só abrir o jogo</b><small>O launcher continua aberto normalmente.</small></div></button></div>
-    ${S.config.game_mode_ask !== false ? `<label class="remember gmopt"><input type="checkbox" id="askGm" ${S.config.game_mode_auto ? 'checked' : ''}> ${I.bolt} <span><b>Otimizar e abrir</b> — Modo Game: plano de energia de desempenho, prioridade alta e Ludrix em silêncio${(S.config.game_mode_close || []).length ? `, fechando ${S.config.game_mode_close.length} app(s)` : ''}</span></label>` : ''}
     <label class="remember"><input type="checkbox" id="askRem"> Lembrar minha escolha (é possível mudar em Ajustes)</label>` });
   setTimeout(() => gpFocusFirst('.askrow button'), 50);
 }
-async function askGo(key, after) { const rem = $('#askRem')?.checked; const gm = $('#askGm')?.checked; $('#modal').classList.remove('on'); if (rem) await setCfg({ after_launch: after, game_mode_auto: !!gm }); play(key, after, undefined, !!gm); }
+async function askGo(key, after) { const rem = $('#askRem')?.checked; $('#modal').classList.remove('on'); if (rem) await setCfg({ after_launch: after }); play(key, after); }
 
 window.onCloseAsk = function () {
   if ($('#modal').classList.contains('on') && $('#closeRem')) return;
@@ -3845,7 +3901,7 @@ const HELP = {
   store: { t: 'Store', p: 'Catálogo das fontes que você ligou. Nada é baixado sem você pedir.', s: ['Com mais de uma fonte ligada, cada cartão mostra de onde o jogo vem e Filtros ganha a seção "Fonte".', 'Ligue ou desligue fontes em "Fontes de jogos".', 'Baixar um jogo coloca-o na Fila; quando terminar, ele aparece na Biblioteca.', 'A busca e a categoria funcionam aqui também.'] },
   emulation: { t: 'Emuladores', p: 'Instale emuladores por console e traga suas ROMs. A configuração básica é automática.', s: ['Os consoles com emulador pronto ou ROMs na pasta ficam em "Meus consoles"; os outros aparecem abaixo, os mais usados primeiro.', 'Em Consoles, instale o emulador e aponte a pasta das suas ROMs.', 'Em Baixar ROMs aparecem as fontes de ROM que você ligou, com um seletor por console; a ROM só entra na Biblioteca depois de baixada.', 'Ao baixar uma ROM você escolhe a pasta de destino; marque "Usar sempre" para fixar a pasta daquele console — ou use "Baixar em…" no cartão do console.', 'Consoles que precisam de BIOS, keys ou firmware (Switch, PS2, PS3, PS1, Xbox, Saturn) têm o botão "guia" no cartão: mostra o que falta, de onde vem e instala no lugar certo do emulador. Se faltar algo, o Jogar avisa e abre o guia.'] },
   mods: { t: 'Mods e ferramentas', p: 'Meus mods instala mods nos seus jogos a partir do arquivo baixado, com botão pra desligar e religar; as outras abas trazem utilitários e sites de mods.', s: ['Escolha o jogo, Instalar mod, aponte o .zip.', 'Arquivos do jogo substituídos ficam guardados: desligar o mod devolve os originais.', 'Em Ferramentas, os chips no alto filtram por categoria ou mostram só as instaladas; cada cartão diz para quais jogos serve. Portátil = o Ludrix baixa do GitHub para tools\\; Site = abre a página oficial.'] },
-  central: { t: 'Central Ludrix', p: 'Preparação do PC para jogar: otimização durante o jogo, dependências que os jogos pedem e programas úteis (incluindo launchers de Minecraft).', s: ['A Visão geral resume tudo: o que precisa de atenção e um botão para resolver; "Ver tudo" abre a aba completa.', 'Em Programas úteis, a parte de Minecraft acha os launchers que você já tem e coloca o Minecraft na Biblioteca; Jogar abre o launcher escolhido.', '"Otimizar antes de jogar" troca o plano de energia e dá prioridade ao jogo; tudo volta ao normal quando ele fecha.', 'Se um jogo fecha na hora ou reclama de .dll, instale as dependências marcadas como faltando.', 'O cartão Opcionais instala launchers e utilitários pelo winget ou abre a página na Microsoft Store.'] },
+  central: { t: 'Central Ludrix', p: 'Dependências que os jogos pedem (Visual C++, DirectX, .NET…) e o Minecraft com os launchers que você já tem.', s: ['Se um jogo fecha na hora ou reclama de .dll, instale as dependências marcadas como faltando; o pacote Clássico cobre quase tudo.', 'Em Minecraft, o Ludrix acha as edições e os launchers instalados e coloca o Minecraft na Biblioteca; Jogar abre o launcher escolhido.'] },
   flash: { t: 'Jogos rápidos', p: 'Jogos leves que abrem dentro do launcher: Flash (pelo Ruffle), HTML5 e jogos de site.', s: ['Meus jogos é o que já está pronto; Baixar mais é o acervo.', 'Clique para jogar; Esc fecha; "Tela cheia" ocupa a janela inteira.', 'Adicionar aceita .swf, .zip ou pasta com index.html e links de sites.'] },
   downloads: { t: 'Fila', p: 'Tudo o que está baixando, extraindo ou já terminou, separado por situação.', s: ['Agora: o que está baixando; Pausados: retome quando quiser; Precisam de atenção: falharam — tente de novo ou remova.', 'Pausar, retomar e cancelar ficam no próprio item.', 'Concluídos ficam no histórico até você limpar.'] },
   settings: { t: 'Ajustes', p: 'Uma aba por assunto: comportamento (Geral), visual (Aparência e Personalizar), exibição dos jogos (Biblioteca), ao jogar (Ao jogar), fontes e downloads (Store e downloads), manutenção (Ferramentas) e máquina (Sistema).', s: ['A lista à esquerda mostra as seções da aba atual; clique para ir direto. A busca no alto acha qualquer opção e pula para ela, mesmo em outra aba.', '"Opções avançadas" mostra o que quase ninguém precisa mexer; "Redefinir esta aba" volta só aquela aba ao padrão.', 'Ajustes marcados com "reiniciar" valem depois de reabrir o Ludrix.'] },
@@ -4056,68 +4112,26 @@ function editFlash(id) {
     ok: 'Salvar', onOk: async () => { await api.post('/api/flash/update', { id, title: $('#feT').value, genre: $('#feG').value, controls: $('#feC').value, players: $('#feP').value, tip: $('#feD').value, w: +$('#feW').value || g.w, h: +$('#feH').value || g.h, url: $('#feU') ? $('#feU').value : undefined }); renderFlash(); } });
 }
 
-const CENTRAL_TABS = [['overview', 'Visão geral'], ['optimize', 'Otimizar antes de jogar'], ['redists', 'Dependências'], ['optionals', 'Programas úteis']];
+const CENTRAL_TABS = [['redists', 'Dependências'], ['minecraft', 'Minecraft']];
 async function renderCentral() {
-  const tab = S.tab.central || 'overview';
+  let tab = S.tab.central || 'redists'; if (!CENTRAL_TABS.some(([id]) => id === tab)) tab = 'redists';
   if (!S.central) $('#view').innerHTML = `<div class="h1"><h2>Central Ludrix</h2><span>verificando o PC…</span></div>`;
-  const [g, r, o, mc] = await Promise.all([api.get('/api/gamemode'), api.get('/api/redists'), api.get('/api/optionals'), api.get('/api/minecraft')]);
+  const [r, mc] = await Promise.all([api.get('/api/redists'), api.get('/api/minecraft')]);
   if (S.view !== 'central') return;
-  S.gm = g; S.redists = r; S.opt = o; S.mc = mc; S.central = true;
+  S.redists = r; S.mc = mc; S.central = true;
   const missing = r.items.filter(i => i.state === 'missing').length;
-  const optInst = o.items.filter(i => i.state === 'installed').length;
-  const body = tab === 'redists' ? redistsHtml(r) : tab === 'optionals' ? optionalsHtml(o) + minecraftHtml(mc) : tab === 'optimize' ? gamemodeHtml(g) : overviewHtml(g, r, o, mc);
   const mcInst = mc.items.filter(i => i.installed).length;
-  const badge = { overview: '', optimize: g.active ? '<span class="n on">ligado</span>' : '', redists: missing && (r.windows || r.prefix_ready) ? `<span class="n">${missing}</span>` : '', optionals: optInst ? `<span class="n">${optInst}</span>` : '' };
-  const sub = { overview: 'tudo que deixa o PC pronto para jogar, num lugar só', optimize: g.active ? 'otimização ligada agora' : (g.windows ? 'plano de energia, prioridade e silêncio enquanto um jogo roda' : 'prioridade e silêncio enquanto um jogo roda'), redists: r.windows || r.prefix_ready ? `${pl(r.items.filter(i => i.state === 'installed').length, 'instalada', 'instaladas')} · ${missing} faltando${r.windows ? '' : ' · dentro do prefixo do Proton'}` : 'prefixo do Proton ainda não criado', optionals: `${optInst} de ${o.items.length} instalados` }[tab];
-  const acts = { overview: `<button class="btn s" onclick="renderCentral()" title="Verificar de novo o que está instalado">${I.refresh} Verificar de novo</button>`, optimize: g.active ? `<button class="btn d" onclick="gamemodeStop()">${I.x} Desligar</button>` : `<button class="btn p" onclick="gamemodeRun()">${I.bolt} Otimizar agora</button>`,
-    redists: `<button class="btn s" onclick="api.post('/api/redist/open',{})" title="Abrir a pasta redists\\">${I.folder}</button><button class="btn s" onclick="renderCentral()">${I.refresh} Re-checar</button>`,
-    optionals: `<button class="btn s" onclick="optDeep()" title="${o.windows ? 'Pergunta ao winget o que já está instalado (leva alguns segundos)' : 'Confere de novo o que está instalado (PATH e Flatpak)'}">${I.refresh} Conferir instalados</button>` }[tab];
+  const body = tab === 'minecraft' ? minecraftHtml(mc) : redistsHtml(r);
+  const badge = { redists: missing && (r.windows || r.prefix_ready) ? `<span class="n">${missing}</span>` : '', minecraft: mcInst ? `<span class="n">${mcInst}</span>` : '' };
+  const sub = { redists: missing && (r.windows || r.prefix_ready) ? pl(missing, 'dependência faltando — jogos podem fechar na hora', 'dependências faltando — jogos podem fechar na hora') : 'bibliotecas que os jogos pedem (Visual C++, DirectX, .NET…)', minecraft: 'edições e launchers encontrados neste PC' }[tab];
+  const acts = { redists: `<button class="btn s" onclick="api.post('/api/redist/open',{})" title="Abrir a pasta redists\\">${I.folder}</button><button class="btn s" onclick="renderCentral()">${I.refresh} Re-checar</button>`,
+    minecraft: `<button class="btn s" onclick="renderCentral()">${I.refresh} Procurar de novo</button>` }[tab];
   $('#view').innerHTML = `<div class="h1"><h2>Central Ludrix</h2><span>${sub}</span><div class="acts">${ONLINE ? '' : '<span class="offl">sem conexão</span>'}${acts}</div></div>
     <div class="tabs ctabs">${CENTRAL_TABS.map(([id, n]) => `<button class="${tab === id ? 'on' : ''}" onclick="centralTab('${id}')">${n}${badge[id]}</button>`).join('')}</div>
     <div class="cbody">${body}</div>`;
   guide('central');
 }
 async function centralTab(id) { S.tab.central = id; await renderCentral(); }
-function overviewHtml(g, r, o, mc) {
-  const win = g.windows;
-  const missing = r.items.filter(i => i.state === 'missing'), inst = r.items.filter(i => i.state === 'installed').length;
-  const classic = (r.bundles || []).find(b => b.id === 'classic');
-  const classicTodo = classic ? classic.items.filter(id => (r.items.find(i => i.id === id) || {}).state !== 'installed').length : 0;
-  const optInst = o.items.filter(i => i.state === 'installed').length;
-  const mcInst = mc.items.filter(i => i.installed), mcLib = mc.items.filter(i => i.in_library).length;
-  const card = (id, icon, title, what, status, cls, acts) => `<div class="ccard ${cls || ''}"><div class="ch"><span class="ci">${icon}</span><div><b>${title}</b><small>${what}</small></div></div><div class="cs">${status}</div><div class="ca">${acts}<button class="btn s sm" onclick="centralTab('${id}')">Ver tudo ${I.ext}</button></div></div>`;
-  const attention = [];
-  const rOk = r.windows || r.prefix_ready;
-  if (rOk && missing.length) attention.push(`<b>${missing.length}</b> ${missing.length > 1 ? 'dependências faltando' : 'dependência faltando'} — jogos podem fechar na hora`);
-  if (o.windows && !o.winget) attention.push('winget não encontrado — os programas úteis só abrem pela Store');
-  if (!o.windows && !o.flatpak) attention.push('Flatpak não encontrado — os programas úteis não instalam daqui');
-  if (mcInst.length && !mcLib) attention.push('Minecraft instalado, mas ainda fora da Biblioteca');
-  const gmStatus = g.active ? `<span class="pill ok">● ligada agora</span> <span>o PC está no modo de jogo até você desligar ou o jogo fechar</span>` : `<span class="pill">desligada</span> <span>${S.config.game_mode_auto ? 'liga sozinha ao abrir um jogo' : S.config.game_mode_ask !== false ? 'pergunto ao abrir um jogo' : 'fica no botão direito de cada jogo'}</span>`;
-  return `${attention.length ? `<div class="note warn catt"><b>Precisa de atenção</b><ul>${attention.map(a => `<li>${a}</li>`).join('')}</ul></div>` : `<div class="note ok catt"><b>Tudo em ordem</b> — nada pendente por aqui — o PC está pronto para jogar.</div>`}
-    <div class="cgrid">
-    ${card('optimize', I.bolt, 'Otimizar antes de jogar', win ? 'Plano de energia, prioridade alta e silêncio enquanto o jogo roda; volta tudo ao normal depois.' : 'Prioridade alta e silêncio do launcher enquanto o jogo roda.', gmStatus, g.active ? 'on' : '', g.active ? `<button class="btn d sm" onclick="gamemodeStop()">${I.x} Desligar</button>` : `<button class="btn p sm" onclick="gamemodeRun()">${I.bolt} Otimizar agora</button>`)}
-    ${card('redists', I.chip, 'Dependências', 'Bibliotecas que quase todo jogo exige (Visual C++, DirectX, .NET…). Sem elas o jogo fecha na hora ou reclama de .dll.', rOk ? `<span class="pill ${missing.length ? 'warn' : 'ok'}">${missing.length ? missing.length + ' faltando' : 'todas instaladas'}</span> <span>${inst} de ${r.items.length} instaladas${r.windows ? '' : ' no prefixo do Proton'}${missing.length ? ': ' + esc(missing.slice(0, 3).map(i => i.title).join(', ')) + (missing.length > 3 ? '…' : '') : ''}</span>` : '<span class="pill">prefixo ainda não criado</span> <span>abra um jogo de Windows uma vez; as dependências vão para dentro do prefixo do Proton</span>', missing.length ? 'warn' : '', rOk && classic && classicTodo ? `<button class="btn p sm" ${ONLINE ? '' : 'disabled'} onclick="redistBundle('classic')">${I.dl} Instalar pacote Clássico</button>` : '')}
-    ${card('optionals', I.win, 'Programas úteis', o.windows ? 'Lojas, launchers, runtimes, ferramentas e launchers de Minecraft. Nada é obrigatório; instala pelo winget ou pela Microsoft Store.' : 'Steam, Heroic, Lutris, GameMode, MangoHud, LACT e outros. Nada é obrigatório; instala pelo Flatpak.', `<span class="pill">${optInst} de ${o.items.length}</span> <span>instalados no PC${o.windows ? (o.winget ? '' : ' · winget não encontrado') : (o.flatpak ? '' : ' · Flatpak não encontrado')}</span>`, '', o.windows ? `<button class="btn s sm" onclick="optDeep()">${I.refresh} Conferir instalados</button>` : '')}
-    </div>`;
-}
-function optRow(i, o) {
-  const j = S.jobs['optional:' + i.id];
-  const st = i.state === 'installed' ? '<span class="pill ok">instalado</span>' : '';
-  if (!o.windows) {
-    const canFp = o.flatpak && i.flatpak;
-    const btns = j ? progHtml(j, 'optional:' + i.id) : `<div class="ta">${i.flatpak ? `<button class="btn ${i.state === 'installed' ? 's' : 'p'}" ${canFp && ONLINE ? '' : 'disabled'} title="${canFp ? 'flatpak install ' + esc(i.flatpak) : 'precisa do Flatpak'}" onclick="optInstall('${i.id}')">${I.dl} ${i.state === 'installed' ? 'Reinstalar' : 'Instalar'}</button>` : `<span class="pill" title="Não há Flatpak; instale pelo gerenciador da sua distro">${esc('distro: ' + (i.pkg || i.title))}</span>`}${i.site ? `<button class="btn s" onclick="api.post('/api/open_url',{url:${jsq(i.site)}})">${I.ext} Site</button>` : ''}</div>`;
-    return `<div class="tile ${i.state === 'installed' ? 'ok' : ''}"><div class="tt"><b title="${esc(i.title)}">${esc(i.title)}</b>${st}</div><div class="td">${esc(i.desc)}</div>${btns}</div>`;
-  }
-  const canWg = o.windows && o.winget && (i.winget || []).length;
-  const btns = j ? progHtml(j, 'optional:' + i.id) : `<div class="ta">${(i.winget || []).length ? `<button class="btn ${i.state === 'installed' ? 's' : 'p'}" ${canWg && ONLINE ? '' : 'disabled'} title="${canWg ? 'winget install ' + esc(i.winget.join(' + ')) : 'precisa do winget (Windows 10/11)'}" onclick="optInstall('${i.id}')">${I.dl} ${i.state === 'installed' ? 'Reinstalar' : 'Instalar'}</button>` : ''}<button class="btn s" onclick="optStore('${i.id}')" title="${i.store ? 'Abrir a página na Microsoft Store' : 'Procurar na Microsoft Store'}">${I.ext} Store</button></div>`;
-  return `<div class="tile ${i.state === 'installed' ? 'ok' : ''}"><div class="tt"><b title="${esc(i.title)}">${esc(i.title)}</b>${st}</div><div class="td">${esc(i.desc)}</div>${btns}</div>`;
-}
-function optionalsHtml(o) {
-  return `<div class="hint">${o.windows ? 'Nada aqui é obrigatório. <b>Instalar</b> usa o winget (gerenciador de pacotes do próprio Windows) em silêncio, com andamento na Fila; <b>Store</b> abre a página na Microsoft Store. O Ludrix não guarda instaladores.' : 'Nada aqui é obrigatório. <b>Instalar</b> usa o Flatpak (Flathub, só para o seu usuário) com andamento na Fila. O que não tem Flatpak aparece com o nome do pacote para instalar pela sua distro.'}</div>
-    ${!o.windows && !o.flatpak ? `<div class="note warn">O Flatpak não foi encontrado. Instale pela sua distro (flatpak.org/setup) para instalar daqui.</div>` : ''}
-    ${o.windows && !o.winget ? `<div class="note warn">O winget não foi encontrado. Ele vem com o "Instalador de Aplicativo" da Microsoft Store. <button class="lnk" onclick="optStore('winget')">Abrir na Store</button></div>` : ''}
-    ${o.groups.map(g => `<div class="gh"><h3>${esc(g.name)}</h3><span>${esc(g.desc)}</span></div><div class="tiles">${o.items.filter(i => i.group === g.id).map(i => optRow(i, o)).join('')}</div>`).join('')}`;
-}
 function minecraftHtml(m) {
   const tile = i => {
     const j = S.jobs['mc:' + i.id];
@@ -4126,7 +4140,7 @@ function minecraftHtml(m) {
     let acts;
     if (j) acts = progHtml(j, 'mc:' + i.id);
     else if (i.installed) acts = `<div class="ta">${i.in_library ? `<button class="btn p" onclick="play(${jsq(i.in_library)})">${I.play} Jogar</button><button class="btn s" onclick="openGame(${jsq(i.in_library)})">${I.info || I.edit} Detalhes</button>` : `<button class="btn p" onclick="mcAdd('${i.id}')">${I.plus} Colocar na Biblioteca</button>`}${i.path && i.kind !== 'store' ? `<span class="pill" title="${esc(i.path)}" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(i.path.split(/[\\/]/).pop())}</span>` : ''}</div>`;
-    else acts = `<div class="ta">${(m.windows ? i.winget.length : i.flatpak) ? `<button class="btn p" ${ONLINE ? '' : 'disabled'} title="${m.windows ? 'winget install ' + esc(i.winget.join(' ')) : 'flatpak install ' + esc(i.flatpak)}" onclick="mcInstall('${i.id}')">${I.dl} Instalar</button>` : ''}${i.store && m.windows ? `<button class="btn s" onclick="api.post('/api/minecraft/open',{id:'${i.id}',where:'store'})">${I.ext} Microsoft Store</button>` : ''}<button class="btn s" onclick="api.post('/api/minecraft/open',{id:'${i.id}',where:'site'})">${I.ext} Site</button><button class="btn s" onclick="mcLocate('${i.id}')" title="Já tenho: apontar o executável">${I.folder} Localizar</button></div>`;
+    else acts = `<div class="ta"><button class="btn p" onclick="api.post('/api/minecraft/open',{id:'${i.id}',where:'site'})">${I.ext} Baixar no site</button><button class="btn s" onclick="mcLocate('${i.id}')" title="Já tenho: apontar o executável">${I.folder} Localizar</button></div>`;
     return `<div class="tile ${i.installed ? 'ok' : ''}"><div class="tt"><b title="${esc(i.title)}">${esc(i.title)}</b>${st}${lib}</div><div class="td">${esc(i.desc)}${i.kind === 'jar' && !m.java ? ' <b style="color:var(--amber)">Java não encontrado.</b>' : ''}</div>${acts}</div>`;
   };
   const eds = (m.editions || []).map(e => {
@@ -4145,26 +4159,20 @@ function minecraftHtml(m) {
     return `<div class="tile ${inst ? 'ok' : ''}"><div class="tt"><b>${esc(e.title)}</b>${inst ? '<span class="pill ok">instalado</span>' : ''}${e.in_library ? '<span class="pill">na Biblioteca</span>' : ''}</div><div class="td">${esc(e.desc)}</div><div class="td" style="display:flex;gap:6px;flex-wrap:wrap">${info}</div>${warn}${acts}</div>`;
   }).join('');
   const show = m.items.filter(i => i.installed || i.suggest);
-  return `<div class="gh" style="margin-top:22px"><h3>Minecraft</h3><span>edições encontradas e launchers sugeridos</span></div><div class="hint">O Ludrix não substitui o launcher do Minecraft: ele descobre qual edição está no PC (Java e Bedrock), coloca na Biblioteca e, ao clicar em Jogar, abre pelo launcher certo (conta, versões e mods continuam lá). Se não houver launcher para o Java, o Ludrix indica um. <b>Instalar</b> usa o winget em silêncio, com andamento na Fila; se você instalou em outra pasta, use <b>Localizar</b>.</div>
+  return `<div class="hint">O Ludrix não substitui o launcher do Minecraft: ele descobre qual edição está no PC (Java e Bedrock), coloca na Biblioteca e, ao clicar em Jogar, abre pelo launcher certo (conta, versões e mods continuam lá). Se não houver launcher para o Java, o Ludrix indica um. <b>Baixar no site</b> abre a página oficial do launcher; depois de instalar, use <b>Localizar</b> se o Ludrix não o encontrar sozinho.</div>
     <div class="gh"><h3>No seu PC</h3><span>Edições encontradas neste computador</span></div><div class="tiles">${eds}</div>
-    ${m.windows && !S.opt.winget ? `<div class="note warn">O winget não foi encontrado. Ele vem com o "Instalador de Aplicativo" da Microsoft Store. <button class="lnk" onclick="optStore('winget')">Abrir na Store</button></div>` : ''}
     <div class="gh"><h3>Launchers</h3><span>os instalados e dois sugeridos: Prism Launcher (código aberto, modpacks) e SKLauncher (leve e prático)</span></div><div class="tiles">${show.map(tile).join('')}</div>`;
 }
 async function mcAdd(id) { const r = await api.post('/api/minecraft/add', { id }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); toast('ok', 'Minecraft na Biblioteca', r.launcher || id === 'bedrock' ? 'Clique em Jogar para abrir.' : 'Ao clicar em Jogar, o Ludrix indica um launcher.', r.key ? [{ label: 'Abrir', fn: () => { setView('home'); openGame(r.key); } }] : null); await loadCatalog(); if (S.view === 'central') renderCentral(); }
 async function mcLocate(id) { const r = await api.post('/api/minecraft/locate', { id }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); if (r.ok) { toast('ok', 'Minecraft na Biblioteca', 'Launcher apontado com sucesso.'); await loadCatalog(); if (S.view === 'central') renderCentral(); } }
 async function mcSetLauncher(id) { const r = await api.post('/api/minecraft/launcher', { id }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); toast('ok', 'Minecraft', 'Java Edition passa a abrir por esse launcher.'); await loadCatalog(); if (S.view === 'central') renderCentral(); }
 function mcNeedLauncher(r) {
-  const recs = (r.recommend || []).map((x, i) => `<div class="tile ${i === 0 ? 'ok' : ''}"><div class="tt"><b>${esc(x.title)}</b>${i === 0 ? '<span class="pill ok">recomendado</span>' : ''}</div><div class="td">${esc(x.why)} ${esc(x.desc)}</div><div class="ta">${x.winget.length && r.winget ? `<button class="btn p sm" ${ONLINE ? '' : 'disabled'} onclick="$('#modal').classList.remove('on');mcInstall('${x.id}');setView('central');centralTab('optionals')">${I.dl} Instalar</button>` : ''}${x.store ? `<button class="btn s sm" onclick="api.post('/api/minecraft/open',{id:'${x.id}',where:'store'})">${I.ext} Microsoft Store</button>` : ''}<button class="btn s sm" onclick="api.post('/api/minecraft/open',{id:'${x.id}',where:'site'})">${I.ext} Site</button><button class="btn s sm" onclick="$('#modal').classList.remove('on');mcLocate('${x.id}')">${I.folder} Já tenho</button></div></div>`).join('');
+  const recs = (r.recommend || []).map((x, i) => `<div class="tile ${i === 0 ? 'ok' : ''}"><div class="tt"><b>${esc(x.title)}</b>${i === 0 ? '<span class="pill ok">recomendado</span>' : ''}</div><div class="td">${esc(x.why)} ${esc(x.desc)}</div><div class="ta"><button class="btn p sm" onclick="api.post('/api/minecraft/open',{id:'${x.id}',where:'site'})">${I.ext} Baixar no site</button><button class="btn s sm" onclick="$('#modal').classList.remove('on');mcLocate('${x.id}')">${I.folder} Já tenho</button></div></div>`).join('');
   modal({ title: 'Falta um launcher de Minecraft', html: `<p>O Minecraft Java Edition está no PC, mas nenhum launcher para abri-lo. O launcher cuida da conta, das versões e dos mods; escolha um:</p><div class="tiles" style="margin-top:10px">${recs}</div><p class="mut" style="margin-top:10px">Outros launchers (MultiMC, ATLauncher, Modrinth, CurseForge…) ficam em Central › Minecraft.</p>`, wide: true, ok: 'Não fazer nada', noCancel: true });
 }
 function mcNeedBedrock(r) {
   modal({ title: 'Minecraft Bedrock não está instalado', text: 'A edição Bedrock vem pela Microsoft Store. Depois de instalar, volte e clique em Jogar.', ok: 'Abrir na Microsoft Store', cancel: 'Não fazer nada', onOk: () => api.post('/api/minecraft/open', { id: 'bedrock', where: 'store' }) });
 }
-async function mcInstall(id) { const r = await api.post('/api/minecraft/install', { id }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); S.jobs['mc:' + id] = { stage: 'install', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on'); renderCentral(); }
-async function optInstall(id) { const r = await api.post('/api/optional/install', { id }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); S.jobs['optional:' + id] = { stage: 'install', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on'); renderCentral(); pollSoon(); }
-async function optStore(id) { const r = await api.post('/api/optional/store', { id }); if (r.error) toast('err', 'Não foi possível concluir', r.error); }
-async function optDeep() { toast('', S.opt && !S.opt.windows ? 'Conferindo instalados…' : 'Conferindo com o winget…', 'Leva alguns segundos.'); const o = await api.get('/api/optionals?deep=1'); if (S.view !== 'central') return; S.opt = o; renderCentral(); }
-
 function redistsHtml(r) {
   const st = { installed: ['ok', 'instalado'], missing: ['warn', 'faltando'], unknown: ['', ''] };
   const jobOf = id => S.jobs['redist:' + id];
@@ -4181,106 +4189,9 @@ function redistsHtml(r) {
 async function redistInstall(id) { const r = await api.post('/api/redist/install', { id }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); S.jobs['redist:' + id] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; renderCentral(); pollSoon(); }
 async function redistBundle(id) { const r = await api.post('/api/redist/bundle', { id }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); if (r.queued === 0) return toast('ok', 'Já está tudo instalado', ''); S.jobs['redist:bundle:' + id] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; renderCentral(); pollSoon(); }
 
-function gamemodeHtml(g) {
-  const c = S.config; const sw = (k, label, desc) => `<div class="frow"><div class="l"><b>${label}</b><span>${desc}</span></div><button class="sw ${c[k] !== false ? 'on' : ''}" onclick="setCfg({${k}:!(S.config.${k}!==false)}).then(renderCentral)"></button></div>`;
-  const list = c.game_mode_close || [];
-  const when = c.game_mode_auto ? 'auto' : c.game_mode_ask !== false ? 'ask' : 'off';
-  const PLANS = { high: ['Alto desempenho', 'O plano "Alto desempenho" do próprio Windows: a CPU não baixa o clock enquanto você joga.'], ultimate: ['Desempenho máximo', 'Modelo "Ultimate Performance" do Windows: sem estados de economia, latência mínima. É criado na primeira vez.'], khorvie: ['Khorvie (comunidade)', 'Plano da comunidade com ajustes agressivos de CPU/USB/PCIe para jogos competitivos. É importado na primeira vez.'] };
-  const plan = c.game_mode_plan || 'high';
-  return `<div class="gstate ${g.active ? 'on' : ''}"><div class="dot"></div><div class="tx"><b>${g.active ? 'Ligado agora' : 'Desligado'}</b><span>${g.active ? `O PC está no modo de jogo${g.plan ? ` · plano de energia: ${esc(g.plan)}` : ''}. Ao fechar o jogo tudo volta como estava.` : !g.windows ? (g.gamemode ? 'Enquanto um jogo roda: GameMode (Feral) ligado, prioridade para o jogo, apps da sua lista fechados e o Ludrix em silêncio.' : 'Enquanto um jogo roda: prioridade para o jogo, apps da sua lista fechados e o Ludrix em silêncio. Com o GameMode (Feral) instalado, o governor da CPU também vai ao máximo.') : 'Enquanto um jogo roda: plano de energia de desempenho, prioridade alta para o jogo, apps da sua lista fechados e o Ludrix em silêncio. Nada de "limpar RAM" ou mexer em serviços.'}</span></div></div>
-    <div class="gmwrap">
-      <div class="sec"><h3>Quando ligar</h3>
-        <div class="frow"><div class="l"><b>Ao abrir um jogo</b><span>${{ auto: 'Liga em todo jogo, sem perguntar', ask: 'Aparece como "Otimizar e abrir" no botão direito do jogo', off: 'Só quando você clicar em "Ligar agora"' }[when]}</span></div>${selHtml([['auto', 'Sempre'], ['ask', 'No menu do jogo'], ['off', 'Nunca']], when, "gmWhen(this.value)")}</div>
-        <h4>O que ele faz</h4>
-        ${g.windows ? sw('game_mode_power', 'Plano de energia de desempenho', 'Troca enquanto joga e restaura o plano anterior quando o jogo fecha') : ''}
-        ${g.windows && c.game_mode_power !== false ? `<div class="frow"><div class="l"><b>Qual plano</b><span>${PLANS[plan][1]}</span></div>${cfgSel('game_mode_plan', Object.entries(PLANS).map(([v, [l]]) => [v, l]), plan, '.then(renderCentral)')}</div>` : ''}
-        ${sw('game_mode_priority', 'Prioridade alta para o jogo', g.windows ? 'O processo do jogo recebe prioridade Alta no Windows (o launcher e o resto cedem CPU)' : (g.gamemode ? 'Abre o jogo com o GameMode (Feral): governor de desempenho e prioridade enquanto ele roda' : 'Instale o GameMode (Central › Programas úteis) para o governor de CPU ir ao máximo durante o jogo; sem ele só a prioridade do processo é ajustada'))}
-        ${sw('game_mode_quiet', 'Ludrix em silêncio', 'Pausa a busca de capas e informações e deixa os torrents em marcha lenta enquanto o jogo roda; retoma depois')}
-        ${sw('game_mode_reopen', 'Reabrir os apps fechados', 'Quando o jogo terminar, abre de novo o que foi fechado')}
-      </div>
-      <div class="sec"><h3>Apps que ele fecha</h3><p>Só o que estiver nesta lista é fechado (Discord, navegador, Spotify…). Nada de serviços do ${g.windows ? 'Windows' : 'sistema'}.</p>
-        <div class="gmapps">${list.length ? list.map(n => { const run = g.running.find(r => r.name.toLowerCase() === n.toLowerCase()); return `<span class="gmapp on"><b>${esc(n)}</b>${run ? `<small>${fmt(run.mem)}</small>` : '<small>fechado</small>'}<button onclick="gmToggle(${jsq(n)})" title="Tirar da lista">${I.x}</button></span>`; }).join('') : '<span style="color:var(--muted2);font-size:12.5px">Nenhum. Clique num app abaixo para adicionar.</span>'}</div>
-        <h4>Rodando agora (sugestões)</h4>
-        <div class="gmapps">${g.running.filter(r => !list.some(n => n.toLowerCase() === r.name.toLowerCase())).map(r => `<span class="gmapp" onclick="gmToggle(${jsq(r.name)})"><b>${esc(r.name)}</b><small>${fmt(r.mem)}</small><i>+</i></span>`).join('') || '<span style="color:var(--muted2);font-size:12.5px">Nenhum dos apps comuns está aberto.</span>'}</div>
-        <div class="mrow" style="margin-top:10px"><input class="mi" id="gmAdd" placeholder="${g.windows ? 'outro .exe (ex.: Wallpaper32.exe)' : 'outro programa (ex.: discord)'}" onkeydown="if(event.key==='Enter')gmToggle(this.value)"><button class="btn s sm" onclick="gmToggle($('#gmAdd').value)">Adicionar</button></div>
-      </div>
-    </div>`;
-}
-async function gmToggle(name) { name = (name || '').trim(); if (!name) return; const list = [...(S.config.game_mode_close || [])]; const i = list.findIndex(n => n.toLowerCase() === name.toLowerCase()); if (i >= 0) list.splice(i, 1); else list.push(name); await setCfg({ game_mode_close: list }); renderCentral(); }
-const gmSummary = r => [r.power ? 'plano ' + (r.plan || 'Alto desempenho') : '', r.closed?.length ? `fechei ${r.closed.join(', ')}` : '', r.quiet ? 'Ludrix em silêncio' : ''].filter(Boolean).join(' · ') || 'nada a fazer';
-async function gamemodeRun() { const r = await api.post('/api/gamemode/run', {}); if (r.error) return toast('err', 'Não foi possível concluir', r.error); toast('ok', 'Modo Game ligado', gmSummary(r)); if (S.view === 'central') renderCentral(); }
-async function gamemodeStop() { const r = await api.post('/api/gamemode/restore', {}); if (r.error) return toast('err', 'Não foi possível concluir', r.error); toast('', 'Modo Game desligado', [r.reopened?.length ? `reabri ${r.reopened.join(', ')}` : '', r.power ? 'plano de energia restaurado' : ''].filter(Boolean).join(' · ') || 'tudo de volta ao normal'); if (S.view === 'central') renderCentral(); }
-
-const GUIDES = {
-  central: [
-    { at: '.ctabs', t: 'Três partes', d: '"Otimizar antes de jogar" prepara o PC enquanto o jogo roda; "Dependências" resolve jogo que não abre; "Programas úteis" é a lista completa dos opcionais.', pos: 'bottom' },
-    { at: '.h1 .btn.p, .h1 .btn.d', t: 'Otimizar agora', d: 'Liga a otimização na hora, sem abrir jogo nenhum. Ao desligar, tudo volta como estava.', pos: 'left' },
-  ],
-  detail: [
-    { at: '#dWrap .btn.g, #dWrap .btn.p', t: 'Jogar ou baixar', d: 'O botão principal abre o jogo (ou baixa, se ele ainda não está no PC). Botão direito na capa mostra mais ações.', pos: 'right' },
-    { at: '#dWrap .row .btn', t: 'Pasta, saves e edição', d: 'Abra a pasta do jogo, cuide dos saves ou edite nome, capa e executável em "Editar".', pos: 'top' },
-    { at: '#metaBtn', t: 'Capa e informações', d: 'Se a capa ou a descrição vierem erradas, busque de novo escolhendo a fonte que preferir.', pos: 'left' },
-  ],
-  store: [
-    { at: '.h1 .btn[onclick*="sources"], .top .search, .titlebar .search', t: 'Fontes de jogos', d: 'A Store mostra o catálogo das fontes ligadas. Nada é baixado sem você pedir; ligue ou desligue fontes em "Fontes de jogos".', pos: 'bottom' },
-    { at: '#chips', t: 'Categorias', d: 'Filtre por categoria aqui; a busca (tecla /) e a ordenação ficam na barra de tarefas.', pos: 'bottom' },
-  ],
-  emulation: [
-    { at: '.tabs button:first-child', t: 'Consoles', d: 'Cada console mostra os emuladores disponíveis. Instale um e aponte a pasta das suas ROMs.', pos: 'bottom' },
-    { at: '.tabs button:last-child', t: 'Baixar ROMs', d: 'Fontes de ROM que você ligou. A ROM só entra na Biblioteca depois de baixada.', pos: 'bottom' },
-  ],
-  downloads: [
-    { at: '.item.q', t: 'Fila', d: 'Cada download mostra andamento e ações (pausar, cancelar, tentar de novo). O histórico fica aqui até você limpar.', pos: 'bottom' },
-  ],
-  settings: [
-    { at: '.stabs', t: 'Ajustes por assunto', d: 'Uma aba por assunto: comportamento, aparência, exibição dos jogos, ao jogar. A busca no alto acha qualquer opção.', pos: 'right' },
-    { at: '.sec:first-of-type', t: 'Aplicação imediata', d: 'Quase tudo aplica na hora. O que precisa reabrir o Ludrix está marcado com "reiniciar".', pos: 'top' },
-  ],
-};
 const G = { id: null, i: 0, el: null };
-function guide(id, delay = 450) {
-  if (S.config.guides === false || !S.config.welcome_done || !GUIDES[id]) return;
-  if (G.id === id) { const st = GUIDES[id][G.i], el = st && document.querySelector(st.at); if (el && el.offsetParent !== null) guideShow(st, el); else guideNext(); return; }
-  if ((S.config.guides_done || []).includes(id) || G.id) return;
-  if ($('#modal').classList.contains('on') || $('#welcome')) return;
-  G.id = id; G.i = -1;
-  setTimeout(() => guideNext(), delay);
-}
-function guideNext() {
-  if (!G.id) return;
-  const steps = GUIDES[G.id];
-  for (G.i++; G.i < steps.length; G.i++) { const el = document.querySelector(steps[G.i].at); if (el && el.offsetParent !== null) return guideShow(steps[G.i], el); }
-  guideEnd(true);
-}
-function guideShow(st, target) {
-  if (!G.el) { G.el = document.createElement('div'); G.el.className = 'guide'; document.body.append(G.el); }
-  const steps = GUIDES[G.id], n = steps.length, last = G.i >= n - 1;
-  G.el.innerHTML = `<div class="gbody"><b>${esc(st.t)}</b><p>${esc(st.d)}</p><div class="gact"><span class="gdots">${steps.map((_, k) => `<i class="${k === G.i ? 'on' : ''}"></i>`).join('')}</span><span class="sp"></span><button class="btn s xs" onclick="guideEnd(false)">Pular</button><button class="btn p xs" onclick="guideNext()">${last ? 'Entendi' : 'Próximo'}</button></div></div><i class="garrow"></i>`;
-  target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  document.querySelectorAll('.gtarget').forEach(e => e.classList.remove('gtarget')); target.classList.add('gtarget');
-  G.el.className = 'guide ' + (st.pos || 'bottom'); G.el.style.visibility = 'hidden'; G.el.style.display = 'block';
-  requestAnimationFrame(() => {
-    const r = target.getBoundingClientRect(), w = G.el.offsetWidth, h = G.el.offsetHeight, m = 12;
-    let x, y, pos = st.pos || 'bottom';
-    if (pos === 'bottom' && r.bottom + h + m > innerHeight) pos = 'top'; if (pos === 'top' && r.top - h - m < 0) pos = 'bottom';
-    if (pos === 'left' && r.left - w - m < 0) pos = 'bottom'; if (pos === 'right' && r.right + w + m > innerWidth) pos = 'bottom';
-    if (pos === 'bottom') { x = r.left + r.width / 2 - w / 2; y = r.bottom + m; } else if (pos === 'top') { x = r.left + r.width / 2 - w / 2; y = r.top - h - m; }
-    else if (pos === 'left') { x = r.left - w - m; y = r.top + r.height / 2 - h / 2; } else { x = r.right + m; y = r.top + r.height / 2 - h / 2; }
-    x = Math.max(8, Math.min(innerWidth - w - 8, x)); y = Math.max(8, Math.min(innerHeight - h - 8, y));
-    G.el.className = 'guide on ' + pos; G.el.style.left = x + 'px'; G.el.style.top = y + 'px'; G.el.style.visibility = '';
-    const ar = G.el.querySelector('.garrow'); if (ar) { if (pos === 'bottom' || pos === 'top') ar.style.left = Math.max(14, Math.min(w - 14, r.left + r.width / 2 - x)) + 'px'; else ar.style.top = Math.max(14, Math.min(h - 14, r.top + r.height / 2 - y)) + 'px'; }
-  });
-}
-function guideEnd(done) {
-  const id = G.id; if (!id) return;
-  G.id = null; G.i = 0;
-  document.querySelectorAll('.gtarget').forEach(e => e.classList.remove('gtarget'));
-  if (G.el) { G.el.classList.remove('on'); G.el.style.display = 'none'; }
-  const list = [...(S.config.guides_done || [])]; if (!list.includes(id)) { list.push(id); S.config.guides_done = list; api.post('/api/config', { guides_done: list }); }
-  void done;
-}
-function guidesReset() { setCfg({ guides: true, guides_done: [] }).then(() => toast('ok', 'Guias reativados', 'Os balões voltam a aparecer na primeira vez que você usar cada parte do Ludrix.')); }
-function guideDismiss() { if (!G.id) return; G.id = null; document.querySelectorAll('.gtarget').forEach(e => e.classList.remove('gtarget')); if (G.el) { G.el.classList.remove('on'); G.el.style.display = 'none'; } }
+function guide() { }
+function guideDismiss() { }
 
 function hashStr(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
 async function installFlash(id) { const r = await api.post('/api/flash/install', { id }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); S.jobs['flash:' + id] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on'); renderFlash(); pollSoon(); }

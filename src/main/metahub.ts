@@ -44,6 +44,55 @@ export class MetaHub {
         this.meta.covers = this.covers;
         this.meta.web = this.web;
         this.images.onThumb = (k) => this.be.push({ type: 'thumb_ready', key: k });
+        setTimeout(() => { void this.fillHeroes(); }, 60_000).unref();
+    }
+
+    private async fillHeroes() {
+        if (!(this.store.config.auto_metadata ?? true) || !this.covers.once('heroes:fill'))
+            return;
+        try {
+            if (!(await this.be.online()))
+                return;
+            let keys: string[] = Object.keys(this.store.library);
+            try {
+                keys = keys.concat(this.be.emu.scanAll().map((r: any) => r.key));
+            }
+            catch { /* nada */ }
+            let n = 0;
+            for (const key of new Set(keys)) {
+                const m = this.meta.get(key);
+                if (!m || m.hero_url || m.background_file || m.hero_checked || (m.system || 'pc') === 'pc')
+                    continue;
+                while (this.be.quiet)
+                    await sleep(30_000);
+                const title = String(m.query_title || m.title || '').trim();
+                if (!title)
+                    continue;
+                const probe: any = { libretro_name: m.libretro_name, libretro_sys: m.libretro_sys, source: [] };
+                try {
+                    await this.covers.consoleHero(probe, title.replace(/\(.*?\)|\[.*?\]/g, '').trim(), m.system, String(m.year || ''));
+                }
+                catch { /* nada */ }
+                const fields: any = { hero_checked: Math.trunc(Date.now() / 1000) };
+                if (probe.hero_url) {
+                    fields.hero_url = probe.hero_url;
+                    fields.hero_src = probe.hero_src || '';
+                    n += 1;
+                }
+                const saved = this.meta.patch(key, fields);
+                if (probe.hero_url && saved)
+                    this.be.push({ type: 'meta_ready', key, has_cover: Boolean(saved.cover_url), cv: this.cv(key, saved), genres: (saved.genres || []).slice(0, 3), year: saved.year || '', creator: saved.developer || '', found: true, title: saved.title || title, mine: this.mine(key), hero_ok: true });
+                await sleep(400);
+            }
+            if (n)
+                log.info('fundos encontrados para %d jogo(s) de console', n);
+        }
+        catch (ex: any) {
+            log.debug('fundos: %s', ex?.message || ex);
+        }
+        finally {
+            this.covers.done('heroes:fill');
+        }
     }
 
     get store() {
@@ -388,14 +437,18 @@ export class MetaHub {
     }
 
     cv(key: string, m: any): number {
-        const c = this.covers.customPath(key);
-        if (c) {
+        const mt = (f: string | null | undefined) => {
+            if (!f)
+                return 0;
             try {
-                return Math.trunc(fs.statSync(c).mtimeMs / 1000);
+                return Math.trunc(fs.statSync(f).mtimeMs / 1000);
             }
-            catch { /* segue */ }
-        }
-        return Math.trunc(Number((m || {}).fetched_at || 0));
+            catch {
+                return 0;
+            }
+        };
+        const mm = m || {};
+        return Math.trunc(Math.max(mt(this.covers.customPath(key)), mt(mm.background_file ? String(mm.background_file) : ''), this.meta.mtime(key), Number(mm.fetched_at || 0)));
     }
 
     private async others(key: string) {
@@ -431,9 +484,8 @@ export class MetaHub {
         const ms = this.store.config.meta_sources || {};
         const sources = [
             { id: 'steam', name: 'Steam' }, { id: 'gog', name: 'GOG' }, { id: 'wikipedia', name: 'Wikipedia' }, { id: 'wikidata', name: 'Wikidata' },
-            { id: 'steamgriddb', name: 'SteamGridDB' + (String(this.store.config.sgdb_key || '').trim() ? '' : ' (precisa de chave)') },
             sysid !== 'pc' ? { id: 'libretro', name: 'Boxart de console (libretro)' } : null,
-            { id: 'web', name: 'Imagens da web (Google, Bing, DuckDuckGo…)' },
+            { id: 'web', name: 'Imagens da web (Bing, DuckDuckGo, Yandex)' },
         ].filter(Boolean).filter((x: any) => ms[x.id] !== false);
         return {
             key, title: d.title || '', title_orig: d.title_orig || '', title_locked: Boolean(d.title_locked),
@@ -540,7 +592,7 @@ export class MetaHub {
         }
         if ('hero_url' in data) {
             fields.hero_url = String(data.hero_url || '').trim();
-            if (fields.hero_url && fields.hero_url !== (prevMeta.user || {}).hero_url) {
+            if (fields.hero_url && (fields.hero_url !== (prevMeta.user || {}).hero_url || !(prevMeta.background_file && fs.existsSync(String(prevMeta.background_file))))) {
                 const r = await this.covers.fetchCustom(key, fields.hero_url, 'hero', String(data.hero_page || ''), String(data.hero_thumb || ''));
                 if (r.error)
                     return { error: r.error };

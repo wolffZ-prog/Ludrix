@@ -180,14 +180,7 @@ export class Catalog {
     }
 
     cv(key: string, m: any): number {
-        const c = this.customPath(key);
-        if (c) {
-            try {
-                return Math.trunc(fs.statSync(c).mtimeMs / 1000);
-            }
-            catch { /* segue */ }
-        }
-        return Math.trunc(Number((m || {}).fetched_at || 0));
+        return this.be.hub.cv(key, m);
     }
 
     slim(e: Entry): any {

@@ -60,7 +60,7 @@ export class WebImageSearch {
         const toks = tokens(q);
         const out: Hit[] = [];
         const seen = new Set<string>();
-        for (const engine of [this.google, this.bing, this.yandex]) {
+        for (const engine of [this.bing, this.duckduckgo, this.yandex]) {
             let hits: Hit[] = [];
             try {
                 hits = await engine.call(this, query);
@@ -95,7 +95,7 @@ export class WebImageSearch {
         const out: Hit[] = [];
         const seen = new Set<string>();
         for (const query of [`${q} ${sysw} wallpaper`.trim(), `${q} ${sysw} screenshot`.trim()]) {
-            for (const engine of [this.google, this.bing, this.yandex]) {
+            for (const engine of [this.bing, this.duckduckgo, this.yandex]) {
                 let hits: Hit[] = [];
                 try {
                     hits = await engine.call(this, query);
@@ -143,7 +143,7 @@ export class WebImageSearch {
         const toks = tokens(q);
         const out: string[] = [];
         const hosts = new Set<string>();
-        for (const engine of [this.bing, this.google, this.yandex]) {
+        for (const engine of [this.bing, this.duckduckgo, this.yandex]) {
             let hits: Hit[] = [];
             try {
                 hits = await engine.call(this, query);
@@ -204,39 +204,6 @@ export class WebImageSearch {
         if (/wallpaper|fan ?art|screenshot|meme|t-shirt|poster|gif/.test(t))
             s -= 1.5;
         return s;
-    }
-
-    async google(query: string, page = 0): Promise<Hit[]> {
-        const r = await this.s.get('https://www.google.com/search', { headers: HEADERS, timeout: TIMEOUT,
-            params: { q: query, tbm: 'isch', asearch: 'isch', async: `_fmt:json,p:1,ijn:${page}`, hl: 'en', ...(page ? { start: page * 100 } : {}) } });
-        if (!r.ok)
-            return [];
-        const txt = await r.text();
-        const i = txt.indexOf('{');
-        let data: any = {};
-        try {
-            data = i >= 0 ? JSON.parse(txt.slice(i)) : {};
-        }
-        catch {
-            data = {};
-        }
-        const out: Hit[] = [];
-        for (const m of (data.ischj || {}).metadata || []) {
-            const oi = m.original_image || {};
-            const res = m.result || {};
-            const th = m.thumbnail || {};
-            if (!oi.url)
-                continue;
-            let title = res.page_title || '';
-            try {
-                title = Buffer.from(title, 'latin1').toString('utf8');
-                if (title.includes('\ufffd'))
-                    title = res.page_title || '';
-            }
-            catch { /* mantém */ }
-            out.push({ url: oi.url, thumb: th.url || oi.url, w: oi.width || 0, h: oi.height || 0, title, page: res.referrer_url || '', engine: 'google' });
-        }
-        return out;
     }
 
     async bing(query: string, page = 0): Promise<Hit[]> {
@@ -337,7 +304,7 @@ export class WebImageSearch {
         const q = String(query || '').trim();
         if (!q)
             return { hits: [], more: false };
-        const engines = engine === 'google' ? [this.google] : engine === 'bing' ? [this.bing] : engine === 'duckduckgo' ? [this.duckduckgo] : engine === 'yandex' ? [this.yandex] : [this.google, this.bing, this.duckduckgo];
+        const engines = engine === 'bing' ? [this.bing] : engine === 'duckduckgo' ? [this.duckduckgo] : engine === 'yandex' ? [this.yandex] : [this.bing, this.duckduckgo, this.yandex];
         const out: Hit[] = [];
         const seen = new Set<string>();
         let got = 0;

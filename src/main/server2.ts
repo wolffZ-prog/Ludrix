@@ -48,8 +48,6 @@ async function routeGet2(res, p, q, be, port) {
         return (0, server.sendJson)(res, await be.savesInfo(decodeURIComponent(p.slice(11)), Boolean(q.get('deep')))), true;
     if (p === '/api/minecraft')
         return (0, server.sendJson)(res, be.central.minecraftStatus()), true;
-    if (p.startsWith('/api/optionals'))
-        return (0, server.sendJson)(res, await be.central.optionalsStatus(p.includes('deep=1') || q.get('deep') === '1')), true;
     // ---- importacao ----
     if (p === '/api/import/launchers')
         return (0, server.sendJson)(res, be.imp.importLaunchers()), true;
@@ -261,10 +259,6 @@ async function routePost2(res, p, b, be, getWindow, port) {
     if (p === '/api/terminal')
         return (0, server.sendJson)(res, await be.terminal.run(String(b?.line || ''), String(b?.source || 'terminal'))), true;
     /* ------------------------------ opcionais ------------------------------ */
-    if (p === '/api/optional/install')
-        return (0, server.sendJson)(res, await be.central.optionalInstall(String(b?.id || ''))), true;
-    if (p === '/api/optional/store')
-        return (0, server.sendJson)(res, be.central.optionalStore(String(b?.id || ''))), true;
     /* ------------------------------- repacks ------------------------------- */
     if (p === '/api/repack/run')
         return (0, server.sendJson)(res, be.repack.run(String(b?.key || ''), Boolean(b?.force))), true;
@@ -283,8 +277,6 @@ async function routePost2(res, p, b, be, getWindow, port) {
         return (0, server.sendJson)(res, await be.central.minecraftLocate(String(b?.id || ''))), true;
     if (p === '/api/minecraft/launcher')
         return (0, server.sendJson)(res, be.central.minecraftSetLauncher(String(b?.id || ''), b?.path || null)), true;
-    if (p === '/api/minecraft/install')
-        return (0, server.sendJson)(res, await be.central.minecraftInstall(String(b?.id || ''))), true;
     if (p === '/api/minecraft/open')
         return (0, server.sendJson)(res, be.central.minecraftOpen(String(b?.id || ''), String(b?.where || 'site'))), true;
     /* ---------------------------- limpeza / jobs ---------------------------- */

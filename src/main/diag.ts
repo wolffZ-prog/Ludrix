@@ -197,7 +197,6 @@ export async function report(be: any, apiOk: boolean | null = null): Promise<any
                 const ok = Boolean(st.proton_ready && st.runtime_ready);
                 add('proton', 'Jogos de Windows', true, `umu + ${st.proton || 'GE-Proton'} ${ok ? 'prontos' : '(baixa na primeira vez que um jogo abrir)'}` + (st.python ? '' : ' · python3 do sistema não encontrado'), !st.python);
             }
-            add('gamemode', 'GameMode (Feral)', true, compat.gamemodePath() ? 'instalado' : 'não instalado · Central › Programas úteis');
         }
         catch (e: any) {
             add('proton', 'Jogos de Windows', true, `não verificado: ${e?.message || e}`, true);

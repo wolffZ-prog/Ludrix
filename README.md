@@ -71,7 +71,7 @@ Requisitos: Windows 10 ou 11, 64 bits. Nada de conta, login, WebView2 ou instala
 
 **Central**
 - Dependências que quase todo jogo exige (Visual C++, DirectX, .NET, PhysX…): detecta o que falta e instala.
-- Modo Game: fecha o supérfluo antes de jogar e restaura depois. Programas úteis via winget e Microsoft Store. Minecraft: detecta o launcher oficial e as alternativas.
+- Minecraft: detecta o launcher oficial e as alternativas.
 
 **Modo Console**
 - Interface separada para TV e controle: capas grandes, navegação por analógico/D-pad, mesmas tabs do launcher. Abre pelo ícone ou automaticamente com controle conectado.
@@ -96,7 +96,7 @@ Requisitos: Windows 10 ou 11, 64 bits. Nada de conta, login, WebView2 ou instala
   </tr>
   <tr>
     <td><img src="docs/screenshots/04-emuladores.jpg" alt="Emuladores"><br><sub>Emuladores: instala, aponta ROMs, escolhe o núcleo</sub></td>
-    <td><img src="docs/screenshots/05-central.jpg" alt="Central"><br><sub>Central: dependências, Modo Game, programas úteis</sub></td>
+    <td><img src="docs/screenshots/05-central.jpg" alt="Central"><br><sub>Central: dependências e Minecraft</sub></td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/07-menu.jpg" alt="Menu de contexto"><br><sub>Menu do botão direito</sub></td>

@@ -26,11 +26,10 @@ import { FlashManager } from './flash';
 import { SaveManager } from './saves';
 import { safeFolderName, freeBytes } from './installer';
 import { Terminal } from './terminal';
-import { CentralFront, expandVars, bedrockInstalled, BEDROCK_AUMID, BEDROCK_STORE, JAVA_STORE, wingetPath } from './central';
+import { CentralFront, expandVars, bedrockInstalled, BEDROCK_AUMID, BEDROCK_STORE, JAVA_STORE } from './central';
 import * as presets from './presets';
 import * as themes from './themes';
 import * as sys from './system';
-import { GameMode } from './gamemode';
 import { Jobs, prog } from './jobs';
 import { CustomUX } from './custom';
 import { DEFAULT_CONFIG } from './store';
@@ -44,6 +43,7 @@ import * as exporters from './exporters';
 import * as gamepadMod from './gamepad';
 import * as http from './http';
 import { Catalog } from './catalog';
+import { DiscordPresence } from './discord';
 import { normalizeTitle, titleFromPath } from './titles';
 /** Extensoes reconhecidas como jogo de PC. */
 const EXE_EXT = ['.exe', '.bat', '.cmd', '.lnk', '.sh', '.x86_64', '.AppImage', '.bin', '.jar'];
@@ -77,10 +77,10 @@ class Backend {
     boot: any = { done: false, i: 0, n: 0, step: '', errors: [], started: false };
     /** Gatilhos de UI que o processo principal registra (minimizar, sair...). */
     windowHooks: Record<string, (...a: any[]) => any>;
+    discord: DiscordPresence;
     gamepad: gamepadMod.GamepadWatcher | null = null;
     /** Fila de eventos para a UI; /api/status drena a cada poll. */
     events: any[] = [];
-    gamemode: GameMode = new GameMode(() => this.store?.config || {});
     jobs: Jobs = new Jobs(this);
     customUX!: CustomUX;
     quiet = false;
@@ -112,9 +112,10 @@ class Backend {
         this.hiddenSet = new Set(this.store.config.hidden_games || []);
         this.loadCategories();
         this.sessions = new SessionManager(this.store);
+        this.discord = new DiscordPresence(this.store);
+        (this.store as any).discordStatus = () => this.discord.status;
         this.sessions.onStart = (sess) => this.onGameStart(sess);
         this.sessions.onEnd = (sess, elapsed) => this.onGameEnd(sess, elapsed);
-        this.sessions.onBoost = (pid) => this.gamemode.boostPid(pid);
         if (process.platform !== 'win32')
             this.sessions.linuxWrap = (cmd, key) => this.linuxWrap(cmd, key);
         this.emu = new EmulationManager(this.store, http.shared, webcache.shared);
@@ -345,7 +346,6 @@ class Backend {
             jobs,
             events: this.events.splice(0),
             online: this.online_ ?? true,
-            gamemode: this.gamemode.active,
             loading: this.catalogLoading,
             activity: this.activityPayload(jobs),
             meta_pending: this.hub.pending,
@@ -497,6 +497,14 @@ class Backend {
             }
             catch { /* ignore */ }
         }
+        if ('hotkey' in patch || 'hotkey_enabled' in patch)
+            this.windowHooks?.hotkey?.();
+        if ('discord_enabled' in patch || 'discord_app_id' in patch) {
+            if (!this.discord.enabled())
+                void this.discord.set(null);
+            else if (this.sessions.active.size)
+                void this.presenceFor([...this.sessions.active.values()][0]);
+        }
         if ('gamepad_wake' in patch && this.gamepad)
             (this.store.config.gamepad_wake ? this.gamepad.start() : this.gamepad.stop());
         if (patch.bg_warmup && !before.bg_warmup)
@@ -580,13 +588,10 @@ class Backend {
         return { ok: true, ...this.autostart() };
     }
     /* ------------------------------- jogar ------------------------------- */
-    async play(key: string, after: string | null = null, emulator: string | null = null, optimize: boolean | null = null, force = false): Promise<any> {
+    async play(key: string, after: string | null = null, emulator: string | null = null, _optimize: boolean | null = null, force = false): Promise<any> {
         if (this.sessions.has(key))
             return { error: 'Este jogo já está aberto', running: true, key };
         this.sessions.nextAfter = ['none', 'minimize', 'close'].includes(String(after)) ? String(after) : null;
-        if (optimize === null || optimize === undefined)
-            optimize = Boolean(this.store.config.game_mode_auto);
-        this.sessions.nextOptimize = Boolean(optimize);
         if (key.startsWith('rom:')) {
             const r = this.emu.scanAll().find((x) => x.key === key);
             const kept = this.store.lib(key) || {};
@@ -656,7 +661,7 @@ class Backend {
             if (spec.error || (spec.cmd && !(fs.existsSync(spec.cmd[spec.cmd.length - 1]) || spec.cmd[0] === 'flatpak'))) {
                 const [it, fresh] = this.central.mced.javaLauncher(lid);
                 if (!fresh)
-                    return { error: 'Nenhum launcher de Minecraft encontrado. O Java Edition precisa de um launcher para abrir.', need_mc_launcher: true, recommend: this.central.mced.recommend(), winget: Boolean(wingetPath()), store: JAVA_STORE };
+                    return { error: 'Nenhum launcher de Minecraft encontrado. O Java Edition precisa de um launcher para abrir.', need_mc_launcher: true, recommend: this.central.mced.recommend(), store: JAVA_STORE };
                 if (fresh !== exeStr || (it && it.id !== lid))
                     this.store.patchLib(key, { exe: fresh, mc_launcher: it.id });
                 spec = this.central.mc.launchSpec(fresh);
@@ -758,7 +763,6 @@ class Backend {
         if (this.jobs.has(jk))
             return { ok: true, tracked: false, preparing: true, hint: 'O Proton ainda está sendo baixado. O jogo abre sozinho quando terminar.' };
         const after = this.sessions.nextAfter;
-        const optimize = this.sessions.nextOptimize;
         const game = { ...(this.store.lib(key) || {}), key };
         this.jobs.run(jk, 'Proton (umu) — primeira vez', 'tool', async (cb, cancel) => {
             const r = await compat.prepare(this.store.config, (t: string, f: number) => cb({ stage: 'download', fraction: f, detail: t }), cancel, game);
@@ -766,7 +770,6 @@ class Backend {
                 throw new Error(r.error);
             cb({ stage: 'install', fraction: 1, detail: 'Abrindo o jogo…' });
             this.sessions.nextAfter = after;
-            this.sessions.nextOptimize = optimize;
             const res = this.sessions.launch(key, cmd, cwd, title);
             if (res.error)
                 throw new Error(res.error);
@@ -1216,6 +1219,51 @@ class Backend {
             catch { /* nada */ }
         }
         return t || path.basename(exe, path.extname(exe));
+    }
+    classifyDrop(paths: any[]) {
+        const EXE = new Set(['.exe', '.lnk', '.url', '.bat', '.cmd', '.sh', '.appimage', '.desktop', '.swf']);
+        const ARCH = new Set(['.zip', '.7z', '.rar', '.001']);
+        const out: any[] = [];
+        for (const raw of paths.slice(0, 50)) {
+            const p = String(raw || '');
+            let st: fs.Stats | null = null;
+            try {
+                st = fs.statSync(p);
+            }
+            catch {
+                out.push({ path: p, kind: 'missing' });
+                continue;
+            }
+            const name = path.basename(p);
+            if (st.isDirectory()) {
+                let roms = 0, exes = 0;
+                try {
+                    for (const de of fs.readdirSync(p, { withFileTypes: true }).slice(0, 400)) {
+                        if (!de.isFile())
+                            continue;
+                        const ext = path.extname(de.name).toLowerCase();
+                        if (EXE.has(ext))
+                            exes++;
+                        else if (!ARCH.has(ext) && this.emu.guessSystemForFile(de.name))
+                            roms++;
+                    }
+                }
+                catch { /* nada */ }
+                out.push({ path: p, kind: 'dir', name, mode: roms > exes ? 'roms' : 'windows', roms, exes });
+                continue;
+            }
+            const ext = path.extname(name).toLowerCase();
+            const sys = this.emu.guessSystemForFile(name) || '';
+            if (EXE.has(ext))
+                out.push({ path: p, kind: 'exe', name });
+            else if (sys && !ARCH.has(ext))
+                out.push({ path: p, kind: 'rom', name, system: sys });
+            else if (ARCH.has(ext) || ext === '.iso')
+                out.push({ path: p, kind: 'archive', name, system: sys === 'arcade' && !/^[a-z0-9_]{1,12}$/.test(name.slice(0, -ext.length)) ? '' : sys, size: st.size });
+            else
+                out.push({ path: p, kind: 'unknown', name });
+        }
+        return { items: out };
     }
     async addLocalGame(exePath, title, dirMatch = true) {
         if (!exePath) {
@@ -2372,19 +2420,6 @@ class Backend {
         this.store.patchLib(key, { size: total });
         return { size: total, files: items.length, partial: false };
     }
-    /* ---------------------------- Modo Game ---------------------------- */
-    async gameModeRun() {
-        return this.gamemode.optimize();
-    }
-    gameModeStatus() {
-        return this.gamemode.snapshot();
-    }
-    async gameModeRestore() {
-        const r = await this.gamemode.restore();
-        if (this.quiet && !this.sessions.keys().length)
-            this.setQuiet(false);
-        return r;
-    }
     setQuiet(on: boolean) {
         if (on === this.quiet)
             return;
@@ -2395,24 +2430,33 @@ class Backend {
         catch { /* ignore */ }        if (!on)
             this.hub.resumeQueue();
     }
+    private async presenceFor(sess: any) {
+        if (!this.discord.enabled())
+            return;
+        try {
+            const d: any = (await this.gamePayload(sess.key)) || {};
+            const m = this.hub.meta.get(sess.key) || {};
+            const img = String(m.cover_url || '');
+            await this.discord.playing(d.title || sess.title, d.system_name || (d.system && d.system !== 'pc' ? d.system : 'PC'), sess.started, /^https:\/\//i.test(img) && !/^https:\/\/thumbnails\.libretro\.com/i.test(img) ? img : '');
+        }
+        catch (e: any) {
+            log.debug('discord: %s', e?.message || e);
+        }
+    }
+    private presenceAfterEnd() {
+        if (!this.discord.enabled())
+            return;
+        const next = [...this.sessions.active.values()][0];
+        if (next)
+            void this.presenceFor(next);
+        else
+            void this.discord.set(null);
+    }
     async onGameStart(sess: any) {
+        void this.presenceFor(sess);
         if (sess.external) {
             this.push({ type: 'session_external', key: sess.key, title: sess.title });
             return;
-        }
-        if (sess.optimize) {
-            try {
-                const done: any = await this.gamemode.optimize();
-                this.gamemode.boostPid(sess.pid);
-                if (this.store.config.game_mode_quiet !== false) {
-                    this.setQuiet(true);
-                    done.quiet = true;
-                }
-                this.push({ type: 'gamemode', on: true, title: sess.title, ...done });
-            }
-            catch (e) {
-                log.warn('gamemode: %s', e);
-            }
         }
         const mode = sess.after || this.store.config.after_launch || 'ask';
         if (mode === 'ask')
@@ -2425,6 +2469,7 @@ class Backend {
             setTimeout(() => this.windowHooks?.hide?.(), 1000);
     }
     async onGameEnd(sess: any, elapsed: number) {
+        setTimeout(() => this.presenceAfterEnd(), 300);
         if (!sess.external) {
             const info0 = this.store.lib(sess.key) || {};
             if (info0.post_cmd) {
@@ -2442,15 +2487,6 @@ class Backend {
             this.store.patchLib(sess.key, { crash_count: n, last_crash: util.now(), last_rc: sess.rc ?? null });
             const why = this.diagnoseCrash(sess.key, info, sess.rc);
             this.notify('error', `${sess.title} fechou sozinho`, why, sess.key);
-        }
-        if (sess.optimize && this.gamemode.active) {
-            try {
-                const r: any = await this.gamemode.restore();
-                this.push({ type: 'gamemode', on: false, title: sess.title, ...r });
-            }
-            catch (e) {
-                log.warn('gamemode restore: %s', e);
-            }
         }
         if (this.quiet && !this.sessions.keys().length)
             this.setQuiet(false);
@@ -2591,6 +2627,7 @@ class Backend {
     shutdown() {
         this.closing = true;
         this.gamepad?.stop();
+        this.discord?.shutdown();
         this.store.flush();
     }
 }

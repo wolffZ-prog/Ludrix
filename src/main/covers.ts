@@ -188,10 +188,6 @@ export class CoverService {
             catch (e: any) {
                 meta.libretro_error = String(e?.message || e);
             }
-            if (!meta.cover_url && meta.grid) {
-                meta.cover_url = meta.grid;
-                meta.cover_src = 'steamgriddb';
-            }
             if (!meta.cover_url && ['switch', 'ps3', 'x360', 'wiiu', 'ps4'].includes(system)) {
                 try {
                     if (this.srcOn('steam'))
@@ -206,8 +202,50 @@ export class CoverService {
                     catch { /* nada */ }
                 }
             }
+            if (!meta.hero_url)
+                await this.consoleHero(meta, q, system, year);
         }
         return meta;
+    }
+
+    async consoleHero(meta: any, q: string, system: string, year: string) {
+        const keep = { cover_url: meta.cover_url, cover_src: meta.cover_src, steam_appid: meta.steam_appid, gog_id: meta.gog_id, source: [...(meta.source || [])] };
+        const restore = () => {
+            if (keep.cover_url) {
+                meta.cover_url = keep.cover_url;
+                meta.cover_src = keep.cover_src;
+            }
+            if (!keep.steam_appid)
+                delete meta.steam_appid;
+            if (!keep.gog_id)
+                delete meta.gog_id;
+            meta.source = [...keep.source];
+        };
+        for (const [name, fn] of [['steam', this.steam], ['gog', this.gog]] as Array<[string, any]>) {
+            if (meta.hero_url || !this.srcOn(name))
+                continue;
+            try {
+                await fn.call(this, meta, q, year, 0.93, false);
+            }
+            catch { /* nada */ }
+            restore();
+            if (meta.hero_url)
+                meta.hero_src = name;
+        }
+        if (meta.hero_url || !meta.libretro_name)
+            return;
+        const sysname = LIBRETRO_SYS[meta.libretro_sys || system];
+        if (!sysname)
+            return;
+        for (const kind of ['Named_Snaps', 'Named_Titles']) {
+            const url = LIBRETRO.replace('{sys}', quote(sysname)).replace('Named_Boxarts', kind) + quote(meta.libretro_name + '.png');
+            const h = await this.s.head(url, { timeout: 10_000 }).catch(() => null);
+            if (h && h.ok) {
+                meta.hero_url = url;
+                meta.hero_src = 'libretro';
+                return;
+            }
+        }
     }
 
     private lang(): string {

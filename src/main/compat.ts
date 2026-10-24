@@ -86,11 +86,6 @@ export function umuPath(): string | null {
     return which('umu-run');
 }
 
-export function gamemodePath(): string | null {
-    if (IS_WIN)
-        return null;
-    return which('gamemoderun', hostEnv().PATH);
-}
 
 export function winePath(): string | null {
     return which('wine');
