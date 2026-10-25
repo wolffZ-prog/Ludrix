@@ -2387,7 +2387,103 @@
   "JSON não aceito": "JSON rejected",
   "Ver relatório do JSON": "View JSON report",
   "direto": "direct",
-  "Trocar executável": "Change executable"
+  "Trocar executável": "Change executable",
+  "Novos nas fontes": "New in sources",
+  "Marcar como vistos": "Mark as seen",
+  "Tira a marca NOVO desses jogos": "Removes the NEW mark from these games",
+  "Fontes ainda não lidas": "Sources not read yet",
+  "Apareceu na fonte recentemente": "Recently appeared in the source",
+  "Ver os jogos novos dessa fonte": "See this source's new games",
+  "Reler as fontes sozinho": "Re-read sources automatically",
+  "Em segundo plano, sem jogo aberto e sem download em andamento. O botão Atualizar da Store continua funcionando": "In the background, with no game open and no download running. The Store's Refresh button keeps working",
+  "A cada 6 horas": "Every 6 hours",
+  "A cada 12 horas": "Every 12 hours",
+  "Uma vez por dia": "Once a day",
+  "Avisar quando uma fonte ganhar jogos": "Notify when a source gains games",
+  "Aviso no sino com o nome da fonte e os primeiros títulos; os jogos ficam marcados como NOVO na Store": "Bell notice with the source name and first titles; the games are marked NEW in the Store",
+  "Jogos que apareceram nas fontes desde a leitura anterior": "Games that appeared in the sources since the previous read",
+  "Novos": "New",
+  "Paleta de comandos": "Command palette",
+  "Buscar (tecla rápida)": "Search (quick key)",
+  "Recarregar a biblioteca": "Reload the library",
+  "Desfazer remoção": "Undo removal",
+  "Selecionar todos (Biblioteca)": "Select all (Library)",
+  "Favoritar o jogo em destaque": "Favorite the featured game",
+  "Lista de atalhos": "Shortcut list",
+  "Jogar o jogo selecionado": "Play the selected game",
+  "Detalhes do selecionado": "Details of the selected game",
+  "Favoritar o selecionado": "Favorite the selected game",
+  "Editar o selecionado": "Edit the selected game",
+  "Renomear o selecionado": "Rename the selected game",
+  "Remover o selecionado": "Remove the selected game",
+  "Teclado": "Keyboard",
+  "Voltar tudo ao padrão": "Reset all to default",
+  "Clique num atalho para trocar. Ctrl+1…9 troca de aba e Esc fecha, fixos.": "Click a shortcut to change it. Ctrl+1…9 switches tabs and Esc closes; those are fixed.",
+  "Paleta: jogos, ações e ajustes": "Palette: games, actions and settings",
+  "nenhum": "none",
+  "Pressione a combinação nova.": "Press the new combination.",
+  "Abrir .lxtheme e .lxup com o Ludrix": "Open .lxtheme and .lxup with Ludrix",
+  "Duplo clique num tema ou numa atualização baixada já importa. Só mexe no registro do seu usuário": "Double-clicking a theme or a downloaded update imports it. Only touches your user's registry",
+  "Arquivos .lxtheme e .lxup abrem no Ludrix": ".lxtheme and .lxup files open in Ludrix",
+  "Associação removida": "Association removed",
+  "Associação de arquivos": "File association",
+  "Arquivos": "Files",
+  "ROM": "ROM",
+  "Abre por": "Opens via",
+  "Trocar…": "Change…",
+  "Mostrar": "Show",
+  "Apontar…": "Locate…",
+  "Ver saves": "View saves",
+  "OUTROS EXECUTÁVEIS NA PASTA": "OTHER EXECUTABLES IN THE FOLDER",
+  "Procurando…": "Searching…",
+  "Nada para listar.": "Nothing to list.",
+  "Arquivo não encontrado.": "File not found.",
+  "Não foi possível trocar": "Could not change",
+  "Procurando ferramentas e sites de mods…": "Looking for mod tools and sites…",
+  "Nenhuma ferramenta nem site de mods conhecido para este jogo. Instale o jogo para gerenciar mods por aqui.": "No known mod tool or site for this game. Install the game to manage mods here.",
+  "Onde este jogo guarda o progresso, backups e importação": "Where this game keeps progress, backups and import",
+  "Escolher outro .exe desta pasta": "Pick another .exe from this folder",
+  "Abrir a pasta com o arquivo selecionado": "Open the folder with the file selected",
+  "Somar o tamanho da pasta": "Add up the folder size",
+  "Imagens órfãs": "Orphan images",
+  "Backup automático semanal": "Weekly automatic backup",
+  "Pasta dos backups automáticos": "Automatic backup folder",
+  "Fazer agora": "Do it now",
+  "Backup automático falhou": "Automatic backup failed",
+  "Dados de uma versão mais nova": "Data from a newer version",
+  "Ação indisponível": "Action unavailable",
+  "Jogar e…": "Play and…",
+  "Esconder da biblioteca": "Hide from library",
+  "Mostrar arquivo": "Show file",
+  "Procurar capa na web": "Search cover on the web",
+  "Notas e nota pessoal": "Notes and personal score",
+  "Caminho no PC": "Path on this PC",
+  "Copiar": "Copy",
+  "Página do jogo": "Game page",
+  "Pasta do emulador": "Emulator folder",
+  "Abrir o emulador": "Open the emulator",
+  "Trocar o emulador do console": "Change the console's emulator",
+  "Apagar ROM baixada": "Delete downloaded ROM",
+  "ATUALIZAÇÃO": "UPDATE",
+  "Versão nova na fonte": "New version at the source",
+  "Criar fonte": "Create source",
+  "Testar controle": "Test controller",
+  "Download direto": "Direct download",
+  "Etiqueta": "Tag",
+  "Como o tema define": "As the theme defines",
+  "Lateral com nomes": "Side with labels",
+  "Lateral só ícones": "Side, icons only",
+  "No alto": "Top",
+  "Do Windows": "From Windows",
+  "Escolher": "Pick",
+  "Sem limite": "No limit",
+  "Só entre": "Only between",
+  "Progresso na barra de tarefas": "Progress on the taskbar",
+  "Avisar pela bandeja com a janela escondida": "Notify from the tray when the window is hidden",
+  "Avisar quando aparecer pasta nova": "Notify when a new folder appears",
+  "Pausar downloads enquanto um jogo está aberto": "Pause downloads while a game is open",
+  "Origem embaixo da capa": "Origin under the cover",
+  "Novos primeiro": "Newest first"
  },
  "patterns": [
   [
@@ -3037,6 +3133,62 @@
   [
    "^(\\d+) de (\\d+) jogos? ok · (\\d+) erros? · (\\d+) avisos?$",
    "$1 of $2 games ok · $3 errors · $4 warnings"
+  ],
+  [
+   "^fontes lidas há (\\d+) min$",
+   "sources read $1 min ago"
+  ],
+  [
+   "^fontes lidas há (\\d+) h$",
+   "sources read $1 h ago"
+  ],
+  [
+   "^fontes lidas ontem$",
+   "sources read yesterday"
+  ],
+  [
+   "^fontes lidas há (\\d+) dias$",
+   "sources read $1 days ago"
+  ],
+  [
+   "^lida há (\\d+) min$",
+   "read $1 min ago"
+  ],
+  [
+   "^lida há (\\d+) h$",
+   "read $1 h ago"
+  ],
+  [
+   "^lida ontem$",
+   "read yesterday"
+  ],
+  [
+   "^lida há (\\d+) dias$",
+   "read $1 days ago"
+  ],
+  [
+   "^Última leitura das fontes: (.*)$",
+   "Last source read: $1"
+  ],
+  [
+   "^(.+): (\\d+) jogos? novos?$",
+   "$1: $2 new games"
+  ],
+  [
+   "^Versão (.+) na fonte$",
+   "Version $1 at the source"
+  ],
+  [
+   "^já usado por \"(.+)\"$",
+   "already used by \"$1\""
+  ],
+  [
+   "^E mais (\\d+)…$",
+   "And $1 more…"
+  ],
+  [
+   "^Fora do horário de download \\((.+)\\) — continua às (.+)$",
+   "Outside the download window ($1) — resumes at $2"
   ]
  ]
 }

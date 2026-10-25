@@ -233,8 +233,12 @@ async function handle(req, res, be, getWindow) {
             return await routePost(req, res, p, q, be, getWindow);
         return sendJson(res, { error: 'method not allowed' }, 405);
     }
-    catch (e) {
-        log.error('%s %s: %s', req.method, p, e);
+    catch (e: any) {
+        const aborted = req.destroyed || res.destroyed || (e && typeof e === 'object' && !(e instanceof Error) && !Object.keys(e).length) || /aborted|ECONNRESET/i.test(String(e?.message || e?.code || ''));
+        if (aborted)
+            log.debug('%s %s: requisição interrompida pelo cliente', req.method, p);
+        else
+            log.error('%s %s: %s', req.method, p, e);
         try {
             sendJson(res, { error: String(e) }, 500);
         }
@@ -396,6 +400,8 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, await be.discord.test());
     if (p === '/api/config/reset')
         return sendJson(res, be.resetConfig(b?.keys || []));
+    if (p === '/api/file_assoc')
+        return sendJson(res, 'on' in b ? be.setFileAssoc(Boolean(b.on)) : be.fileAssoc());
     if (p === '/api/autostart')
         return sendJson(res, be.setAutostart(b?.on));
     // ---- biblioteca ----
@@ -504,6 +510,8 @@ async function routePost(req, res, p, _q, be, getWindow) {
     if (p === '/api/custom/export')
         return sendJson(res, be.customUX.export(String(b?.name || ''), String(b?.dest || '')));
     // ---- sistema ----
+    if (p === '/api/cache/images_gc')
+        return sendJson(res, be.imageGc(Boolean(b.apply)));
     if (p === '/api/cache/clear')
         return sendJson(res, await be.clearCache(b.what || []));
     if (p === '/api/notifications/ack')
@@ -516,6 +524,19 @@ async function routePost(req, res, p, _q, be, getWindow) {
     if (p === '/api/choose_folder')
         return sendJson(res, await be.chooseFolder(b.what || 'games', b.system || '', b.initial || ''));
     // ---- backup completo ----
+    if (p === '/api/data/auto_backup') {
+        if (b.pick) {
+            const d = await require('./dialogs').pickFolder(be.autoBackupDir());
+            if (d)
+                be.store.setConfig({ auto_backup_dir: d });
+            return sendJson(res, { ok: true, dir: be.autoBackupDir() });
+        }
+        if (b.reset) {
+            be.store.setConfig({ auto_backup_dir: '' });
+            return sendJson(res, { ok: true, dir: be.autoBackupDir() });
+        }
+        return sendJson(res, b.now ? be.autoBackup(true) : { ok: true, dir: be.autoBackupDir() });
+    }
     if (p === '/api/data/export')
         return sendJson(res, await be.dataExport());
     if (p === '/api/data/inspect')
@@ -533,6 +554,17 @@ async function routePost(req, res, p, _q, be, getWindow) {
 }
 /* ------------------------- comandos de janela ------------------------- */
 let resizeTimer = null;
+export function sysAccent(): string {
+    try {
+        if (process.platform !== 'win32' && process.platform !== 'darwin')
+            return '';
+        const c = String(electron.systemPreferences.getAccentColor() || '');
+        return /^[0-9a-f]{6}/i.test(c) ? '#' + c.slice(0, 6).toLowerCase() : '';
+    }
+    catch {
+        return '';
+    }
+}
 async function windowCmd(b, getWindow, be) {
     const win = getWindow();
     const cmd = String(b?.cmd || '');
@@ -545,6 +577,8 @@ async function windowCmd(b, getWindow, be) {
     if (!win)
         return { ok: false, error: 'janela indisponivel' };
     switch (cmd) {
+        case 'sys_accent':
+            return { ok: true, hex: sysAccent() };
         case 'notify_ui':
             be.push({ type: 'ui', ui: b.ui || {} });
             return { ok: true };

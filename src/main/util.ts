@@ -33,7 +33,15 @@ function readJson(file, fallback) {
 function writeJson(file, data) {
     try {
         fs.mkdirSync(path.dirname(file), { recursive: true });
-        fs.writeFileSync(file, JSON.stringify(data, null, 1), 'utf8');
+        const tmp = `${file}.${process.pid}.tmp`;
+        fs.writeFileSync(tmp, JSON.stringify(data, null, 1), 'utf8');
+        try {
+            fs.renameSync(tmp, file);
+        }
+        catch {
+            fs.copyFileSync(tmp, file);
+            fs.rmSync(tmp, { force: true });
+        }
     }
     catch (e) {
         // disco cheio / permissao: nunca derruba a interface por causa disso

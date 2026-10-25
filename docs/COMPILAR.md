@@ -11,7 +11,7 @@ npm start                        abre o Ludrix pelo código (desenvolvimento)
 ## `tools/build.js`
 | Comando | Saída |
 |---|---|
-| `check` | compila o TypeScript e confere json, changelog e executáveis nativos |
+| `check` | roda `tools/check.js` (abaixo), compila o TypeScript e confere json, changelog e executáveis nativos |
 | `bump X.Y.Z` | grava a versão em `version.json`, `package.json`, shim e recurso do exe |
 | `folder` | `release/<v>/Ludrix/` (app, runtime, Ludrix.exe, LudrixConsole.exe, pastas vazias) |
 | `zip` | `Ludrix-<v>.zip` |
@@ -21,6 +21,9 @@ npm start                        abre o Ludrix pelo código (desenvolvimento)
 | `feed [url-base]` | `ludrix-updates.json` (herda os pacotes anteriores do feed publicado) |
 | `all [min]` | check + folder + zip + patch + full + src + feed; apaga `release/stage` e `dist` ao final |
 | `publish` | cria a release `v<versão>` no GitHub com os arquivos de `release/<v>/` |
+
+## `tools/check.js`
+Roda sozinho antes de qualquer `build`/`all` (pule com `LUDRIX_SKIP_CHECK=1`). Confere: TypeScript sem erros; sintaxe de cada `.js` do renderer; `package.json` e `lang/en.json` válidos; todo id do menu de contexto do backend tem um `case` em `ctxDo`; todo `I.xxx` usado existe no mapa de ícones; toda chave gravada por `setCfg`/`sw`/`cfgSel` tem default em `store.ts` (sem default a chave é descartada ao salvar); rotas chamadas pelo renderer existem no servidor. Com `--boot` ainda sobe o app numa pasta temporária e confere se `/api/config` responde (no Linux precisa de `DISPLAY`).
 
 Cache de dependências de produção: `%LOCALAPPDATA%\Ludrix-Dev\cache` (ou `LUDRIX_BUILD_CACHE`). Saída: `release\` (ou `LUDRIX_BUILD_OUT`).
 

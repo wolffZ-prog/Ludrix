@@ -551,7 +551,14 @@ async function main() {
         },
         show: () => showWindow(),
         hotkey: () => applyHotkey(),
+        notify_hidden: (msg: string) => { if (win && !win.isVisible() && (backend?.store.config || {}).notify_hidden !== false) trayMod.notify(msg); },
+        progress: (v: number) => { try { win?.setProgressBar(v, { mode: v < 0 ? 'none' : v >= 1 ? 'none' : 'normal' }); } catch { /* sem barra */ } },
     };
+    if (process.platform === 'win32')
+        try {
+            electron.systemPreferences.on('accent-color-changed', () => backend?.push({ type: 'sys_accent', hex: server.sysAccent() }));
+        }
+        catch { /* sem evento */ }
     if (CONSOLE)
         createConsoleWindow(`http://127.0.0.1:${server.port}/console`);
     else {

@@ -1,3 +1,4 @@
+import nodeCrypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -128,6 +129,44 @@ function sleep(ms: number) {
     return new Promise((r) => setTimeout(r, ms));
 }
 
+let limitFn: () => number = () => 0;
+let holdFn: () => string = () => '';
+export function setDownloadPolicy(limit: () => number, hold: () => string) {
+    limitFn = limit;
+    holdFn = hold;
+}
+const BUCKET = { at: 0, bytes: 0 };
+async function throttle(n: number) {
+    const limit = limitFn();
+    if (!(limit > 0))
+        return;
+    const now = Date.now();
+    if (now - BUCKET.at >= 1000) {
+        BUCKET.at = now;
+        BUCKET.bytes = 0;
+    }
+    BUCKET.bytes += n;
+    if (BUCKET.bytes > limit)
+        await sleep(Math.max(5, BUCKET.at + 1000 - now));
+}
+class HoldError extends Error { }
+async function waitWindow(cb: ProgressCb, cancel: Cancel, frac: number) {
+    let said = '';
+    for (;;) {
+        const why = holdFn();
+        if (!why)
+            return;
+        if (why !== said) {
+            said = why;
+            cb(prog('download', frac, why));
+        }
+        for (let i = 0; i < 20; i++) {
+            if (cancel.aborted)
+                throw new CancelledError();
+            await sleep(100);
+        }
+    }
+}
 export class Downloader {
     static CHUNK = 1024 * 512;
     constructor(public session: http.Session = http.shared) { }
@@ -146,6 +185,7 @@ export class Downloader {
         let checked = false;
         for (let attempt = 1; attempt <= 5; attempt++) {
             try {
+                await waitWindow(cb, cancel, af.size ? have / af.size : -1);
                 const r = await this.session.get(af.url, { headers, timeout: 60_000, redirect: 'follow' });
                 if (r.status === 416)
                     break;
@@ -186,6 +226,14 @@ export class Downloader {
                             chunk = af.decrypt(chunk, have);
                         fs.writeSync(fd, chunk);
                         have += chunk.length;
+                        await throttle(chunk.length);
+                        if (holdFn()) {
+                            try {
+                                await reader.cancel();
+                            }
+                            catch { /* nada */ }
+                            throw new HoldError();
+                        }
                         const dt = (Date.now() - t0) / 1000;
                         if (dt >= 0.5) {
                             speed = (have - got0) / dt;
@@ -208,13 +256,17 @@ export class Downloader {
                     throw e;
                 if (e instanceof http.HttpError && [403, 404, 410].includes(Number(e.status)))
                     throw e;
-                if (attempt === 5)
-                    throw e;
-                cb(prog('download', -1, `Conexão caiu (${e?.name || 'erro'}), tentando de novo em ${attempt * 3}s...`));
-                for (let i = 0; i < attempt * 3 * 10; i++) {
-                    if (cancel.aborted)
-                        throw new CancelledError();
-                    await sleep(100);
+                if (e instanceof HoldError)
+                    attempt--;
+                else {
+                    if (attempt === 5)
+                        throw e;
+                    cb(prog('download', -1, `Conexão caiu (${e?.name || 'erro'}), tentando de novo em ${attempt * 3}s...`));
+                    for (let i = 0; i < attempt * 3 * 10; i++) {
+                        if (cancel.aborted)
+                            throw new CancelledError();
+                        await sleep(100);
+                    }
                 }
                 have = fs.existsSync(part) ? fs.statSync(part).size : 0;
                 headers = { ...baseHeaders };
@@ -691,6 +743,34 @@ export async function installFromArchives(archives: string[], gameDir: string, c
 
 export type Resolver = (af: DlRef) => Promise<[string, Record<string, string>, string?, number?]>;
 
+export function sha256File(file: string, onProgress: ((f: number) => void) | null, cancel: Cancel | null): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const total = fs.statSync(file).size || 1;
+        let done = 0, lastEmit = 0;
+        const h = nodeCrypto.createHash('sha256');
+        const st = fs.createReadStream(file, { highWaterMark: 1 << 20 });
+        st.on('data', (chunk: Buffer) => {
+            try {
+                cancel?.check();
+            }
+            catch (e) {
+                st.destroy();
+                reject(e);
+                return;
+            }
+            h.update(chunk);
+            done += chunk.length;
+            const now = Date.now();
+            if (onProgress && now - lastEmit > 150) {
+                lastEmit = now;
+                onProgress(done / total);
+            }
+        });
+        st.on('error', reject);
+        st.on('end', () => resolve(h.digest('hex')));
+    });
+}
+
 export async function installGame(files: DlRef[], title: string, installRoot: string, cb: ProgressCb, cancel: Cancel, keepArchive = false,
     session: http.Session = http.shared, resolver: Resolver | null = null): Promise<[string, string[]]> {
     const gameDir = path.join(installRoot, safeFolderName(title));
@@ -714,6 +794,17 @@ export async function installGame(files: DlRef[], title: string, installRoot: st
         else {
             const wrapped: ProgressCb = n > 1 ? (p) => cb(prog(p.stage, p.fraction, prefix + p.detail)) : cb;
             await dl.download(af, dest, wrapped, cancel);
+        }
+        if (af.sha256 && /^[0-9a-fA-F]{64}$/.test(af.sha256)) {
+            const got = await sha256File(dest, (f) => cb(prog('download', f, `${prefix}Conferindo integridade de ${basename(af)}…`)), cancel);
+            if (got.toLowerCase() !== af.sha256.toLowerCase()) {
+                try {
+                    fs.rmSync(dest, { force: true });
+                }
+                catch { /* já era */ }
+                throw new Error(`${basename(af)}: o arquivo baixado não bate com o sha256 informado pela fonte (chegou ${got.slice(0, 12)}…, esperado ${af.sha256.slice(0, 12)}…). O arquivo foi apagado; tente baixar de novo ou avise quem mantém a fonte.`);
+            }
+            cb(prog('download', 1, `${prefix}${basename(af)} conferido`));
         }
         downloaded.push(dest);
     }

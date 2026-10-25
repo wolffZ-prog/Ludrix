@@ -6,7 +6,7 @@ import * as crypto from './crypto';
 export const MANIFEST = 'integrity.json';
 const SKIP_DIRS = new Set(['__pycache__', '.git', 'node_modules']);
 const SKIP_EXT = new Set(['.pyc', '.pyo', '.log', '.tmp', '.part', '.bak', '.map']);
-const CRITICAL_PREFIX = ['main/', 'ui/app.js', 'ui/app.css', 'ui/index.html', 'ui/lang/', 'assets/presets/', 'package.json'];
+const CRITICAL_PREFIX = ['main/', 'ui/app.js', 'ui/keys.js', 'ui/detail.js', 'ui/settings.js', 'ui/gamepad.js', 'ui/icons.js', 'ui/sofa.js', 'ui/app.css', 'ui/index.html', 'ui/lang/', 'assets/presets/', 'package.json'];
 let cache: any = null;
 
 const today = () => new Date().toISOString().slice(0, 10);

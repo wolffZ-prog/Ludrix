@@ -86,7 +86,7 @@ const enc = s => encodeURIComponent(s);
 const fmtTime = sec => { sec = Math.floor(sec || 0); if (sec < 60) return '0 min'; const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60); return h ? `${h} h ${String(m).padStart(2, '0')} min` : `${m} min`; };
 const ago = ts => { if (!ts) return ''; const d = (Date.now() / 1000 - ts); if (d < 3600) return 'há ' + Math.max(1, Math.floor(d / 60)) + ' min'; if (d < 86400) return 'há ' + Math.floor(d / 3600) + ' h'; if (d < 172800) return 'ontem'; return 'há ' + Math.floor(d / 86400) + ' dias'; };
 
-const S = { sel: new Set(), games: [], byKey: {}, cats: [], repos: [], systems: {}, config: {}, view: 'home', cat: 'all', q: '', stageKey: '', sort: 'az', flt: { cats: new Set(), sys: new Set(), flags: new Set(), repos: new Set(), src: new Set(), genres: new Set(), devs: new Set(), years: new Set(), lastp: new Set(), added: new Set(), ptime: new Set(), size: new Set(), status: new Set(), score: new Set() }, _fopen: {}, _fq: {}, _fall: {}, home: null, tab: { store: 'games', mods: 'tools', emulation: 'emulators', central: 'overview' }, mods: null,
+const S = { sel: new Set(), games: [], byKey: {}, cats: [], repos: [], systems: {}, config: {}, view: 'home', cat: 'all', q: '', stageKey: '', sort: 'az', flt: { cats: new Set(), sys: new Set(), flags: new Set(), repos: new Set(), src: new Set(), genres: new Set(), tags: new Set(), devs: new Set(), years: new Set(), lastp: new Set(), added: new Set(), ptime: new Set(), size: new Set(), status: new Set(), score: new Set() }, _fopen: {}, _fq: {}, _fall: {}, home: null, tab: { store: 'games', mods: 'tools', emulation: 'emulators', central: 'overview' }, mods: null,
             jobs: {}, current: null, hero: [], heroIdx: 0, heroT: null, torrent: false, emu: null, themes: [] };
 
 const FR = [
@@ -198,7 +198,7 @@ let themeLayout = '', themeAccent = '';
 const LAYOUT_ALIAS = { taskbar: 'bottom', dock: 'bottom' };
 function normLayout(l) { return LAYOUT_ALIAS[l] || l || ''; }
 function setLayout(l) { if (l === themeLayout) return; themeLayout = l; applyChrome(); }
-function themeLay() { const l = normLayout(themeLayout); return ['top', 'rail', 'bottom'].includes(l) ? l : 'side'; }
+function themeLay() { const o = S.config.nav_layout; if (['side', 'rail', 'top', 'bottom'].includes(o)) return o; const l = normLayout(themeLayout); return ['top', 'rail', 'bottom'].includes(l) ? l : 'side'; }
 mq.addEventListener('change', () => { if ((S.config.theme || 'system') === 'system' || S.config.theme_mode === 'system') applyTheme(); });
 function inLightWindow() {
   const [f, t] = [S.config.theme_light_from || '07:00', S.config.theme_light_to || '19:00'].map(x => { const [h, m] = String(x).split(':').map(Number); return (h || 0) * 60 + (m || 0); });
@@ -207,18 +207,22 @@ function inLightWindow() {
 }
 setInterval(() => { if (S.config.theme_schedule && (S.config.theme || 'system') === 'system' && (inLightWindow() ? 'light' : 'dark') !== S._schedLast) applyTheme(); }, 30000);
 function applyAccent() {
-  const acc = S.dynAccent || S.config.accent || themeAccent || (document.documentElement.dataset.light === '1' ? '#2b6be0' : '#4f8df7');
+  const mode = S.config.accent_mode || 'theme';
+  if (mode === 'system' && S.sysAccent === undefined) { S.sysAccent = ''; api.post('/api/window', { cmd: 'sys_accent' }).then(r => { S.sysAccent = (r && r.hex) || ''; if (S.sysAccent) applyAccent(); }); }
+  const acc = S.dynAccent || (mode === 'system' && S.sysAccent) || (mode === 'custom' && S.config.accent) || themeAccent || (document.documentElement.dataset.light === '1' ? '#2b6be0' : '#4f8df7');
   const st = document.documentElement.style; document.documentElement.classList.remove('mono');
   applyFrame();
   if (!acc) { st.removeProperty('--accent'); st.removeProperty('--accent2'); st.removeProperty('--on-accent'); scheduleContrast(); return; }
   const rgb = hexRgb(acc); if (!rgb) return;
   st.setProperty('--accent', acc);
-  st.setProperty('--on-accent', luma(rgb) > .55 ? '#111' : '#fff');
+  st.setProperty('--on-accent', onAccent(rgb));
   const bg = hexRgb(getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
   const lightBg = bg ? luma(bg) > .5 : currentTheme === 'light';
   st.setProperty('--accent2', lightBg ? shade(rgb, -55) : shade(rgb, 45));
   scheduleContrast();
 }
+function relLum([r, g, b]) { const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); }
+function onAccent(rgb) { const L = relLum(rgb); return 1.05 / (L + .05) >= (L + .05) / .0561 ? '#fff' : '#111'; }
 let frameT = 0, frameLast = '';
 function applyFrame() {
   if (!S.config.native || S.config.os !== 'windows') return;
@@ -400,7 +404,8 @@ let ONLINE = true;
 window.addEventListener('online', () => setOnline(true)); window.addEventListener('offline', () => setOnline(false));
 function setOnline(v) { if (v === ONLINE) return; ONLINE = v; document.body.classList.toggle('offline', !v); if (S.view === 'store') renderView(); if (!v) toast('', 'Sem internet', 'Baixar jogos, capas e emuladores fica indisponível até reconectar.'); }
 
-function appMenu(x, y) {
+function appMenu(x, y) { showCtx(appMenuItems(), x, y); }
+function appMenuItems() {
   const go = (v, tab) => () => { setView(v); if (tab) { S.tab[v] = tab; renderView(); } };
   const set = (tab) => () => { setView('settings'); S.tab.settings = tab; renderSettings(true); };
   const items = [
@@ -425,7 +430,44 @@ function appMenu(x, y) {
     { label: 'Sobre o Ludrix', icon: 'info', fn: () => { S._settingsJump = 'Sobre'; set('system')(); } },
   ];
   if (S.config.native) items.push({ sep: true }, { label: 'Esconder na bandeja', icon: 'tray', fn: () => winCmd('hide') }, { label: 'Sair do launcher', icon: 'power', danger: true, fn: () => winCmd('quit') });
-  showCtx(items, x, y);
+  return items;
+}
+const PAL = { on: false, idx: 0, rows: [] };
+function palActions() {
+  const out = [];
+  const walk = (items, path) => { for (const it of items) { if (it.sep || !it.label) continue; if (it.sub) walk(it.sub, path.concat(it.label)); else if (it.fn && !it.disabled) out.push({ kind: 'act', label: it.label.replace(/…$/, ''), path: path.join(' › '), icon: it.icon || 'dots', danger: !!it.danger, fn: it.fn }); } };
+  walk(appMenuItems(), []);
+  for (const [id, name] of (S._settingsTabs || []).map(t => [t[0], t[1]])) out.push({ kind: 'act', label: name, path: 'Ajustes', icon: 'cog', fn: () => { setView('settings'); settingsTab(id); } });
+  out.push({ kind: 'act', label: 'Testar controle', path: 'Ajustes › Controle', icon: 'gamepad', fn: () => gpTester() });
+  out.push({ kind: 'act', label: S.config.reduce_motion ? 'Ligar animações' : 'Reduzir movimento', path: 'Aparência', icon: 'spark', fn: () => setCfg({ reduce_motion: !S.config.reduce_motion }) });
+  out.push({ kind: 'act', label: 'Checar atualizações', path: 'Sistema', icon: 'refresh', fn: () => checkUpdates() });
+  return out;
+}
+function palOpen() {
+  if (PAL.on) return palClose();
+  const el = $('#pal'); if (!el) return;
+  PAL.on = true; PAL.idx = 0; el.classList.add('on'); el.querySelector('input').value = ''; palRender(''); setTimeout(() => el.querySelector('input').focus(), 20);
+}
+function palClose() { const el = $('#pal'); if (!el) return; PAL.on = false; el.classList.remove('on'); }
+function palRender(q) {
+  const list = $('#palList'), raw = q.trim(), actOnly = raw.startsWith('>'), nq = qnorm(actOnly ? raw.slice(1) : raw);
+  const rows = [];
+  if (!actOnly) {
+    const pool = S.games.filter(g => !g.hidden && !g.dup_of);
+    const hits = nq ? pool.filter(g => g._q && g._q.includes(nq)) : pool.filter(g => g.last_played).sort((a, b) => (b.last_played || 0) - (a.last_played || 0));
+    for (const g of hits.slice(0, nq ? 7 : 4)) rows.push({ kind: 'game', g, label: g.title, path: [g.creator || g.fr, g.year, g.installed || g.owned ? 'instalado' : g.repo !== 'local' ? 'na Store' : ''].filter(Boolean).join(' · '), fn: () => openGame(g.key), play: g.installed || g.owned });
+  }
+  const acts = palActions().filter(a => !nq || qnorm(a.label + ' ' + a.path).includes(nq));
+  for (const a of acts.slice(0, nq ? 8 : 6)) rows.push(a);
+  PAL.rows = rows; if (PAL.idx >= rows.length) PAL.idx = 0;
+  list.innerHTML = rows.length ? rows.map((r, i) => `<div class="palr${i === PAL.idx ? ' on' : ''}${r.danger ? ' dg' : ''}" data-i="${i}" onmousemove="palHover(${i})" onclick="palRun(${i})">${r.kind === 'game' ? `<img class="palc" src="/thumb/${enc(r.g.key)}?v=${r.g.cv || 0}" alt="" onerror="this.style.visibility='hidden'">` : `<span class="pali">${I[r.icon] || I.dots || ''}</span>`}<div class="palt"><b>${esc(r.label)}</b>${r.path ? `<small>${esc(r.path)}</small>` : ''}</div><kbd>${r.kind === 'game' ? (r.play ? 'Enter abre · Shift+Enter joga' : 'Enter') : 'Enter'}</kbd></div>`).join('') : `<div class="palr none">Nada com "${esc(raw)}". Dica: comece com &gt; para ver só ações.</div>`;
+}
+function palHover(i) { if (PAL.idx === i) return; PAL.idx = i; $('#palList').querySelectorAll('.palr').forEach((e, j) => e.classList.toggle('on', j === i)); }
+function palRun(i, shift) { const r = PAL.rows[i]; if (!r) return; palClose(); if (r.kind === 'game' && shift && r.play) play(r.g.key); else r.fn(); }
+function palKey(e) {
+  if (e.key === 'Escape') { e.preventDefault(); palClose(); return; }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const n = PAL.rows.length; if (!n) return; PAL.idx = (PAL.idx + (e.key === 'ArrowDown' ? 1 : n - 1)) % n; const rows = $('#palList').querySelectorAll('.palr'); rows.forEach((el, j) => el.classList.toggle('on', j === PAL.idx)); rows[PAL.idx]?.scrollIntoView({ block: 'nearest' }); return; }
+  if (e.key === 'Enter') { e.preventDefault(); palRun(PAL.idx, e.shiftKey); }
 }
 function viewMenu(view, x, y) {
   const m = {
@@ -487,7 +529,7 @@ function uriName(x) { const sc = String(x || '').split('://')[0].toLowerCase(); 
 const SRC_NAMES = { steam: 'Steam', epic: 'Epic', gog: 'GOG', uplay: 'Ubisoft', ubisoft: 'Ubisoft', ea: 'EA', xbox: 'Xbox', scan: 'Pasta', heroic: 'Heroic', shortcuts: 'Atalho', esde: 'EmulationStation', launchbox: 'LaunchBox', pegasus: 'Pegasus', battlenet: 'Battle.net', amazon: 'Amazon', playnite: 'Playnite', url: 'link' };
 const originOf = g => g.store_src || (g.source && g.source !== 'playnite' ? SRC_NAMES[g.source] || g.source : g.kind === 'rom' ? 'ROM' : g.repo === 'local' ? 'Manual' : '');
 function daysAgo(ts) { const d = Math.floor((Date.now() / 1000 - ts) / 86400); return d <= 0 ? 'hoje' : d === 1 ? 'ontem' : `há ${d} dias`; }
-function hydrate(g) { const fr = franchiseOf(g); g.fr = fr; g._q = qnorm([g.title, g.creator || '', fr || '', (g.genres || []).join(' '), (S.systems && S.systems[g.system]) || g.system || '', g.year || '', SRC_NAMES[g.source] || g.source || '', g.store_src || '', g.kind === 'rom' ? 'rom emulado' : ''].join('\n')); return g; }
+function hydrate(g) { const fr = franchiseOf(g); g.fr = fr; g._q = qnorm([g.title, g.creator || '', fr || '', (g.genres || []).join(' '), (g.tags || []).join(' '), (S.systems && S.systems[g.system]) || g.system || '', g.year || '', SRC_NAMES[g.source] || g.source || '', g.store_src || '', g.kind === 'rom' ? 'rom emulado' : ''].join('\n')); return g; }
 function setGames(list) {
   S.games = list.map(hydrate); S.byKey = Object.fromEntries(S.games.map(g => [g.key, g]));
   S._sorted = null; S._poolKey = '';
@@ -518,7 +560,7 @@ async function loadCatalog(refresh) {
   if (!S.loaded) { const v = $('#spv'); if (v && S.config.version) v.textContent = 'v' + S.config.version; if (d.loading) { if (!S._splScan) { S._splScan = 1; splashStep('procurando jogos', 58); } } else splashStep('biblioteca · ' + pl((d.games || []).filter(g => g.installed).length, 'jogo', 'jogos'), 72); } S.torrent = !!d.torrent_available; S.torrentEngine = d.torrent_engine || ''; S.systems = d.systems || {};
   await initLang(S.config.language);
   document.documentElement.style.setProperty('--cw', (S.config.card_size || 136) + 'px'); applyScale();
-  S.cats = d.categories || []; S.repos = d.repos || []; S.faces = d.faces || S.faces || [];
+  S.cats = d.categories || []; S.repos = d.repos || []; S.faces = d.faces || S.faces || []; S.checkedAt = d.checked_at || 0; S.newsCount = d.news_count || 0;
   if (d.custom) S.custom = d.custom;
   applyTheme(); applyAnim(); applyChrome();
   if (!S.loaded && !d.loading) splashStep('aplicando tema', 88);
@@ -615,6 +657,7 @@ function qPrefix(g, k, v) {
   if (k === 'dev') return qnorm(g.creator || '').includes(v);
   if (k === 'ano') return String(g.year || '') === v || (v.endsWith('s') && String(g.year || '').startsWith(v.slice(0, 3)));
   if (k === 'gen') return (g.genres || []).some(x => qnorm(x).includes(v)) || (g.cats || []).some(x => qnorm(x).includes(v));
+  if (k === 'tag' || k === 'etiqueta') return (g.tags || []).some(x => qnorm(x).includes(v));
   if (k === 'sis') return qnorm((S.systems && S.systems[g.system]) || g.system || 'pc').includes(v) || qnorm(g.system || 'pc').includes(v);
   return qnorm(originOf(g) + ' ' + (g.store_src || '') + ' ' + (SRC_NAMES[g.source] || g.source || '')).includes(v);
 }
@@ -633,6 +676,7 @@ function visible() {
     if (hasSys && !f.sys.has(g.system || 'pc')) return false;
     if (hasRepos && !f.repos.has(g.repo)) return false;
     if (f.genres.size && !(g.genres || []).some(x => f.genres.has(x))) return false;
+    if (f.tags.size && !(g.tags || []).some(x => f.tags.has(x))) return false;
     if (f.devs.size && !f.devs.has(g.creator || '')) return false;
     if (f.years.size && !f.years.has(String(g.year || ''))) return false;
     for (const k of BUCKET_KINDS) if (f[k].size && !f[k].has(bucketOf[k](g))) return false;
@@ -649,6 +693,7 @@ function visible() {
   else if (S.sort === 'dev') list.sort((a, b) => COLL.compare(a.creator || a.fr || '\uffff', b.creator || b.fr || '\uffff') || az(a, b));
   else if (S.sort === 'count') list.sort((a, b) => (b.play_count || 0) - (a.play_count || 0) || (b.playtime || 0) - (a.playtime || 0) || az(a, b));
   else if (S.sort === 'score') list.sort((a, b) => (b.score || 0) - (a.score || 0) || az(a, b));
+  else if (S.sort === 'fresh') list.sort((a, b) => (b.fresh ? 1 : 0) - (a.fresh ? 1 : 0) || az(a, b));
   if (S.sortRev) list.reverse();
   if (S.config.fav_first && S.view === 'home') { const f = list.filter(g => g.fav), o = list.filter(g => !g.fav); list = f.concat(o); }
   return list;
@@ -656,7 +701,7 @@ function visible() {
 function poolStats() {
   const key = S.view + '|' + S.tab.store + '|' + (S.emuSys || '') + '|' + (S.config.store_hide_installed !== false) + '|' + Object.keys(S.jobs).length;
   if (S._poolKey === key && S._pool) return S._pool;
-  const counts = {}, scount = {}, fcount = {}, rcount = {}, ocount = {}, gcount = {}, dcount = {}, ycount = {}, bcount = { lastp: {}, added: {}, ptime: {}, size: {}, status: {}, score: {} }; let n = 0;
+  const counts = {}, scount = {}, fcount = {}, rcount = {}, ocount = {}, gcount = {}, tcount = {}, dcount = {}, ycount = {}, bcount = { lastp: {}, added: {}, ptime: {}, size: {}, status: {}, score: {} }; let n = 0;
   const flagIds = FLAGS.map(f => f[0]); for (const id of flagIds) fcount[id] = 0;
   const inc = (o, k) => { if (k) o[k] = (o[k] || 0) + 1; };
   for (const g of S.games) {
@@ -664,11 +709,12 @@ function poolStats() {
     if (g.cats) for (const c of g.cats) counts[c] = (counts[c] || 0) + 1;
     const sy = g.system || 'pc'; scount[sy] = (scount[sy] || 0) + 1; if (g.repo) rcount[g.repo] = (rcount[g.repo] || 0) + 1; const og = originOf(g); if (og) ocount[og] = (ocount[og] || 0) + 1;
     if (g.genres) for (const x of g.genres) inc(gcount, x);
+    if (g.tags) for (const x of g.tags) inc(tcount, x);
     inc(dcount, g.creator || ''); inc(ycount, String(g.year || ''));
     for (const k of BUCKET_KINDS) inc(bcount[k], bucketOf[k](g));
     for (const id of flagIds) if (FLAG_TEST[id](g)) fcount[id]++;
   }
-  S._poolKey = key; return S._pool = { n, counts, scount, fcount, rcount, ocount, gcount, dcount, ycount, bcount };
+  S._poolKey = key; return S._pool = { n, counts, scount, fcount, rcount, ocount, gcount, tcount, dcount, ycount, bcount };
 }
 function renderChips() {
   const { n, counts } = poolStats();
@@ -689,6 +735,12 @@ $('#chips').addEventListener('click', e => { const b = e.target.closest('[data-d
 function parkTop() { const top = $('.top'), sb = $('#sort'); if (top && sb && sb.parentElement !== top) top.appendChild(sb); }
 const QCHIPS = [['', 'Todos'], ['fav', 'Favoritos'], ['recent', 'Jogados esta semana'], ['never', 'Nunca joguei']];
 function qchipOn(id) { if (!id) return !filtersActive(); return S.flt.flags.size === 1 && S.flt.flags.has(id) && fltCount() === 1 && S.cat === 'all'; }
+function storeChips() {
+  if (!S.newsCount && !S.flt.flags.has('fresh')) return '';
+  const on = qchipOn('fresh');
+  return `<div class="qchips one">${on ? (S.newsCount ? `<button class="chip ghost" onclick="newsSeen()" title="Tira a marca NOVO desses jogos">Marcar como vistos</button>` : '') : `<button class="chip" title="Jogos que apareceram nas fontes desde a leitura anterior" onclick="flagOnly('fresh')">Novos <span class="n">${S.newsCount}</span></button>`}</div>`;
+}
+async function newsSeen(id) { await api.post('/api/repos/seen', id ? { id } : {}); clearFlt(); await loadCatalog(false); if (S.view === 'store' && S.tab.store === 'sources') renderSources(); }
 function quickChips() { return `<div class="qchips">${QCHIPS.map(([id, l]) => `<button class="chip${qchipOn(id) ? ' on' : ''}" onclick="${!id || qchipOn(id) ? 'clearFlt()' : `flagOnly('${id}')`}">${l}</button>`).join('')}</div>`; }
 function renderLibrary() {
   renderChips();
@@ -701,17 +753,17 @@ function renderLibrary() {
   if (S.view === 'store') h += storeTabs();
   if (S.view === 'store' && !filtersActive() && !S.q && S.hero.length && S.config.hero_enabled !== false) h += heroHtml();
   if (S.view === 'home' && !filtersActive() && !S.q) h += homeTop();
-  h += `<div class="h1"><h2>${esc(catName)}</h2>${S.view === 'home' ? quickChips() : ''}<span class="cnt">${list.length} ${list.length === 1 ? 'jogo' : 'jogos'}</span><span class="sp"></span>
+  h += `<div class="h1"><h2>${esc(catName)}</h2>${S.view === 'home' ? quickChips() : storeChips()}<span class="cnt">${list.length} ${list.length === 1 ? 'jogo' : 'jogos'}</span><span class="sp"></span>
         ${!topSearchVisible() ? `<div class="qmini ${S.q ? 'on' : ''}"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="qm" placeholder="Buscar…" value="${esc(S.q)}" autocomplete="off" spellcheck="false" oninput="miniSearch(this.value)" onfocus="this.parentElement.classList.add('on')" onblur="if(!this.value)this.parentElement.classList.remove('on')"><kbd>/</kbd></div>` : ''}
         <span class="slot" id="sortSlot"></span>${['home', 'store'].includes(S.view) ? viewBtn() : ''}${filterBtn()}
-        ${S.view === 'home' ? `<button class="btn s xs ic" onclick="surprise()" title="Me surpreenda — escolhe um jogo para você jogar agora">${I.dice}</button><button class="btn p xs addbtn" onclick="addGameMenu()">+ Adicionar</button>` : `<button class="btn s xs" onclick="loadCatalog(true)">${I.refresh} Atualizar</button>`}</div>`;
+        ${S.view === 'home' ? `<button class="btn s xs ic" onclick="surprise()" title="Me surpreenda — escolhe um jogo para você jogar agora">${I.dice}</button><button class="btn p xs addbtn" onclick="addGameMenu()">+ Adicionar</button>` : `<button class="btn s xs" onclick="loadCatalog(true)" title="${S.checkedAt ? 'Última leitura das fontes: ' + new Date(S.checkedAt * 1000).toLocaleString('pt-BR') : 'Fontes ainda não lidas'}">${I.refresh} Atualizar</button>`}</div>`;
   h += activeChips();
   const noSrc = S.view === 'store' && !S.repos.some(r => r.enabled && r.kind !== 'rom');
   if (!S.games.length && !noSrc && !(S.view === 'home' && S.loaded)) h += `<div class="grid">${Array.from({ length: 18 }, () => '<div class="card sk"><div class="cov"></div><h4>&nbsp;</h4></div>').join('')}</div>`;
-  else if (!list.length && noSrc && !S.q && !filtersActive()) h += `${emptyHtml(I.magnet, S.repos.length ? 'Nenhuma fonte ligada' : 'Nenhuma fonte adicionada', `A Store mostra o que as suas fontes de jogos de PC oferecem${S.repos.some(r => r.enabled && r.kind === 'rom') ? ' — as fontes de ROM ficam na aba <b>Emuladores</b>' : ''}. ${S.repos.length ? 'Ligue uma em' : 'Adicione uma em'} <b>Fontes</b>: site de download, coleção do archive.org, GitHub ou lista .json.`, [['Abrir Fontes', "S.tab.store='sources';renderView()", 1], ['Adicionar jogo que já tenho', 'addLocal()']])}`;
+  else if (!list.length && noSrc && !S.q && !filtersActive()) h += `${emptyHtml('sources', S.repos.length ? 'Nenhuma fonte ligada' : 'Nenhuma fonte adicionada', `A Store mostra o que as suas fontes de jogos de PC oferecem${S.repos.some(r => r.enabled && r.kind === 'rom') ? ' — as fontes de ROM ficam na aba <b>Emuladores</b>' : ''}. ${S.repos.length ? 'Ligue uma em' : 'Adicione uma em'} <b>Fontes</b>: site de download, coleção do archive.org, GitHub ou lista .json.`, [['Abrir Fontes', "S.tab.store='sources';renderView()", 1], ['Adicionar jogo que já tenho', 'addLocal()']])}`;
   else if (!list.length) h += `${S.view === 'home' ? (S.q || filtersActive() ? emptyHtml(I.search, 'Nenhum jogo com esse filtro', /\b(dev|ano|gen|sis|origem|src):/.test(S.q) ? 'Prefixos aceitos: dev: (desenvolvedora), ano: (ano ou década, ex. 2010s), gen: (gênero), sis: (sistema), origem: (Steam, Epic, ROM…).' : 'Tente outro termo ou limpe os filtros.', [['Limpar busca e filtros', 'clearSearch();clearFlt()', 1]]) : emptyHtml(I.home, 'Sua biblioteca está vazia', 'Baixe algo na Store ou adicione um jogo que você já tem — um .exe, um atalho ou uma ROM.', [['Abrir Store', "setView('store')", 1], ['Adicionar jogo', 'addLocal()'], ['Importar de outro launcher', 'importWizard()']])) : emptyHtml(I.search, 'Nenhum resultado', 'Tente outro termo ou categoria.', [['Limpar busca e filtros', 'clearSearch();clearFlt()', 1]])}`;
   if (S.view === 'store' && list.length && q.length >= 3 && S.repos.some(r => r.enabled && /^site-/.test(r.id)) && !S._siteQ) h += `<div class="sitehint">Não achou? <button class="lnk" onclick="siteSearch()">Buscar "${esc(S.q.trim())}" direto nos sites ligados</button></div>`;
-  else h += `${listHead()}${azBar(list)}<div class="grid${listMode() ? ' lst' : muralMode() ? ' mural' : ''}" id="grid" style="--lmw:${lmWidth()}px"></div><div class="pager" id="pager"></div>`;
+  else h += `${listHead()}${azBar(list)}<div class="grid${listMode() ? ' lst' : muralMode() ? ' mural' : ''}" id="grid" style="--lmw:${lmWidth()}px"></div>`;
   const pin = fpOn(), oldP = $('#fpanel'), pst = oldP ? oldP.scrollTop : 0;
   const pk = S.view === 'home' && S.panelKey && S.byKey[S.panelKey] ? S.panelKey : '';
   if (!pk) S.panelKey = '';
@@ -719,7 +771,7 @@ function renderLibrary() {
   if (pk) gpanelFill(pk);
   const slot = $('#sortSlot'), sb = $('#sort'); if (slot && sb && ['home', 'store'].includes(S.view)) { slot.appendChild(sb); sb.style.display = ''; }
   if (pin && pst) { const np = $('#fpanel'); if (np) np.scrollTop = pst; }
-  if (list.length) { if (S.view === 'store') fillPaged(list); else fillGrid(list); }
+  if (list.length) fillGrid(list);
   if (S.hero.length && $('#hero')) showHero(S.heroIdx);
   if (S.view === 'home' && S._focusKey) gameFocus(null);
   if (S.view === 'home' && S.config.cover_slideshow && !ssT && !(S._focusKey && S.config.game_backdrop)) slideshowStart();
@@ -817,18 +869,6 @@ function fillGrid(list) {
   gridIO = new IntersectionObserver(es => { if (!es.some(e => e.isIntersecting)) return; const has = more(); sent.querySelector('span').textContent = `mostrando ${Math.min(i, list.length)} de ${list.length}`; if (!has) { gridIO.disconnect(); gridIO = null; sent.remove(); } }, { root: $('#view'), rootMargin: '900px' });
   gridIO.observe(sent);
 }
-function fillPaged(list) {
-  const per = S.config.store_page_size || 25, pages = Math.max(1, Math.ceil(list.length / per));
-  if (S.page > pages) S.page = pages; if (!S.page || S.page < 1) S.page = 1;
-  const grid = $('#grid'); gridGen++; const page = list.slice((S.page - 1) * per, S.page * per), groups = groupedList(page);
-  if (groups) { grid.classList.remove('grid', 'lst'); grid.classList.add('ggwrap'); grid.innerHTML = groups.map(([k, gs]) => `<div class="ggrp${S._gcol.has(k) ? ' col' : ''}" data-g="${esc(k)}">${groupHead(k, gs.length, gs.reduce((a, g) => a + (g.playtime || 0), 0))}<div class="grid${listMode() ? ' lst' : ''}">${gs.map((g, i) => cardHtml(g, i)).join('')}</div></div>`).join(''); }
-  else grid.innerHTML = page.map((g, i) => cardHtml(g, i)).join('');
-  const pg = $('#pager'); if (!pg) return;
-  if (pages <= 1) { pg.innerHTML = ''; return; }
-  const btn = (n, l, on) => `<button class="${on ? 'on' : ''}" ${n < 1 || n > pages ? 'disabled' : ''} onclick="S.page=${n};(S.view==='emulation'?renderEmulation():renderLibrary());$('#view').scrollTo({top:$('#grid').offsetTop-90,behavior:'smooth'})">${l}</button>`;
-  const nums = []; const win = 2; for (let i = 1; i <= pages; i++) { if (i === 1 || i === pages || Math.abs(i - S.page) <= win) nums.push(i); else if (nums[nums.length - 1] !== '…') nums.push('…'); }
-  pg.innerHTML = `<span>${pl(list.length, 'jogo', 'jogos')} · página ${S.page} de ${pages}</span><div class="pbtns">${btn(S.page - 1, '‹')}${nums.map(n => n === '…' ? '<i>…</i>' : btn(n, n, n === S.page)).join('')}${btn(S.page + 1, '›')}</div>`;
-}
 function listMode() { return S.config.view_mode === 'list'; }
 function muralMode() { return (S.config.view_mode || 'mural') === 'mural' && S.view === 'home'; }
 function setCardSize(v, save) { document.documentElement.style.setProperty('--cw', v + 'px'); S.config.card_size = +v; if (save) api.post('/api/config', { card_size: +v }); }
@@ -921,6 +961,11 @@ function gameFocus(key) {
     }
   }
   dynAccent(key && S.config.accent_from_cover && S.view === 'home' ? key : null);
+}
+async function setAccentMode(v) {
+  if (v === 'system' && !S.sysAccent) { const r = await api.post('/api/window', { cmd: 'sys_accent' }); S.sysAccent = (r && r.hex) || ''; if (!S.sysAccent) { toast('warn', 'Sem cor do sistema', 'Não consegui ler a cor de destaque do Windows.'); return; } }
+  const patch = { accent_mode: v }; if (v === 'custom' && !S.config.accent) patch.accent = cssVar('--accent') || '#4f8df7';
+  await setCfg(patch); applyAccent(); renderSettings(true);
 }
 function dynAccent(key) {
   if (!key) { if (S.dynAccent) { S.dynAccent = ''; applyAccent(); } return; }
@@ -1037,11 +1082,12 @@ function cardHtml(g, i) {
   const sys = g.system && g.system !== 'pc' ? `<span class="badge sys">${esc((S.systems[g.system] || g.system).toUpperCase().slice(0, 8))}</span>` : '';
   const dim = S.view === 'store' && !g.installed && !g.owned && !job && S.config.dim_not_installed !== false && !/^(rom|local):/.test(g.key) ? ' dim' : '';
   const lst = listMode() && ['home', 'store'].includes(S.view);
-  const now = Date.now() / 1000, rib = S.config.card_ribbons !== false && (g.installed || g.owned) && !live && !g.mc_nolauncher ? (g.owned ? '<span class="rib today">NO PC</span>' : g.last_played && new Date(g.last_played * 1000).toDateString() === new Date().toDateString() ? '<span class="rib today">HOJE</span>' : g.added_at && now - g.added_at < 7 * 86400 && !g.playtime ? `<span class="rib new" title="Adicionado ${daysAgo(g.added_at)} e ainda não aberto">NOVO</span>` : '') : '';
+  const now = Date.now() / 1000, rib = S.config.card_ribbons !== false && (g.installed || g.owned || g.fresh) && !live && !g.mc_nolauncher ? (g.owned ? '<span class="rib today">NO PC</span>' : g.fresh && !g.installed ? (S.view === 'store' ? '<span class="rib new" title="Apareceu na fonte recentemente">NOVO</span>' : '') : g.update_version ? `<span class="rib upd" title="Versão ${esc(g.update_version)} disponível na fonte (instalada: ${esc(g.version || '?')})">ATUALIZAÇÃO</span>` : g.last_played && new Date(g.last_played * 1000).toDateString() === new Date().toDateString() ? '<span class="rib today">HOJE</span>' : g.added_at && now - g.added_at < 7 * 86400 && !g.playtime ? `<span class="rib new" title="Adicionado ${daysAgo(g.added_at)} e ainda não aberto">NOVO</span>` : '') : '';
   const ptb = '';
   const prog = job ? `<div class="cprog${job.fraction < 0 ? ' ind' : ''}"><i style="width:${job.fraction >= 0 ? Math.round(job.fraction * 100) : 40}%"></i></div>` : '';
   const favB = `<button class="fav ${g.fav ? 'on' : ''}" data-fav="${esc(g.key)}" title="Favorito">${I.star}</button>`;
-  const srcB = S.view === 'store' && S._multiSrc && g.repo && g.repo !== 'local' ? `<span class="src" title="Fonte: ${esc(repoName(g.repo))}">${esc(repoName(g.repo))}</span>` : '';
+  const orig = S.view === 'home' && S.config.card_origin ? originOf(g) : '';
+  const srcB = S.view === 'store' && S._multiSrc && g.repo && g.repo !== 'local' ? `<span class="src" title="Fonte: ${esc(repoName(g.repo))}">${esc(repoName(g.repo))}</span>` : orig ? `<span class="src" title="Origem: ${esc(orig)}">${esc(orig)}</span>` : '';
   const qpB = (g.installed || g.owned) && !job ? `<button class="qp ${live ? 'live' : ''}" data-qp="${esc(g.owned || g.key)}" title="${live ? 'Em execução — clique para encerrar' : 'Jogar'}">${live ? I.x : I.play}</button>` : !g.installed && g.avail && !job ? `<button class="qp dl" data-dl="${esc(g.avail)}" title="Não está no PC — baixar pela Loja">${I.dl}</button>` : '';
   if (lst) return `<div class="card${dim}${S.sel.has(g.key) ? ' msel' : ''}" data-key="${esc(g.key)}">
     <div class="cov"><div class="ph">${esc(g.title)}</div><img loading="lazy" decoding="async" class="${TH.ok.has(g.key) ? 'ld inst' : TH.err.has(g.key) ? 'err' : ''}" src="/thumb/${enc(g.key)}?v=${g.cv || 0}" alt="" onload="this.classList.add('ld');TH.ok.add(${jsq(g.key)})" onerror="thumbFail(this,${jsq(g.key)})">${job ? ringSvg(job.fraction) : ''}</div>
@@ -1060,7 +1106,7 @@ function cardHtml(g, i) {
 }
 $('#sort').addEventListener('click', e => { e.stopPropagation(); sortMenu($('#sort')); });
 function sortMenu(btn) {
-  const items = SORTS.map(([id, l]) => ({ label: l, icon: S.sort === id ? 'check' : '', fn: () => setSort(id) }));
+  const items = SORTS.filter(([id]) => id !== 'fresh' || S.view === 'store').map(([id, l]) => ({ label: l, icon: S.sort === id ? 'check' : '', fn: () => setSort(id) }));
   items.push({ label: 'Ordem inversa', icon: S.sortRev ? 'check' : '', fn: () => { S.sortRev = !S.sortRev; S.page = 1; renderSortBtn(); renderLibrary(); } });
   if (S.view === 'home') items.push({ label: 'Favoritos primeiro', icon: S.config.fav_first ? 'check' : '', fn: () => setCfg({ fav_first: !S.config.fav_first }).then(() => { S.page = 1; renderLibrary(); }) });
   if (['home', 'store'].includes(S.view)) { items.push({ sep: true }); for (const [id, l] of GROUPS) items.push({ label: id ? 'Agrupar: ' + l : 'Sem grupos', icon: (S.config.group_by || '') === id ? 'check' : '', fn: () => setCfg({ group_by: id }) }); }
@@ -1117,46 +1163,6 @@ function focusSearch() { const m = $('#qm'); if (m && m.offsetParent) { m.parent
 let qmt; function miniSearch(v) { S._siteQ = ''; clearTimeout(qmt); qmt = setTimeout(() => { S.q = v; S.page = 1; const i = $('#q'); if (i) i.value = v; renderLibrary(); const m = $('#qm'); if (m) { m.parentElement.classList.add('on'); m.focus(); m.setSelectionRange(v.length, v.length); } }, 160); }
 $('#q').addEventListener('keydown', e => { if (e.key === 'Escape' && e.target.value) { e.preventDefault(); e.stopPropagation(); clearSearch(); } else if (e.key === 'Escape') e.target.blur(); });
 let qt; $('#q').addEventListener('input', e => { S._siteQ = ''; clearTimeout(qt); qt = setTimeout(() => { S.q = e.target.value; S.page = 1; if (S.view === 'emulation' && S.tab.emulation === 'roms') renderEmulation(); else if (FILTER_VIEWS.includes(S.view)) searchInView(); else if (!['home', 'store'].includes(S.view)) setView(S.repos.some(r => r.enabled) ? 'store' : 'home'); else renderLibrary(); }, 120); });
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { if ($('#ctx').classList.contains('on')) closeCtx(); else if ($('#modal').classList.contains('on')) $('#modal').classList.remove('on'); else if (S.sel.size && !$('#detail').classList.contains('on')) msClear(); else closeDetail(); }
-  if (e.key === 'F11') { e.preventDefault(); toggleFullscreen(); }
-  if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); focusSearch(); }
-  if (e.key === '"' && S.config.terminal_enabled && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') { e.preventDefault(); openTerminal(); }
-  const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName) || document.activeElement.isContentEditable;
-  const busy = $('#modal').classList.contains('on') || $('#welcome')?.classList.contains('on') || $('#flashwin')?.classList.contains('on');
-  if ((e.ctrlKey || e.metaKey) && !e.altKey && /^[1-9]$/.test(e.key)) { const tabs = navOrder().filter(v => !(S.config.nav_hidden || []).includes(v)).concat(['settings']); const v = tabs[+e.key - 1]; if (v) { e.preventDefault(); closeDetail(); setView(v); } return; }
-  if ((e.ctrlKey || e.metaKey) && (e.key === 'a' || e.key === 'A') && S.view === 'home' && !typing && !busy && !$('#detail').classList.contains('on')) { e.preventDefault(); for (const c of document.querySelectorAll('#view .card')) if (/^(local|rom):/.test(c.dataset.key)) S.sel.add(c.dataset.key); document.querySelectorAll('#view .card').forEach(c => c.classList.toggle('msel', S.sel.has(c.dataset.key))); msBar(); return; }
-  if ((e.ctrlKey || e.metaKey) && e.key === ',') { e.preventDefault(); closeDetail(); setView('settings'); return; }
-  if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K' || e.key === 'f' || e.key === 'F')) { e.preventDefault(); focusSearch(); return; }
-  if (e.key === 'F5') { e.preventDefault(); if (!busy) { S.home = null; S._poolKey = ''; loadCatalog(false); toast('', 'Biblioteca atualizada', ''); } return; }
-  if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z') && !typing && !busy) { e.preventDefault(); undoRemove(); return; }
-  if ((e.ctrlKey || e.metaKey) && (e.key === 'd' || e.key === 'D') && !typing && !busy && S.view === 'home' && S.stageKey && S.byKey[S.stageKey]) { e.preventDefault(); toggleFav(S.stageKey); return; }
-  if (typing || busy || e.ctrlKey || e.metaKey || e.altKey) return;
-  if (e.key === '?') { e.preventDefault(); shortcutsHelp(); return; }
-  if ((e.key === 'n' || e.key === 'N') && S.view === 'home' && !$('#detail').classList.contains('on')) { e.preventDefault(); addLocal(); return; }
-  if ((e.key === 'Home' || e.key === 'End') && !$('#modal').classList.contains('on') && !$('#detail').classList.contains('on')) { const v = $('#view'); if (v) { e.preventDefault(); v.scrollTo({ top: e.key === 'Home' ? 0 : v.scrollHeight, behavior: 'smooth' }); } return; }
-  if ($('#detail').classList.contains('on')) {
-    if (e.key === 'Enter' && S.det) { const b = $('#dWrap .acts > .btn.g, #dWrap .acts > .btn.p'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
-    return;
-  }
-  if (S.view !== 'home' || !S.stageKey || !S.byKey[S.stageKey]) return;
-  const g = S.byKey[S.stageKey];
-  if (e.key === 'Enter') { e.preventDefault(); if (g.installed || S.stageKey.startsWith('rom:')) play(S.stageKey); else openGame(S.stageKey); }
-  else if (e.key === 'i' || e.key === 'I') { e.preventDefault(); openGame(S.stageKey); }
-  else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleFav(S.stageKey); }
-  else if ((e.key === 'e' || e.key === 'E') && /^(local|rom):/.test(S.stageKey)) { e.preventDefault(); editGame(S.stageKey); }
-  else if (e.key === 'F2' && /^(local|rom):/.test(S.stageKey)) { e.preventDefault(); renameGame(S.stageKey); }
-  else if (e.key === 'Delete' && S.sel.size) { e.preventDefault(); removeMany([...S.sel]); }
-  else if (e.key === 'Delete' && /^(local|rom):/.test(S.stageKey)) { e.preventDefault(); confirmUninstall(S.stageKey); }
-});
-function shortcutsHelp() {
-  const tabs = navOrder().filter(v => !(S.config.nav_hidden || []).includes(v)).concat(['settings']);
-  const names = Object.fromEntries(NAV_ITEMS.map(([v, n]) => [v, n])); names.settings = 'Ajustes';
-  const row = (k, d) => `<div class="krow"><span>${k.map(x => `<kbd>${x}</kbd>`).join('<i>+</i>')}</span><em>${d}</em></div>`;
-  modal({ title: 'Atalhos do teclado', wide: true, ok: 'Fechar', noCancel: true, html: `<div class="kgrid">
-    <div class="kcol"><h4>Em qualquer lugar</h4>${row(['/'], 'Buscar na aba atual')}${row(['Ctrl', 'K'], 'Buscar (alternativa; Ctrl+F também)')}${row(['F5'], 'Recarregar a biblioteca')}${row(['Ctrl', '1…' + tabs.length], tabs.map((v, i) => `${i + 1} ${names[v] || v}`).join(' · '))}${row(['Ctrl', ','], 'Abrir Ajustes')}${row(['F11'], 'Tela cheia')}${row(['Esc'], 'Fechar o que estiver aberto (detalhes, janela, menu)')}${row(['?'], 'Esta lista')}</div>
-    <div class="kcol"><h4>Na Biblioteca, com um jogo selecionado</h4>${row(['Enter'], 'Jogar (ou abrir os detalhes se não estiver instalado)')}${row(['I'], 'Abrir os detalhes')}${row(['F'], 'Favoritar / desfavoritar')}${row(['E'], 'Editar detalhes (jogos adicionados e ROMs)')}${row(['F2'], 'Renomear')}${row(['Ctrl', 'D'], 'Favoritar / desfavoritar')}${row(['Ctrl', 'Z'], 'Desfazer a última remoção (até 10 minutos)')}${row(['N'], 'Adicionar jogo')}${row(['Home', 'End'], 'Ir para o começo ou o fim da lista')}${row(['Delete'], 'Remover da biblioteca (jogos adicionados e ROMs; pede confirmação)')}${row(['Ctrl', 'clique'], 'Selecionar vários (Shift+clique para um intervalo; Ctrl+A todos da página)')}<h4>Nos detalhes de um jogo</h4>${row(['Enter'], 'Jogar ou Baixar')}${row(['Esc'], 'Voltar')}${S.config.terminal_enabled ? `<h4>Extras</h4>${row(['"'], 'Terminal do Ludrix')}` : ''}</div></div>` });
-}
 async function openTerminal() {
   const r = await api.post('/api/window', { cmd: 'terminal' });
   if (r && r.ok) return;
@@ -1246,143 +1252,6 @@ async function openGame(key) {
 function closeDetail() { if (!S.current) return closeDetailNow(); uiSound('back'); const was = S.current; const src = cardImg(was); vtRun(() => { closeDetailNow(); if (src) src.style.viewTransitionName = 'gcov'; }, 'close').then(() => { if (src) src.style.viewTransitionName = ''; }); }
 function closeDetailNow() { const was = S.current; S.current = null; $('#detail').classList.remove('on'); $('#detail').classList.remove('bar'); if (S._dObs) { S._dObs.disconnect(); S._dObs = null; } if (was && S.config.accent_from_cover) { if (S.view === 'home' && S.stageKey) gameFocus(S.stageKey); else { S._focusKey = ''; dynAccent(null); } } }
 $('#dClose').onclick = closeDetail;
-function renderDetail() {
-  const d = S.det; if (!d) return; const key = d.key, job = S.jobs[key], m = d.meta || {};
-  const isRom = key.startsWith('rom:'), isRecomp = d.kind === 'recomp', isLocal = d.kind === 'local', live = S.sessions && S.sessions[key];
-  const genres = (m.genres && m.genres.length ? m.genres : d.genres) || [];
-  let acts = '';
-  if (job) acts = progHtml(job, key);
-  else if (d.repack && d.repack_state !== 'done') {
-    acts = `<button class="btn p" onclick="runRepack(${jsq(key)})">${I.dl} ${d.repack_state === 'installing' ? 'Instalador aberto…' : d.disc ? 'Montar o disco e instalar' : 'Abrir instalador (setup)'}</button>
-      <span class="pill" style="justify-content:center;text-align:center;white-space:normal;line-height:1.35">Repack baixado. Quando o setup terminar, a pasta é localizada e o jogo entra na biblioteca.</span>
-      <div class="row"><button class="btn s sm" onclick="openPath(${jsq(d.dir)},${jsq(key)})">${I.folder} Pasta</button><button class="btn s sm" onclick="chooseExe(${jsq(key)})">${I.cog} Já instalei</button></div>
-      <div class="row"><button class="btn s sm" onclick="api.post('/api/finish_repack',{key:${jsq(key)}}).then(()=>openGame(${jsq(key)}))">${I.check} Procurar instalação agora</button><button class="btn d sm" onclick="confirmUninstall(${jsq(key)})" title="Apagar o repack baixado">${I.trash}</button></div>`;
-  } else if (d.installed || isRom) {
-    acts = `${d.missing && d.avail ? `<button class="btn p" onclick="openGame(${jsq(d.avail)})">${I.dl} Baixar da Loja</button><span class="pill" style="justify-content:center;white-space:normal;line-height:1.4;padding:6px 10px">O arquivo sumiu do PC, mas uma das suas fontes tem este jogo.</span>` : ''}${d.crash_count ? `<button class="pill warn crashpill" onclick="crashDialog(${jsq(key)}, ${jsq(d.title)})" title="${esc(d.crash_why || '')}">${I.warn || '!'} Fechou sozinho ${d.crash_count > 1 ? d.crash_count + '× ' : ''}— por quê?</button>` : ''}${d.missing ? `<button class="btn p" onclick="play(${jsq(key)})">${I.folder} Apontar ${isRom ? 'arquivo' : 'pasta'}…</button>` : `<button class="btn g" ${live ? 'disabled' : ''} onclick="play(${jsq(key)})">${I.play} ${live ? 'Jogando…' : 'Jogar'}</button>`}
-      <div class="row">${d.dir && !isUri(d.exe) && !d.missing ? `<button class="btn s sm" onclick="openPath(${jsq(d.dir)},${jsq(key)})">${I.folder} Pasta</button>` : ''}
-      <button class="btn s sm" onclick="savesPanel(${jsq(key)})" title="Saves">${I.save} Saves</button>
-      <button class="btn s sm" onclick="editGame(${jsq(key)})" title="Editar detalhes do jogo (nome, capa, descrição, executável…)">${I.edit} Editar</button><button class="btn d sm" onclick="confirmUninstall(${jsq(key)})" title="${isLocal || isRom ? 'Remover da biblioteca' : 'Desinstalar'}">${I.trash}</button></div>`;
-  } else {
-    const multi = (d.files || []).length > 1;
-    if (d.buy_only) acts = `<span class="pill warn" style="justify-content:center;white-space:normal;line-height:1.4;padding:8px 10px">Este jogo ainda está à venda — o site não distribui o arquivo. Veja em "Origem".</span>`;
-    else if (d.browser_only) acts = `<button class="btn p" ${d.files?.length ? '' : 'disabled'} onclick="install(${jsq(key)},false)">${I.ext} Baixar pelo navegador</button><span class="pill" style="justify-content:center;white-space:normal;line-height:1.4;padding:6px 10px">${multi ? 'Escolha o mirror ao lado → ' : ''}O site pede verificação humana, então o download abre no navegador. Depois: Adicionar → Jogo de Windows.</span>${d.steam_url ? `<button class="btn s sm" onclick="api.post('/api/open_url',{url:${jsq(d.steam_url)}})">${I.ext} Página na Steam</button>` : ''}`;
-    else if (d.owned) acts = `<button class="btn p" onclick="play(${jsq(d.owned)})">${I.play} Jogar</button><button class="btn s sm" onclick="openGame(${jsq(d.owned)})">${I.info} Ver na biblioteca</button><span class="pill" style="justify-content:center">Já está no PC</span>`;
-    else {
-      const hasT = !!(d.magnet || d.torrent_url), hasF = !!(d.files && d.files.length);
-      if (hasT && hasF && d.prefer === 'torrent') acts = `<button class="btn p" onclick="install(${jsq(key)},true)">${I.magnet} ${S.torrent ? 'Baixar via torrent' : 'Abrir no cliente de torrent'}</button>
-        <button class="btn s sm" onclick="install(${jsq(key)},false)">${I.dl} Baixar em partes</button>${multi ? `<span class="pill" style="justify-content:center">Em partes: escolha os arquivos ao lado →</span>` : ''}`;
-      else if (hasT && !hasF) acts = `<button class="btn p" onclick="install(${jsq(key)},true)">${I.magnet} ${S.torrent ? 'Baixar via torrent' : 'Abrir no cliente de torrent'}</button>
-        <span class="pill" style="justify-content:center;white-space:normal;line-height:1.4;padding:6px 10px">${S.torrent ? `Baixa e instala aqui mesmo (motor ${esc(S.torrentEngine || 'torrent')}).${d.repack_hint ? ' Repack: o setup abre no fim.' : ''}` : 'Sem motor de torrent no launcher — o magnet abre no seu cliente (qBittorrent etc.). Depois: Adicionar → Jogo de Windows.'}</span>`;
-      else acts = `<button class="btn p" ${hasF ? '' : 'disabled'} onclick="install(${jsq(key)},false)">${I.dl} ${isRecomp ? 'Baixar recomp' : d.kind === 'rom' ? 'Baixar ROM' : 'Baixar e instalar'}</button>
-      ${hasT ? `<button class="btn s sm" onclick="install(${jsq(key)},true)">${I.magnet} ${S.torrent ? 'Baixar via torrent' : 'Abrir magnet no cliente de torrent'}</button>` : ''}
-      ${multi ? `<span class="pill" style="justify-content:center">Escolha os arquivos ao lado →</span>` : ''}`;
-    }
-  }
-  const page = `<div class="row">${d.page_url ? `<button class="btn s sm" onclick="api.post('/api/open_url',{url:${jsq(d.page_url)}})">${I.ext} Origem</button>` : ''}<button class="btn s sm ${d.fav || (S.byKey[key] || {}).fav ? 'favon' : ''}" onclick="toggleFav(${jsq(key)});this.classList.toggle('favon')">${I.star} Favorito</button><button class="btn s sm" onclick="ctxMenu(${jsq(key)}, this.getBoundingClientRect().left, this.getBoundingClientRect().bottom + 6)">⋯</button></div>`;
-  const metaBtn = d.kind !== 'emulator' ? `<button class="btn s sm" id="metaBtn" onclick="fetchMeta(${jsq(key)},true)">${I.spark} ${d.meta ? 'Atualizar metadados' : 'Buscar metadados'}</button>` : '';
-
-  const srcs = d.sources && d.sources.length > 1 ? `<div class="srcbar"><small>${d.sources.length} fontes têm este jogo</small><div class="srcpick">${d.sources.map(sx => `<button class="srcopt ${sx.me ? 'on' : ''}" ${sx.me ? 'disabled' : `onclick="openGame(${jsq(sx.key)})"`}><b>${esc(sx.repo_name)}</b><span>${[sx.direct ? (sx.files_n > 1 ? `${sx.files_n} arquivos` : 'direto') : '', sx.torrent ? 'torrent' : '', sx.size ? fmt(sx.size) : '', sx.installed ? 'instalado' : ''].filter(Boolean).join(' · ') || '—'}</span>${sx.me ? `<i>${I.check}</i>` : `<i>${I.chev}</i>`}</button>`).join('')}</div></div>` : '';
-  let files = '';
-  if (!d.installed && !isRom && d.files && d.files.length > 1) {
-    const mirrors = d.mirrors;
-    files = `<div class="dsec"><h3>${mirrors ? 'ESPELHOS — ESCOLHA UM' : 'ARQUIVOS DISPONÍVEIS'}</h3>${mirrors ? '<p class="mut" style="margin:0 0 8px">O mesmo build em hospedagens diferentes; o downloader embutido baixa o escolhido. Google Drive limita arquivos gigantes — prefira Gofile/buzzheavier.</p>' : ''}<div class="files">${d.files.map((f, i) => `<label class="file ${i === 0 ? 'on' : ''}"><input type="${/\.\d{3}$/.test(f.name) ? 'checkbox' : 'radio'}" name="f" value="${esc(f.name)}" ${i === 0 || /\.\d{3}$/.test(f.name) ? 'checked' : ''} onchange="this.closest('.files').querySelectorAll('.file').forEach(x=>x.classList.toggle('on',x.querySelector('input').checked))"><span class="n">${esc(f.basename)}</span><span class="s">${f.size ? fmt(f.size) : ''}</span></label>`).join('')}</div></div>`;
-  }
-  if (d.patches && d.patches.length) files += `<div class="dsec"><h3>PATCHES E EXTRAS</h3><div class="files">${d.patches.map((f, i) => `<div class="file" style="display:flex;align-items:center;gap:8px"><span style="flex:1;min-width:0"><b>${esc(f.name)}</b>${f.note ? `<br><small class="mut">${esc(f.note)}</small>` : ''}</span>${f.size ? `<small class="mut">${fmt(f.size)}</small>` : ''}<button class="btn s xs" onclick="api.post('/api/patch/download',{key:${jsq(key)},i:${i}}).then(r=>toast(r.error?'err':'ok',${jsq(f.name)},r.error||'Baixando — acompanhe na Fila.'))">${I.dl} Baixar</button></div>`).join('')}</div></div>`;
-  const kv = [
-    d.playtime ? ['Tempo jogado', d.playtime_h] : null, d.last_played ? ['Último jogo', ago(d.last_played)] : null, d.play_count ? ['Vezes jogado', String(d.play_count)] : null, d.last_session ? ['Última sessão', fmtTime(d.last_session)] : null, d.added_at && (d.installed || d.missing) ? ['Adicionado', new Date(d.added_at * 1000).toLocaleDateString('pt-BR')] : null,
-    ['Desenvolvedora', m.developer || d.creator], ['Publicadora', m.publisher], ['Ano', m.year || d.year], ['Gêneros', genres.join(', ')],
-    ['Modos', m.modes], ['Série', m.series], ['Sistema', d.system_name], d.emu && d.emu.emulator_title ? ['Emulador', d.emu.installed ? d.emu.emulator_title : d.emu.emulator_title + ' (não instalado)'] : null, ['Versão', d.version], d.size ? ['Tamanho', fmt(d.size)] : isLocal && d.dir && !d.missing ? ['Tamanho', `<a href="#" onclick="calcSize(${jsq(key)},this);return false" style="color:var(--accent2)">Calcular</a>`] : null,
-    ['Repositório', (S.repos.find(r => r.id === d.repo) || {}).name || d.repo], d.installed && !d.missing && !isUri(d.exe) ? ['Pasta', d.dir] : null, d.installed || d.missing ? [isUri(d.exe) ? 'Abre por' : isRom ? 'Arquivo' : 'Executável', isUri(d.exe) ? `${uriName(d.exe)} (${d.exe})` : d.exe] : null, d.args ? ['Argumentos', d.args] : null, d.workdir ? ['Pasta de trabalho', d.workdir] : null, d.source === 'playnite' ? ['Origem', 'Playnite' + (d.store_src ? ' · ' + d.store_src : '')] : d.store_src ? ['Origem', d.store_src] : null,
-    m.wiki_url ? ['Wikipedia', `<a href="#" onclick="api.post('/api/open_url',{url:${jsq(m.wiki_url)}});return false" style="color:var(--accent2)">${esc(m.wiki_url.replace(/^https?:\/\//, ''))}</a>`] : null,
-    m.gog_url ? ['GOG', `<a href="#" onclick="api.post('/api/open_url',{url:${jsq(m.gog_url)}});return false" style="color:var(--accent2)">${esc(m.gog_name || 'página na GOG')}</a>`] : null,
-    m.steam_appid ? ['Steam', `<a href="#" onclick="api.post('/api/open_url',{url:'https://store.steampowered.com/app/${esc(String(m.steam_appid))}'});return false" style="color:var(--accent2)">${esc(m.steam_name || 'página na Steam')}</a>`] : null,
-    d.title_orig && d.title_orig !== d.title ? ['Nome original', `${esc(d.title_orig)} <small style="color:var(--muted)">(${d.title_locked ? 'renomeado por você' : 'corrigido pelos metadados'})</small>`] : null,
-    m.cover_src ? ['Capa', { steam: 'Steam', gog: 'GOG', libretro: 'boxart oficial (' + esc(S.systems[m.libretro_sys] || m.libretro_sys || d.system_name || '') + ')', wikipedia: 'Wikipedia', steamgriddb: 'SteamGridDB', manual: 'link seu' }[m.cover_src] || esc(m.cover_src)] : null,
-    ...(m.links || []).map(l => ['Link', `<a href="#" onclick="api.post('/api/open_url',{url:${jsq(l.url)}});return false" style="color:var(--accent2)">${esc(l.name || l.url.replace(/^https?:\/\//, ''))}</a>`]),
-    m.status || m.score ? ['Para você', `${m.status ? `<span class="pill">${esc(statusName(m.status))}</span>` : ''}${scoreHtml(m.score, 'big')} <a href="#" onclick="editGame(${jsq(key)},'avancado');return false" style="color:var(--accent2);margin-left:6px">editar</a>`] : null,
-    m.notes ? ['Notas', `<span style="white-space:pre-wrap">${esc(m.notes)}</span> <a href="#" onclick="editGame(${jsq(key)},'avancado');return false" style="color:var(--accent2);margin-left:6px">editar</a>`] : null
-  ].filter(x => x && x[1]);
-  const lbl = [d.system_name || 'PC', m.developer || d.creator, m.year || d.year].filter(Boolean).map(esc).join(' &nbsp;·&nbsp; ') + (live ? ' &nbsp;·&nbsp; <b>Jogando agora</b>' : d.missing ? ' &nbsp;·&nbsp; <b style="color:var(--amber)">Arquivo não encontrado</b>' : d.installed || isRom ? ' &nbsp;·&nbsp; <b>Instalado</b>' : '');
-  $('#detail').classList.toggle('art', !!(m.hero || m.hero_url || m.background_file));
-  const dimg = !!((S.byKey[key] || {}).hero_ok || m.hero || m.hero_url || m.background_file) && (S.config.detail_art || 'auto') !== 'off';
-  $('#dWrap').innerHTML = `
-    <div class="dhero${dimg ? ' himg' : ''}" id="dHero"${dimg ? ` style="--dimg:url('/hero/${enc(key)}?v=${(S.byKey[key] || {}).cv || 0}')"` : ''}><div class="dcov"><img src="/cover/${enc(key)}?v=${(S.byKey[key] || {}).cv || m.fetched_at || 0}" alt="${esc((d.title || '?').trim().charAt(0).toUpperCase())}" onload="dbandColor(this)" onerror="dph(this)"><div class="covedit"><button class="btn s xs" onclick="setCover(${jsq(key)})" title="Usar uma imagem minha como capa">${I.image} Trocar capa</button>${d.custom_cover ? `<button class="btn s xs" onclick="resetCover(${jsq(key)})" title="Voltar à capa original">${I.refresh}</button>` : ''}</div></div>
-    <div class="dhead"><div class="dlbl">${lbl}</div><h1>${esc(d.title)}</h1>
-      <div class="meta">${isLocal ? `<span class="pill">${d.source === 'playnite' ? 'Importado do Playnite' : 'Adicionado manualmente'}</span>` : ''}${d.playtime > 60 ? `<span class="pill">${clock} ${esc(d.playtime_h)}</span>` : ''}${isRecomp ? '<span class="pill ac">Recompilação nativa</span>' : ''}${isRom ? `<span class="pill ac">${esc(d.system_name)}</span>` : ''}
-        ${genres.slice(0, 3).map(x => `<span class="pill">${esc(x)}</span>`).join('')}${m.year || d.year ? `<span class="pill">${esc(m.year || d.year)}</span>` : ''}${d.size ? `<span class="pill">${fmt(d.size)}</span>` : ''}${d.meta ? `<span class="pill" title="${esc([].concat(m.source || []).join(', '))}">${I.spark} meta</span>` : ''}</div>
-      <div class="acts">${acts}${page}${metaBtn}</div></div></div>
-    <div class="dmain">
-      ${d.requires_rom ? `<div class="note"><b>Precisa da ROM original.</b> ${esc(d.requires_rom)}. Recompilações não incluem dados do jogo — o launcher só baixa o executável.</div>` : ''}
-      ${d.emu && !d.emu.installed ? `<div class="note"><b>${esc(d.emu.emulator_title)} não instalado.</b> <a href="#" onclick="setView('emulation');return false" style="color:var(--accent2)">Instalar na aba Emuladores</a> para jogar.</div>` : ''}
-      ${srcs}
-      ${dtabsHtml(d, m)}
-      <div class="dpane ${(S.dtab || 'about') === 'about' ? 'on' : ''}" data-pane="about">
-      <div class="desc" style="margin-top:14px">${esc(m.summary || d.description || 'Sem descrição. Clique em "Buscar metadados".')}</div>
-      ${files}
-      <div class="dsec" id="dMods"></div>
-      <div class="dsec"><h3>INFORMAÇÕES</h3><div class="kv">${kv.map(([k, v]) => `<b>${k}</b><span>${['Wikipedia', 'GOG', 'Steam', 'Nome original', 'Capa', 'Link', 'Notas', 'Tamanho', 'Para você'].includes(k) ? v : esc(v)}</span>`).join('')}</div></div>
-      </div>
-      <div class="dpane ${S.dtab === 'shots' ? 'on' : ''}" data-pane="shots">${shotsHtml(key, d, m)}</div>
-      <div class="dpane ${S.dtab === 'reqs' ? 'on' : ''}" data-pane="reqs">${reqsHtml(d, m)}</div>
-    </div>`;
-  loadModsFor(key);
-  detailBar();
-}
-function detailBar() {
-  const d = S.det, bar = $('#dBar'), det = $('#detail'); if (!d || !bar) return;
-  if (S._dObs) { S._dObs.disconnect(); S._dObs = null; }
-  det.classList.remove('bar');
-  const prim = $('#dWrap .acts > .btn.g, #dWrap .acts > .btn.p') || $('#dWrap .acts .prog');
-  $('#dBarTitle').textContent = d.title || '';
-  const img = $('#dBarImg'); img.onerror = () => { img.style.display = 'none'; }; img.style.display = ''; img.src = `/thumb/${enc(d.key)}`;
-  const act = $('#dBarAct'); act.innerHTML = '';
-  if (prim && prim.classList.contains('btn')) { const c = prim.cloneNode(true); c.classList.remove('g', 'p'); c.classList.add(prim.classList.contains('g') ? 'g' : 'p', 'sm'); act.appendChild(c); }
-  else if (prim) { const j = S.jobs[d.key]; act.innerHTML = `<span class="pill ac">${j && j.fraction >= 0 ? Math.round(j.fraction * 100) + '%' : '…'} <button class="lnk" onclick="api.post('/api/cancel',{key:${jsq(d.key)}})">Cancelar</button></span>`; }
-  const target = prim || $('#dWrap .dcov');
-  if (!target) return;
-  S._dObs = new IntersectionObserver(es => { es.forEach(e => det.classList.toggle('bar', !e.isIntersecting && det.classList.contains('on'))); }, { root: det, threshold: 0 });
-  S._dObs.observe(target);
-}
-function dtabsHtml(d, m) {
-  if (d.kind === 'emulator') return '';
-  const shots = (m.shots || d.screenshots || []).length;
-  const tabs = [['about', 'Sobre'], ['shots', `Screenshots${shots ? ` <span class="n">${shots}</span>` : ''}`], ['reqs', 'Requisitos']];
-  return `<div class="tabs dtabs">${tabs.map(([id, l]) => `<button class="${(S.dtab || 'about') === id ? 'on' : ''}" onclick="dtab('${id}')">${l}</button>`).join('')}</div>`;
-}
-function dtab(id) { S.dtab = id; document.querySelectorAll('.dtabs button').forEach((b, i) => b.classList.toggle('on', ['about', 'shots', 'reqs'][i] === id)); document.querySelectorAll('.dpane').forEach(p => p.classList.toggle('on', p.dataset.pane === id)); }
-function shotsHtml(key, d, m) {
-  const v = m.fetched_at || 0;
-  const list = m.shots ? m.shots.map((_, i) => `/shot/${enc(key)}/${i}?v=${v}`) : (d.screenshots || []).slice(0, 3);
-  const q = encodeURIComponent(`${d.title || ''} gameplay screenshot`);
-  if (!list.length) return `<div class="dsec dempty"><p class="mut">${d.meta ? 'Nenhuma screenshot encontrada nas fontes disponíveis para este jogo.' : 'As screenshots chegam junto com os metadados.'}</p><div class="row">${d.meta ? `<button class="btn s" onclick="fetchMeta(${jsq(key)}, true)">${I.refresh} Buscar de novo</button>` : `<button class="btn p" onclick="fetchMeta(${jsq(key)}, true)">${I.refresh} Buscar metadados</button>`}<button class="btn s" onclick="api.post('/api/open_url', {url: 'https://www.bing.com/images/search?q=${q}'})">${I.ext} Ver imagens na web</button></div></div>`;
-  const src = m.shots_src === 'web' ? 'web' : (m.steam_appid ? 'Steam' : '');
-  return `<div class="shots">${list.map((u, i) => `<img src="${esc(u)}" alt="" loading="lazy" onclick="lightbox(${jsq(u)})" onerror="this.closest('.shots').removeChild(this)">`).join('')}</div><p class="mut" style="margin-top:8px;font-size:12px">Toque numa imagem para ampliar. Imagens leves, guardadas em cache${src ? ' · fonte: ' + src : ''}.</p>`;
-}
-function reqsHtml(d, m) {
-  const r = m.reqs || d.requirements;
-  const q = encodeURIComponent(`${d.title || ''} requisitos de sistema pc`);
-  if (!r || (!(r.min || []).length && !(r.rec || []).length)) return `<div class="dsec dempty"><p class="mut">${d.system && d.system !== 'pc' ? 'Jogo emulado: o que pesa é o emulador, não o jogo. Veja os requisitos na aba Emuladores.' : d.meta ? 'Nenhuma fonte disponível publicou os requisitos deste jogo.' : 'Os requisitos chegam junto com os metadados.'}</p><div class="row">${d.meta ? `<button class="btn s" onclick="fetchMeta(${jsq(d.key)}, true)">${I.refresh} Buscar de novo</button>` : `<button class="btn p" onclick="fetchMeta(${jsq(d.key)}, true)">${I.refresh} Buscar metadados</button>`}${d.system && d.system !== 'pc' ? '' : `<button class="btn s" onclick="api.post('/api/open_url', {url: 'https://www.bing.com/search?q=${q}'})">${I.ext} Procurar na web</button>`}</div></div>`;
-  const col = (t, ls) => ls && ls.length ? `<div class="reqcol"><h3>${t}</h3><ul>${ls.map(x => { const i = x.indexOf(':'); return i > 0 && i < 30 ? `<li><b>${esc(x.slice(0, i))}</b><span>${esc(x.slice(i + 1).trim())}</span></li>` : `<li><span>${esc(x)}</span></li>`; }).join('')}</ul></div>` : '';
-  return `${reqCompare(r, d)}<div class="reqs">${col('MÍNIMOS', r.min)}${col('RECOMENDADOS', r.rec)}</div>${m.reqs_src === 'pcgamingwiki' ? '<p class="mut" style="margin-top:8px;font-size:12px">Fonte: PCGamingWiki.</p>' : ''}`;
-}
-function reqCompare(r, d) {
-  if (d.system && d.system !== 'pc') return '';
-  if (!S.hw) { if (!S._hwReq) { S._hwReq = true; api.get('/api/hardware').then(h => { if (h && !h.error) { S.hw = h; const pane = document.querySelector('.dpane[data-pane="reqs"]'), det = S.det; if (pane && det && !pane.querySelector('.reqcmp')) { const html = reqCompare(r, det); if (html) pane.insertAdjacentHTML('afterbegin', html); } } }); } return ''; }
-  const hw = S.hw, lines = (r.min || []).concat(r.rec || []).join('\n');
-  const gb = re => { const mm = lines.match(re); return mm ? parseFloat(mm[1].replace(',', '.')) * (/mb/i.test(mm[2] || '') ? 1 / 1024 : 1) : 0; };
-  const needRam = gb(/(?:mem[oó]ria|ram)[^\n]*?(\d+(?:[.,]\d+)?)\s*(gb|mb)/i) || gb(/(\d+(?:[.,]\d+)?)\s*(gb|mb)\s*(?:de\s*)?ram/i);
-  const needDisk = gb(/(\d+(?:[.,]\d+)?)\s*(gb|mb)\s*(?:de\s*)?(?:espa[çc]o|dispon[íi]ve|livre|available|free)/i) || gb(/\b(?:armazenamento|storage|disco r[íi]gido|hard drive|espa[çc]o em disco)\b[^\n]*?(\d+(?:[.,]\d+)?)\s*(gb|mb)/i);
-  const wantsGpu = /gtx|rtx|radeon|geforce|rx\s?\d{3,4}|arc a/i.test((r.min || []).join(' '));
-  const haveRam = (hw.ram && hw.ram.total ? hw.ram.total / 2 ** 30 : 0), free = Math.max(0, ...(hw.disks || []).map(x => x.free || 0)) / 2 ** 30;
-  const gpu = (hw.gpus || []).map(g => g.name).join(' ').toLowerCase(), dedicated = /rtx|gtx|radeon rx|arc a|arc b|geforce|rx \d{3,4}/.test(gpu) && !/vega \d\b|graphics$/.test(gpu);
-  const items = [];
-  if (needRam && haveRam) items.push([haveRam >= needRam, `Memória: ${Math.round(haveRam)} GB (pede ${needRam} GB)`]);
-  if (needDisk && free) items.push([free >= needDisk, `Espaço livre: ${Math.round(free)} GB (pede ${needDisk} GB)`]);
-  if (wantsGpu && gpu) items.push([dedicated, dedicated ? 'Placa de vídeo dedicada' : 'Sem placa de vídeo dedicada (o jogo pede uma)']);
-  if (!items.length) return '';
-  const bad = items.filter(x => !x[0]).length;
-  return `<div class="reqcmp ${bad ? 'warn' : 'ok'}"><b>${bad ? (bad === 1 ? '1 item abaixo do mínimo' : bad + ' itens abaixo do mínimo') : 'Seu PC atende ao mínimo'}</b>${items.map(([ok, t]) => `<span class="${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✕'} ${esc(t)}</span>`).join('')}<a href="#" class="more" onclick="closeDetail();setView('settings');settingsTab('system','Seu PC');return false">Ver meu PC</a></div>`;
-}
 function lightbox(u) { const l = document.createElement('div'); l.className = 'lightbox'; l.innerHTML = `<img src="${esc(u)}"><button class="dclose">${I.x}</button>`; l.onclick = () => l.remove(); document.body.appendChild(l); }
 async function fetchMeta(key, force, silent) {
   const b = $('#metaBtn'); if (b) { b.disabled = true; b.innerHTML = I.spark + ' Buscando…'; }
@@ -1395,9 +1264,28 @@ async function fetchMeta(key, force, silent) {
   }
 }
 function pl(n, one, many) { return `${n} ${n === 1 ? one : many}`; }
+const ART = (() => {
+  const w = (body) => `<svg viewBox="0 0 160 96" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
+  const A = 'class="a"', F = 'class="f"', D = 'class="d"';
+  return {
+    library: w(`<path ${D} d="M22 78h116"/><rect ${F} x="30" y="30" width="16" height="48" rx="2"/><rect ${F} x="50" y="22" width="14" height="56" rx="2"/><rect ${A} x="68" y="36" width="18" height="42" rx="2"/><path d="M92 78l10-44 16 4-10 40z"/><path ${D} d="M36 40v26M56 32v8M76 46v4"/><circle ${A} cx="128" cy="30" r="9"/><path ${A} d="M128 25v10M123 30h10"/>`),
+    store: w(`<path ${D} d="M20 80h120"/><path ${F} d="M34 40h92l-6 40H40z"/><path d="M34 40l6-14h80l6 14"/><path ${D} d="M60 26v14M100 26v14M80 26v14"/><path ${A} d="M64 58q16-16 32 0"/><circle ${A} cx="64" cy="58" r="2.5"/><circle ${A} cx="96" cy="58" r="2.5"/>`),
+    roms: w(`<path ${D} d="M24 82h112"/><rect ${F} x="52" y="18" width="56" height="62" rx="6"/><rect ${A} x="62" y="28" width="36" height="22" rx="3"/><path d="M52 62h56"/><path ${D} d="M66 70h6M74 70h6M82 70h6"/><path d="M40 44q-10 10 0 20M120 44q10 10 0 20"/>`),
+    downloads: w(`<path ${D} d="M24 82h112"/><path ${F} d="M40 56v18a4 4 0 004 4h72a4 4 0 004-4V56"/><path ${A} d="M80 16v38M66 42l14 14 14-14"/><path ${D} d="M60 70h40"/>`),
+    tools: w(`<path ${D} d="M24 82h112"/><path ${F} d="M48 74l34-34-6-6-34 34a4 4 0 006 6z"/><path d="M80 32a14 14 0 0118-18l-8 8 2 8 8 2 8-8a14 14 0 01-18 18"/><path ${A} d="M106 54l14 14M120 54l-14 14"/><circle ${D} cx="46" cy="71" r="1.5"/>`),
+    mods: w(`<path ${D} d="M24 82h112"/><path ${F} d="M50 36h22v-6a8 8 0 0116 0v6h22v22h-6a8 8 0 000 16h6v22H88v-6a8 8 0 00-16 0v6H50V74h6a8 8 0 000-16h-6z" transform="translate(0 -8) scale(.92) translate(7 8)"/><path ${A} d="M118 20l4 8 8 4-8 4-4 8-4-8-8-4 8-4z"/>`),
+    flash: w(`<path ${D} d="M24 82h112"/><path ${F} d="M86 14L54 56h22l-6 28 34-44H82z"/><path ${A} d="M116 30l-6 2M118 42l-6-1M40 30l6 2M38 42l6-1"/>`),
+    search: w(`<path ${D} d="M24 82h112"/><circle ${F} cx="72" cy="44" r="22"/><path d="M88 60l20 20"/><path ${A} d="M62 44q10-12 20 0"/><path ${D} d="M30 24l4-4M126 20l-4 4"/>`),
+    sources: w(`<path ${D} d="M24 82h112"/><path ${F} d="M58 26h44a4 4 0 014 4v44a4 4 0 01-4 4H58a4 4 0 01-4-4V30a4 4 0 014-4z"/><path d="M66 42h28M66 52h28M66 62h16"/><circle ${A} cx="112" cy="68" r="10"/><path ${A} d="M112 63v10M107 68h10"/>`),
+    done: w(`<path ${D} d="M24 82h112"/><circle ${F} cx="80" cy="46" r="26"/><path ${A} d="M66 46l10 10 20-22"/><path ${D} d="M36 28l4 4M124 28l-4 4M30 56h6M124 56h6"/>`),
+    warn: w(`<path ${D} d="M24 82h112"/><path ${F} d="M80 18l34 58H46z"/><path ${A} d="M80 38v18M80 64v2"/>`),
+  };
+})();
 function emptyHtml(icon, title, text, actions) {
   const acts = (actions || []).map(([l, fn, p]) => `<button class="btn ${p ? 'p' : 's'} sm" onclick="${esc(fn)}">${l}</button>`).join('');
-  return `<div class="empty">${icon ? `<div class="eic">${icon}</div>` : ''}<b>${title}</b><p>${text}</p>${acts ? `<div class="eacts">${acts}</div>` : ''}</div>`;
+  const art = typeof icon === 'string' && ART[icon] ? icon : (icon === I.search ? 'search' : icon === I.magnet ? 'store' : icon === I.home ? 'library' : icon === I.gamepad ? 'roms' : icon === I.dl ? 'downloads' : icon === I.wrench ? 'tools' : icon === I.bolt ? 'flash' : icon === I.check ? 'done' : icon === I.warn ? 'warn' : '');
+  const pic = art ? `<div class="eart ${art}">${ART[art]}</div>` : icon ? `<div class="eic">${icon}</div>` : '';
+  return `<div class="empty ${art ? 'art' : ''}">${pic}<b>${title}</b><p>${text}</p>${acts ? `<div class="eacts">${acts}</div>` : ''}</div>`;
 }
 function progHtml(j, key) {
   const names = { download: 'Baixando', extract: 'Extraindo', cleanup: 'Limpando', done: 'Concluído', move: 'Movendo', install: 'Instalando' };
@@ -1408,6 +1296,12 @@ function progHtml(j, key) {
 }
 
 function fmtEta(sec) { if (sec < 60) return 'menos de 1 min'; const h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60); return h ? `${h} h ${String(m).padStart(2, '0')} min` : `${m} min`; }
+function updateFromSource(key) {
+  const d = S.det && S.det.key === key ? S.det : null; if (!d || !d.update_version) return;
+  const from = d.update_from || key, g = S.byKey[from] || {};
+  modal({ title: `Baixar a versão ${esc(d.update_version)}?`, html: `<p>Instalada agora: <b>${esc(d.version || '?')}</b> · na fonte <b>${esc(repoName(g.repo) || g.repo || '')}</b>: <b>${esc(d.update_version)}</b>.</p><p class="dim">Os arquivos do jogo são substituídos pelos novos. Saves e configurações que ficam em Documentos/AppData não são tocados.</p>`,
+    ok: 'Baixar agora', onOk: () => { if (from !== key) openGame(from); else install(key, false); } });
+}
 async function install(key, torrent) {
   const picked = [...document.querySelectorAll('.files input:checked')].map(i => i.value);
   const d = S.det && S.det.key === key ? S.det : null;
@@ -1449,6 +1343,13 @@ async function dlPickRoot(sel, key, torrent) {
   const r = await api.post('/api/choose_folder', { what: 'games' });
   if (r && r.folder) { await loadCatalog(false); install(key, torrent); }
 }
+function dlWindowNote() {
+  const c = S.config; if (!c.dl_schedule) return '';
+  const mins = x => { const [h, m] = String(x || '').split(':').map(Number); return (h || 0) * 60 + (m || 0); };
+  const f = mins(c.dl_from || '23:00'), t = mins(c.dl_to || '07:00'); if (f === t) return '';
+  const d = new Date(), n = d.getHours() * 60 + d.getMinutes(), inside = f < t ? (n >= f && n < t) : (n >= f || n < t);
+  return inside ? '' : `Fora do horário de download (${c.dl_from || '23:00'}–${c.dl_to || '07:00'}): fica esperando na Fila. Ajustes › Store e downloads.`;
+}
 async function installNow(key, torrent, picked, where) {
   picked = picked || [...document.querySelectorAll('.files input:checked')].map(i => i.value);
   const r = await api.post('/api/install', { key, files: picked.length ? picked : null, torrent, dest: where && where.dest || '', remember: !!(where && where.remember) });
@@ -1456,6 +1357,7 @@ async function installNow(key, torrent, picked, where) {
   if (r.browser) { toast('ok', 'Abrindo no navegador', 'O download continua no navegador. Quando terminar: Adicionar → Jogo de Windows.'); return; }
   if (r.external) { toast('ok', 'Magnet enviado ao cliente de torrent', 'Quando terminar de baixar: Adicionar → Jogo de Windows (ou arraste o arquivo para Store).'); return; }
   if (r.free && r.need && r.free < r.need) toast('', 'Pouco espaço', `Livre: ${fmt(r.free)} · recomendado ~${fmt(r.need)}. A instalação continua mesmo assim.`);
+  const wn = dlWindowNote(); if (wn) toast('warn', 'Na fila, esperando o horário', wn);
   S.jobs[key] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on');
   if (S.det && S.det.key === key) renderDetail(); pollSoon();
 }
@@ -1520,7 +1422,7 @@ async function editGame(key, tab) {
   if (info.error) return toast('err', 'Editar', info.error);
   if (ED.key !== key) { ED.webThumb = ''; ED.heroThumb = ''; ED.web = null; ED.webKind = ''; }
   ED.key = key; ED.info = info; ED.tab = tab === 'meta' ? 'geral' : (tab || 'geral'); ED.probe = null;
-  ED.form = { title: info.title, system: info.system, developer: info.developer, publisher: info.publisher, year: info.year, genres: info.genres.join(', '), summary: info.summary, series: info.series, modes: info.modes, notes: info.notes, status: info.status || '', score: info.score || 0,
+  ED.form = { title: info.title, system: info.system, developer: info.developer, publisher: info.publisher, year: info.year, genres: info.genres.join(', '), tags: (info.tags || []).join(', '), summary: info.summary, series: info.series, modes: info.modes, notes: info.notes, status: info.status || '', score: info.score || 0,
     links: info.links.map(l => ({ ...l })), cover_url: info.cover_url && info.cover_src === 'manual' ? info.cover_url : '', hero_url: info.user.includes('hero_url') ? info.hero_url : '', background_file: info.background_file || '',
     exe: info.exe, dir: info.dir, args: info.args, workdir: info.workdir, version: info.version, emulator: info.emulator, fav: info.fav, unlock_title: false,
     admin: !!info.admin, pre_cmd: info.pre_cmd || '', post_cmd: info.post_cmd || '', pfx: info.pfx || '' };
@@ -1547,6 +1449,7 @@ function edRender() {
       ${row('Publicadora' + userTag('publisher'), inp('publisher', 'ex.: Sony'))}
       ${row('Ano' + userTag('year'), inp('year', 'ex.: 2004', 'maxlength="4" style="width:110px"'))}
       ${row('Gêneros' + userTag('genres'), inp('genres', 'Ação, Aventura, RPG… (separe por vírgula)'))}
+      ${row('Etiquetas', inp('tags', 'Zerar em 2026, Coop com a galera, Leve… (separe por vírgula)'), 'Suas marcações livres. Viram filtro e busca (tag:leve)')}
       ${row('Série' + userTag('series'), inp('series', 'ex.: Need for Speed'))}
       ${row('Modos' + userTag('modes'), inp('modes', 'Um jogador, Multijogador…'))}
     </div>
@@ -1938,9 +1841,9 @@ async function renderRomStore() {
       <div class="qmini ${S.q ? 'on' : ''}"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="qm" placeholder="Buscar ROM…" value="${esc(S.q)}" autocomplete="off" spellcheck="false" oninput="emuSearch(this.value)" onfocus="this.parentElement.classList.add('on')" onblur="if(!this.value)this.parentElement.classList.remove('on')"></div>
       <button class="btn s" onclick="S.tab.store='sources';setView('store')">${I.cog} Fontes</button></div></div>${emuTabs()}
     <div class="chips" style="position:static;margin:6px 0 14px;padding:0"><button class="chip dd ${S.emuSys ? 'on' : ''}" onclick="emuSysMenu(this)" title="Console">${I.gamepad}<span class="lbl">${esc(S.emuSys ? (S.systems[S.emuSys] || S.emuSys) : 'Todos os consoles')}</span><span class="n">${S.emuSys ? (scount[S.emuSys] || 0) : n}</span><svg class="car" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button></div>
-    ${list.length ? '<div class="grid" id="grid"></div><div class="pager" id="pager"></div>' : `${S.q ? emptyHtml(I.search, 'Nenhuma ROM com esse nome', 'Tente outro termo ou outro console.', [['Limpar busca', 'clearSearch()', 1]]) : `<div class="empty" style="padding:24px 0"><b>Carregando as fontes…</b>As listas do archive.org chegam em alguns segundos.</div>`}`}`;
+    ${list.length ? '<div class="grid" id="grid"></div>' : `${S.q ? emptyHtml(I.search, 'Nenhuma ROM com esse nome', 'Tente outro termo ou outro console.', [['Limpar busca', 'clearSearch()', 1]]) : `<div class="empty" style="padding:24px 0"><b>Carregando as fontes…</b>As listas do archive.org chegam em alguns segundos.</div>`}`}`;
   $('#view').innerHTML = h;
-  if (list.length) fillPaged(list);
+  if (list.length) fillGrid(list);
 }
 function emuSysMenu(btn) {
   const scount = {}; let n = 0; for (const g of S.games) if (isRepoRom(g) && (!g.installed || S.jobs[g.key])) { n++; scount[g.system] = (scount[g.system] || 0) + 1; }
@@ -2219,370 +2122,11 @@ const CFMT = { n: v => v, pct: v => v + '%', px: v => v + 'px', deg: v => v + '�
 function setPath(path, v) { const o = {}; let cur = o; const parts = path.split('.'); parts.forEach((p, i) => { if (i === parts.length - 1) cur[p] = v; else cur = cur[p] = {}; }); return o; }
 function cssVar(n) { const v = getComputedStyle(document.documentElement).getPropertyValue(n).trim(); return /^#[0-9a-f]{6}$/i.test(v) ? v : rgbToHex(v) || '#000000'; }
 function rgbToHex(v) { const m = v.match(/rgba?\((\d+)[ ,]+(\d+)[ ,]+(\d+)/); return m ? '#' + [m[1], m[2], m[3]].map(x => (+x).toString(16).padStart(2, '0')).join('') : ''; }
-function settingsData(fresh) {
-  if (fresh) { S._setOk = false; S._cache = null; }
-  if (!S._setOk && !S._setReq) {
-    S._setReq = Promise.all([api.get('/api/themes/full'), api.get('/api/repos')]).then(([t, r]) => {
-      S._setReq = null; S._setOk = true;
-      const nt = Array.isArray(t) ? t : [], nr = Array.isArray(r) ? r : [];
-      const changed = JSON.stringify(nt) !== JSON.stringify(S.themes || []) || JSON.stringify(nr) !== JSON.stringify(S.repos || []);
-      S.themes = nt; S.repos = nr;
-      if (changed && S.view === 'settings') renderSettings();
-    }).catch(() => { S._setReq = null; });
-  }
-  const tab = S.tab.settings || 'general';
-  if (tab === 'tools' && !S._cache && !S._cacheReq) S._cacheReq = api.get('/api/cache').then(d => { S._cacheReq = null; S._cache = d || {}; settingsCacheFill(); }).catch(() => { S._cacheReq = null; });
-  if (tab === 'system' && !S.hw && !S._hwReq) S._hwReq = api.get('/api/hardware').then(d => { S._hwReq = null; S.hw = d || { error: 'sem resposta' }; if (S.view === 'settings' && (S.tab.settings || 'general') === 'system') renderSettings(); }).catch(() => { S._hwReq = null; });
-  return { themes: S.themes || [], repos: S.repos || [], cache: S._cache || null, hw: S.hw || null };
-}
-function settingsCacheFill() {
-  const box = $('#cacheBox'); if (!box || !S._cache) return;
-  box.querySelectorAll('input[value]').forEach(i => { const sp = i.parentElement.querySelector('span'); if (sp) sp.textContent = fmt(S._cache[i.value]) || '0 B'; });
-}
-async function renderSettings(fresh) {
-  const { themes, cache, repos, hw } = settingsData(fresh);
-  if (S.view !== 'settings') return;
-  if ((S.tab.settings || 'general') === 'custom' && !S.custom) S.custom = await api.get('/api/custom');
-  if ((S.tab.settings || 'general') === 'custom' && !S.fonts) S.fonts = ((await api.get('/api/fonts')) || {}).fonts || [];
-  if (S.view !== 'settings') return;
-  const keepScroll = $('#view').scrollTop;
-  const c = S.config; const tab = S.tab.settings || 'general';
-  const sw = (k, label, desc) => `<div class="frow"><div class="l"><b>${label}${restartTag(k)}</b><span>${desc}</span></div><button class="sw ${c[k] ? 'on' : ''}" onclick="setCfg({${k}:!S.config.${k}})"></button></div>`;
-  const TABS = [
-    ['general', 'Geral', 'cog', ['idioma', 'janela_geral', 'notificacoes', 'orientacao']],
-    ['appearance', 'Aparência', 'image', ['tema', 'janela', 'navegacao', 'sofa', 'escala', 'efeitos']],
-    ['library', 'Biblioteca', 'home', ['cartoes', 'capas', 'pastas']],
-    ['play', 'Ao jogar', 'play', ['ao_abrir', 'discord', 'linux', 'saves', 'emuladores', 'controle', 'console']],
-    ['store', 'Store e downloads', 'dl', ['fontes', 'store', 'instalacao', 'torrent']],
-    ['tools', 'Ferramentas', 'wrench', ['verificar', 'importar', 'exportar', 'metadados', 'dados', 'diagnostico', 'limpeza']],
-    ['system', 'Sistema', 'cpu', ['pc', 'segundo_plano', 'atualizacoes', 'avancado', 'perigo', 'sobre']],
-  ];
-  S._settingsTabs = TABS;
-  const TAB_MAP = { updates: 'system', about: 'system', downloads: 'store' }; if (TAB_MAP[S.tab.settings]) { S._settingsJump = S._settingsJump || (S.tab.settings === 'updates' ? 'Atualizações' : S.tab.settings === 'about' ? 'Sobre' : ''); S.tab.settings = TAB_MAP[S.tab.settings]; }
-  const sec = (id, title, rows, o = {}) => { const main = rows.filter(Boolean).join(''), adv = (o.adv || []).filter(Boolean).join(''); if (!main && !adv) return ''; return `<div class="sec${o.cls ? ' ' + o.cls : ''}${!main ? ' advonly' : ''}" id="s-${id}" data-sec="${esc(title)}"><h3>${title}${o.help ? ' ' + help(o.help) : ''}</h3>${o.p ? `<p>${o.p}</p>` : ''}${main}${adv ? `<div class="adv">${adv}</div>` : ''}</div>`; };
-  const accents = ['#2f80ed', '#22c55e', '#f59e0b', '#ef4444', '#ec4899', '#14b8a6', '#eab308', '#f97316', '#8b5cf6'];
-  const SEC = {
-    idioma: () => sec('idioma', 'Idioma', [`
-    <div class="frow"><div class="l"><b>Idioma do launcher${restartTag('language')}</b><span>Idioma dos textos da interface: Português (Brasil) ou English.</span></div>
-      <select class="mi" style="width:auto;min-width:200px" onchange="setCfg({language:this.value})">${[['pt-BR', 'Português (Brasil)'], ['en', 'English']].map(([v, l]) => `<option value="${v}" ${(c.language || 'pt-BR') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`]),
-    janela_geral: () => sec('janela_geral', 'Abrir e fechar', [`
-    <div class="frow"><div class="l"><b>Abrir com o ${OSN()}</b><span>Inicia junto com o sistema, recolhido na bandeja</span></div><button class="sw ${c.autostart ? 'on' : ''}" onclick="setAutostart(!S.config.autostart)"></button></div>
-    ${sw('tray_enabled', 'Ícone na bandeja', 'Mantém o launcher acessível ao lado do relógio quando recolhido. Botão direito no ícone: jogar um dos últimos jogos, ir direto a uma tela, ver a fila, verificar atualizações ou sair. Desligado, ele apenas minimiza para a barra de tarefas')}
-    ${c.tray_enabled !== false ? sw('tray_sleep', 'Dormir na bandeja', 'Recolhido há mais de 25 s, o Ludrix libera a janela da memória e fica só com o ícone (uns 50 MB em vez de centenas). Downloads, tempo de jogo, Discord e atalho continuam; a janela volta em 1 s') : ''}
-    <div class="frow"><div class="l"><b>Ao fechar a janela</b><span>${{ ask: 'Mostra as opções ao clicar no X e memoriza a escolha.', tray: 'Sai da barra de tarefas e fica no ícone ao lado do relógio.', quit: 'Fecha por completo, inclusive o ícone da bandeja.' }[c.close_action || 'ask']} Com um jogo aberto e a bandeja ligada, o Ludrix apenas se recolhe para continuar contando o tempo.</span></div>${cfgSel('close_action', [['ask', 'Perguntar'], ['tray', 'Bandeja'], ['quit', 'Encerrar']], c.close_action || 'ask')}</div>
-    ${c.tray_enabled === false ? '<p>Sem o ícone na bandeja, o X sempre encerra o launcher.</p>' : ''}
-    ${sw('hotkey_enabled', 'Atalho de teclado global', 'Mostra ou esconde o Ludrix de qualquer lugar, mesmo com um jogo aberto')}
-    ${c.hotkey_enabled !== false ? `<div class="frow"><div class="l"><b>Tecla do atalho</b><span>${c.hotkey_status && c.hotkey_status.error ? `<span style="color:var(--amber)">${esc(c.hotkey_status.error)}</span>` : 'Clique no campo e pressione a combinação (precisa de Ctrl, Alt, Shift ou Win).'}</span></div><input class="mi" readonly value="${esc(c.hotkey || '')}" placeholder="pressione as teclas" style="width:170px;text-align:center;cursor:pointer" onkeydown="hotkeyCapture(event,this)" onfocus="this.dataset.old=this.value;this.value='…'" onblur="if(this.value==='…')this.value=this.dataset.old||''"></div>` : ''}`]),
-    notificacoes: () => sec('notificacoes', 'Notificações', [`
-    ${sw('popups', 'Avisos dentro do app', 'Download concluído, erros e pendências aparecem como cartão no canto; o sino guarda o histórico')}
-    ${sw('notify_sound', 'Som ao concluir download', 'Um aviso sonoro curto quando um jogo termina de instalar')}
-    ${sw('ui_sounds', 'Sons da interface', 'Cliques, abrir e fechar com sons curtos e suaves, estilo console')}
-    ${c.ui_sounds !== false ? `<div class="frow"><div class="l"><b>Volume dos sons</b><span>Toca uma amostra ao escolher.</span></div>${cfgSel('ui_sounds_level', [['low', 'Baixo'], ['mid', 'Médio'], ['high', 'Alto']], c.ui_sounds_level || 'low', ";setTimeout(()=>uiSound('done'),300)")}</div>` : ''}`]),
-    orientacao: () => sec('orientacao', 'Orientação', [`
-    <div class="frow"><div class="l"><b>Tour de boas-vindas</b><span>As telas da primeira abertura</span></div><button class="btn s sm" onclick="welcomeTour()">Ver de novo</button></div>`]),
-    tema: () => themesHtml(c),
-    janela: () => sec('janela', 'Janela', [`
-    ${S.config.os === 'windows' ? sw('frameless', 'Janela sem moldura do Windows', 'A barra de título segue o tema, com os botões de minimizar, maximizar e fechar desenhados pelo launcher. Vale após reabrir.') : ''}
-    ${S.config.os === 'windows' && c.native ? `<div class="frow"><div class="l"><b>Moldura do Windows</b><span>${c.frameless ? 'Com a janela sem moldura, vale para a borda fina e os cantos' : 'Barra de título, texto e borda da janela'} no tom do tema. No Windows 10 só o claro/escuro acompanha</span></div>${cfgSel('frame_mode', [['theme', 'No tom do tema'], ['windows', 'Padrão do Windows']], c.frame_mode || 'theme')}</div>
-    <div class="frow"><div class="l"><b>Cantos da janela</b><span>Windows 11. "Padrão" deixa o sistema decidir</span></div>${cfgSel('frame_corners', [['', 'Padrão'], ['round', 'Arredondados'], ['small', 'Levemente arredondados'], ['square', 'Retos']], c.frame_corners || '')}</div>` : ''}
-    <div class="frow"><div class="l"><b>Relógio na barra de status</b><span>Útil com a janela sem moldura ou em tela cheia, quando a barra do Windows some</span></div>${cfgSel('clock', [['off', 'Desligado'], ['time', 'Hora'], ['datetime', 'Dia e hora']], c.clock || 'off')}</div>
-    `], { adv: [`
-    ${c.native && c.frameless ? `<div class="frow"><div class="l"><b>Menus do botão direito</b><span>O menu do Windows passa da borda da janela (como em qualquer programa) e é desenhado com as cores do tema, sem ícones; o do Ludrix fica dentro da janela, com ícones${S.themeMenu ? ` · o tema atual pede <b style="display:inline">${S.themeMenu === 'ludrix' ? 'Menu do Ludrix' : 'Menu do Windows'}</b>` : ''}</span></div>
-      ${cfgSel('ctx_menu', [['', 'Seguir o tema (padrão: Windows)'], ['windows', 'Menu do Windows'], ['ludrix', 'Menu do Ludrix']], c.ctx_menu || '')}</div>` : ''}`] }),
-    navegacao: () => sec('navegacao', 'Navegação', [`
-        <div class="frow" style="align-items:flex-start;flex-direction:column;gap:8px"><div class="l"><b>Abas</b><span>Arraste para mudar a ordem e desligue o que você não usa. O que estiver desligado continua acessível pela busca e pelo menu do logo.</span></div>
-    <div class="navedit" id="navEdit">${navOrder().map(v => { const it = NAV_ITEMS.find(x => x[0] === v), hid = (c.nav_hidden || []).includes(v), svg = ($('#rail .rb[data-view="' + v + '"] svg') || {}).outerHTML || ''; return `<div class="nrow${hid ? ' off' : ''}" draggable="true" data-v="${v}" ondragstart="navDrag(event)" ondragover="navOver(event)" ondragleave="this.classList.remove('dt','db')" ondrop="navDrop(event)"><i class="grip">${I.dots}</i><span class="ic">${svg}</span><b>${esc(it[1])}</b>${v === 'home' ? '<small>sempre visível</small>' : `<button class="sw ${hid ? '' : 'on'}" onclick="navToggle(${jsq(v)})"></button>`}</div>`; }).join('')}</div>
-    ${(c.nav_order || []).length || (c.nav_hidden || []).length ? `<button class="btn s xs" style="margin-top:10px" onclick="setCfg({nav_order:[],nav_hidden:[]})">Restaurar padrão</button>` : ''}</div>`]),
-    sofa: () => sec('sofa', 'Modo sofá', [`
-    <div class="frow"><div class="l"><b>Controle</b><span>Com um controle ligado, qualquer botão passa a navegação para ele: direcional move, A seleciona, B volta, X abre o menu, Y favorita, LB/RB trocam de aba, Start joga. Mexer o mouse volta ao normal</span></div>
-      ${cfgSel('gamepad', [['auto', 'Ligar quando um controle for usado'], ['off', 'Desligado']], c.gamepad || 'auto')}</div>
-    <div class="frow"><div class="l"><b>Zoom no sofá</b><span>Aumenta a interface enquanto o controle está no comando, para ler de longe</span></div>
-      ${cfgSel('sofa_zoom', [[1, 'Igual'], [1.15, '115%'], [1.3, '130%'], [1.5, '150%']], c.sofa_zoom || 1.15)}</div>`]),
-    escala: () => sec('escala', 'Escala da interface', [`
-    <div class="frow"><div class="l"><b>Zoom</b><span id="uiScaleLbl">${c.ui_scale ? Math.round(c.ui_scale * 100) + '%' : 'Auto (' + Math.round(autoScale() * 100) + '%)'}</span></div>
-      ${cfgSel('ui_scale', [[0, 'Automático'], ...[0.8, 0.9, 1, 1.1, 1.25, 1.5].map(v => [v, Math.round(v * 100) + '%'])], c.ui_scale || 0)}</div>
-    <div class="frow"><div class="l"><b>Tamanho do texto</b><span>Só as letras, sem mexer no resto. Bom para ler de longe sem aumentar tudo</span></div>${cfgSel('text_size', [[-2, 'Bem menor'], [-1, 'Menor'], [0, 'Normal'], [1, 'Maior'], [2, 'Bem maior']], c.text_size || 0)}</div>
-    <div class="frow"><div class="l"><b>Tamanho das capas</b><span>O mesmo controle disponível ao lado das listas</span></div><label class="zoom"><input type="range" min="100" max="300" step="10" value="${c.card_size || 136}" oninput="setCardSize(this.value,false)" onchange="setCardSize(this.value,true)"></label></div>
-    <div class="frow"><div class="l"><b>Densidade</b><span>Compacto aproxima os cartões e reduz espaçamentos; útil em telas pequenas</span></div>${cfgSel('density', [['normal', 'Normal'], ['compact', 'Compacto']], c.density || 'normal')}</div>`], { p: 'Ajusta o tamanho de textos, botões e capas para qualquer tela, de um notebook 1366×768 a uma TV 4K. <b>Auto</b> acompanha o tamanho da janela.' }),
-    efeitos: () => sec('efeitos', 'Efeitos', [`
-    ${c.os === 'windows' ? `<div class="frow"><div class="l"><b>Vidro fosco${restartTag('acrylic')}</b><span>Janela translúcida com desfoque do Windows 11 (acrílico), por trás de toda a interface. Em Windows 10 ou com alto contraste fica opaco</span></div><button class="sw ${c.acrylic !== false ? 'on' : ''}" onclick="setCfg({acrylic:!(S.config.acrylic!==false)})"></button></div>` : ''}
-    ${sw('accent_from_cover', 'Cor acompanha o jogo', 'Botões e realces tomam a cor dominante da capa do jogo selecionado ou aberto, com transição suave; volta à cor do tema ao sair')}
-    ${sw('reduce_motion', 'Reduzir movimento', 'Corta transições e animações de uma vez. Liga sozinho quando o sistema pede menos movimento')}
-    ${sw('high_contrast', 'Alto contraste', 'Bordas e textos mais fortes, sem transparência nem desfoque, foco bem marcado. Liga sozinho quando o Windows está em modo de alto contraste')}`]),
-    cartoes: () => sec('cartoes', 'Cartões e listas', [`
-    <div class="frow"><div class="l"><b>Biblioteca e Store</b><span>Com painel, clicar numa capa abre o jogo ao lado; grade mostra só as capas; lista mostra uma linha por jogo com ano, gênero, tamanho e tempo jogado</span></div>${cfgSel('view_mode', [['mural', 'Capas com painel lateral'], ['grid', 'Grade de capas'], ['list', 'Lista']], c.view_mode || 'mural')}</div>
-    <div class="frow"><div class="l"><b>Agrupar por</b><span>Cabeçalhos recolhíveis na Biblioteca e na Store; a ordenação vale dentro de cada grupo. Também no menu de ordenar</span></div>${cfgSel('group_by', GROUPS, c.group_by ?? 'letter')}</div>
-    ${sw('fav_first', 'Favoritos primeiro', 'Mantém os favoritos no topo da lista em qualquer ordenação')}
-    ${sw('card_ribbons', 'Fitas "Novo" e "Hoje" nas capas', '"Novo" marca jogos instalados há menos de 7 dias que você ainda não abriu; "Hoje" marca os que você jogou hoje')}
-    ${sw('card_playtime', 'Tempo e status embaixo da capa', 'Duas linhas sob o título: tempo jogado (ou "Não jogado") e quando foi a última vez; sem isso aparece só o gênero ou a plataforma')}
-`]),
-    capas: () => sec('capas', 'Capas e informações', [`
-    ${sw('auto_metadata', 'Buscar capas e metadados automaticamente', 'Procura capa, descrição, ano e gêneros na Steam, GOG e Wikipedia. Para consoles, usa as capas oficiais de cada sistema e a imagem de fundo do jogo. Roda em segundo plano e não repete buscas')}
-    ${sw('web_covers', 'Capa por busca de imagens na web', 'Quando Steam, GOG, Wikipedia e as capas de console não têm o jogo, procura no Bing, DuckDuckGo e Yandex e usa a melhor imagem vertical. Útil para mods e jogos raros; pode errar, e a capa pode ser trocada na edição do jogo')}
-    <div class="frow"><div class="l"><b>Fontes de metadados</b><span>De onde vêm capa, descrição, ano e gêneros — na busca automática e em "Baixar metadados…". Nenhuma precisa de chave.</span><div class="mchk">${META_SRC.map(([id, n, d]) => `<label class="${(c.meta_sources || {})[id] !== false ? 'on' : ''}" title="${d}"><input type="checkbox" ${(c.meta_sources || {})[id] !== false ? 'checked' : ''} onchange="metaSrcToggle('${id}',this.checked)">${n}</label>`).join('')}</div></div></div>
-    ${sw('auto_rename', 'Corrigir nomes automaticamente', 'Ao encontrar o jogo nas fontes, substitui nomes como "Atalho para Sleeping Dogs" ou "SleepingDogs_x64" pelo nome oficial. Só renomeia quando o nome encontrado bate com segurança (mesmo título e mesma numeração); em dúvida, mantém o atual. Nomes digitados por você nunca são alterados')}`]),
-    pastas: () => sec('pastas', 'Pastas', [`
-    <div class="frow"><div class="l"><b>Pasta de jogos instalados</b><span>Destino definitivo dos jogos baixados e extraídos. Atual: ${esc(c.games_dir_effective)}</span></div><button class="btn s sm" onclick="openPath(${jsq(c.games_dir_effective)})">${I.folder} Abrir</button><button class="btn s sm" onclick="chooseFolder()">Alterar</button>${c.games_dir ? `<button class="btn s sm" onclick="setCfg({games_dir:''})">Padrão</button>` : ''}</div>
-    <div class="frow"><div class="l"><b>Outras pastas com jogos</b><span>Pastas de outros discos ou de outros launchers. O Ludrix procura jogos novos nelas (e na pasta de instalados) ao abrir e no botão abaixo.${(c.game_dirs || []).length ? '' : ' Nenhuma adicionada.'}</span>${(c.game_dirs || []).length ? `<div class="dirlist">${c.game_dirs.map(d => `<div><code>${esc(d)}</code><button class="btn s xs" onclick="openPath(${jsq(d)})">${I.folder}</button><button class="btn s xs" onclick="gameDirRemove(${jsq(d)})">${I.x}</button></div>`).join('')}</div>` : ''}</div><button class="btn s sm" onclick="gameDirAdd()">${I.plus} Adicionar pasta</button><button class="btn s sm" onclick="scanRun('windows','*')">${I.search} Procurar jogos novos</button></div>
-    ${sw('auto_scan_dirs', 'Procurar jogos novos ao abrir', 'Alguns segundos depois de abrir, o Ludrix olha as pastas acima e avisa se achou jogo que ainda não está na biblioteca. Nada é adicionado sem revisão')}
-    <div class="frow"><div class="l"><b>Pasta de downloads (temporária)</b><span>Os arquivos chegam em <code>downloads${SEP()}</code>, são extraídos ou instalados e essa pasta é limpa sozinha. O que sobrar de downloads cancelados é apagado quando o Ludrix abre.</span></div><button class="btn s sm" onclick="openPath(${jsq(c.downloads_dir || 'downloads')})">${I.folder} Abrir</button><button class="btn s sm" onclick="api.post('/api/downloads/clean',{}).then(r=>toast('ok','Pasta limpa',(r.freed_h||'')+(r.skipped?' · '+r.skipped+' em uso':'')))">Limpar agora</button></div>`]),
-    ao_abrir: () => sec('ao_abrir', 'Ao abrir um jogo', [`
-    <div class="frow"><div class="l"><b>Ao abrir um jogo</b><span>${{ ask: 'Pergunta antes de abrir (com opção de lembrar).', none: 'Continua visível normalmente.', minimize: 'Sai da barra de tarefas e volta quando o jogo fechar.', close: 'Fecha por completo; o tempo de jogo desta sessão não é contado.' }[c.after_launch || 'ask']} O tempo de jogo é contado enquanto o processo do jogo estiver em execução.</span></div>${cfgSel('after_launch', [['ask', 'Perguntar'], ['none', 'Manter'], ['minimize', 'Bandeja'], ['close', 'Fechar']], c.after_launch || 'ask')}</div>
-    <div class="frow"><div class="l"><b>Apresentação ao abrir um jogo</b><span>Uma tela rápida com a capa e o nome enquanto o jogo carrega. Clique ou Esc fecham antes</span></div>${cfgSel('launch_splash', [['off', 'Desligada'], ['short', 'Curta'], ['long', 'Longa']], c.launch_splash || 'short')}</div>
-    ${sw('track_external', 'Contar tempo de jogos abertos fora do Ludrix', 'Quando um jogo da biblioteca é aberto pela Steam, por um atalho ou direto pelo .exe, o Ludrix percebe e conta o tempo do mesmo jeito. Checa os processos a cada 15 s; não interfere no jogo')}
-    ${sw('nav_hide_playing', 'Esconder a barra de navegação enquanto um jogo está aberto', 'A barra se recolhe quando você abre um jogo e volta quando ele fecha. Para vê-la no meio do jogo, encoste o mouse na borda onde ela fica')}`]),
-    linux: () => c.os !== 'linux' ? '' : sec('linux', 'Jogos de Windows no Linux', [`
-    <div class="frow"><div class="l"><b>Como abrir .exe</b><span>Proton via umu baixa o GE-Proton e o runtime da Steam sozinho na primeira vez que um jogo de Windows for aberto (~1 GB, uma vez só). Wine usa o que já estiver instalado na distro.</span></div>${cfgSel('linux_runner', [['auto', 'Proton (umu)'], ['wine', 'Wine do sistema']], c.linux_runner || 'auto')}</div>
-    <div class="frow"><div class="l"><b>Versão do Proton</b><span>Vazio = GE-Proton mais recente. Aceita o nome de uma pasta em ~/.local/share/Steam/compatibilitytools.d ou um caminho completo.</span></div><input class="mi" style="width:240px" value="${esc(c.linux_proton || '')}" placeholder="GE-Proton" onchange="setCfg({linux_proton:this.value.trim()})"></div>
-    <div class="frow"><div class="l"><b>Variáveis extras</b><span>Separadas por espaço, ex.: <span class="code">DXVK_HUD=fps MANGOHUD=1</span>. Valem para todos os jogos.</span></div><input class="mi" style="width:240px" value="${esc(c.linux_env || '')}" onchange="setCfg({linux_env:this.value.trim()})"></div>
-    ${sw('linux_runtime_updates', 'Manter o runtime do Proton atualizado', 'O umu confere e baixa atualizações do runtime da Steam ao abrir um jogo. Desligue se a conexão for lenta')}
-    <div class="frow"><div class="l"><b>Proton e prefixo</b><span id="lxst">Verificando…</span></div><div style="display:flex;gap:6px"><button class="btn s sm" onclick="linuxPrepare()">${I.dl} Baixar/atualizar agora</button><button class="btn s sm" onclick="openPath(S.config.root+'/data/pfx')">${I.folder} Prefixos</button></div></div>`]),
-    saves: () => sec('saves', 'Saves', [`
-    ${sw('save_auto_backup', 'Guardar cópia dos saves ao fechar o jogo', `Depois de cada sessão, copia a pasta de saves do jogo para data${SEP()}save_backups (até 5 cópias por jogo, só quando algo mudou; pastas acima de 512 MB são puladas). Restaure em Saves, no menu do jogo`)}`]),
-    emuladores: () => sec('emuladores', 'Emuladores', [`
-    ${sw('emu_no_ask', 'Não perguntar qual emulador', 'Em consoles com mais de um emulador instalado, usa sempre o padrão em vez de perguntar ao jogar')}`]),
-    discord: () => sec('discord', 'Discord', [`
-    ${sw('discord_enabled', 'Mostrar o jogo no Discord', 'Enquanto um jogo estiver aberto, seu perfil do Discord mostra o nome do jogo, a plataforma, a capa e há quanto tempo você está jogando. Usa o Discord aberto no computador; nada é enviado para fora')}
-    ${c.discord_enabled ? `<div class="frow"><div class="l"><b>ID do aplicativo</b><span>${help('O Discord exige um "aplicativo" para mostrar a atividade. É grátis e leva um minuto: entre em discord.com/developers/applications, clique em New Application, dê o nome LudrixHub e copie o Application ID. O nome do aplicativo é o que aparece em "Jogando".')} ${c.discord_status && c.discord_status.connected ? '<span style="color:var(--green2)">conectado ao Discord</span>' : c.discord_status && c.discord_status.error ? `<span style="color:var(--amber)">${esc(c.discord_status.error)}</span>` : 'Cole o Application ID (só números).'}</span></div><input class="mi" value="${esc(c.discord_app_id || '')}" placeholder="ex.: 1234567890123456789" inputmode="numeric" style="width:220px" onchange="setCfg({discord_app_id:this.value.replace(/\\D/g,'')}).then(()=>discordTest())"><button class="btn s sm" onclick="discordTest()">Testar</button><button class="btn s sm" onclick="api.post('/api/open_url',{url:'https://discord.com/developers/applications'})">${I.ext} Criar aplicativo</button></div>` : ''}`]),
-    controle: () => sec('controle', 'Controle', [`
-    ${sw('gamepad_enabled', 'Navegar com controle', 'Direcional ou analógico move, A abre, B volta, X abre o menu de opções, Y busca, LB/RB trocam de aba, LT/RT ou analógico direito rolam a página, Start joga o jogo em foco, Back volta à Biblioteca. Em listas e controles deslizantes, A entra no ajuste e o direcional muda o valor')}
-    ${sw('gamepad_wake', 'Controle chama o launcher', 'Ao conectar um controle, ou segurar o botão Guide/Xbox por 1 s, o launcher sai da bandeja e vem para a frente. Mantém um monitor leve do controle enquanto o Ludrix estiver aberto')}`], { adv: [`
-    <div class="frow"><div class="l"><b>Velocidade do cursor</b><span>Ritmo de repetição ao segurar o direcional. "Lento" é o mais preciso</span></div>
-      ${cfgSel('gamepad_speed', [['slow', 'Lento'], ['normal', 'Normal'], ['fast', 'Rápido']], c.gamepad_speed || 'normal')}</div>`] }),
-    console: () => sec('console', 'Modo Console', [`
-    <div class="frow"><div class="l"><b>Tela cheia da janela</b><span>F11 alterna a tela cheia desta janela, sem sair dela</span></div><button class="btn s sm" onclick="toggleFullscreen()">${FS.on ? 'Sair da tela cheia' : 'Tela cheia agora'}</button></div>
-    <button class="btn p sm" onclick="openConsole()">${I.gamepad} Abrir o Modo Console</button>`], { p: 'Um programa à parte, pensado para a TV: ocupa o monitor inteiro, mostra só os jogos instalados numa esteira de capas e tem temas próprios. Funciona com controle, teclado ou mouse. Ao abrir, esta janela fecha; lá dentro, "Voltar para a janela" reabre o Ludrix normal.' }),
-    fontes: () => sec('fontes', 'Fontes de jogos', [`
-    <button class="btn s sm" onclick="S.tab.store='sources';setView('store')">Abrir Store → Fontes</button>`], { p: `${repos.length} fontes configuradas (${repos.filter(r => r.enabled).length} ativas). Adicionar, ativar e remover fica na <b>Store → Fontes</b>.` }),
-    store: () => sec('store', 'Store', [`
-    ${sw('hero_enabled', 'Destaque rotativo na Store', 'O banner com um jogo em destaque no topo da Store')}
-    ${sw('store_hide_installed', 'Store só mostra o que falta baixar', 'Jogo baixado some da Store e fica só na Biblioteca. Se você remover pelo launcher, ele volta para Store')}
-    ${sw('dim_not_installed', 'Escurecer jogos não baixados', 'Na Store, os jogos dos repositórios que você ainda não instalou aparecem apagados')}`], { adv: [`
-    <div class="frow"><div class="l"><b>Jogos por página na Store</b><span>Menos por página = mais leve. Você navega com os botões no fim da lista</span></div>${cfgSel('store_page_size', [25, 50, 100, 200].map(v => [v, v + ' jogos']), c.store_page_size || 25)}</div>`] }),
-    instalacao: () => sec('instalacao', 'Instalação', [`
-    ${sw('keep_archive', 'Manter arquivo compactado', 'Guarda o arquivo baixado (.zip/.7z) na pasta downloads depois de instalar. Ocupa espaço, mas evita um novo download')}
-    <div class="frow"><div class="l"><b>Downloads simultâneos</b></div>${cfgSel('concurrent_downloads', [1, 2, 3, 4].map(v => [v, String(v)]), c.concurrent_downloads || 2)}</div>
-    ${sw('shortcut_ask', 'Oferecer atalho na área de trabalho', 'Quando um jogo baixado termina de extrair e está pronto para jogar, pergunta se deseja um atalho. Não se aplica a instaladores (repack), importados nem ROMs')}
-    ${sw('repack_auto_open', 'Abrir o instalador de repacks automaticamente', 'Quando um repack (FitGirl, DODI, ElAmigos…) termina de baixar, o instalador abre em seguida. Desligado, fica como pendência nas notificações')}`]),
-    torrent: () => `
-  ${S.torrent ? `<div class="sec"><h3>Torrent</h3><p>Usado quando o item oferece magnet ou .torrent. Limites em KB/s (0 = sem limite).</p>
-    <div class="frow"><div class="l"><b>Download máx.</b></div><input type="number" value="${c.torrent_max_down || 0}" onchange="setCfg({torrent_max_down:+this.value})" style="min-width:110px"></div>
-    <div class="frow"><div class="l"><b>Upload máx.</b></div><input type="number" value="${c.torrent_max_up || 0}" onchange="setCfg({torrent_max_up:+this.value})" style="min-width:110px"></div>
-    ${sw('torrent_seed_after', 'Continuar semeando', 'Mantém o torrent ativo depois do download, enquanto o launcher estiver aberto')}</div>` : `<div class="sec"><h3>Torrent</h3><p>Esta versão não inclui download por torrent. Links magnet abrem no seu cliente de torrent (qBittorrent e similares).</p></div>`}`,
-    verificar: () => sec('verificar', 'Verificar jogos', [`
-    <div class="frow"><div class="l"><b>Procurar jogos que sumiram</b><span>Confere se a pasta, o executável ou a ROM de cada jogo ainda existem. Para os que mudaram de lugar, dá para apontar a pasta nova sem perder capa, tempo jogado e saves${S.config.last_lib_check ? ` · última verificação ${ago(S.config.last_lib_check)}` : ''}</span></div><button class="btn s sm" onclick="libraryCheck()">${I.search} Verificar</button></div>
-    <div class="frow"><div class="l"><b>Jogos duplicados</b><span>Procura entradas com o mesmo nome ou o mesmo executável, comum depois de importar de dois lugares. A remoção não apaga arquivos do disco</span></div><button class="btn s sm" onclick="libraryDupes()">${I.search} Procurar</button></div>
-    <div class="frow"><div class="l"><b>Cópias da biblioteca</b><span>A lista de jogos (library.json) é copiada uma vez por dia em <span class="code">data${SEP()}backups</span>; ficam as últimas 7 diárias e as 10 últimas feitas à mão. Restaurar traz de volta o que sumiu e recupera tempo de jogo zerado, sem apagar o que existe hoje</span></div><button class="btn s sm" onclick="libraryBackups()">${I.doc} Ver cópias</button></div>
-    <div class="frow"><div class="l"><b>Avisar ao abrir</b><span>Mostra um aviso ao iniciar quando algum jogo da biblioteca está com arquivo não encontrado</span></div><button class="sw ${S.config.warn_missing !== false ? 'on' : ''}" onclick="setCfg({warn_missing:!(S.config.warn_missing!==false)})"></button></div>`]),
-    importar: () => sec('importar', 'Importar de outro launcher', [`
-    <button class="btn p sm" onclick="importWizard()">${I.import} Importar biblioteca…</button>`], { p: 'Traz sua biblioteca do Playnite (pasta ou backup .zip), Heroic, Steam, Epic, GOG Galaxy, RetroBat / EmulationStation, LaunchBox, Pegasus ou atalhos da área de trabalho. Você confere a lista antes de adicionar.' }),
-    exportar: () => sec('exportar', 'Exportar biblioteca', [`
-    <button class="btn s sm" onclick="exportLibrary()">${I.doc} Exportar agora</button>
-    <div class="frow"><div class="l"><b>Enviar para a Steam</b><span>Cria os atalhos "não-Steam" com capa; os jogos aparecem na Steam e no Big Picture. A Steam precisa estar fechada. Rodar de novo atualiza os atalhos do Ludrix e não mexe nos outros</span></div><button class="btn s sm" onclick="exportSteam()">${I.ext} Enviar…</button></div>`], { p: 'Gera uma pasta em <span class="code">downloads\\</span> com a lista de jogos, metadados e capas em quatro formatos: pacote para o Playnite (<span class="code">playnite\\LudrixImport.pext</span>: dois cliques nele, depois menu Extensões › Ludrix › Importar), JSON completo do Ludrix, planilha CSV (Excel) e o <span class="code">library.json</span> de jogos avulsos do Heroic Games Launcher.', help: 'Para voltar a biblioteca inteira num Ludrix novo, use "Meus dados › Exportar meus dados" (zip com tudo). "Exportar biblioteca" serve para levar os jogos a outro programa: o pacote do Playnite leva nome, capa, pasta, executável, tempo jogado, favoritos, gênero, ano e desenvolvedora; jogos já importados são atualizados, não duplicados. ROMs entram com o arquivo preenchido e o emulador é escolhido no Playnite. Playnite 11 em diante não aceita o pacote (sem PowerShell): aí vale o CSV.' }),
-    metadados: () => sec('metadados', 'Capas e informações', [`
-    <div class="frow"><div class="l"><b>Atualizar metadados de tudo</b><span>Refaz capa, nome e informações de toda a biblioteca. Roda em segundo plano; a barra de status mostra o andamento</span></div><button class="btn s sm" onclick="api.post('/api/metadata/refetch_all',{}).then(r=>toast(r.ok?'ok':'err', r.ok?'Atualizando…':'Não foi possível concluir', r.ok?'Acompanhe pela barra de status. Você será avisado ao terminar.':r.error))">${I.refresh} Atualizar tudo</button></div>`]),
-    dados: () => sec('dados', 'Meus dados', [`
-    <div class="frow"><div class="l"><b>Exportar meus dados</b><span>Gera Ludrix-dados-&lt;data&gt;.zip. Guarde antes de formatar, trocar de PC ou mexer em algo delicado</span></div><button class="btn s sm" onclick="dataExport()">${I.dl} Exportar…</button></div>
-    <div class="frow"><div class="l"><b>Importar um backup</b><span>Escolha um Ludrix-dados-*.zip. O conteúdo é listado antes de aplicar</span></div><button class="btn s sm" onclick="dataImport()">${I.folder} Importar…</button></div>`], { help: 'O backup é um zip com configurações, biblioteca (com tempo jogado e favoritos), capas personalizadas, fontes, temas importados, cópias de saves e jogos rápidos adicionados por você. Não inclui os jogos em si nem caches. Importar substitui o que existe hoje pelo que está no zip e reabre o Ludrix — antes disso, o estado atual é guardado em data/updates.' }),
-    diagnostico: () => sec('diagnostico', 'Diagnóstico', [`
-    <div class="frow"><div class="l"><b>Diagnóstico</b><span>Confere pasta, espaço em disco, WebView2, ferramentas e mostra o fim do log — copie e cole quando algo der errado</span></div><button class="btn s sm" onclick="showDiag()">Ver diagnóstico</button></div>`]),
-    limpeza: () => sec('limpeza', 'Limpeza', [`
-    <div class="cache" id="cacheBox">${[['web', 'Listas das fontes'], ['thumbs', 'Miniaturas'], ['covers', 'Capas grandes'], ['meta', 'Informações dos jogos'], ['downloads', 'Downloads incompletos'], ['log', 'Registro de erros']].map(([k, n]) => `<label><input type="checkbox" value="${k}"><div><b>${n}</b><span>${cache ? (fmt(cache[k]) || '0 B') : '…'}</span></div></label>`).join('')}</div>
-    <div style="margin-top:12px;display:flex;gap:8px"><button class="btn d sm" onclick="clearCache()">${I.trash} Limpar selecionados</button><button class="btn s sm" onclick="openPath(${jsq(c.root)})">${I.folder} Abrir pasta do app</button></div>`], { cls: 'wide', help: 'Tudo o que o launcher guarda aqui (capas, listas, informações) serve apenas para abrir mais rápido. Pode apagar sem receio: é baixado de novo quando necessário. Seus jogos e configurações não são afetados.', p: 'Tudo o que o launcher cria fica dentro da própria pasta. Selecione o que apagar:' }),
-    pc: () => hwHtml(hw),
-    segundo_plano: () => sec('segundo_plano', 'Em segundo plano', [`
-    ${sw('bg_warmup', 'Completar capas e informações ao abrir', 'Ao abrir, busca em lote as capas e descrições que faltam na biblioteca e no início da Store. Desligado, cada jogo é buscado apenas quando aparece na tela')}
-    ${sw('bg_sites', 'Continuar varrendo fontes do tipo site', 'Fontes com muitas páginas continuam carregando as próximas em segundo plano. Desligado, entram apenas as primeiras páginas, e mais quando você atualiza a fonte')}
-    ${sw('update_auto_check', 'Procurar atualização ao abrir', 'Consulta o canal de atualizações uma vez ao abrir, se houver internet. Desligado, use Ajustes › Sistema › Atualizações › Verificar')}`], { help: 'Tudo aqui vem desligado. Sem nada ligado, o Ludrix parado não faz nada: nenhuma busca, nenhum acesso à internet, nenhuma tarefa em execução. Ele só responde ao que você pede.', p: 'O que o Ludrix pode fazer sozinho enquanto está aberto. Desligado, ele só trabalha quando você solicita.' }),
-    atualizacoes: () => updatesHtml(),
-    avancado: () => sec('avancado', 'Avançado', [], { adv: [`
-    ${sw('terminal_enabled', 'Habilitar o terminal', 'A tecla " (aspas) abre uma janela de comandos do Ludrix; /help lista todos. Recomendado apenas para usuários avançados')}`] }),
-    perigo: () => sec('perigo', 'Zona de perigo', [`
-    <p>Resetar o launcher apaga <b>tudo</b> que ele criou — jogos baixados, ROMs, emuladores, fontes, temas, configurações — e reabre como se fosse a primeira vez. Não tem volta.</p>
-    <button class="btn d sm" onclick="factoryReset()">${I.trash} Resetar o Ludrix de fábrica…</button>`], { cls: 'danger', help: 'Volta o Ludrix ao estado de primeira execução. Apaga permanentemente: configurações, biblioteca, fontes, caches, metadados, temas importados, downloads e as pastas games/ e emulation/ (jogos baixados e ROMs). O que estiver fora da pasta do Ludrix não é tocado.' }),
-    sobre: () => `
-  <div class="sec about" id="s-sobre" data-sec="Sobre"><div class="abt"><div class="abtlogo">${logoSvg()}</div><div><h3>LudrixHub</h3><p>Criado e idealizado por <b>WOLFFZ</b></p></div></div>
-    <p>Um lugar só para os seus jogos: os de PC, os emulados, os atalhos e os Flash, com capa, tempo jogado e favoritos. Portátil — a pasta inteira vai com você.</p>
-    <p>O launcher não hospeda nem distribui jogos. Ele organiza o que você tem e lê as fontes que você adiciona.</p>
-    <div class="kv" style="margin-top:14px"><b>Versão</b><span>${esc(c.version || '')}${c.version_date ? ` <small style="color:var(--muted)">(${esc(c.version_date)})</small>` : ''} ${c.version_changelog ? `<a href="#" onclick="whatsNew();return false" style="color:var(--accent2);margin-left:8px">novidades</a>` : ''}</span><b>Pasta</b><span>${esc(c.root)}</span><b>Motor da janela</b><span>${esc(c.webview2 ? (/^GTK/.test(c.webview2) ? c.webview2 : 'WebView2 ' + c.webview2) : '')}</span></div>
-    <div class="frow" style="margin-top:12px"><div class="l"><b>Arquivos do launcher</b><span>${integrityLine(c.integrity)}</span></div><div class="ta"><button class="btn s sm" onclick="integrityCheck()">${I.check} Verificar arquivos</button></div></div>
-    <p class="mut" style="margin-top:12px;font-size:11.5px">Ícones: Tabler, Phosphor e Pixelarticons (licença MIT). Fontes: Outfit e Manrope (SIL Open Font License).</p>
-  </div>`,
-  };
-  const buildBody = tab => tab === 'custom' ? customHtml(S.custom || {}) : ((TABS.find(t => t[0] === tab) || TABS[0])[3] || []).map(id => SEC[id] ? SEC[id]() : '').join('');
-  S._settingsBody = buildBody;
-  const body = buildBody(tab);
-  const tabBtn = ([id, n, ic]) => `<button class="${tab === id ? 'on' : ''}" data-tab="${id}" onclick="settingsTab('${id}')">${I[ic] || ''}<span>${n}</span></button>`;
-  $('#view').innerHTML = `<div class="h1 seth"><h2>Ajustes</h2><span title="${esc(c.root)}">${esc(c.root)}</span></div>
-    ${restartBanner()}<div class="setwrap"><aside class="setnav"><div class="stabs">${TABS.map(tabBtn).join('')}</div><div class="stoc" id="stoc"></div>
-      <div class="setfoot"><div class="sadvbox ${c.settings_adv ? 'on' : ''}"><div class="l"><b>Opções avançadas</b><span id="sadvN">${c.settings_adv ? 'Visíveis em todas as abas' : 'Ocultas — mostra as opções marcadas como avançado'}</span></div><button class="sw ${c.settings_adv ? 'on' : ''}" onclick="toggleAdv()" title="${c.settings_adv ? 'Ocultar opções avançadas' : 'Mostrar opções avançadas'}"></button></div>
-      ${(TAB_KEYS[tab] || []).length ? `<button class="lnk" onclick="settingsReset('${tab}')">Redefinir esta aba</button>` : ''}<button class="lnk" onclick="openPath('data')" title="Pasta data (config, biblioteca, log)">Abrir pasta data</button></div></aside>
-    <div class="settings" id="setBody" data-tab="${tab}">${body}</div></div>`;
-  settingsToc();
-  if (S._settingsJump) { const j = S._settingsJump; S._settingsJump = ''; requestAnimationFrame(() => settingsGo(j, false)); } else $('#view').scrollTop = keepScroll;
-  viewFilter();
-  if (tab === 'system' && !S.upd) loadUpdates();
-  if (tab === 'play' && c.os === 'linux') linuxStatus();
-}
-function toggleAdv() {
-  const on = !S.config.settings_adv;
-  setCfg({ settings_adv: on }).then(() => {
-    const n = document.querySelectorAll('#setBody .adv .frow, #setBody .sec.advonly .frow, #setBody .adv .tiles, #setBody .adv .seg').length;
-    if (!on) return;
-    if (!n) toast('info', 'Opções avançadas ligadas', 'Esta aba não tem opções avançadas. Elas aparecem com a marca AVANÇADO nas abas que têm.');
-    else { const first = document.querySelector('#setBody .adv, #setBody .sec.advonly'); if (first) { first.scrollIntoView({ block: 'center', behavior: 'smooth' }); first.classList.add('flash'); setTimeout(() => first.classList.remove('flash'), 1600); } }
-  });
-}
-const TAB_KEYS = {
-  general: ['tray_enabled', 'tray_sleep', 'close_action', 'hotkey_enabled', 'popups', 'notify_sound', 'ui_sounds', 'ui_sounds_level'],
-  appearance: ['accent_from_cover', 'gamepad', 'sofa_zoom', 'theme', 'theme_mode', 'face', 'accent', 'theme_schedule', 'theme_light_from', 'theme_light_to', 'frameless', 'frame_mode', 'frame_corners', 'status_position', 'clock', 'ctx_menu', 'layout', 'nav', 'nav_hidden', 'nav_order', 'rail_icons', 'toolbar', 'toolbar_items', 'ui_scale', 'text_size', 'card_size', 'density', 'acrylic', 'animations', 'fx_type', 'fx_intensity', 'glass', 'card_hover', 'reduce_motion', 'parallax', 'high_contrast'],
-  library: ['home_spot', 'fav_first', 'home_rows', 'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'cover_slideshow', 'cover_slideshow_secs', 'view_mode', 'group_by', 'card_ribbons', 'card_playtime', 'detail_art', 'auto_metadata', 'web_covers', 'auto_rename'],
-  play: ['discord_enabled', 'after_launch', 'launch_splash', 'nav_hide_playing', 'save_auto_backup', 'emu_no_ask', 'gamepad_enabled', 'gamepad_speed', 'gamepad_wake'],
-  store: ['hero_enabled', 'store_hide_installed', 'dim_not_installed', 'store_page_size', 'keep_archive', 'concurrent_downloads', 'shortcut_ask', 'repack_auto_open', 'torrent_max_down', 'torrent_max_up', 'torrent_seed_after'],
-  system: ['bg_warmup', 'bg_sites', 'update_auto_check', 'terminal_enabled'],
-};
-function settingsReset(tab) {
-  const name = ((S._settingsTabs || []).find(t => t[0] === tab) || [])[1] || tab;
-  modal({ title: `Redefinir "${name}"?`, text: 'Todas as opções desta aba voltam ao padrão do Ludrix. Jogos, fontes, pastas e temas importados não são tocados.', ok: 'Redefinir', cancel: 'Não fazer nada', danger: true, onOk: async () => {
-    const r = await api.post('/api/config/reset', { keys: TAB_KEYS[tab] || [] }); if (!r || r.error) return toast('err', 'Não foi possível redefinir', (r || {}).error || '');
-    S.config = r; applyTheme(); applyAccent(); applyAnim(); applyScale(); applyChrome(); applyRailIcons(); frameLast = ''; applyFrame(); if (S.view === 'settings') renderSettings(); toast('ok', 'Aba redefinida', `${name} voltou ao padrão`);
-  } });
-}
-function settingsToc() {
-  const box = $('#stoc'), body = $('#setBody'); if (!box || !body) return;
-  const secs = [...body.querySelectorAll('.sec')].filter(s => !s.closest('.sec .sec') && getComputedStyle(s).display !== 'none'); let n = 0;
-  const items = secs.map(s => { const h = s.querySelector(':scope > h3') || s.querySelector('h3'); if (!h) return ''; if (!s.id) s.id = 's-auto' + (n++); const t = s.dataset.sec || [...h.childNodes].filter(x => x.nodeType === 3).map(x => x.textContent).join('').trim() || h.textContent.replace(/\?$/, '').trim(); return `<a data-for="${s.id}" onclick="settingsGo(${jsq(s.id)})">${esc(t)}</a>`; }).filter(Boolean);
-  box.innerHTML = items.length > 1 ? items.join('') : '';
-  const v = $('#view'); if (S._tocScroll) v.removeEventListener('scroll', S._tocScroll);
-  S._tocScroll = () => { const as = box.querySelectorAll('a'); if (!as.length) return; const top = v.getBoundingClientRect().top + 80; let cur = as[0]; for (const a of as) { const s = document.getElementById(a.dataset.for); if (s && getComputedStyle(s).display !== 'none' && s.getBoundingClientRect().top <= top) cur = a; } if (v.scrollTop + v.clientHeight >= v.scrollHeight - 4) cur = as[as.length - 1]; as.forEach(a => a.classList.toggle('on', a === cur)); };
-  v.addEventListener('scroll', S._tocScroll, { passive: true }); S._tocScroll();
-}
-function settingsGo(id, smooth = true) {
-  let el = document.getElementById(id); if (!el) el = [...document.querySelectorAll('#setBody .sec')].find(s => (s.dataset.sec || (s.querySelector('h3') || {}).textContent || '').trim().startsWith(id)); if (!el) return;
-  const v = $('#view'), inst = !smooth || S.config.reduce_motion; if (inst) v.style.scrollBehavior = 'auto';
-  el.scrollIntoView({ behavior: inst ? 'auto' : 'smooth', block: 'start' }); if (inst) setTimeout(() => { v.style.scrollBehavior = ''; }, 50); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
-}
-const help = (txt) => `<span class="help" tabindex="0" data-help="${esc(txt)}">?</span>`;
-function restartTag(k) { const need = (S.config.restart_labels || {})[k] !== undefined; return need ? ` <em class="rq">*Requer Reinicialização!</em>` : ''; }
-function restartBanner() {
-  const p = S.config.pending_restart || []; if (!p.length) return '';
-  const names = p.map(k => (S.config.restart_labels || {})[k] || k).join(', ');
-  return `<div class="rqbar"><div><b>Requer reinicialização</b><span>Alterado: ${esc(names)}. Vale depois de reabrir o launcher.</span></div><button class="btn p sm" onclick="restartApp()">${I.refresh} Reiniciar agora</button></div>`;
-}
-function restartApp() { modal({ title: 'Reiniciar o Ludrix?', text: 'Downloads em andamento continuam de onde pararam; jogos abertos não são afetados.', ok: 'Reiniciar', cancel: 'Não fazer nada', onOk: async () => { const r = await api.post('/api/restart', {}); if (r && r.error) toast('err', 'Não foi possível reiniciar', r.error); else toast('ok', 'Reabrindo…'); } }); }
-async function loadUpdates(check) {
-  S.upd = check ? await api.post('/api/updates/check', {}) : await api.get('/api/updates');
-  if (S.view === 'settings' && S.tab.settings === 'system') { const box = $('#updBox'); if (box) box.outerHTML = updatesHtml(); }
-  if (S.upd && S.upd.last_result) { const r = S.upd.last_result; api.post('/api/updates/ack', {}); modal({ title: r.ok ? (r.restore ? 'Versão restaurada' : 'Atualização instalada') : 'A atualização não foi aplicada', text: r.ok ? `Agora você está na versão ${r.version}.` : (r.error || 'O atualizador restaurou a versão anterior.'), html: r.changelog ? chlogHtml(r.changelog) : '', ok: 'Entendi', wide: !!r.changelog }); S.upd.last_result = null; }
-  return S.upd;
-}
-function chlogHtml(md) {
-  const inline = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`([^`]+)`/g, '<code>$1</code>');
-  let out = '', ul = false;
-  for (const raw of (md || '').split('\n')) {
-    const l = raw.trimEnd();
-    if (/^\s*[-*] /.test(l)) { if (!ul) { out += '<ul>'; ul = true; } out += `<li>${inline(l.replace(/^\s*[-*] /, ''))}</li>`; continue; }
-    if (ul) { out += '</ul>'; ul = false; }
-    if (!l.trim()) continue;
-    if (l.startsWith('## ')) { const [v, d, t] = l.slice(3).split(/\s+[—-]+\s+/); out += `<h5><span class="v">${esc(v)}</span>${t ? esc(t) : ''}${d ? `<small>${esc(d)}</small>` : ''}</h5>`; continue; }
-    if (l.startsWith('### ')) { out += `<h6>${inline(l.slice(4))}</h6>`; continue; }
-    out += `<p>${inline(l)}</p>`;
-  }
-  if (ul) out += '</ul>';
-  return `<div class="chlog">${out}</div>`;
-}
-function notesBetween(m, cur) {
-  const vt = v => (String(v || '0').match(/\d+/g) || []).slice(0, 3).map(Number).concat([0, 0, 0]).slice(0, 3);
-  const cmp = (a, b) => { for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] - b[i]; return 0; };
-  const all = m.changelog_all || [], c = vt(cur), top = vt(m.version);
-  const secs = all.filter(x => cmp(vt(x.version), c) > 0 && cmp(vt(x.version), top) <= 0);
-  if (!secs.length) return m.changelog || '';
-  return secs.map(x => `## ${x.version}${x.date ? ' — ' + x.date : ''}${x.title ? ' — ' + x.title : ''}\n${x.text || ''}`).join('\n\n');
-}
-function updatesHtml() {
-  if (S.config.appimage) return `<div class="sec"><h3>Atualizações</h3><p>Esta é a versão <b>${esc(S.config.version || '')}</b> em AppImage. Para atualizar, baixe o AppImage novo e substitua o arquivo — jogos, ajustes e temas ficam em <span class="code">${esc(S.config.root || '')}</span> e não são tocados.</p><div class="row" style="margin-top:8px"><button class="btn s sm" onclick="api.post('/api/open_url',{url:'https://github.com/wolffZ-prog/Ludrix/releases/latest'})">${I.dl} Baixar a versão mais recente</button></div></div>`;
-  const u = S.upd, cur = (u && u.current) || {}; const av = u && u.available, rem = u && u.remote, st = (u && u.state) || {};
-  const job = S.jobs.update;
-  const ready = !!av, remote = !ready && !!rem;
-  const kind = k => k === 'full' ? 'Nova versão do launcher' : 'Atualização';
-  const when = st.checked_at ? new Date(st.checked_at * 1000).toLocaleTimeString().slice(0, 5) : '';
-  let card = '';
-  if (!u) card = `<p class="mut">Consultando…</p>`;
-  else if (ready) card = `<div class="updcard on"><div class="l"><b>v${esc(av.version)}${av.title && !/^(patch|ludrix) /i.test(av.title) ? ' · ' + esc(av.title) : ''}</b><span>${kind(av.kind)}${av.date ? ' · ' + esc(av.date) : ''}${av.size ? ' · ' + fmt(av.size) : ''} · verificada, pronta para instalar</span></div>${chlogHtml(notesBetween(av, cur.version))}</div>`;
-  else if (remote) card = `<div class="updcard on"><div class="l"><b>v${esc(rem.version)}</b><span>${kind(rem.kind)}${rem.date ? ' · ' + esc(rem.date) : ''}${rem.size ? ' · ' + fmt(rem.size) : ''} · ${job ? 'baixando… ' + Math.round((job.fraction || 0) * 100) + '%' : 'disponível para download'}</span></div>${rem.changelog ? chlogHtml(notesBetween(rem, cur.version)) : ''}${job ? progHtml(job, 'update') : ''}</div>`;
-  else card = `<div class="updcard"><div class="l"><b>Você está na versão mais recente</b><span>${st.error ? esc(st.error) : 'Nenhuma novidade por enquanto'}${when ? ' · checado às ' + when : ''}</span></div></div>`;
-  const applyLabel = remote ? 'Baixar' : 'Instalar';
-  const canApply = ready || (remote && !job);
-  return `<div id="updBox">
-  <div class="sec"><h3>Atualizações <span class="ver">v${esc(cur.version || '?')}</span> ${help('O Ludrix confere o endereço de atualizações (https) ao abrir e ao clicar em Checar. Um arquivo .lxup recebido por fora entra por "Instalar de arquivo". Só pacotes assinados pelo projeto são instalados. Jogos, configurações, temas e emuladores nunca são tocados numa atualização.')}</h3>
-    ${card}
-    <div class="updbtns"><button class="btn s sm" onclick="checkUpdates()" ${st.busy ? 'disabled' : ''}>${I.refresh} Checar</button>
-    <button class="btn p sm" onclick="${remote ? 'downloadUpdate()' : 'applyUpdate()'}" ${canApply ? '' : 'disabled'} title="${canApply ? '' : 'Fica ativo quando houver uma atualização'}">${I.dl} ${applyLabel}</button>
-    <button class="btn s sm" onclick="updateFromFile()" title="Escolher um arquivo .lxup que você recebeu">Instalar de arquivo…</button>
-    <button class="btn s sm" onclick="restoreVersion()" title="Voltar para uma versão anterior a partir do código-fonte dela (Ludrix-<versão>-src.zip)">${I.import} Voltar de versão…</button></div>
-    ${u && !u.updater_present ? `<p class="mut warn">O atualizador (updater) não está na pasta do launcher, então a atualização não consegue se instalar sozinha. Extraia o pacote completo de novo por cima.</p>` : ''}
-    <div class="frow"><div class="l"><b>Checar ao abrir</b><span>Procura novidades quando o launcher inicia (só se tiver internet)</span></div><button class="sw ${S.config.update_auto_check !== false ? 'on' : ''}" onclick="setCfg({update_auto_check:!(S.config.update_auto_check!==false)})"></button></div>
-    <div class="frow"><div class="l"><b>Endereço de atualizações</b><span>Em branco usa o endereço do projeto (GitHub). Preencha só para testar outro feed https.</span></div><input class="mi" id="updFeed" value="${esc(S.config.update_feed || '')}" placeholder="github.com/wolffZ-prog/Ludrix" style="width:260px"><button class="btn s sm" onclick="setCfg({update_feed:$('#updFeed').value.trim()}).then(()=>toast('ok','Endereço salvo'))">Salvar</button></div>
-  </div></div>`;
-}
-async function checkUpdates() { toast('info', 'Procurando atualizações…'); const u = await loadUpdates(true); if (u && (u.available || u.remote)) toast('ok', 'Atualização encontrada', 'v' + (u.available || u.remote).version, [{ label: 'Ver', fn: () => { setView('settings'); S.tab.settings = 'system'; S._settingsJump = 'Atualizações'; renderSettings(true); } }]); else if (u && u.state && u.state.error) toast('err', 'Não foi possível verificar', u.state.error); else toast('ok', 'Tudo em dia', 'Você já está na versão mais recente'); }
-async function downloadUpdate() { const r = await api.post('/api/updates/download', {}); if (r && r.error) toast('err', 'Download', r.error); }
-function applyUpdate() {
-  const av = S.upd && S.upd.available; if (!av) return;
-  modal({ title: `Instalar a versão ${av.version}?`, html: `<p>O Ludrix fecha por completo (inclusive da bandeja) e o atualizador instala a versão nova mostrando o progresso. No fim ele pergunta se quer reabrir.</p><p class="rq">*Requer Reinicialização!</p>`, ok: 'Fechar e atualizar', cancel: 'Não fazer nada', onOk: async () => { const r = await api.post('/api/updates/apply', { relaunch: true }); if (r && r.error) toast('err', 'Atualização', r.error); else toast('ok', 'Fechando para atualizar…'); } });
-}
-async function updateFromFile() { const r = await api.post('/api/updates/file', {}); if (!r) return; if (r.native === false) return modal({ title: 'Instalar de arquivo', text: 'Nesse modo não é possível abrir a janela de escolher arquivo. Copie o .lxup para pasta updates, dentro da pasta do launcher, e clique em "Checar".', ok: 'Ok' }); if (r.error) return toast('err', 'Arquivo inválido', r.error); if (r.ok) { toast('ok', 'Atualização pronta para instalar', 'Versão ' + r.available.version); loadUpdates(false); } }
-async function restoreVersion(repair) {
-  const r = await api.post('/api/updates/restore_pick', { allow_same: !!repair }); if (!r || r.cancel) return;
-  if (r.native === false) return modal({ title: 'Voltar de versão', text: 'Nesse modo não é possível abrir a janela de escolher arquivo. Abra o updater pela pasta do Ludrix e use "Escolher arquivo".', ok: 'Ok' });
-  if (r.error) return modal({ title: 'Voltar de versão', text: r.error, ok: 'Ok' });
-  modal({ title: r.same ? `Reinstalar a versão ${r.version}?` : `${r.newer ? 'Instalar' : 'Voltar para'} a versão ${r.version}?`, wide: true,
-    html: `<p>Você está na <b>${esc(r.current)}</b>. O Ludrix fecha por completo, o atualizador ${r.same ? 'regrava todos os arquivos da versão' : 'troca o código pela versão'} <b>${esc(r.version)}</b> e reabre nela. Jogos, configurações, temas e emuladores ficam como estão.</p>${r.changelog ? `<p class="mut" style="margin:8px 0 4px">O que essa versão tinha:</p>${chlogHtml(r.changelog)}` : ''}<p class="rq">*Requer Reinicialização!</p>`,
-    ok: r.same ? 'Fechar e reinstalar' : r.newer ? 'Fechar e instalar' : 'Fechar e voltar', cancel: 'Não fazer nada',
-    onOk: async () => { const x = await api.post('/api/updates/apply', { relaunch: true, restore: r.path }); if (x && x.error) toast('err', 'Voltar de versão', x.error); else toast('ok', 'Fechando para trocar de versão…'); } });
-}
-const LAYOUT_NAMES = { top: 'navegação no topo', side: 'menu lateral largo', dock: 'barra embaixo', taskbar: 'barra embaixo', rail: 'ícones à esquerda', bottom: 'barra embaixo' };
-function pickFace(id) { const prev = faceInfo(S.config.face || DEFAULT_FACE), patch = { face: id }; if ((S.config.theme || '').startsWith('file:')) patch.theme = 'system'; if (S.config.accent && S.config.accent === prev.accent) patch.accent = ''; setCfg(patch); }
-async function pickTheme(id) { if (!(S.themes || []).length) S.themes = await api.get('/api/themes/full'); const t = (S.themes || []).find(x => x.id === id), prev = (S.themes || []).find(x => x.id === (S.config.theme || 'system')); const patch = { theme: id }; if (prev && prev.accent && S.config.accent === prev.accent) patch.accent = ''; setCfg(patch); }
-const toHex = v => { v = (v || '').trim(); if (/^#([0-9a-f]{6})$/i.test(v)) return v; const m = v.match(/rgba?\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)/i); if (m) return '#' + [m[1], m[2], m[3]].map(x => (+x).toString(16).padStart(2, '0')).join(''); return ''; };
-function reloadTheme() { currentTheme = null; applyTheme(); }
-async function themeExport(id, fmt) { const r = await api.post('/api/theme/export', { id, format: fmt || 'lxtheme' }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); toast('ok', 'Tema exportado', r.path, [{ label: 'Abrir pasta', fn: () => openPath(r.path.replace(/[\\/][^\\/]*$/, '')) }]); }
-function themeMenu(id, x, y) {
-  const t = (S.themes || []).find(t => t.id === id) || {}; const items = [{ label: 'Aplicar', icon: 'check', fn: () => pickTheme(id) }];
-  if (id.startsWith('file:')) items.push({ sep: true },
-    { label: 'Exportar', icon: 'ext', sub: [{ label: '.lxtheme', hint: 'oficial', fn: () => themeExport(id, 'lxtheme') }, { label: '.zip', hint: 'mesmo esqueleto', fn: () => themeExport(id, 'zip') }] },
-    { sep: true }, { label: 'Apagar', icon: 'trash', danger: true, fn: () => themeDelete(id, t.name || id) });
-  showCtx(items, x, y);
-}
-function themeExportMenu(id, e) { showCtx([{ label: 'Exportar .lxtheme', hint: 'oficial', icon: 'ext', fn: () => themeExport(id, 'lxtheme') }, { label: 'Exportar .zip', hint: 'mesmo esqueleto', icon: 'ext', fn: () => themeExport(id, 'zip') }], e.clientX, e.clientY); }
-async function themeExportAll() { const r = await api.post('/api/theme/export_all', { format: 'zip' }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); toast('ok', `Arquivo com ${pl(r.count, 'tema', 'temas')}`, r.path, [{ label: 'Abrir pasta', fn: () => openPath(r.path.replace(/[\\/][^\\/]*$/, '')) }]); }
-async function themeImport() {
-  if (S.config.native) { const r = await api.post('/api/theme/import', {}); if (r.error) return toast('err', 'Não foi possível concluir', r.error); if (r.ok) { toast('ok', r.count > 1 ? 'Temas importados' : 'Tema importado', r.name || ''); renderSettings(true); } return; }
-  modal({ title: 'Importar temas', text: 'Caminho do .lxtheme, .zip (um ou vários estilos) ou theme.json. Para vários arquivos, um por linha.', textarea: '', ok: 'Importar', onOk: async v => { const r = await api.post('/api/theme/import', { path: v }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); if (r.ok) toast('ok', r.count > 1 ? 'Temas importados' : 'Tema importado', r.name || ''); renderSettings(true); } });
-}
-function themeSel(id, builtin) { if (builtin) return; S._tsel.has(id) ? S._tsel.delete(id) : S._tsel.add(id); renderSettings(); }
-function themeSelGroup(ids) { const list = ids.split('|'); const all = list.every(i => S._tsel.has(i)); list.forEach(i => all ? S._tsel.delete(i) : S._tsel.add(i)); renderSettings(); }
-function themeDeleteSel() {
-  const ids = [...S._tsel]; if (!ids.length) return;
-  modal({ title: `Apagar ${ids.length} estilo${ids.length > 1 ? 's' : ''}?`, text: 'As pastas deles em themes serão removidas. É possível importar de novo depois.', ok: 'Apagar', danger: true, onOk: async () => {
-    for (const id of ids) await api.post('/api/theme/delete', { id });
-    if (ids.includes(S.config.theme)) S.config.theme = 'system';
-    S._tsel.clear(); S._tselMode = false; reloadTheme(true); renderSettings(true); toast('ok', 'Apagados', `${ids.length} estilo${ids.length > 1 ? 's' : ''}`);
-  } });
-}
-function themeDeleteAll() {
-  const ids = (S.themes || []).filter(t => t.id && t.id.startsWith('file:')).map(t => t.id); if (!ids.length) return;
-  modal({ title: `Apagar os ${ids.length} temas importados?`, text: 'As pastas deles em themes serão removidas. Os temas Escuro e Claro continuam. É possível importar de novo depois.', ok: 'Apagar todos', danger: true, onOk: async () => {
-    for (const id of ids) await api.post('/api/theme/delete', { id });
-    if (ids.includes(S.config.theme)) { S.config.theme = 'dark'; await setCfg({ theme: 'dark' }); }
-    S.themes = await api.get('/api/themes/full'); reloadTheme(true); renderSettings(true); toast('ok', 'Temas apagados', pl(ids.length, 'tema', 'temas'));
-  } });
-}
-function themeDelete(id, name) { modal({ title: `Apagar o estilo "${name}"?`, text: 'A pasta dele em themes será removida. É possível importar de novo depois.', ok: 'Apagar', danger: true, onOk: async () => { await api.post('/api/theme/delete', { id }); if (S.config.theme === id) S.config.theme = 'system'; reloadTheme(true); renderSettings(true); } }); }
 function autoScale() { const r = Math.min(window.innerWidth / 1500, window.innerHeight / 860); const s = 1 + (r - 1) * 0.6; return Math.round(Math.min(1.35, Math.max(0.8, s)) * 20) / 20; }
 function applyScale() { const s = (S.config.ui_scale || autoScale()) * (document.body.classList.contains('sofa') ? (S.config.sofa_zoom || 1.15) : 1); document.documentElement.style.setProperty('--scale', s); document.documentElement.style.fontSize = ((13 + (S.config.text_size || 0)) * s) + 'px'; document.body.classList.toggle('compact', (S.config.density || 'normal') === 'compact'); document.body.classList.toggle('noglass', S.config.glass === false); }
 let rzT = 0; window.addEventListener('resize', () => { if (S.config.ui_scale) return; cancelAnimationFrame(rzT); rzT = requestAnimationFrame(() => { const s = autoScale(); if (String(s) !== document.documentElement.style.getPropertyValue('--scale')) applyScale(); }); });
-async function setCfg(patch) { const r = await api.post('/api/config', patch); if (r && !r.error) { S.config = r; api.emit('config', patch); if ('language' in patch) { location.reload(); return r; } applyTheme(); applyAnim(); applyScale(); if ('rail_icons' in patch) applyRailIcons(); if ('cursor' in patch) if ('game_backdrop' in patch || 'accent_from_cover' in patch || 'cover_slideshow' in patch || 'cover_slideshow_secs' in patch) gameFocus(S._focusKey || S.stageKey || null); if ('frame_mode' in patch || 'frame_corners' in patch) { frameLast = ''; applyFrame(); } if ('nav_hide_playing' in patch) applyPlaying(); if ('nav_hidden' in patch || 'nav_order' in patch) applyNavItems(); if ('card_hover' in patch || 'reduce_motion' in patch || 'detail_art' in patch || 'high_contrast' in patch || 'settings_adv' in patch) applyMotion(); if ('clock' in patch) applyClock(); if ('group_by' in patch && ['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'settings') renderSettings(); if (['home', 'store'].includes(S.view) && ('card_size' in patch || 'face' in patch || 'theme' in patch || 'home_spot' in patch || 'home_rows' in patch || 'view_mode' in patch)) renderLibrary(); if ('toolbar' in patch || patch.toolbar_items) { applyToolbar(); if (['home', 'store'].includes(S.view)) renderLibrary(); } } }
+async function setCfg(patch) { const r = await api.post('/api/config', patch); if (r && !r.error) { S.config = r; api.emit('config', patch); if ('language' in patch) { location.reload(); return r; } applyTheme(); applyAnim(); applyScale(); if ('rail_icons' in patch) applyRailIcons(); if ('cursor' in patch) if ('game_backdrop' in patch || 'accent_from_cover' in patch || 'cover_slideshow' in patch || 'cover_slideshow_secs' in patch) gameFocus(S._focusKey || S.stageKey || null); if ('frame_mode' in patch || 'frame_corners' in patch) { frameLast = ''; applyFrame(); } if ('nav_hide_playing' in patch) applyPlaying(); if ('nav_hidden' in patch || 'nav_order' in patch) applyNavItems(); if ('nav_layout' in patch) { applyChrome(); renderView(); } if ('watch_dirs' in patch) api.post('/api/dirs/watch', {}); if ('card_hover' in patch || 'reduce_motion' in patch || 'detail_art' in patch || 'high_contrast' in patch || 'settings_adv' in patch) applyMotion(); if ('clock' in patch) applyClock(); if ('group_by' in patch && ['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'settings') renderSettings(); if (['home', 'store'].includes(S.view) && ('card_size' in patch || 'face' in patch || 'theme' in patch || 'home_spot' in patch || 'home_rows' in patch || 'view_mode' in patch)) renderLibrary(); if ('toolbar' in patch || patch.toolbar_items) { applyToolbar(); if (['home', 'store'].includes(S.view)) renderLibrary(); } } }
+async function setFileAssoc(on) { const r = await api.post('/api/file_assoc', { on }); if (r.error) { if (/versão instalada/.test(r.error)) { await setCfg({ file_assoc: on }); return; } return toast('err', 'Associação de arquivos', r.error); } S.config.file_assoc = on; renderSettings(true); toast('ok', on ? 'Arquivos .lxtheme e .lxup abrem no Ludrix' : 'Associação removida'); }
 async function setAutostart(on) { const r = await api.post('/api/autostart', { on }); if (r.error) return toast('err', r.error); S.config.autostart = !!r.enabled; renderSettings(); toast('ok', r.enabled ? 'O Ludrix vai abrir com o Windows' : 'Não abre mais com o Windows'); }
 async function chooseFolder() { const r = await api.post('/api/choose_folder', { what: 'games' }); if (r.native) { if (r.folder) { await loadCatalog(false); renderSettings(); scanRun('windows', r.folder); } return; } modal({ title: 'Pasta dos jogos', text: 'Digite o caminho completo (modo navegador não tem diálogo nativo).', input: S.config.games_dir || '', ok: 'Salvar', onOk: v => setCfg({ games_dir: v }) }); }
 function factoryReset() {
@@ -2594,6 +2138,14 @@ function factoryReset() {
       toast('ok', 'Fechando para apagar tudo…', 'O Ludrix reabre sozinho zerado.');
     } });
 }
+async function imgGc(btn) {
+  const r = await api.post('/api/cache/images_gc', { apply: false });
+  if (!r || r.error) return toast('err', 'Não deu para conferir', (r && r.error) || '');
+  if (!r.files) return toast('ok', 'Nada para limpar', 'Nenhuma imagem órfã com mais de 30 dias.');
+  modal({ title: 'Limpar imagens órfãs?', text: `${pl(r.files, 'arquivo', 'arquivos')} · ${fmt(r.bytes)}. Se um jogo voltar a aparecer, a imagem é baixada de novo.`, ok: 'Limpar', danger: true, onOk: async () => { const x = await api.post('/api/cache/images_gc', { apply: true }); toast('ok', 'Imagens limpas', `${pl(x.files, 'arquivo', 'arquivos')} · ${fmt(x.bytes)}`); if (S.view === 'settings') renderSettings(true); } });
+}
+async function autoBackupDir(what) { const r = await api.post('/api/data/auto_backup', { [what]: true }); if (r && !r.error) { S.config = await api.get('/api/config'); renderSettings(true); } }
+async function autoBackupNow(btn) { if (btn) btn.disabled = true; const r = await api.post('/api/data/auto_backup', { now: true }); if (btn) btn.disabled = false; if (!r || r.error) return toast('err', 'Backup não feito', (r && r.error) || ''); toast('ok', 'Backup pronto', r.path || '', r.path ? [{ label: 'Abrir pasta', fn: () => openPath(r.path) }] : undefined); S.config = await api.get('/api/config'); renderSettings(true); }
 async function clearCache() { const what = [...document.querySelectorAll('#cacheBox input:checked')].map(i => i.value); await api.post('/api/cache/clear', { what }); toast('ok', 'Limpeza concluída', what.join(', ')); renderSettings(true); if (what.includes('web')) loadCatalog(false); }
 const REPO_FIELDS = {
   telegram: [['token', 'Token do bot (deixe em branco para manter o atual)', '123456:AAH…', 'password'], ['chat', 'Canal (link t.me/+…, @usuario ou nome)', 'opcional']],
@@ -2731,6 +2283,7 @@ async function handleEvent(ev) {
     if (ev.kind === 'update') { toast('ok', 'Atualização baixada', 'Pronta para aplicar', [{ label: 'Ver', fn: () => { setView('settings'); S.tab.settings = 'system'; S._settingsJump = 'Atualizações'; renderSettings(true); } }]); S.upd = null; if (S.view === 'settings' && S.tab.settings === 'system') loadUpdates(false); return; }
     if (ev.kind === 'emulator') { toast('ok', 'Emulador instalado', ev.title); if (S.view === 'emulation') renderEmulation(); return; }
     if (ev.kind === 'tool') { toast('ok', ev.key && ev.key.startsWith('mod:') ? 'Mod instalado' : 'Ferramenta instalada', ev.title); if (S.view === 'mods') renderMods(); return; }
+    if (ev.kind === 'source') { toast('ok', 'Fonte criada', `${ev.count || 0} jogo(s)`); sourceMade(ev.out); return; }
     if (ev.kind === 'move') { toast('ok', 'Pasta movida', ev.title + (ev.dir ? ' → ' + ev.dir : '')); loadCatalog(false); if (S.det && S.det.key === ev.key) { S.det = await api.get('/api/game/' + enc(ev.key)); renderDetail(); } return; }
     if (ev.kind === 'redist' || ev.kind === 'optional') { toast('ok', ev.restart ? 'Instalado — precisa reiniciar o PC' : 'Instalado', ev.title); if (S.view === 'central') renderCentral(); return; }
     if (ev.kind === 'flash') { toast('ok', ev.ruffle ? 'Player Flash pronto' : 'Jogo rápido pronto', ev.title, ev.gid ? [{ label: 'Jogar', fn: () => { if (S.view !== 'flash') setView('flash'); setTimeout(() => playFlash(ev.gid), 400); } }] : undefined); if (S.view === 'flash') renderFlash(); return; }
@@ -2780,6 +2333,7 @@ async function handleEvent(ev) {
       const yr = c.querySelector('.info span'); if (yr) yr.textContent = g.year || '';
     });
     if (S.det && S.det.key === ev.key && !S.det.meta) { const d = await api.get('/api/game/' + enc(ev.key)); if (S.current === ev.key) { S.det = d; renderDetail(); } }
+  } else if (ev.type === 'sys_accent') { S.sysAccent = ev.hex || ''; if ((S.config.accent_mode || 'theme') === 'system') applyAccent();
   } else if (ev.type === 'notify') {
     loadNotifs();
     if (ev.kind === 'repack') toast('', ev.title, ev.text, [{ label: 'Abrir instalador', fn: () => runRepack(ev.key) }, { label: 'Depois', fn: () => { } }]);
@@ -2787,6 +2341,7 @@ async function handleEvent(ev) {
     else if (ev.kind === 'info') { toast('ok', ev.title, ev.text); loadCatalog(false); }
     else if (ev.kind === 'warn' && ev.key === 'integrity') toast('warn', ev.title, ev.text, [{ label: 'Ver arquivos', fn: () => integrityCheck() }, { label: 'Depois', fn: () => { } }]);
     else if (ev.kind === 'ok') toast('ok', ev.title, ev.text);
+    else if (ev.kind === 'store') { toast('ok', ev.title, ev.text, [{ label: 'Ver na Store', fn: () => notifOpen(ev.id) }, { label: 'Depois', fn: () => { } }]); loadCatalog(false); }
   } else if (ev.type === 'renamed') {
     const g = S.byKey[ev.key]; if (g) g.title = ev.title;
     if (S.home && S.home.games && S.home.games[ev.key]) S.home.games[ev.key].title = ev.title;
@@ -3084,18 +2639,18 @@ function homeOrder(list) {
   return [...list].sort((a, b) => score(b) - score(a) || a.title.localeCompare(b.title, 'pt'));
 }
 async function refreshHome() { if (S.view !== 'home') return; try { S.home = await api.get('/api/home'); } catch (e) { return; } if (S.view === 'home' && !filtersActive() && !S.q) { const el = $('#homeTop'); if (el) el.outerHTML = homeTop(); } }
-const SORTS = [['az', 'A–Z'], ['year', 'Ano'], ['size', 'Tamanho'], ['recent', 'Recentes'], ['most', 'Mais jogados'], ['count', 'Vezes jogado'], ['added', 'Adicionados'], ['dev', 'Desenvolvedora'], ['score', 'Sua nota']];
+const SORTS = [['az', 'A–Z'], ['year', 'Ano'], ['size', 'Tamanho'], ['recent', 'Recentes'], ['most', 'Mais jogados'], ['count', 'Vezes jogado'], ['added', 'Adicionados'], ['dev', 'Desenvolvedora'], ['score', 'Sua nota'], ['fresh', 'Novos nas fontes']];
 const WEEK = 7 * 86400;
 const FLAG_TEST = {
-  fav: g => !!g.fav, never: g => !g.last_played && !(g.playtime > 0), played: g => !!g.last_played || g.playtime > 0,
+  fresh: g => !!g.fresh, upd: g => !!g.update_version, direct: g => !!g.avail_direct, torrent: g => !!g.avail_torrent, fav: g => !!g.fav, never: g => !g.last_played && !(g.playtime > 0), played: g => !!g.last_played || g.playtime > 0,
   recent: g => (g.last_played || 0) > Date.now() / 1000 - WEEK, added: g => (g.added_at || 0) > Date.now() / 1000 - WEEK,
   installed: g => !!g.installed, notinst: g => !g.installed, hidden: g => !!g.hidden, nometa: g => !g.has_meta, broken: g => g.repo === 'local' && !g.installed && !g.mc_nolauncher, playnite: g => g.source === 'playnite', withargs: g => !!g.has_args, big: g => (g.size || 0) > 10e9, old: g => +(g.year || 0) > 0 && +g.year < 2005,
 };
-const FLAGS = [['fav', 'Favoritos'], ['recent', 'Jogados esta semana'], ['added', 'Adicionados esta semana'], ['never', 'Nunca joguei'], ['played', 'Já joguei'],
+const FLAGS = [['fresh', 'Novos nas fontes'], ['upd', 'Versão nova na fonte'], ['direct', 'Download direto'], ['torrent', 'Torrent'], ['fav', 'Favoritos'], ['recent', 'Jogados esta semana'], ['added', 'Adicionados esta semana'], ['never', 'Nunca joguei'], ['played', 'Já joguei'],
                ['installed', 'Instalados'], ['notinst', 'Não instalados'], ['old', 'Clássicos (antes de 2005)'], ['big', 'Grandes (> 10 GB)'], ['nometa', 'Sem capa / metadados'], ['broken', 'Arquivo não encontrado'], ['playnite', 'Vindos do Playnite'], ['withargs', 'Com argumentos'], ['hidden', 'Ocultos']];
 const repoFltN = () => (S.view === 'store' ? S.flt.repos.size : 0) + S.flt.src.size;
 const repoName = id => (S.repos.find(r => r.id === id) || {}).name || id || '';
-const FLT_KINDS = ['cats', 'sys', 'flags', 'repos', 'src', 'genres', 'devs', 'years', 'lastp', 'added', 'ptime', 'size', 'status', 'score'];
+const FLT_KINDS = ['cats', 'sys', 'flags', 'repos', 'src', 'genres', 'tags', 'devs', 'years', 'lastp', 'added', 'ptime', 'size', 'status', 'score'];
 const BUCKET_KINDS = ['lastp', 'added', 'ptime', 'size', 'status', 'score'];
 const BUCKETS = {
   lastp: [['never', 'Nunca'], ['today', 'Hoje'], ['week', 'Últimos 7 dias'], ['month', 'Últimos 30 dias'], ['year', 'Último ano'], ['older', 'Há mais de um ano']],
@@ -3114,7 +2669,7 @@ const bucketOf = {
   status: g => g.status || 'none',
   score: g => { const n = +g.score || 0; return !n ? 'none' : n >= 9 ? 's9' : n >= 7 ? 's7' : n >= 5 ? 's5' : 's1'; },
 };
-const FLT_TITLES = { repos: 'Fonte', src: 'Origem', sys: 'Plataforma', cats: 'Categoria', genres: 'Gênero', years: 'Ano de lançamento', devs: 'Desenvolvedora', lastp: 'Última vez jogado', added: 'Adicionado', ptime: 'Tempo de jogo', size: 'Tamanho', status: 'Status', score: 'Sua nota', flags: 'Situação' };
+const FLT_TITLES = { repos: 'Fonte', src: 'Origem', sys: 'Plataforma', cats: 'Categoria', genres: 'Gênero', tags: 'Etiqueta', years: 'Ano de lançamento', devs: 'Desenvolvedora', lastp: 'Última vez jogado', added: 'Adicionado', ptime: 'Tempo de jogo', size: 'Tamanho', status: 'Status', score: 'Sua nota', flags: 'Situação' };
 const QUICK = [['installed', 'Instalados'], ['notinst', 'Não instalados'], ['fav', 'Favoritos'], ['never', 'Nunca joguei']];
 const fltCount = () => FLT_KINDS.reduce((a, k) => a + (k === 'repos' && S.view !== 'store' ? 0 : S.flt[k].size), 0);
 const filtersActive = () => S.cat !== 'all' || fltCount() > 0;
@@ -3138,6 +2693,7 @@ function fpItems(kind) {
   if (kind === 'sys') { const it = byCount(P.scount); return it.length > 1 ? it : []; }
   if (kind === 'cats') return S.cats.filter(c => P.counts[c.id]).map(c => [c.id, c.name, P.counts[c.id]]);
   if (kind === 'genres') return byCount(P.gcount);
+  if (kind === 'tags') return byCount(P.tcount);
   if (kind === 'devs') return byCount(P.dcount).filter(x => x[0]);
   if (kind === 'years') return Object.keys(P.ycount).filter(Boolean).sort((a, b) => +b - +a).map(id => [id, id, P.ycount[id]]);
   if (BUCKET_KINDS.includes(kind)) { if (kind === 'size' && S.view === 'home') return []; if (['status', 'score'].includes(kind) && (S.view === 'store' || Object.keys(P.bcount[kind]).every(k => k === 'none'))) return []; return BUCKETS[kind].map(([id, nm]) => [id, nm, P.bcount[kind][id] || 0]).filter(x => x[2]); }
@@ -3166,7 +2722,7 @@ function fpanelHtml() {
     <div class="fpre"><select onchange="fpApplyPreset(this.value)" title="Filtros salvos"><option value="">${presets.length ? 'Filtros salvos…' : 'Nenhum filtro salvo'}</option>${presets.map((p, i) => `<option value="${i}" ${S._fpreset === i ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
       ${S._fpreset !== undefined && presets[S._fpreset] ? `<button class="btn s xs" onclick="fpDelPreset()" title="Excluir este filtro salvo">${I.trash}</button>` : `<button class="btn s xs" onclick="fpSavePreset()" ${n ? '' : 'disabled'} title="Salvar a combinação atual com um nome">Salvar</button>`}</div>
     ${quick ? `<div class="fquick">${quick}</div>` : ''}
-    ${['repos', 'src', 'sys', 'cats', 'status', 'score', 'genres', 'years', 'devs', 'lastp', 'added', 'ptime', 'size', 'flags'].map(sec).join('')}
+    ${['repos', 'src', 'sys', 'cats', 'status', 'score', 'genres', 'tags', 'years', 'devs', 'lastp', 'added', 'ptime', 'size', 'flags'].map(sec).join('')}
     <div class="fpfoot">Marque quantos quiser: dentro de um grupo vale qualquer um; entre grupos, todos.</div>
   </aside>`;
 }
@@ -3204,7 +2760,7 @@ function viewBtn() {
   return `<div class="filt" id="vpop"><button class="btn s xs ${n ? 'p' : ''}" onclick="toggleFilt(undefined,'vpop')" title="Ordem, grupos, grade ou lista e tamanho das capas">${I.layout}<span class="lb">Exibição</span></button>
     <div class="pop wide" onclick="event.stopPropagation()">
       <div class="fhead"><b>Exibição</b><span>como os jogos aparecem nesta tela</span>${n ? `<button class="btn s xs" onclick="S.sort='az';setCfg({group_by:'letter',view_mode:'mural'});renderSortBtn()">Padrão</button>` : ''}</div>
-      <div class="fsec"><h5>Ordem</h5><div class="seg fsort">${SORTS.map(([id, l]) => `<button class="${S.sort === id ? 'on' : ''}" onclick="setSort('${id}');toggleFilt(true,'vpop')">${l}</button>`).join('')}</div></div>
+      <div class="fsec"><h5>Ordem</h5><div class="seg fsort">${SORTS.filter(([id]) => id !== 'fresh' || S.view === 'store').map(([id, l]) => `<button class="${S.sort === id ? 'on' : ''}" onclick="setSort('${id}');toggleFilt(true,'vpop')">${l}</button>`).join('')}</div></div>
       <div class="fsec"><h5>Agrupar</h5><div class="seg fsort">${GROUPS.map(([id, l]) => `<button class="${g === id ? 'on' : ''}" onclick="setCfg({group_by:${jsq(id)}}).then(()=>toggleFilt(true,'vpop'))">${l}</button>`).join('')}</div></div>
       <div class="fsec"><h5>Modo</h5><div class="seg fsort">${[['mural', 'Mural com painel'], ['grid', 'Grade de capas'], ['list', 'Lista']].map(([id, l]) => `<button class="${(S.config.view_mode || 'mural') === id ? 'on' : ''}" onclick="setViewMode(${jsq(id)});requestAnimationFrame(()=>toggleFilt(true,'vpop'))">${l}</button>`).join('')}</div></div>
       ${lm ? `<div class="fsec"><h5>Colunas da lista</h5><div class="seg fsort">${LIST_COLS.map(([id, l]) => `<button class="${listCols().includes(id) ? 'on' : ''}" onclick="toggleListCol(${jsq(id)})">${l}</button>`).join('')}</div></div>` : ''}
@@ -3233,7 +2789,7 @@ function toggleFilt(force, id) {
   pop.style.left = left + 'px'; pop.style.top = top + 'px';
 }
 function toggleFlt(kind, id) { const set = S.flt[kind]; set.has(id) ? set.delete(id) : set.add(id); S._fpreset = undefined; S.page = 1; renderLibrary(); renderRailX(); }
-function flagOnly(id) { clearFlt(); S.flt.flags.add(id); S.page = 1; if (S.view !== 'home') setView('home'); else renderLibrary(); }
+function flagOnly(id) { clearFlt(); S.flt.flags.add(id); S.page = 1; const want = id === 'fresh' ? 'store' : 'home'; if (S.view !== want) setView(want); else renderLibrary(); }
 function clearFlt() { for (const k of FLT_KINDS) S.flt[k].clear(); S._fpreset = undefined; S.cat = 'all'; S.sort = 'az'; S.sortRev = false; S.page = 1; renderLibrary(); }
 function setSort(id) { S.sort = id; S.page = 1; renderSortBtn(); renderLibrary(); if (S.config.sort_by !== id) { S.config.sort_by = id; api.post('/api/config', { sort_by: id }, { quiet: true }); } }
 const HOME_ROWS = [['recent', 'Continuar jogando'], ['favorites', 'Favoritos'], ['added', 'Adicionados há pouco'], ['most', 'Mais jogados']];
@@ -3348,7 +2904,7 @@ function setupRender() {
   $('#swSteps').innerHTML = `<div class="slogo">${logoSvg()}<b>LudrixHub</b></div>` + SETUP_STEPS.map((x, i) => `<div class="sstep ${i === SW_I ? 'on' : i < SW_I ? 'ok' : ''}" onclick="SW_I=${i};setupRender()"><i>${i < SW_I ? I.check : i + 1}</i><span>${x.t}</span></div>`).join('') + `<small>Tudo isso pode ser mudado depois em Ajustes.</small>`;
   let h = '';
   if (st.id === 'hello') h = `<div class="shero">${logoSvg()}</div><h2>Bem-vindo ao LudrixHub</h2><p class="lead">Um lugar só para os seus jogos: os que já estão no PC, os que você baixar das suas fontes e os de console emulados — com capa, tempo jogado e tudo organizado.</p>
-    <div class="sgrid">${[[I.library || I.grid, 'Biblioteca', 'Seus jogos com capa grande, favoritos e tempo jogado.'], [I.dl, 'Store', 'Baixe das fontes que você adicionar; o jogo entra na biblioteca sozinho.'], [I.gamepad, 'Emuladores', 'Consoles antigos com emulador instalado em um clique.'], [I.layout, 'Modo Console', 'Tela cheia para a TV, com controle, teclado ou mouse.']].map(([ic, t, d]) => `<div class="scard2">${ic}<b>${t}</b><span>${d}</span></div>`).join('')}</div>
+    <div class="sgrid">${[[I.grid, 'Biblioteca', 'Seus jogos com capa grande, favoritos e tempo jogado.'], [I.dl, 'Store', 'Baixe das fontes que você adicionar; o jogo entra na biblioteca sozinho.'], [I.gamepad, 'Emuladores', 'Consoles antigos com emulador instalado em um clique.'], [I.layout, 'Modo Console', 'Tela cheia para a TV, com controle, teclado ou mouse.']].map(([ic, t, d]) => `<div class="scard2">${ic}<b>${t}</b><span>${d}</span></div>`).join('')}</div>
     <p class="mut">São 4 passos rápidos: onde guardar os jogos, a aparência e o que fazer quando um jogo abre.</p>`;
   else if (st.id === 'folder') h = `<h2>Pasta dos jogos</h2><p class="lead">Os jogos baixados pelo Ludrix são extraídos e instalados nesta pasta. Escolha um disco com espaço — dá para mover depois, jogo por jogo.</p>
     <div class="sfolder"><div class="code" id="swDir">${esc(c.games_dir_effective || c.games_dir || 'games')}</div><button class="btn p sm" onclick="setupPickDir()">${I.folder} Escolher pasta…</button>${c.games_dir ? `<button class="btn s sm" onclick="setCfg({games_dir:''}).then(setupRender)">Usar a padrão</button>` : ''}</div>
@@ -3547,7 +3103,12 @@ async function ctxDo(key, id) {
     case 'score': return editGame(key, 'avancado');
     case 'cover_reset': return resetCover(key);
     case 'page': { const d = await api.get('/api/game/' + enc(key)); return api.post('/api/open_url', { url: d.page_url }); }
-    case 'remove': return confirmUninstall(key);
+    case 'shortcut': { const r = await api.post('/api/shortcut/desktop', { key }); return r && r.error ? toast('err', 'Atalho', r.error) : toast('ok', 'Atalho criado', 'Na área de trabalho'); }
+    case 'cover_set': return setCover(key);
+    case 'open_folder': { const d = S.det && S.det.key === key ? S.det : await api.get('/api/game/' + enc(key)); return openPath(d.dir, key); }
+    case 'set_exe': return chooseExe(key);
+    case 'remove': case 'uninstall': return confirmUninstall(key);
+    default: toast('warn', 'Ação indisponível', id); return;
   }
 }
 
@@ -3557,14 +3118,14 @@ async function renderSources() {
   const kindName = { pc: 'Jogos PC', rom: 'ROMs', recomp: 'Ports / recompilações' };
   const typeName = { telegram: 'canal do Telegram (bot lê posts com .torrent)', webpage: 'página da web (links diretos / torrents)', archive_uploader: 'coleção de um uploader', archive_creator: 'coleção de um criador', archive_item: 'pacote (um arquivo por jogo)', archive_search: 'busca', github_release: 'releases do GitHub', manifest: 'lista .json', local_folder: 'pasta do PC' };
   $('#view').innerHTML = storeTabs() + `
-    <div class="h1"><h2>Fontes de jogos</h2><span>${repos.length ? `${repos.filter(r => r.enabled).length} de ${repos.length} ligadas` : 'de onde a Store puxa o catálogo'}</span><div class="acts"><button class="btn s" onclick="addRepo()">${I.cog} Manual (avançado)</button></div></div>
+    <div class="h1"><h2>Fontes de jogos</h2><span>${repos.length ? `${repos.filter(r => r.enabled).length} de ${repos.length} ligadas` : 'de onde a Store puxa o catálogo'}</span><div class="acts"><button class="btn s" onclick="sourceMaker()" title="Monta um .json de fonte a partir de uma pasta com os arquivos dos jogos">${I.plus} Criar fonte</button><button class="btn s" onclick="addRepo()">${I.cog} Manual (avançado)</button></div></div>
     <div class="hint">Cole um link ou escolha um arquivo .json com fontes de jogos ${help('Uma fonte é uma lista de jogos que a Store lê: um arquivo .json (local ou por link), uma coleção do archive.org, uma página com downloads, um repositório do GitHub ou uma pasta do PC.')} <a href="#" class="fmtlink" onclick="api.post('/api/open_url',{url:'https://github.com/wolffZ-prog/Ludrix/blob/main/docs/FONTES.md'});return false">formato do .json</a>${ONLINE ? '' : ' <span class="offl">Sem internet — conecte-se para ligar fontes e baixar.</span>'}</div>
     <div class="detbox"><div class="mrow"><input class="mi" id="detq" placeholder="https://…/fontes.json  ·  archive.org/details/@usuario  ·  página com jogos  ·  GitHub  ·  pasta do PC" onkeydown="if(event.key==='Enter')doDetect()"><button class="btn p sm" onclick="doDetect()">${I.search} Analisar</button>${S.config.native ? `<button class="btn s sm" onclick="pickSourceJson()">${I.doc} Arquivo .json</button><button class="btn s sm" title="Pasta do PC com jogos ou ROMs" onclick="api.post('/api/choose_folder',{what:'any'}).then(r=>{if(r.folder){$('#detq').value=r.folder;doDetect()}})">${I.folder} Pasta</button>` : ''}</div>
     </div>
     <div class="browse" id="browse"></div>
     <div class="gh"><h3>Suas fontes</h3><span>botão direito numa fonte mostra mais opções</span></div>
     ${repos.length ? '' : `<div class="empty" style="padding:24px 0 16px"><b>Nenhuma fonte ainda</b>Cole um link acima ou use Manual (avançado).</div>`}
-    <div class="srcs">${repos.map(r => `<div class="src ${r.enabled ? 'on' : ''} ${!ONLINE && !r.enabled ? 'off' : ''}" data-repo="${esc(r.id)}" title="${ONLINE ? 'Botão direito: mais opções' : 'Sem internet'}"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b>${esc(r.name)}</b><button class="sw ${r.enabled ? 'on' : ''}" ${!ONLINE && !r.enabled ? 'disabled title="Sem conexão com a internet"' : ''} onclick="event.stopPropagation();if(!ONLINE&&!${r.enabled})return toast('err','Sem internet','Conecte-se para ligar essa fonte.');api.post('/api/repos/toggle',{id:${jsq(r.id)},enabled:${!r.enabled}}).then(()=>{renderSources();loadCatalog(false)})"></button></div><span>${esc(typeName[r.type] || r.type)} · ${esc(kindName[r.kind] || r.kind)}${r.system && r.system !== 'pc' ? ' · ' + esc(S.systems[r.system] || r.system) : ''}</span><span class="n">${r.error ? `<span class="rep bad" title="${esc(r.error)}">${I.warn} não carregou</span>` : r.report ? `<a href="#" class="rep ${r.report.errors.length ? 'bad' : r.report.warnings.length ? 'warn' : 'ok'}" onclick="event.stopPropagation();repoReport(${jsq(r.id)});return false" title="Ver relatório do JSON">${esc(r.report.summary)}</a>` : r.enabled ? `${r.count} ${r.count === 1 ? 'jogo' : 'jogos'}` : 'desligada'}${r.builtin ? '' : `<button class="srcedit" title="Editar fonte" onclick="event.stopPropagation();editRepo(${jsq(r.id)})">${I.edit}</button>`}</span>${r.note ? `<span class="u" style="direction:ltr" title="${esc(r.note)}">${esc(r.note)}</span>` : ''}${r.url ? `<span class="u" title="${esc(r.url)}">${esc(r.url.replace(/^https?:\/\/(www\.)?/, '').replace(/^[A-Za-z]:\\/, ''))}</span>` : ''}</div>`).join('')}</div>`;
+    <div class="srcs">${repos.map(r => `<div class="src ${r.enabled ? 'on' : ''} ${!ONLINE && !r.enabled ? 'off' : ''}" data-repo="${esc(r.id)}" title="${ONLINE ? 'Botão direito: mais opções' : 'Sem internet'}"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b>${esc(r.name)}</b><button class="sw ${r.enabled ? 'on' : ''}" ${!ONLINE && !r.enabled ? 'disabled title="Sem conexão com a internet"' : ''} onclick="event.stopPropagation();if(!ONLINE&&!${r.enabled})return toast('err','Sem internet','Conecte-se para ligar essa fonte.');api.post('/api/repos/toggle',{id:${jsq(r.id)},enabled:${!r.enabled}}).then(()=>{renderSources();loadCatalog(false)})"></button></div><span>${esc(typeName[r.type] || r.type)} · ${esc(kindName[r.kind] || r.kind)}${r.system && r.system !== 'pc' ? ' · ' + esc(S.systems[r.system] || r.system) : ''}</span><span class="n">${r.error ? `<span class="rep bad" title="${esc(r.error)}">${I.warn} não carregou</span>` : r.report ? `<a href="#" class="rep ${r.report.errors.length ? 'bad' : r.report.warnings.length ? 'warn' : 'ok'}" onclick="event.stopPropagation();repoReport(${jsq(r.id)});return false" title="Ver relatório do JSON">${esc(r.report.summary)}</a>` : r.enabled ? `${r.count} ${r.count === 1 ? 'jogo' : 'jogos'}` : 'desligada'}${r.enabled && r.checked_at ? `<em class="age" title="${esc(new Date(r.checked_at * 1000).toLocaleString('pt-BR'))}">lida ${ago(r.checked_at)}</em>` : ''}${r.new_count ? `<a href="#" class="fresh" title="Ver os jogos novos dessa fonte" onclick="event.stopPropagation();S.tab.store='games';flagOnly('fresh');S.flt.repos.add(${jsq(r.id)});renderLibrary();return false">${r.new_count} ${r.new_count === 1 ? 'novo' : 'novos'}</a>` : ''}${r.builtin ? '' : `<button class="srcedit" title="Editar fonte" onclick="event.stopPropagation();editRepo(${jsq(r.id)})">${I.edit}</button>`}</span>${r.note ? `<span class="u" style="direction:ltr" title="${esc(r.note)}">${esc(r.note)}</span>` : ''}${r.url ? `<span class="u" title="${esc(r.url)}">${esc(r.url.replace(/^https?:\/\/(www\.)?/, '').replace(/^[A-Za-z]:\\/, ''))}</span>` : ''}</div>`).join('')}</div>`;
   setTimeout(() => $('#detq')?.focus(), 50);
 }
 function reportHtml(rep) {
@@ -3615,6 +3176,49 @@ async function detectAdd(i) {
 }
 async function addPack() { for (const x of S._det) { const r = await api.post('/api/repos/add', x.cfg); if (r.error) toast('err', x.title, r.error); } toast('ok', 'Fontes adicionadas', 'Carregando na Store…'); if (S.tab.store === 'sources') renderSources(); loadCatalog(false); }
 async function pickSourceJson() { const r = await api.post('/api/pick_exe', { kind: 'json', initial: '' }); if (r && r.file) { $('#detq').value = r.file; doDetect(); } }
+const SG = { dir: '', games: [], name: '', base: '', hash: true };
+async function sourceMaker() {
+  const body = () => `
+    <div class="sgf"><label>Nome da fonte</label><input class="mi" id="sgName" value="${esc(SG.name)}" placeholder="Lista do Fulano" oninput="SG.name=this.value"></div>
+    <div class="sgf"><label>Pasta com os arquivos dos jogos</label><div class="mrow"><input class="mi" id="sgDir" value="${esc(SG.dir)}" placeholder="D:\\Jogos\\pacotes" readonly><button class="btn s" onclick="sgPick()">${I.folder} Escolher…</button></div></div>
+    <div class="sgf"><label>Onde esses arquivos vão ficar na internet (URL base)</label><input class="mi" id="sgBase" value="${esc(SG.base)}" placeholder="https://meusite.com/jogos/" oninput="SG.base=this.value.trim()"><small class="dim">O nome de cada arquivo é colocado depois dessa URL. Vazio = fica um aviso no lugar do link para preencher depois.</small></div>
+    <label class="sgck"><input type="checkbox" ${SG.hash ? 'checked' : ''} onchange="SG.hash=this.checked"><span>Calcular sha256 de cada arquivo <small class="dim">— recomendado: o Ludrix confere o download; demora em arquivos grandes</small></span></label>
+    <div id="sgList">${sgListHtml()}</div>`;
+  modal({ title: 'Criar fonte (.json)', wide: true, html: body(), ok: 'Gerar .json', onOk: async () => {
+    if (!SG.dir || !SG.games.length) { toast('warn', 'Escolha uma pasta com arquivos de jogos'); return false; }
+    const games = SG.games.filter(g => g.on && g.title.trim()).map(g => ({ id: g.id, title: g.title.trim(), version: g.version, year: g.year, files: g.files.map(f => f.rel) }));
+    if (!games.length) { toast('warn', 'Nenhum jogo marcado'); return false; }
+    const r = await api.post('/api/repos/gen/make', { name: SG.name, dir: SG.dir, base_url: SG.base, hash: SG.hash, games });
+    if (r && r.cancel) return false;
+    if (!r || r.error) { toast('err', 'Não deu para gerar', (r && r.error) || ''); return false; }
+    toast('info', 'Gerando a fonte…', SG.hash ? 'Acompanhe na Fila — o sha256 de arquivos grandes leva um tempo.' : 'Quase instantâneo.');
+  } });
+}
+function sgListHtml() {
+  if (!SG.dir) return '<div class="empty sg" style="padding:14px 0 4px">Escolha a pasta: cada arquivo (.zip, .7z, .rar, .iso…) ou subpasta vira um jogo. Arquivos em partes (.part1.rar, .001) são agrupados.</div>';
+  if (!SG.games.length) return '<div class="empty sg" style="padding:14px 0 4px"><b>Nada encontrado</b>Nenhum arquivo de jogo nessa pasta (procuro na pasta e em 1 nível de subpastas).</div>';
+  const n = SG.games.filter(g => g.on).length, tot = SG.games.filter(g => g.on).reduce((a, g) => a + g.size, 0);
+  return `<div class="gh" style="margin-top:10px"><h3>${n} jogo${n === 1 ? '' : 's'} · ${fmt(tot)}</h3><span>confira os títulos antes de gerar</span></div>
+    <div class="sgrows">${SG.games.map((g, i) => `<div class="sgrow ${g.on ? '' : 'off'}"><input type="checkbox" title="Incluir" ${g.on ? 'checked' : ''} onchange="SG.games[${i}].on=this.checked;$('#sgList').innerHTML=sgListHtml()">
+      <input class="mi t" value="${esc(g.title)}" placeholder="Título" oninput="SG.games[${i}].title=this.value">
+      <input class="mi v" value="${esc(g.version)}" placeholder="versão" title="Versão (opcional)" oninput="SG.games[${i}].version=this.value.trim()">
+      <input class="mi y" value="${esc(g.year)}" placeholder="ano" maxlength="4" title="Ano (opcional)" oninput="SG.games[${i}].year=this.value.trim()">
+      <span class="dim" title="${esc(g.files.map(f => f.name).join('\n'))}">${g.files.length} arq. · ${fmt(g.size)}</span></div>`).join('')}</div>`;
+}
+async function sgPick() {
+  const r = await api.post('/api/repos/gen/scan', { dir: '', initial: SG.dir });
+  if (!r || r.cancel) return;
+  if (r.error) return toast('err', 'Não deu para ler a pasta', r.error);
+  SG.dir = r.dir; SG.games = (r.games || []).map(g => ({ ...g, on: true }));
+  if (!SG.name) { SG.name = r.dir.split(/[\\/]/).filter(Boolean).pop() || ''; const n = $('#sgName'); if (n) n.value = SG.name; }
+  const d = $('#sgDir'); if (d) d.value = SG.dir;
+  $('#sgList').innerHTML = sgListHtml();
+}
+function sourceMade(out) {
+  if (!out) return;
+  modal({ title: 'Fonte pronta', html: `<p>Arquivo gravado em:</p><p><code>${esc(out)}</code></p><p class="dim">Publique esse .json num link (GitHub, Drive público, seu site) e compartilhe o link — quem colar na Store do Ludrix vê os jogos. Você também pode usar o arquivo local como fonte agora para testar.</p>`,
+    ok: 'Usar como fonte agora', extra: 'Abrir pasta', onExtra: () => openPath(out), onOk: async () => { await addSource({ url: out, name: SG.name || 'Minha fonte', kind: 'pc', type: 'manifest' }); S.tab.store = 'sources'; if (S.view === 'store') renderSources(); else setView('store'); } });
+}
 async function addSource(cfg) { const r = await api.post('/api/repos/add', cfg); if (r.error) return toast('err', 'Não foi possível concluir', r.error); toast('ok', 'Fonte adicionada', cfg.name + ' — carregando na Store…'); if (S.tab.store === 'sources') renderSources(); loadCatalog(false); }
 
 async function renderMods() {
@@ -3656,7 +3260,7 @@ async function renderMyMods() {
   const inst = S.games.filter(g => g.installed && g.kind !== 'emulator').sort((a, b) => COLL.compare(a.title, b.title));
   const withMods = S.mods.games || [], cnt = {}; for (const w of withMods) cnt[w.key] = w.count;
   if (!S.modsGame || !inst.some(g => g.key === S.modsGame)) S.modsGame = (withMods[0] && withMods[0].key) || (inst[0] && inst[0].key) || '';
-  if (!inst.length) { el.innerHTML = `${emptyHtml(I.wrench, 'Nenhum jogo instalado', 'Instale ou adicione um jogo na Biblioteca; depois volte aqui para colocar mods nele.', [['Abrir Store', "setView('store')", 1], ['Adicionar jogo', 'addLocal()']])}`; return; }
+  if (!inst.length) { el.innerHTML = `${emptyHtml('mods', 'Nenhum jogo instalado', 'Instale ou adicione um jogo na Biblioteca; depois volte aqui para colocar mods nele.', [['Abrir Store', "setView('store')", 1], ['Adicionar jogo', 'addLocal()']])}`; return; }
   const key = S.modsGame; const g = S.byKey[key] || inst.find(x => x.key === key);
   const qn = qnorm(S._modsQ || ''), ordered = inst.filter(x => !qn || qnorm(x.title).includes(qn)).sort((a, b) => (cnt[b.key] || 0) - (cnt[a.key] || 0) || COLL.compare(a.title, b.title));
   el.innerHTML = `<div class="modwrap"><aside class="modgames"><input class="mgq" placeholder="Procurar jogo…" value="${esc(S._modsQ || '')}" oninput="S._modsQ=this.value;renderMyMods();const i=document.querySelector('.modgames .mgq');i.focus();i.setSelectionRange(99,99)">
@@ -3748,108 +3352,10 @@ async function installTool(id) { const r = await api.post('/api/tools/install', 
 function removeTool(id, name) { modal({ title: `Remover ${name}?`, text: 'A pasta da ferramenta será apagada.', ok: 'Remover', danger: true, onOk: async () => { await api.post('/api/tools/remove', { id }); renderMods(); } }); }
 async function loadModsFor(key) {
   const r = await api.get('/api/mods/for/' + enc(key)); const el = $('#dMods'); if (!el || S.current !== key) return;
-  if (!r.tools.length && !r.sites.length && !(S.byKey[key] || {}).installed) { el.remove(); return; }
+  if (!r.tools.length && !r.sites.length && !(S.byKey[key] || {}).installed) { el.innerHTML = `<p class="mut">Nenhuma ferramenta nem site de mods conhecido para este jogo. Instale o jogo para gerenciar mods por aqui.</p>`; return; }
   el.innerHTML = `<h3>MODS E FERRAMENTAS</h3>${(S.byKey[key] || {}).installed ? `<div class="sites" style="margin-bottom:8px"><button class="site sp" onclick="S.modsGame=${jsq(key)};S.tab.mods='mine';setView('mods')">${I.wrench} Meus mods neste jogo</button></div>` : ''}${r.tools.length ? `<div class="sites" style="margin-bottom:8px">${r.tools.map(t => `<button class="site sp" onclick="S.tab.mods='tools';setView('mods')" title="${esc(t.for)}">${I.wrench} ${esc(t.title)}${t.installed ? ' ✓' : ''}</button>`).join('')}</div>` : ''}
     <div class="sites">${r.sites.map(s => `<button class="site ${s.specific ? 'sp' : ''}" onclick="api.post('/api/open_url',{url:${jsq(s.url)}})" title="${esc(s.desc)}">${I.ext} ${esc(s.name)}</button>`).join('')}</div>`;
 }
-
-const GP = { idx: -1, last: {}, focus: null, hint: null, t: null, active: false, edit: null, scr: null, scrAt: 0 };
-function gpIndicator(st) { const el = $('#gpInd'); if (!el) return; const n = (st && st.connected) || [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter(Boolean).length; el.classList.toggle('on', n > 0); }
-window.addEventListener('gamepadconnected', e => { gpIndicator(); toast('ok', 'Controle conectado', e.gamepad.id.slice(0, 40)); gpLoop(); });
-window.addEventListener('gamepaddisconnected', () => { gpIndicator(); gpClear(); });
-window.onGamepadWake = why => { if (why === 'connected') toast('ok', 'Controle conectado', 'Use o D-pad para navegar · A abre · B volta'); gpLoop(); };
-function gpFocusables() {
-  if ($('#ctx').classList.contains('on')) return [...document.querySelectorAll('#ctx button:not([disabled])')];
-  if ($('#modal').classList.contains('on')) return [...document.querySelectorAll('#modalBox button, #modalBox input, #modalBox select, #modalBox label.on, #modalBox .file')];
-  if ($('#detail').classList.contains('on')) return [...document.querySelectorAll('#detail .btn:not([disabled]), #detail .site, #detail .file')];
-  return [...document.querySelectorAll('#toasts .toast.act button, #view .card, #view .sf, #view .btn, #view .chip, #view select, #view input[type=range], #view .src, #view .site, #view .tool .btn, #view .brow .btn, #view .radio label, #view .sw, #view .theme, #view .swatch')].filter(el => el.offsetParent !== null);
-}
-function gpSet(el) { if (GP.focus) GP.focus.classList.remove('gp-focus'); GP.focus = el; if (el) { el.classList.add('gp-focus'); el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' }); if (el.dataset.sk && el.dataset.sk !== S.stageKey) stageSet(el.dataset.sk); } }
-function gpFocusFirst(sel) { const el = document.querySelector(sel); if (el) gpSet(el); }
-function gpClear() { gpEdit(null); gpSet(null); $('.gphint')?.classList.remove('on'); GP.active = false; }
-function gpEdit(el) { if (GP.edit) { GP.edit.classList.remove('gp-edit'); if (GP.edit.tagName === 'SELECT') GP.edit.blur(); } GP.edit = el; if (el) el.classList.add('gp-edit'); gpHint(); }
-function gpStep(el, d) {
-  if (el.tagName === 'SELECT') { const i = Math.max(0, Math.min(el.options.length - 1, el.selectedIndex + d)); if (i === el.selectedIndex) return; el.selectedIndex = i; el.dispatchEvent(new Event('change', { bubbles: true })); return; }
-  if (el.type === 'range') { const v = +el.value; d > 0 ? el.stepUp() : el.stepDown(); if (+el.value === v) return; el.dispatchEvent(new Event('input', { bubbles: true })); clearTimeout(GP.rangeT); GP.rangeT = setTimeout(() => el.dispatchEvent(new Event('change', { bubbles: true })), 500); }
-}
-function gpHint() {
-  const h = $('.gphint') || (document.body.insertAdjacentHTML('beforeend', '<div class="gphint on"></div>'), $('.gphint'));
-  const edit = GP.edit ? '<span><b class="d">◂▸</b>ajustar</span><span><b class="a">A</b>pronto</span><span><b class="b">B</b>sair</span>' : '';
-  const key = edit ? 'edit' : 'nav';
-  if (h.dataset.k !== key) { h.dataset.k = key; h.innerHTML = edit || '<span><b class="a">A</b>selecionar / abrir</span><span><b class="b">B</b>voltar</span><span><b class="x">X</b>opções</span><span><b class="y">Y</b>buscar</span><span>LB/RB abas</span><span>LT/RT rolar</span><span>Start jogar</span>'; }
-  h.classList.add('on');
-}
-function gpScroller() {
-  const now = performance.now(); if (GP.scr && now - GP.scrAt < 600 && document.contains(GP.scr)) return GP.scr;
-  const roots = $('#modal').classList.contains('on') ? ['#modalBox'] : $('#detail').classList.contains('on') ? ['#detail'] : ['#view', 'main'];
-  let found = document.scrollingElement;
-  outer: for (const sel of roots) { const r = document.querySelector(sel); if (!r) continue; for (const el of [r, ...r.querySelectorAll('*')]) { if (el.scrollHeight > el.clientHeight + 4) { const o = getComputedStyle(el).overflowY; if (o === 'auto' || o === 'scroll') { found = el; break outer; } } } }
-  GP.scr = found; GP.scrAt = now; return found;
-}
-function gpScroll(dy, smooth) { const el = gpScroller(); if (!el) return; el.scrollBy({ top: dy, behavior: smooth ? 'smooth' : 'auto' }); }
-function gpViews() { const vs = [...document.querySelectorAll('#rail .rb[data-view]')].filter(b => !b.classList.contains('nhid') && b.offsetParent !== null).map(b => b.dataset.view); return vs.length ? vs : ['home', 'store', 'emulation', 'downloads', 'settings']; }
-function gpMove(dx, dy) {
-  const els = gpFocusables(); if (!els.length) return;
-  if (!GP.focus || !els.includes(GP.focus)) return gpSet(els[0]);
-  const r = GP.focus.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-  let best = null, bd = Infinity;
-  for (const el of els) { if (el === GP.focus) continue; const b = el.getBoundingClientRect(); const ex = b.left + b.width / 2 - cx, ey = b.top + b.height / 2 - cy;
-    const along = dx * ex + dy * ey; if (along <= 4) continue; const cross = Math.abs(dx ? ey : ex); const d = along + cross * 2.2; if (d < bd) { bd = d; best = el; } }
-  if (best) gpSet(best);
-}
-function gpPress(btn) {
-  GP.active = true; gpHint();
-  const views = gpViews();
-  if (GP.edit) {
-    if (!document.contains(GP.edit)) gpEdit(null);
-    else if (btn === 'a' || btn === 'b') return gpEdit(null);
-    else if (btn === 'left' || btn === 'up') return gpStep(GP.edit, -1);
-    else if (btn === 'right' || btn === 'down') return gpStep(GP.edit, 1);
-    else return;
-  }
-  if (btn === 'lt') return gpScroll(-innerHeight * .7, true);
-  if (btn === 'rt') return gpScroll(innerHeight * .7, true);
-  if (btn === 'back') { if (S.view !== 'home') { setView('home'); setTimeout(() => gpFocusFirst('#view .card, #view .btn'), 250); } return; }
-  switch (btn) {
-    case 'a': { const f = GP.focus; if (!f) return gpMove(1, 0); if (f.classList.contains('card')) { if ($('#modal').classList.contains('on')) return; if (S.view === 'home' && !f.classList.contains('sel')) return selectGame(f.dataset.key); openGame(f.dataset.key); setTimeout(() => gpFocusFirst('#detail .btn.g, #detail .btn.p, #detail .btn'), 400); } else if (f.tagName === 'SELECT' || (f.tagName === 'INPUT' && f.type === 'range')) return gpEdit(f); else if (f.tagName === 'INPUT' && f.type === 'checkbox') f.click(); else f.click(); setTimeout(() => { const els = gpFocusables(); if (!els.includes(GP.focus)) gpSet(els[0]); }, 200); return; }
-    case 'b': { if ($('#ctx').classList.contains('on')) return closeCtx(); if ($('#modal').classList.contains('on')) return $('#modal').classList.remove('on'); if ($('#detail').classList.contains('on')) { closeDetail(); return setTimeout(() => gpFocusFirst('#view .card'), 200); } if (S.q) { S.q = ''; $('#q').value = ''; renderLibrary(); } return; }
-    case 'x': { const f = GP.focus; if (f && f.classList.contains('card')) { const r = f.getBoundingClientRect(); ctxMenu(f.dataset.key, r.left + 20, r.top + 40); setTimeout(() => gpFocusFirst('#ctx button'), 250); } else if (S.det) { ctxMenu(S.det.key, innerWidth / 2 - 120, 120); setTimeout(() => gpFocusFirst('#ctx button'), 250); } return; }
-    case 'y': focusSearch(); return;
-    case 'lb': case 'rb': { const i = views.indexOf(S.view); setView(views[(i + (btn === 'rb' ? 1 : views.length - 1)) % views.length]); setTimeout(() => gpFocusFirst('#view .card, #view .btn'), 250); return; }
-    case 'start': { if (GP.focus && GP.focus.classList.contains('card')) play(GP.focus.dataset.key); else if (S.det && S.det.installed) play(S.det.key); return; }
-    case 'up': return gpMove(0, -1); case 'down': return gpMove(0, 1); case 'left': return gpMove(-1, 0); case 'right': return gpMove(1, 0);
-  }
-}
-const DIRS = ['up', 'down', 'left', 'right'], GP_SPEED = { slow: [650, 260], normal: [520, 180], fast: [380, 110] };
-function gpLoop() {
-  if (GP.t) return; GP.t = true;
-  const map = { 0: 'a', 1: 'b', 2: 'x', 3: 'y', 4: 'lb', 5: 'rb', 6: 'lt', 7: 'rt', 8: 'back', 9: 'start', 12: 'up', 13: 'down', 14: 'left', 15: 'right' };
-  let idle = 0;
-  const tick = () => {
-    if (S.config.gamepad_enabled === false || document.hidden) { if (GP.active) gpClear(); setTimeout(tick, 700); return; }
-    const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : [];
-    if (!pads.length) { GP.t = null; gpClear(); return; }
-    const now = performance.now(); let any = false;
-    for (const p of pads) {
-      const st = GP.last[p.index] || (GP.last[p.index] = {});
-      const [delay, rep] = GP_SPEED[S.config.gamepad_speed || 'normal'] || GP_SPEED.normal;
-      const press = (name, down) => { const was = st[name] || 0; const dir = DIRS.includes(name);
-        if (down && (!was || (dir && now - was > delay && now - (st[name + '_r'] || 0) > rep))) { if (!was) st[name] = now; st[name + '_r'] = now; gpPress(name); any = true; }
-        if (!down) st[name] = 0; };
-      p.buttons.forEach((b, i) => { if (map[i]) press(map[i], b.pressed); });
-      const ax = p.axes[0] || 0, ay = p.axes[1] || 0, th = .7, rel = .45;
-      const axis = (neg, pos, v) => { press(neg, v < -th || (st[neg] && v < -rel)); press(pos, v > th || (st[pos] && v > rel)); };
-      axis('left', 'right', ax); axis('up', 'down', ay);
-      const ry = p.axes[3] || 0; if (Math.abs(ry) > .3) { gpScroll(ry * 22, false); any = true; }
-    }
-    idle = any ? 0 : idle + 1;
-    setTimeout(() => requestAnimationFrame(tick), idle > 30 ? 120 : 0);
-  };
-  requestAnimationFrame(tick);
-}
-document.addEventListener('mousemove', () => { if (GP.active) { gpClear(); } }, { passive: true });
-document.addEventListener('visibilitychange', () => { if (!document.hidden && navigator.getGamepads && [...navigator.getGamepads()].some(Boolean)) gpLoop(); });
-if (navigator.getGamepads && [...navigator.getGamepads()].some(Boolean)) gpLoop();
 
 applyAnim(); loadCatalog(false); poll();
 
@@ -3878,7 +3384,7 @@ let NOTIFS = [];
 async function loadNotifs() { try { NOTIFS = await api.get('/api/notifications'); } catch (e) { return; } renderBell(); }
 function renderBell() {
   const un = NOTIFS.filter(n => !n.read).length; const b = $('#bellN'); b.textContent = un > 9 ? '9+' : un; b.style.display = un ? 'grid' : 'none';
-  const ic = { error: I.warn, warn: I.warn, ok: I.check, repack: I.dl, info: I.check, update: I.refresh };
+  const ic = { error: I.warn, warn: I.warn, ok: I.check, repack: I.dl, info: I.check, update: I.refresh, store: I.magnet };
   $('#bellList').innerHTML = NOTIFS.length ? NOTIFS.map(n => `<div class="bn ${n.read ? '' : 'un'} ${n.kind}" onclick="notifOpen(${jsq(n.id)})">${ic[n.kind] || I.info}<div><b>${esc(n.title)}</b><span>${esc(n.text || '')}</span><small>${ago(n.at)}</small></div>${n.kind === 'repack' && n.key ? `<button class="btn p xs" onclick="event.stopPropagation();runRepack(${jsq(n.key)})">Instalar</button>` : ''}</div>`).join('') : '<div class="empty" style="padding:30px 10px"><b>Tudo em dia</b>Nenhuma notificação.</div>';
 }
 const HELP = {
@@ -3898,14 +3404,14 @@ function toggleHelp(e) {
   if (!on) { p.classList.remove('on'); return; }
   const h = HELP[S.view] || HELP.home;
   p.innerHTML = `<div class="bh"><b>${I.help}${esc(h.t)}</b><span class="sp"></span><button class="btn s xs" onclick="$('#helppop').classList.remove('on')">Fechar</button></div>
-    <div class="hb"><p>${esc(h.p)}</p><ul>${h.s.map(x => `<li>${esc(x)}</li>`).join('')}</ul><div class="hk">Atalhos: <kbd>/</kbd> busca · <kbd>Ctrl</kbd>+<kbd>1…9</kbd> abas · <kbd>Esc</kbd> fecha · <button class="lnk" onclick="$('#helppop').classList.remove('on');shortcutsHelp()"><kbd>?</kbd> ver todos</button></div></div>`;
+    <div class="hb"><p>${esc(h.p)}</p><ul>${h.s.map(x => `<li>${esc(x)}</li>`).join('')}</ul><div class="hk">Atalhos: <kbd>/</kbd> busca · <kbd>Ctrl</kbd>+<kbd>K</kbd> paleta · <kbd>Ctrl</kbd>+<kbd>1…9</kbd> abas · <kbd>Esc</kbd> fecha · <button class="lnk" onclick="$('#helppop').classList.remove('on');shortcutsHelp()"><kbd>?</kbd> ver todos</button></div></div>`;
   p.classList.add('on');
   setTimeout(() => document.addEventListener('click', helpOut, { once: true }), 0);
 }
 function helpOut(e) { const p = $('#helppop'); if (!p.contains(e.target) && !$('#helpBtn').contains(e.target)) p.classList.remove('on'); else if (p.classList.contains('on')) setTimeout(() => document.addEventListener('click', helpOut, { once: true }), 0); }
 function toggleBell() { $('#helppop').classList.remove('on'); const p = $('#bellpop'); const on = p.classList.toggle('on'); if (on) { loadNotifs(); setTimeout(() => document.addEventListener('click', bellOut, { once: true }), 0); } }
 function bellOut(e) { const p = $('#bellpop'); if (!p.contains(e.target) && !$('#bell').contains(e.target)) p.classList.remove('on'); else if (p.classList.contains('on')) setTimeout(() => document.addEventListener('click', bellOut, { once: true }), 0); }
-async function notifOpen(id) { const n = NOTIFS.find(x => x.id === id); if (!n) return; await api.post('/api/notifications/ack', { id }); n.read = true; renderBell(); if (n.key === 'integrity') { $('#bellpop').classList.remove('on'); integrityCheck(); return; } if (n.key && !n.key.startsWith('flash:')) { $('#bellpop').classList.remove('on'); openGame(n.key); } }
+async function notifOpen(id) { const n = NOTIFS.find(x => x.id === id); if (!n) return; await api.post('/api/notifications/ack', { id }); n.read = true; renderBell(); if (n.action && n.action.startsWith('scan-dir:')) { $('#bellpop').classList.remove('on'); scanRun('windows', n.action.slice(9)); return; } if (n.action === 'store-new') { $('#bellpop').classList.remove('on'); S.tab.store = 'games'; flagOnly('fresh'); const rid = String(n.key || '').replace(/^store:/, ''); if (rid && S.repos.some(r => r.id === rid)) { S.flt.repos.add(rid); renderLibrary(); } return; } if (n.key === 'integrity') { $('#bellpop').classList.remove('on'); integrityCheck(); return; } if (n.action === 'updates') { $('#bellpop').classList.remove('on'); checkUpdates(); return; } if (n.action && n.action.startsWith('settings:')) { $('#bellpop').classList.remove('on'); closeDetail(); setView('settings'); settingsTab(n.action.slice(9)); return; } if (n.key && !n.key.startsWith('flash:') && S.byKey[n.key]) { $('#bellpop').classList.remove('on'); openGame(n.key); } }
 function discToolAsk(key, r) {
   modal({ title: r.tool_only ? 'Formato de disco não suportado' : 'Disco com faixas de áudio', text: r.message + '\n\nO WinCDEmu é gratuito e de código aberto; instala um driver (pede permissão de administrador uma vez). Depois de montar o disco com ele, abra o instalador e, no fim, use "Procurar instalação agora" nos detalhes do jogo.', ok: 'Baixar WinCDEmu', onOk: async () => { const t = await api.get('/api/disc/tool'); api.post('/api/open_url', { url: t.url }); }, extra: r.tool_only ? null : 'Montar sem o áudio', onExtra: () => api.post('/api/repack/run', { key, force: true }).then(x => x.error ? toast('err', 'Disco', x.error) : toast('', 'Disco montado', 'O instalador vai abrir em seguida.')), cancel: 'Depois' });
 }
@@ -3924,7 +3430,7 @@ function statusBar(a, loading) {
   if (a.fraction > 0 && a.fraction < 1 && a.text) txt += ` · ${Math.round(a.fraction * 100)}%`;
   if (t.textContent !== txt) t.textContent = txt;
   const nb = S.games.filter(FLAG_TEST.broken).length;
-  const right = [a.jobs ? `${a.jobs} na fila` : '', S.games.length ? `<a href="#" onclick="gotoGrid();return false">${pl(S.games.length, 'jogo', 'jogos')} no catálogo</a>` : '', nb ? `<a href="#" onclick="flagOnly('broken');return false" style="color:var(--amber)">${pl(nb, 'não encontrado', 'não encontrados')}</a>` : ''].filter(Boolean).join(' · ');
+  const right = [a.jobs ? `${a.jobs} na fila` : '', S.games.length ? `<a href="#" onclick="gotoGrid();return false">${pl(S.games.length, 'jogo', 'jogos')} no catálogo</a>` : '', S.view === 'store' && S.checkedAt ? `<span title="${esc(new Date(S.checkedAt * 1000).toLocaleString('pt-BR'))}">fontes lidas ${ago(S.checkedAt)}</span>` : '', nb ? `<a href="#" onclick="flagOnly('broken');return false" style="color:var(--amber)">${pl(nb, 'não encontrado', 'não encontrados')}</a>` : ''].filter(Boolean).join(' · ');
   if (r.innerHTML !== right) r.innerHTML = right;
   let z = $('#szoom'); if (!z) { z = document.createElement('label'); z.id = 'szoom'; z.className = 'szoom'; z.title = 'Tamanho das capas'; z.innerHTML = `<button type="button" onclick="setCardSize(Math.max(100,(S.config.card_size||136)-10),true);$('#szoom input').value=S.config.card_size">−</button><input type="range" min="100" max="300" step="10" value="${S.config.card_size || 136}" oninput="setCardSize(this.value,false)" onchange="setCardSize(this.value,true)"><button type="button" onclick="setCardSize(Math.min(300,(S.config.card_size||136)+10),true);$('#szoom input').value=S.config.card_size">+</button>`; r.after(z); }
   zoomVis();

@@ -51,6 +51,8 @@ export class Jobs {
                 const result = await fn(cb, cancel);
                 this.histPut(key, title, kind, 'done', { dir: (result || {}).dir });
                 this.be.push({ type: 'done', key, title, kind, ...(result || {}) });
+                if (kind === 'install' || kind === 'emulator')
+                    this.be.windowHooks?.notify_hidden?.(`${title}: pronto`);
             }
             catch (ex: any) {
                 if (ex instanceof CancelledError || ex?.name === 'CancelledError' || (cancel.aborted && /cancel/i.test(String(ex?.message || ex)))) {

@@ -4,7 +4,7 @@ export interface Report { format: 'ludrix' | 'hydra' | 'unknown'; games: number;
 export const KINDS = ['pc', 'rom', 'recomp', 'emulator', 'tool'];
 const GAME_KEYS = new Set(['id', 'title', 'kind', 'system', 'creator', 'developer', 'publisher', 'year', 'description', 'cover', 'thumb', 'hero', 'genres', 'tags', 'page_url', 'files', 'magnet', 'torrent', 'github', 'asset', 'needs', 'exe', 'requires_rom', 'patches', 'size', 'host', 'prefer', 'version', 'note', 'notes', 'languages', 'repack', 'uploaded']);
 const ROOT_KEYS = new Set(['name', 'format', 'kind', 'system', 'games', 'sources', 'version', 'description', 'author', 'updated', 'url', 'note', '$schema']);
-const FILE_KEYS = new Set(['name', 'url', 'size', 'note', 'host']);
+const FILE_KEYS = new Set(['name', 'url', 'size', 'note', 'host', 'sha256']);
 const MAX = 60;
 
 const isStr = (v: any) => typeof v === 'string' && v.trim().length > 0;
@@ -112,6 +112,8 @@ export function validateManifest(data: any, systems: Record<string, any> = {}): 
                     if (!isHttp(f.url) && !isLocalPath(f.url)) { err(fat, `"url" inválida: ${JSON.stringify(f.url ?? null)} (precisa começar com http:// ou https://)`); return; }
                     if (!isStr(f.name))
                         warn(fat, '"name" ausente — o nome vem do fim da url');
+                    if (f.sha256 !== undefined && !/^[0-9a-fA-F]{64}$/.test(String(f.sha256)))
+                        warn(fat, '"sha256" inválido (precisa de 64 caracteres hexadecimais) — a conferência fica desligada para esse arquivo');
                     if (f.size !== undefined && sizeOf(f.size) < 0)
                         warn(fat, `"size" ilegível: ${JSON.stringify(f.size)} (use bytes ou "12.5 GB")`);
                     if (f.size === undefined || sizeOf(f.size) === 0)

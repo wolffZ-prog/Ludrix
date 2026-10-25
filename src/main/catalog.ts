@@ -9,7 +9,30 @@ import { RepoRegistry, Entry, FileRef, makeEntry, entryDict, basename, detectSou
 import { humanTime } from './sessions';
 
 const EDITION_RE = /\b(edi[cç][aã]o|edition|deluxe|ultimate|gold|complete|completa|definitive|definitiva|goty|game of the year|digital|premium|anniversary|collector'?s|director'?s cut|enhanced|repack|multi\d*|v?\d+(\.\d+)+[a-z]?|build \d+|dlcs?|bonus|update \d*|fitgirl|dodi|elamigos|codex|plaza|skidrow|gog|steam)\b/g;
-export function matchKey(title: string, system = 'pc'): string {
+export function versionParts(v: string): (number | string)[] {
+    return String(v).toLowerCase().replace(/^v(?=\d)/, '').split(/[.\-_ ]+/).map((x) => (/^\d+$/.test(x) ? Number(x) : x));
+}
+function sameVersion(a: string, b: string): boolean {
+    return versionParts(a).join('.') === versionParts(b).join('.');
+}
+function newerVersion(a: string, b: string): boolean {
+    const pa = versionParts(a), pb = versionParts(b);
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+        const x = pa[i], y = pb[i];
+        if (x === undefined)
+            return false;
+        if (y === undefined)
+            return true;
+        if (typeof x === 'number' && typeof y === 'number') {
+            if (x !== y)
+                return x > y;
+        }
+        else if (String(x) !== String(y))
+            return String(x) > String(y);
+    }
+    return false;
+}
+function matchKey(title: string, system = 'pc'): string {
     let t = String(title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     t = t.replace(/[([{][^)\]}]*[)\]}]/g, ' ');
     t = t.replace(EDITION_RE, ' ').replace(/&/g, ' and ').replace(/\b(the|a|an|o|os|as|of|de|do|da|em|the)\b/g, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
@@ -88,10 +111,13 @@ export class Catalog {
             const neu = new Map<string, Entry>();
             const errors: Record<string, any> = {};
             const provs = this.repos.enabledProviders();
+            const arrivals: { prov: any; fresh: string[]; titles: Record<string, string> }[] = [];
             for (let i = 0; i < provs.length; i++) {
                 const prov = provs[i];
                 this.be.act(`Carregando catálogo ${i + 1}/${provs.length}: ${prov.name}`);
                 try {
+                    const keys: string[] = [];
+                    const titles: Record<string, string> = {};
                     for (const e of await prov.catalog(force)) {
                         const old = this.entries.get(e.key);
                         if (old && old.files_loaded && !force) {
@@ -100,7 +126,13 @@ export class Catalog {
                             e.cover = old.cover;
                         }
                         neu.set(e.key, e);
+                        const ident = e.key.startsWith(prov.id + ':') ? e.key.slice(prov.id.length + 1) : e.key;
+                        keys.push(ident);
+                        titles[ident] = e.title;
                     }
+                    const fresh = this.repos.touch(prov.id, keys, titles, force);
+                    if (fresh.length)
+                        arrivals.push({ prov, fresh, titles });
                 }
                 catch (ex) {
                     log.error('catalog %s: %s', prov.id, (ex as any)?.stack || ex);
@@ -123,8 +155,22 @@ export class Catalog {
                 catch { /* nada */ }
             }
             this.state = { loading: false, errors };
+            if (force)
+                this.repos.state.__auto_at = Math.floor(Date.now() / 1000);
+            this.repos.saveState();
             log.info('catálogo: %d itens de %d fontes em %ss', neu.size, provs.length, ((Date.now() - t0) / 1000).toFixed(1));
             this.be.act('');
+            if (this.store.config.store_notify_new !== false)
+                for (const a of arrivals) {
+                    const names = a.fresh.slice(0, 3).map((k) => a.titles[k]).filter(Boolean);
+                    const n = a.fresh.length;
+                    try {
+                        this.be.notify('store', `${a.prov.name}: ${n} ${n === 1 ? 'jogo novo' : 'jogos novos'}`, names.join(', ') + (n > names.length ? ` e mais ${n - names.length}` : ''), `store:${a.prov.id}`, 'store-new');
+                    }
+                    catch (e) {
+                        log.warn('aviso de fonte: %s', e);
+                    }
+                }
             try {
                 this.onLoaded?.();
             }
@@ -196,7 +242,7 @@ export class Catalog {
         const key = e.key;
         const info = this.store.lib(key);
         const sig = JSON.stringify([this.be.hub.meta.mtime(key), this.favs.has(key), this.be.jobs.has(key), this.hasThumb(key), this.customPath(key) != null,
-            info ? [info.playtime, info.last_played, info.installed_at, info.exe, info.dir] : null]);
+            info ? [info.playtime, info.last_played, info.installed_at, info.exe, info.dir, info.version] : null]);
         const hit = this.slimCache.get(key);
         if (hit && hit.sig === sig && hit.d.__e === e)
             return hit.d;
@@ -218,7 +264,8 @@ export class Catalog {
             size: e.size, genres: genres.slice(0, 3), cats: this.categoryOf(e, m),
             installed: this.store.isInstalled(e.key) || Boolean(e.extra.local_path && this.existsCached(e.extra.local_path)), job: this.be.jobs.has(e.key),
             has_meta: Boolean(m), hero_ok: this.hasHero(m), thumb_ok: this.hasThumb(e.key) || Boolean(this.customPath(e.key)),
-            torrent: Boolean(e.magnet || e.torrent_url), direct: e.files.length > 0 || Boolean(e.extra.repo),
+            torrent: Boolean(e.magnet || e.torrent_url), direct: e.files.length > 0 || Boolean(e.extra.repo), version: String(e.extra.version || ''),
+            ...(this.store.isInstalled(e.key) && String(info.version || '').trim() && String(e.extra.version || '').trim() && !sameVersion(String(e.extra.version), String(info.version)) && newerVersion(String(e.extra.version), String(info.version)) ? { update_from: e.key, update_version: String(e.extra.version), version: String(info.version) } : {}),
             playtime: info.playtime || 0, status: (m || {}).status || '', score: Math.trunc(Number((m || {}).score || 0)),
             last_played: info.last_played || 0,
             added_at: info.installed_at || e.extra.posted || 0,
@@ -256,7 +303,7 @@ export class Catalog {
                 installed: this.existsCached(exe) || exe.includes('://') || exe.startsWith('shell:') || exe.startsWith('flatpak:')
                     || Boolean(info.mc === 'java' && !info.exe && info.dir && util.isDir(String(info.dir))),
                 job: false,
-                mc: info.mc || '', mc_nolauncher: Boolean(info.mc === 'java' && !info.exe),
+                mc: info.mc || '', mc_nolauncher: Boolean(info.mc === 'java' && !info.exe), version: String(info.version || ''),
                 has_meta: Boolean(m), hero_ok: this.hasHero(m), thumb_ok: this.hasThumb(key), torrent: false,
                 playtime: info.playtime || 0, last_played: info.last_played || 0,
                 added_at: info.installed_at || 0, fav: favs.has(key), cv: this.cv(key, m), source: info.source || '',
@@ -323,6 +370,25 @@ export class Catalog {
             for (const g of all)
                 if (hid.has(g.key))
                     g.hidden = true;
+        const news = this.repos.newsSet();
+        let newsCount = 0;
+        for (const g of all) {
+            const tg = this.be.hub.meta.get(g.key)?.tags;
+            if (tg && tg.length)
+                g.tags = tg;
+            else if (g.tags)
+                delete g.tags;
+            if (news.has(g.key)) {
+                g.fresh = true;
+                newsCount++;
+            }
+            else if (g.fresh)
+                delete g.fresh;
+        }
+        let checkedAt = 0;
+        for (const r of repoList)
+            if (r.enabled && Number(r.checked_at || 0) > checkedAt)
+                checkedAt = Number(r.checked_at);
         const cats = this.categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon || '' })).concat([{ id: 'other', name: 'Outros', icon: 'dots' }]);
         if (!this.firstPayloadAt) {
             this.firstPayloadAt = Date.now() / 1000;
@@ -337,7 +403,8 @@ export class Catalog {
             systems[k] = v.name;
         return {
             ...this.state, games: all, categories: cats, sites_loading: false, roms_pending: this.be.emu.scanPending(),
-            repos: repoList.map((r) => ({ id: r.id, name: r.name, enabled: r.enabled, kind: r.kind || 'pc', hidden: Boolean(r.hidden_in_library) })),
+            checked_at: checkedAt, news_count: newsCount,
+            repos: repoList.map((r) => ({ id: r.id, name: r.name, enabled: r.enabled, kind: r.kind || 'pc', hidden: Boolean(r.hidden_in_library), checked_at: Number(r.checked_at || 0), new_count: Number(r.new_count || 0) })),
             systems,
             config: this.be.publicConfig(), faces: themes.faces(), custom: this.be.custom(),
             torrent_available: torrentMod.available(), torrent_engine: torrentMod.engine(),
@@ -387,12 +454,24 @@ export class Catalog {
                 const i = out.indexOf(prim);
                 if (i >= 0)
                     out[i] = { ...prim, owned: g.key, dup_of: prim.dup_of || '' };
-                out.push(g);
+                const nv = String(prim.version || '').trim(), cv = String(g.version || '').trim();
+                out.push(nv && cv && !sameVersion(nv, cv) && newerVersion(nv, cv) ? { ...g, update_from: prim.key, update_version: nv } : g);
             }
             else
                 out.push({ ...g, avail: prim.key, avail_torrent: Boolean(prim.torrent), avail_direct: Boolean(prim.direct) });
         }
         return out;
+    }
+    updateFor(info: any): { update_from?: string; update_version?: string } {
+        const cv = String(info?.version || '').trim();
+        if (!cv)
+            return {};
+        const k = this.availFor(info.title || '', info.system || 'pc');
+        const e = k ? this.entries.get(k) : null;
+        const nv = String(e?.extra?.version || '').trim();
+        if (!e || !nv || sameVersion(nv, cv) || !newerVersion(nv, cv))
+            return {};
+        return { update_from: e.key, update_version: nv };
     }
     availFor(title: string, system: string): string {
         const k = matchKey(title, system);
@@ -547,9 +626,10 @@ export class Catalog {
                 installed: true, dir: info.dir || '', exe: info.exe || '', args: this.be.gameArgs(key), files: [], meta: m, job: null,
                 creator: (m || {}).developer || info.creator || '', year: (m || {}).year || info.year || '',
                 genres: ((m || {}).genres || []).length ? (m || {}).genres : (info.genres || []), mc: info.mc || '',
-                description: (m || {}).summary || info.description || '', size: 0, page_url: info.page_url || '', requires_rom: '', version: '',
+                description: (m || {}).summary || info.description || '', size: 0, page_url: info.page_url || '', requires_rom: '', version: String(info.version || ''),
                 playtime: info.playtime || 0, playtime_h: humanTime(info.playtime || 0), last_played: info.last_played || 0,
                 avail: this.existsCached(String(info.exe || '')) || String(info.exe || '').includes('://') ? '' : this.availFor(info.title || '', 'pc'),
+                ...this.updateFor(info),
             };
         }
         const e = this.entry(key);
@@ -572,6 +652,7 @@ export class Catalog {
             files: files.map((f) => ({ ...f, basename: basename(f) })), mirrors: Boolean(e.extra.mirrors),
             installed: this.store.isInstalled(key), dir: info.dir || '', exe: info.exe || '', args: this.be.gameArgs(key),
             version: info.version || e.extra.version || '',
+            ...(this.store.isInstalled(key) && String(info.version || '').trim() && String(e.extra.version || '').trim() && !sameVersion(String(e.extra.version), String(info.version)) && newerVersion(String(e.extra.version), String(info.version)) ? { update_from: e.key, update_version: String(e.extra.version) } : {}),
             requires_rom: e.extra.requires_rom || '',
             meta: m, job: this.be.jobs.payload(key),
             system_name: (systems[e.system] || {}).name || e.system,

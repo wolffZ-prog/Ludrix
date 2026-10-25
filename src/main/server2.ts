@@ -9,6 +9,7 @@ import * as storeFront from './storeFront';
 import * as emulation from './emulation';
 import * as presets from './presets';
 import * as dialogs from './dialogs';
+import * as sourceGen from './sourceGen';
 import * as util from './util';
 Object.defineProperty(exports, "slug", { enumerable: true, get: function () { return util.slug; } });
 let frontRef = null;
@@ -227,10 +228,20 @@ async function routePost2(res, p, b, be, getWindow, port) {
         return (0, server.sendJson)(res, await be.imp.folderScan(b?.path ?? null, String(b?.mode || 'windows'))), true;
     if (p === '/api/folder/apply')
         return (0, server.sendJson)(res, await be.imp.folderApply(Array.isArray(b?.games) ? b.games : [], String(b?.mode || 'windows'), b?.opts || {})), true;
-    if (p === '/api/dirs/add')
-        return (0, server.sendJson)(res, await be.imp.gameDirAdd(b?.path || null)), true;
-    if (p === '/api/dirs/remove')
-        return (0, server.sendJson)(res, be.imp.gameDirRemove(String(b?.path || ''))), true;
+    if (p === '/api/dirs/add') {
+        const r = await be.imp.gameDirAdd(b?.path || null);
+        be.watchDirs();
+        return (0, server.sendJson)(res, r), true;
+    }
+    if (p === '/api/dirs/remove') {
+        const r = be.imp.gameDirRemove(String(b?.path || ''));
+        be.watchDirs();
+        return (0, server.sendJson)(res, r), true;
+    }
+    if (p === '/api/dirs/watch') {
+        be.watchDirs();
+        return (0, server.sendJson)(res, { ok: true, dirs: [...be.watchers.keys()] }), true;
+    }
     if (p === '/api/dirs/ignore')
         return (0, server.sendJson)(res, be.imp.scanIgnore(Array.isArray(b?.exes) ? b.exes : [])), true;
     /* ----------------------------- atualizacoes ----------------------------- */
@@ -274,8 +285,31 @@ async function routePost2(res, p, b, be, getWindow, port) {
     if (p === '/api/compat/layer')
         return (0, server.sendJson)(res, be.compatLayer(String(b?.key || ''), String(b?.layer || ''))), true;
     /* ------------------------------- detectar ------------------------------- */
+    if (p === '/api/repos/gen/scan') {
+        const dir = String(b?.dir || '').trim() || (await dialogs.pickFolder(String(b?.initial || '') || P.ROOT)) || '';
+        if (!dir)
+            return (0, server.sendJson)(res, { cancel: true }), true;
+        return (0, server.sendJson)(res, sourceGen.scanFolder(dir)), true;
+    }
+    if (p === '/api/repos/gen/make') {
+        const name = String(b?.name || '').trim() || 'Minha fonte';
+        const out = String(b?.out || '') || (await dialogs.pickSave(path.join(app.getPath('documents') || P.ROOT, name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '.json'), 'json')) || '';
+        if (!out)
+            return (0, server.sendJson)(res, { cancel: true }), true;
+        const key = 'gen:' + path.basename(out);
+        const r = be.jobs.run(key, `Fonte ${name}`, 'source', async (cb: any, cancel: any) => {
+            const g = await sourceGen.generate({ name, dir: String(b?.dir || ''), base_url: String(b?.base_url || ''), out, hash: b?.hash !== false, games: Array.isArray(b?.games) ? b.games : [] }, cb, cancel);
+            be.notify('ok', `Fonte criada: ${name}`, `${g.count} jogo(s), ${g.files} arquivo(s) · ${g.out}`, key, 'source-made:' + g.out);
+            return { dir: path.dirname(g.out), out: g.out, count: g.count };
+        });
+        return (0, server.sendJson)(res, { ...r, out, key }), true;
+    }
     if (p === '/api/repos/validate')
         return (0, server.sendJson)(res, await front.repoValidate(String(b?.url || ''))), true;
+    if (p === '/api/repos/seen') {
+        be.repos.clearNews(b?.id ? String(b.id) : undefined);
+        return (0, server.sendJson)(res, { ok: true }), true;
+    }
     if (p === '/api/detect')
         return (0, server.sendJson)(res, await front.detect(String(b?.q || ''))), true;
     /* ------------------------------ minecraft ------------------------------ */

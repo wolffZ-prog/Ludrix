@@ -1,5 +1,49 @@
 # Changelog
 
+## 4.0.8 — 2026-10-25
+
+- Fontes vivas: o Ludrix relê as fontes da Store sozinho, em segundo plano (Ajustes › Store › "Reler as fontes sozinho": nunca, 6 h, 12 h ou uma vez por dia; padrão 12 h). Só roda sem jogo aberto, sem download em andamento e com internet; o primeiro ciclo espera 2 minutos e meio depois de abrir. O botão Atualizar da Store zera a contagem.
+- Jogos novos numa fonte: ao reler, o Ludrix compara com a leitura anterior e avisa no sino ("Fonte X: N jogos novos", com os primeiros títulos); o aviso abre a Store já filtrada. Os jogos ganham a faixa NOVO no cartão e o filtro "Novos nas fontes" (chip "Novos" no topo da Store, também em Filtros); "Marcar como vistos" tira a marca. A marca some sozinha depois de 14 dias. O aviso pode ser desligado em Ajustes › Store; a primeira leitura de uma fonte nunca gera aviso.
+- Store › Fontes: cada fonte mostra quando foi lida pela última vez ("lida há 2 h") e quantos jogos novos tem; a barra de status da Store mostra a leitura mais recente. O registro fica em `data/sources_state.json` e é apagado junto com a fonte.
+- Controle (gamepad): o D-pad disparava a cada quadro quando segurado ou tocado (a leitura do analógico zerava o estado do botão). Agora botão e analógico são lidos juntos: um toque move uma vez e segurar repete no ritmo escolhido em Ajustes › Controle.
+
+- Barra de navegação (Ajustes › Aparência › Barra de navegação): Como o tema define, Lateral com nomes, Lateral só ícones, No alto ou Embaixo. Vale por cima do tema e fica gravada.
+- Ficha do jogo em abas: Sobre, Arquivos, Mods, Screenshots e Requisitos. Arquivos mostra executável (com Trocar, Mostrar e Apontar quando o arquivo sumiu), pasta (Abrir, Tamanho), argumentos, pasta de trabalho, saves e os outros executáveis encontrados na pasta ("Usar este"); para jogos da Store, os arquivos, espelhos e patches da fonte. Mods concentra o atalho para os mods do jogo, as ferramentas e os sites conhecidos.
+- Telas vazias com desenho: Biblioteca, Store, Fontes, ROMs, Downloads, Ferramentas, Mods, Rápidos, busca sem resultado e avisos têm cada um um desenho de linha no estilo do tema (cor do texto, detalhe no acento). Com "Reduzir movimento" o detalhe não flutua.
+- Cartão: selo de origem embaixo da capa (Steam, Epic, GOG, ROM, Manual…; Ajustes › Biblioteca › Origem embaixo da capa). Na Store, com mais de uma fonte, o cartão mostra de qual fonte veio.
+- Downloads na barra de tarefas (Ajustes › Store e downloads › Progresso na barra de tarefas): o ícone do Ludrix no Windows mostra o andamento; pausado fica amarelo, erro fica vermelho.
+- Cor de destaque (Ajustes › Aparência › Cor de destaque): Do tema, Do Windows (segue a cor de realce do sistema e acompanha quando ela muda) ou Escolher (seletor de cor). O texto sobre a cor de destaque passa a ser branco ou preto pelo contraste real, não por um corte fixo — faixas NOVO, botões e filtros em temas de acento claro (verde, amarelo, laranja) ficavam ilegíveis.
+
+- Store e Emuladores: a grade carrega em rolagem contínua, como a Biblioteca; some o paginador.
+- Store: ordenação "Novos primeiro" (pela data em que o jogo apareceu na fonte) e filtros "Download direto" e "Torrent".
+- Store: faixa "ATUALIZAÇÃO" e filtro "Versão nova na fonte" quando a lista publica um `version` diferente do instalado; a ficha ganha "Versão X na fonte", que baixa por cima.
+- Fontes .json: arquivos podem trazer `sha256`; o Ludrix confere depois de baixar e, se não bater, apaga e marca o download com erro ("não bate com o sha256 informado pela fonte").
+- Store › Fontes › Criar fonte: lê uma pasta sua (cada .zip, .7z, .rar, .iso ou subpasta vira um jogo), calcula o sha256 se quiser, monta as URLs a partir de uma base e grava um `ludrix-pack/1` pronto, já ligado como fonte. Formato documentado em docs/FONTES.md.
+- Downloads (Ajustes › Store e downloads): limite de velocidade (512 KB/s a 25 MB/s ou sem limite) e janela de horário ("Só entre" HH:MM e HH:MM; fora dela o download fica aguardando e a fila mostra quando continua). Vale para direto e torrent.
+- Pausar downloads enquanto um jogo está aberto (Ajustes › Ao jogar, ligado por padrão): param quando o jogo abre e voltam quando fecha; o que já estava extraindo termina.
+- Aviso do Windows com a janela escondida (Ajustes › Geral › Notificações): balão nativo quando um download ou emulador termina e o Ludrix está recolhido na bandeja.
+- Paleta de comandos (Ctrl+K): digite para achar jogo (Enter abre, Shift+Enter joga), ação (Checar atualizações, Adicionar jogo, Fazer backup…) ou um ajuste pelo nome, que abre Ajustes já na linha certa. `>` no começo mostra só ações.
+- Etiquetas: em Editar › Geral cada jogo aceita etiquetas livres; filtro "Etiqueta" na Biblioteca e busca `tag:nome`.
+- Testar controle (Ajustes › Controle): mostra na hora cada botão e analógico que você mexer.
+- Atalhos de teclado (Ajustes › Geral › Teclado): cada ação tem a sua tecla e pode ser trocada clicando nela (Backspace volta ao padrão, Esc cancela); conflitos são avisados; "Voltar tudo ao padrão". A lista de atalhos (?) lê o que você definiu e tem o botão Personalizar. Ctrl+1…9 e Esc continuam fixos.
+- Abrir .lxtheme e .lxup com o Ludrix (Ajustes › Geral, Windows, ligado por padrão): registra a associação só no seu usuário; duplo clique num tema importa e num pacote de atualização abre a instalação. O Ludrix refaz o registro se a pasta mudar.
+- Backup automático semanal (Ajustes › Sistema › Meus dados, ligado por padrão): uma vez por semana, ao abrir, gera Ludrix-dados-<data>.zip (biblioteca, ajustes, fontes, capas, temas) em data\backups\auto ou numa pasta sua; guarda os 4 últimos; botão "Fazer agora". Falha vira aviso em Notificações.
+- Vigia da pasta de jogos (Ajustes › Biblioteca › Avisar quando aparecer pasta nova, ligado por padrão): com o Ludrix aberto, uma pasta nova com jogo dentro de games\ ou das pastas acompanhadas gera um aviso em Notificações que adiciona o jogo com um clique. Pastas antigas são ignoradas.
+- Limpeza de imagens órfãs (Ajustes › Sistema › Limpeza › Imagens órfãs): capas, fundos e screenshots de jogos que já saíram da biblioteca e das fontes, com mais de 30 dias, são listados e removidos; o Ludrix faz isso sozinho uma vez por semana.
+
+- Menu de contexto: "Remover da biblioteca" não removia (o id da ação não batia com o do menu). O menu foi refeito por completo e agora traz Jogar, Jogar e…, Detalhes, Favoritar, Status (submenu), Marcar como nunca jogado, Esconder da biblioteca, Abrir pasta, Mostrar arquivo, Saves, Mods, Atalho na área de trabalho, Emulador (submenu), Página do jogo, Editar (Notas e nota pessoal, Trocar capa…, Trocar executável…, Voltar à capa original, Procurar capa na web, Atualizar metadados), Copiar (nome, caminho) e Remover. Ação que o Ludrix não conhece mostra "Ação indisponível" em vez de não fazer nada.
+- Controle em caixas de diálogo e em Ajustes: o D-pad passa por botões, campos, listas, interruptores, segmentos e as abas de Ajustes; A em um campo de texto entra para digitar e B sai; B também fecha a paleta, o sino de notificações e volta para as abas de Ajustes. Na ficha do jogo, o D-pad alcança as abas, as fontes e os executáveis.
+- Janela estreita (até 1140 px): os filtros rápidos da Biblioteca (Todos, Favoritos…) rolam em vez de esmagar a contagem de jogos; abaixo de 1000 px descem para uma segunda linha.
+- Temas: auditoria automática dos 70 temas do pacote (contraste de faixa NOVO/ATUALIZAÇÃO, filtros, botões, navegação, menu, avisos, barra de status). Luna Nova tinha Ajuda e Notificações invisíveis, nome da marca duplicado e "Pronto" apagado na barra de status; corrigido no pacote (reimportar o tema).
+- Ajustes: "Barra de navegação", "Controle" (Modo sofá) e "Zoom no sofá" não eram gravados — voltavam ao padrão ao reabrir.
+- Notificações: clicar num aviso que não é de um jogo não tenta mais abrir uma ficha vazia; avisos do backup abrem Ajustes › Sistema e o de dados mais novos abre a checagem de atualização.
+- Log: requisição interrompida pela própria interface (troca de tela no meio de um carregamento) deixa de entrar como erro no ludrix.log.
+
+- Organização: a interface foi dividida em arquivos por área (app.js, keys.js, detail.js, settings.js, gamepad.js, sofa.js, icons.js); todos entram na conferência de integridade do atualizador.
+- Organização: `tools/check.js` roda antes de qualquer build e barra o pacote se algo estiver quebrado: TypeScript, sintaxe de cada arquivo da interface, JSONs, ids do menu de contexto sem ação, ícones inexistentes, chaves de ajuste sem default (seriam descartadas ao salvar) e rotas chamadas que não existem no servidor; `--boot` ainda sobe o app numa pasta temporária. Foi ele que achou os três ajustes que não gravavam.
+- Organização: `data/schema.json` registra a versão do formato dos dados e do Ludrix que gravou; pasta gravada por uma versão mais nova gera aviso em vez de ser sobrescrita; os JSONs de dados passam a ser gravados em arquivo temporário e renomeados (queda de energia no meio não corrompe config/biblioteca).
+- Documentação: docs/TEMAS.md (formato dos temas, variáveis, layout, o que o Ludrix calcula sozinho, conferência) e docs/FONTES.md (version, sha256, mirrors, Criar fonte).
+
 ## 4.0.7 — 2026-10-24
 - Início único: a Biblioteca é uma tela só — faixa "Continuar" com o jogo selecionado e a grade. Os estilos antigos de destaque (Estante, Painel, Banner, Duplo, Simples) e o rodízio automático do destaque saíram do código; a opção "Estilo do destaque" some de Ajustes.
 - Cartões: embaixo do título entram duas linhas, tempo jogado (ou "Não jogado") e a última vez que o jogo foi aberto (ou gênero/plataforma se nunca foi); o selo de horas sobre a capa sai. Ajustes › Biblioteca › "Tempo e status embaixo da capa" volta ao formato só com gênero.

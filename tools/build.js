@@ -71,6 +71,8 @@ function rmrf(p) {
     fs.rmSync(p, { recursive: true, force: true });
 }
 function cmdBuild() {
+    if (!process.env.LUDRIX_SKIP_CHECK)
+        run(process.execPath, [path.join(ROOT, 'tools', 'check.js')], { shell: false });
     run(path.join(ROOT, 'node_modules', '.bin', WIN ? 'tsc.cmd' : 'tsc'), ['-p', 'tsconfig.json']);
 }
 function prodModules(dst) {

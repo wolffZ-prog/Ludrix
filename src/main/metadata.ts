@@ -159,7 +159,7 @@ function sleep(ms: number) {
 
 export class MetadataService {
     static WIKI_MIN_GAP = 0.25;
-    static USER_FIELDS = ['developer', 'publisher', 'year', 'genres', 'summary', 'series', 'modes', 'links', 'notes',
+    static USER_FIELDS = ['tags', 'developer', 'publisher', 'year', 'genres', 'summary', 'series', 'modes', 'links', 'notes',
         'cover_url', 'cover_src', 'hero_url', 'background_file', 'platforms', 'status', 'score'];
     static SOURCES = ['steam', 'gog', 'wikipedia', 'wikidata', 'libretro', 'web'];
     static WIKI_PROPS = { action: 'query', generator: 'search', gsrlimit: 6, gsrprop: 'snippet',

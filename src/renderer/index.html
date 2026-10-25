@@ -78,9 +78,14 @@
 <div class="ctx" id="ctx"></div>
 <div class="flashwin" id="flashwin"><div class="fbar"><b id="ftitle"></b><span id="fhint"></span><span class="sp"></span><button class="btn s xs" onclick="flashFull()">Tela cheia</button><button class="btn s xs" onclick="closeFlash()">Fechar (Esc)</button></div><iframe id="fframe" allow="autoplay; fullscreen; gamepad"></iframe></div>
 <div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
+<div class="pal" id="pal" onmousedown="if(event.target===this)palClose()"><div class="palbox"><div class="palq"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input placeholder="Jogo, ação ou ajuste…  (&gt; só ações)" autocomplete="off" spellcheck="false" oninput="palRender(this.value)" onkeydown="palKey(event)"><kbd>Esc</kbd></div><div class="pallist" id="palList"></div></div></div>
 <div class="toasts" id="toasts"></div>
 <script src="/ui/icons.js"></script>
 <script src="/ui/app.js"></script>
+<script src="/ui/keys.js"></script>
+<script src="/ui/detail.js"></script>
+<script src="/ui/settings.js"></script>
+<script src="/ui/gamepad.js"></script>
 <script src="/ui/sofa.js"></script>
 </body>
 </html>

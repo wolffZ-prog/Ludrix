@@ -47,6 +47,13 @@ Fontes vêm **desligadas** até você ligar. Cada uma pode ser editada, desligad
 - `system`: para ROMs (`n64`, `ps1`, `ps2`, `psp`, `gc`, `wii`, `dc`, `xbox`, `x360`, `gba`, `snes`, `nds`, `genesis`, `nes`, `ps3`, `wiiu`, `switch`, `3ds`, `saturn`, `sms`, `pce`, `atari2600`, `arcade`, `dos`). Sem `system`, o Ludrix deduz pela extensão e pelo nome.
 - `files`: vários arquivos = partes do mesmo download. `magnet`/`torrent`: torrent só quando a lista fornece.
 - `exe`: executável preferido depois de instalar (opcional).
+- `version`: versão do build (texto livre, ex.: `"1.2.0"`). Quando a fonte publica uma versão diferente da instalada, o jogo ganha a faixa **ATUALIZAÇÃO**, o filtro "Versão nova na fonte" e o botão "Versão X na fonte" na ficha.
+- `files[].sha256`: hash do arquivo. O Ludrix confere depois de baixar; se não bater, apaga o arquivo e marca o download com erro ("não bate com o sha256 informado pela fonte").
+- `mirrors`: `true` quando os `files` são o mesmo build em hospedagens diferentes (o usuário escolhe um) em vez de partes.
+
+### Criar uma lista a partir de uma pasta
+
+**Store → Fontes → Criar fonte** lê uma pasta (cada `.zip`, `.7z`, `.rar`, `.iso` ou subpasta vira um jogo), calcula o `sha256` se você quiser e grava um `ludrix-pack/1` pronto, com as URLs montadas a partir de uma base (`https://meusite/jogos/` + nome do arquivo). A lista gerada já entra como fonte local; depois é só subir os arquivos e o JSON para o lugar indicado na base.
 
 ### Entrada apontando pro GitHub
 
@@ -82,6 +89,12 @@ A Loja lê o arquivo jogo por jogo antes de aceitar. O relatório aparece ao adi
 Títulos iguais (ignorando edição, região, pontuação e maiúsculas) viram **um** cartão na Loja. Na ficha, a faixa **N fontes têm este jogo** lista cada lugar com tipo (direto, torrent, partes) e tamanho; um clique troca. Prioridade do cartão principal: arquivo direto, depois torrent, depois GitHub.
 
 Jogo da Store que já está instalado no PC mostra **Jogar** em vez de **Baixar**. Jogo da biblioteca cujo arquivo sumiu ganha **Baixar da Loja** quando alguma fonte tem o título.
+
+## Releitura automática e jogos novos
+
+O Ludrix relê as fontes ligadas em segundo plano (Ajustes › Store › **Reler as fontes sozinho**: nunca, 6 h, 12 h ou uma vez por dia). A releitura só acontece sem jogo aberto, sem download em andamento e com internet. **Atualizar** na Store força a leitura na hora.
+
+A cada leitura o Ludrix compara os `id` dos jogos com a leitura anterior. Jogos que apareceram ganham a faixa **NOVO** e entram no filtro **Novos nas fontes**; o sino avisa "Fonte: N jogos novos". Por isso o `id` deve ser estável — trocar o `id` de um jogo faz ele contar como novo. A primeira leitura de uma fonte não gera aviso; a marca some em **Marcar como vistos** ou sozinha após 14 dias.
 
 ## Pacotes prontos
 

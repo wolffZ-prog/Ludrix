@@ -6,6 +6,7 @@
  * gerado pelo Ludrix em Python abre aqui sem migracao.
  */
 import fs from 'node:fs';
+import path from 'node:path';
 import * as P from './paths';
 import * as util from './util';
 const RUNTIME: { frameless: boolean | null; acrylic: boolean } = { frameless: null, acrylic: false };
@@ -60,6 +61,15 @@ const DEFAULT_CONFIG = {
     hidden_games: [],
     favorites: [],
     store_hide_installed: true,
+    store_auto_refresh: 12,
+    pause_downloads_playing: true,
+    dl_max_down: 0,
+    dl_schedule: false,
+    dl_from: '23:00',
+    dl_to: '07:00',
+    notify_hidden: true,
+    taskbar_progress: true,
+    store_notify_new: true,
     card_size: 136,
     view_mode: 'mural',
     list_cols: ['year', 'genre', 'size', 'playtime', 'last', 'status'],
@@ -67,6 +77,7 @@ const DEFAULT_CONFIG = {
     backdrop_blur: 10,
     backdrop_dim: 42,
     accent_from_cover: true,
+    accent_mode: 'theme',
     theme_schedule: false,
     theme_light_from: '07:00',
     theme_light_to: '19:00',
@@ -90,8 +101,16 @@ const DEFAULT_CONFIG = {
     filter_panel: false,
     filter_presets: [],
     card_playtime: true,
+    card_origin: true,
     warn_missing: true,
     game_dirs: [],
+    watch_dirs: true,
+    file_assoc: true,
+    file_assoc_cmd: '',
+    keymap: {},
+    auto_backup: true,
+    auto_backup_dir: '',
+    auto_backup_at: 0,
     auto_scan_dirs: true,
     scan_ignore_rest: false,
     linux_runner: 'auto',
@@ -152,6 +171,9 @@ const DEFAULT_CONFIG = {
     status_position: 'bottom',
     ctx_menu: '',
     gamepad_enabled: true,
+    gamepad: 'auto',
+    sofa_zoom: 1.15,
+    nav_layout: '',
     gamepad_wake: false,
     mods_dir: '',
     update_feed: '',
@@ -231,6 +253,38 @@ class Store {
         this.config = { ...exports.DEFAULT_CONFIG, ...out };
         this.migrateLook();
         this.library = (0, util.readJson)(P.LIBRARY_FILE, {});
+        this.migrateSchema();
+    }
+    static SCHEMA = 1;
+    static SCHEMA_FILE = () => path.join(P.DATA, 'schema.json');
+    schemaInfo: { version: number; app: string; at: number; newer?: boolean; migrated?: number[] } = { version: 0, app: '', at: 0 };
+    migrateSchema() {
+        const cur = (0, util.readJson)(Store.SCHEMA_FILE(), null) as any;
+        const had = cur && Number.isFinite(Number(cur.version)) ? Number(cur.version) : (fs.existsSync(P.CONFIG_FILE) ? 0 : Store.SCHEMA);
+        let app = '';
+        try { app = String(require('./updates').currentVersion().version || ''); } catch { /* sem version.json em dev */ }
+        if (had > Store.SCHEMA) {
+            this.schemaInfo = { version: had, app: String(cur.app || ''), at: Number(cur.at || 0), newer: true };
+            return;
+        }
+        const migrated: number[] = [];
+        const steps: Record<number, () => void> = {
+            0: () => {
+                for (const [k, v] of Object.entries(this.library || {})) {
+                    if (!v || typeof v !== 'object' || Array.isArray(v))
+                        delete (this.library as any)[k];
+                }
+            },
+        };
+        for (let v = had; v < Store.SCHEMA; v++) {
+            try { steps[v]?.(); migrated.push(v + 1); } catch (e) { void e; }
+        }
+        this.schemaInfo = { version: Store.SCHEMA, app, at: Date.now() / 1000, migrated };
+        if (had !== Store.SCHEMA || !cur || cur.app !== app) {
+            (0, util.writeJson)(Store.SCHEMA_FILE(), { version: Store.SCHEMA, app, at: Math.floor(Date.now() / 1000), files: ['config.json', 'library.json', 'repos.json', 'sources_state.json'] });
+            if (migrated.length)
+                this.markDirty('library');
+        }
     }
     /** Aplica as migracoes de "look" (versao de aparencia) do original. */
     migrateLook() {

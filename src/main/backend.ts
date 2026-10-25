@@ -132,6 +132,110 @@ class Backend {
             setTimeout(() => { try { require('./server2').frontFor(this).cleanDownloads(); } catch (e) { log.debug(`clean downloads: ${e}`); } }, 100);
         this.cat.reload(false);
         this.autoUpdateLoop();
+        this.sourcesLoop();
+        require('./installer').setDownloadPolicy(() => Math.max(0, Number(this.store.config.dl_max_down || 0)) * 1024, () => this.dlHold());
+        setInterval(() => { try { require('./torrent').setHold?.(Boolean(this.dlHold())); } catch { /* sem torrent */ } }, 30_000);
+        setTimeout(() => this.watchDirs(), 20_000);
+        setTimeout(() => this.fileAssocSync(), 45_000);
+        if (this.store.schemaInfo?.newer)
+            setTimeout(() => this.notify('warn', 'Dados de uma versão mais nova', `A pasta data foi gravada pelo Ludrix ${this.store.schemaInfo.app || '?'} (formato ${this.store.schemaInfo.version}). Esta versão lê o formato ${require('./store').Store.SCHEMA}. Atualize o Ludrix ou restaure um backup antes de mexer na biblioteca.`, 'schema_newer', 'updates'), 3000);
+        setTimeout(() => this.autoBackup(false), 120_000);
+        setTimeout(() => { try { if (util.now() - Number(this.store.config.img_gc_at || 0) > 7 * 86400 && !this.jobs.jobs.size) this.imageGc(true); } catch (e) { log.debug(`limpeza de imagens: ${e}`); } }, 180_000);
+        setInterval(() => this.watchDirs(), 5 * 60_000);
+    }
+    watchers = new Map<string, { w: fs.FSWatcher; seen: Set<string>; timers: Map<string, NodeJS.Timeout> }>();
+    watchDirs() {
+        const want = new Set<string>();
+        if (this.store.config.watch_dirs !== false) {
+            for (const d of [...(this.store.config.game_dirs || []), this.store.config.games_dir || this.store.gamesDir()])
+                if (d && fs.existsSync(String(d)))
+                    want.add(path.resolve(String(d)));
+        }
+        for (const [d, w] of this.watchers)
+            if (!want.has(d)) {
+                try {
+                    w.w.close();
+                }
+                catch { /* já fechado */ }
+                for (const t of w.timers.values())
+                    clearTimeout(t);
+                this.watchers.delete(d);
+            }
+        for (const d of want) {
+            if (this.watchers.has(d))
+                continue;
+            try {
+                const seen = new Set(fs.readdirSync(d, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name.toLowerCase()));
+                const entry = { w: null as any, seen, timers: new Map<string, NodeJS.Timeout>() };
+                entry.w = fs.watch(d, { persistent: false }, (_ev, name) => {
+                    const n = String(name || '');
+                    if (!n || /^[._~$]|^(downloads|temp|tmp|\$recycle\.bin)$/i.test(n))
+                        return;
+                    const old = entry.timers.get(n);
+                    if (old)
+                        clearTimeout(old);
+                    entry.timers.set(n, setTimeout(() => { entry.timers.delete(n); this.watchHit(d, n, entry.seen); }, 15_000));
+                });
+                entry.w.on('error', () => { try { entry.w.close(); } catch { /* nada */ } this.watchers.delete(d); });
+                this.watchers.set(d, entry);
+            }
+            catch (e) {
+                log.debug(`vigia ${d}: ${e}`);
+            }
+        }
+    }
+    private watchHit(root: string, name: string, seen: Set<string>) {
+        const full = path.join(root, name);
+        const key = name.toLowerCase();
+        let isDir = false;
+        try {
+            isDir = fs.statSync(full).isDirectory();
+        }
+        catch {
+            if (seen.has(key)) {
+                seen.delete(key);
+                this.cat.reload(false);
+            }
+            return;
+        }
+        if (!isDir || seen.has(key))
+            return;
+        seen.add(key);
+        const nc = (p: string) => path.resolve(String(p || '')).toLowerCase();
+        for (const info of Object.values(this.store.library || {}) as any[]) {
+            const d = info?.dir || (info?.exe ? path.dirname(String(info.exe)) : '');
+            if (d && (nc(d) === nc(full) || nc(d).startsWith(nc(full) + path.sep)))
+                return;
+        }
+        if (this.jobs.jobs.size > 0)
+            return;
+        let found: any[] = [];
+        try {
+            found = require('./scanner').scanWindows(full, null, 3);
+        }
+        catch {
+            found = [];
+        }
+        const exe = found[0]?.exe || '';
+        if (!exe)
+            return;
+        log.info('vigia: nova pasta com jogo em %s', full);
+        this.notify('info', `Nova pasta em ${path.basename(root)}: ${name}`, `Achei ${path.basename(exe)} dentro. Quer adicionar à biblioteca?`, 'watch:' + full, 'scan-dir:' + full);
+    }
+    dlHold(): string {
+        const c = this.store.config;
+        if (!c.dl_schedule)
+            return '';
+        const mins = (s: any, d: number) => { const m = /^(\d{1,2}):(\d{2})$/.exec(String(s || '')); return m ? Math.min(23, Number(m[1])) * 60 + Math.min(59, Number(m[2])) : d; };
+        const f = mins(c.dl_from, 23 * 60), t = mins(c.dl_to, 7 * 60);
+        if (f === t)
+            return '';
+        const now = new Date(), n = now.getHours() * 60 + now.getMinutes();
+        const inside = f < t ? (n >= f && n < t) : (n >= f || n < t);
+        if (inside)
+            return '';
+        const hh = (m: number) => `${String(Math.trunc(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+        return `Fora do horário de download (${hh(f)}–${hh(t)}) — continua às ${hh(f)}`;
     }
     loadCategories() {
         const file = P.ASSETS
@@ -279,27 +383,77 @@ class Backend {
         return out.slice(0, 200).sort();
     }
     /** Menu de contexto do botao direito. */
-    contextActions(key) {
-        const g = this.localGames().find((x) => x.key === key);
-        const info = this.store.lib(key) || {};
+    contextActions(key: string) {
+        const isRom = key.startsWith('rom:'), isLocal = key.startsWith('local:');
+        const info: any = this.store.lib(key) || {};
+        const entry = isRom || isLocal ? null : this.cat.entry(key);
+        const g: any = (isRom || isLocal ? this.localGames().find((x) => x.key === key) : (entry ? this.cat.slim(entry) : null)) || {};
+        const installed = Boolean(g.installed) || (!isRom && !isLocal && this.store.isInstalled(key));
+        const inLib = isRom || isLocal || this.store.isInstalled(key);
         const live = this.sessions.keys().includes(key);
-        const acts = [];
-        if (g?.installed) {
+        const hidden = this.cat.hidden.has(key);
+        const missing = inLib && !installed && Boolean(info.exe || info.dir);
+        const romLike = isRom || info.kind === 'rom' || g.kind === 'rom';
+        const pc = !romLike;
+        const m: any = this.hub.meta.get(key) || {};
+        const status = String(m.status || '');
+        const STATUS: [string, string][] = [['', 'Sem status'], ['plan', 'Planejo jogar'], ['playing', 'Jogando'], ['played', 'Jogado'], ['beaten', 'Zerado'], ['completed', 'Completado 100%'], ['on_hold', 'Em espera'], ['abandoned', 'Abandonado']];
+        const acts: any[] = [];
+        if (installed)
             acts.push({ id: live ? 'stop' : 'play', label: live ? 'Encerrar' : 'Jogar', icon: live ? 'x' : 'play', primary: true, danger: live });
-            acts.push({ id: 'open_folder', label: 'Abrir pasta', icon: 'folder' });
+        else if (missing)
+            acts.push({ id: 'relocate', label: romLike ? 'Apontar arquivo…' : 'Apontar pasta…', icon: 'folder', primary: true });
+        else if (!inLib && (g.direct || g.torrent || entry))
+            acts.push({ id: 'install', label: 'Baixar', icon: 'dl', primary: true });
+        if (installed && !live && pc)
+            acts.push({ id: 'play_opt', label: 'Jogar e…', icon: 'play', hint: 'fechar / bandeja' });
+        acts.push({ id: 'details', label: 'Detalhes', icon: 'info' });
+        acts.push({ sep: true });
+        acts.push({ id: 'fav', label: g.fav ? 'Tirar dos favoritos' : 'Favoritar', icon: 'star' });
+        if (inLib)
+            acts.push({ id: 'status', label: 'Status', icon: 'flag', sub: STATUS.map(([id, l]) => ({ id: 'status:' + id, label: l, icon: status === id ? 'check' : '' })) });
+        if (inLib)
+            acts.push({ id: 'mark_played', label: g.last_played > 0 ? 'Marcar como nunca jogado' : 'Marcar como jogado', icon: 'check' });
+        acts.push({ id: 'hide', label: hidden ? 'Mostrar na biblioteca' : 'Esconder da biblioteca', icon: 'eye' });
+        acts.push({ sep: true });
+        if (installed) {
+            if (info.dir || info.exe)
+                acts.push({ id: 'open_dir', label: 'Abrir pasta', icon: 'folder' });
+            if (info.exe && !String(info.exe).includes('://'))
+                acts.push({ id: 'open_select', label: 'Mostrar arquivo', icon: 'doc' });
+            if (pc)
+                acts.push({ id: 'saves', label: 'Saves', icon: 'save' });
+            if (pc)
+                acts.push({ id: 'mods', label: 'Mods', icon: 'wrench' });
+            if (pc && process.platform === 'win32')
+                acts.push({ id: 'shortcut', label: 'Atalho na área de trabalho', icon: 'ext' });
         }
-        acts.push({ id: 'cover_set', label: 'Trocar capa', icon: 'image' });
-        if (this.hub.covers.customPath(key))
-            acts.push({ id: 'cover_reset', label: 'Remover capa', icon: 'trash' });
-        acts.push({ id: 'edit', label: 'Editar', icon: 'edit' });
-        acts.push({ sep: true });
-        acts.push({ id: 'fav', label: g?.fav ? 'Tirar dos favoritos' : 'Favoritar', icon: 'star' });
-        acts.push({ id: 'hide', label: g?.hidden ? 'Mostrar na biblioteca' : 'Esconder', icon: 'eye' });
-        acts.push({ id: 'shortcut', label: 'Atalho na área de trabalho', icon: 'ext' });
-        if (String(info.exe || ''))
-            acts.push({ id: 'set_exe', label: 'Trocar executável', icon: 'doc' });
-        acts.push({ sep: true });
-        acts.push({ id: 'uninstall', label: 'Remover da biblioteca', icon: 'trash', danger: true });
+        if (romLike && installed)
+            acts.push({ id: 'emu', label: 'Emulador', icon: 'cog', sub: [{ id: 'play_with', label: 'Jogar com…', icon: 'play' }, { id: 'choose_emu', label: 'Trocar o emulador do console', icon: 'cog' }, { id: 'config_emu', label: 'Abrir o emulador', icon: 'ext' }, { id: 'open_emu_dir', label: 'Pasta do emulador', icon: 'folder' }] });
+        if (g.page_url || entry?.page_url)
+            acts.push({ id: 'page', label: 'Página do jogo', icon: 'ext' });
+        if (acts[acts.length - 1] && !acts[acts.length - 1].sep)
+            acts.push({ sep: true });
+        if (inLib) {
+            const ed: any[] = [{ id: 'edit', label: 'Editar…', icon: 'edit' }, { id: 'rename', label: 'Renomear', icon: 'edit' }, { id: 'cover', label: 'Trocar capa…', icon: 'image' }];
+            if (this.hub.covers.customPath(key))
+                ed.push({ id: 'cover_reset', label: 'Voltar à capa original', icon: 'trash' });
+            ed.push({ id: 'cover_web', label: 'Procurar capa na web', icon: 'search' });
+            ed.push({ id: 'metadata', label: 'Atualizar metadados', icon: 'refresh' });
+            if (pc && installed && isLocal)
+                ed.push({ id: 'choose_exe', label: 'Trocar executável…', icon: 'doc' });
+            if (installed && (info.dir || info.exe))
+                ed.push({ id: 'relocate', label: romLike ? 'Apontar outro arquivo…' : 'Apontar outra pasta…', icon: 'folder' });
+            ed.push({ id: 'edit_notes', label: 'Notas e nota pessoal', icon: 'edit' });
+            acts.push({ id: 'editsub', label: 'Editar', icon: 'edit', sub: ed });
+        }
+        else
+            acts.push({ id: 'cover', label: 'Trocar capa…', icon: 'image' });
+        acts.push({ id: 'copysub', label: 'Copiar', icon: 'copy', sub: [{ id: 'copy_name', label: 'Nome', icon: 'copy' }, ...(info.exe || info.dir ? [{ id: 'copy_path', label: 'Caminho no PC', icon: 'copy' }] : [])] });
+        if (inLib) {
+            acts.push({ sep: true });
+            acts.push({ id: 'uninstall', label: isRom || isLocal ? 'Remover da biblioteca' : (romLike ? 'Apagar ROM baixada' : 'Desinstalar'), icon: 'trash', danger: true });
+        }
         return acts;
     }
     activity: { text: string; since: number; busy: boolean } = { text: '', since: 0, busy: false };
@@ -327,6 +481,20 @@ class Backend {
     retryExtra(_name: string): any {
         return null;
     }
+    private tbLast = -2;
+    taskbarProgress(jobs: Record<string, any>) {
+        let v = -1;
+        if (this.store.config.taskbar_progress !== false) {
+            const fr = Object.values(jobs).map((j: any) => Number(j.fraction)).filter((f) => f >= 0 && f < 1);
+            if (fr.length)
+                v = fr.reduce((x, y) => x + y, 0) / fr.length;
+        }
+        const r = v < 0 ? -1 : Math.round(v * 100) / 100;
+        if (r === this.tbLast)
+            return;
+        this.tbLast = r;
+        this.windowHooks?.progress?.(r);
+    }
     activityPayload(jobs: Record<string, any>) {
         let a: any = { ...this.activity };
         const n = Object.keys(jobs).length;
@@ -338,6 +506,7 @@ class Backend {
         }
         a.jobs = n;
         a.sessions = this.sessions.keys().length;
+        this.taskbarProgress(jobs);
         return a;
     }
     statusPayload() {
@@ -519,6 +688,65 @@ class Backend {
         for (const k of list)
             patch[k] = JSON.parse(JSON.stringify(DEFAULT_CONFIG[k]));
         return this.setConfig(patch);
+    }
+    static ASSOC: [string, string, string][] = [['.lxtheme', 'LudrixHub.Theme', 'Tema do LudrixHub'], ['.lxup', 'LudrixHub.Update', 'Atualização do LudrixHub']];
+    assocExe(): string {
+        return process.platform === 'win32' && P.FROZEN ? path.join(P.ROOT, 'Ludrix.exe') : '';
+    }
+    assocCmd(): string {
+        const exe = this.assocExe();
+        return exe ? `"${exe}" "%1"` : '';
+    }
+    fileAssoc(): { supported: boolean; enabled: boolean } {
+        const cmd = this.assocCmd();
+        if (!cmd)
+            return { supported: false, enabled: false };
+        try {
+            const out = cp.execFileSync('reg', ['query', 'HKCU\\Software\\Classes\\LudrixHub.Theme\\shell\\open\\command', '/ve'], { windowsHide: true, timeout: 8000, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
+            const m = /REG_\w+\s+(.*)$/m.exec(out);
+            return { supported: true, enabled: Boolean(m && m[1].trim() === cmd) };
+        }
+        catch {
+            return { supported: true, enabled: false };
+        }
+    }
+    setFileAssoc(on: boolean) {
+        const cmd = this.assocCmd();
+        if (!cmd)
+            return { error: 'Só na versão instalada do Windows' };
+        const reg = (args: string[]) => cp.execFileSync('reg', args, { windowsHide: true, timeout: 8000, stdio: 'ignore' });
+        try {
+            for (const [ext, prog, desc] of Backend.ASSOC) {
+                const base = `HKCU\\Software\\Classes\\${prog}`;
+                if (on) {
+                    reg(['add', `HKCU\\Software\\Classes\\${ext}`, '/ve', '/t', 'REG_SZ', '/d', prog, '/f']);
+                    reg(['add', base, '/ve', '/t', 'REG_SZ', '/d', desc, '/f']);
+                    reg(['add', `${base}\\DefaultIcon`, '/ve', '/t', 'REG_SZ', '/d', `"${this.assocExe()}",0`, '/f']);
+                    reg(['add', `${base}\\shell\\open\\command`, '/ve', '/t', 'REG_SZ', '/d', cmd, '/f']);
+                }
+                else {
+                    try { reg(['delete', `HKCU\\Software\\Classes\\${ext}`, '/f']); } catch { /* já não existia */ }
+                    try { reg(['delete', base, '/f']); } catch { /* idem */ }
+                }
+            }
+            this.store.setConfig({ file_assoc: on, file_assoc_cmd: on ? cmd : '' });
+            return { ok: true, ...this.fileAssoc() };
+        }
+        catch (e: any) {
+            return { error: `Não consegui mexer no registro: ${e?.message || e}` };
+        }
+    }
+    fileAssocSync() {
+        try {
+            const c = this.store.config;
+            if (c.file_assoc === false || !this.assocCmd())
+                return;
+            if (c.file_assoc_cmd !== this.assocCmd() || !this.fileAssoc().enabled)
+                this.setFileAssoc(true);
+        }
+        catch (e) {
+            log.debug(`assoc sync: ${e}`);
+        }
     }
     autostartCmd() {
         if (process.platform === 'win32' && P.FROZEN)
@@ -933,6 +1161,30 @@ class Backend {
         catch (e: any) {
             log.warn('update check: %s', e?.message || e);
         }
+    }
+    /** Releitura periódica das fontes da Store (store_auto_refresh em horas; 0 desliga). Só roda sem jogo aberto e sem download ativo. */
+    sourcesLoop() {
+        const tick = async () => {
+            if (this.closing)
+                return;
+            let next = 600;
+            const hours = Number(this.store.config.store_auto_refresh ?? 12);
+            const st = this.repos.state;
+            const last = Number(st.__auto_at || 0);
+            const now = Math.floor(Date.now() / 1000);
+            if (hours > 0 && now - last >= hours * 3600 && !this.cat.state.loading && !this.sessions.keys().length && !this.jobs.all().length && this.repos.enabledProviders().length) {
+                if (await this.online(true)) {
+                    st.__auto_at = now;
+                    this.repos.saveState();
+                    log.info('fontes: releitura automática (%dh)', hours);
+                    this.cat.reload(true);
+                }
+                else
+                    next = 1800;
+            }
+            setTimeout(tick, next * 1000).unref?.();
+        };
+        setTimeout(tick, 150_000).unref?.();
     }
     autoUpdateLoop() {
         let waits = [60, 300, 900];
@@ -1589,6 +1841,69 @@ class Backend {
             log: fs.existsSync(P.LOG_FILE) ? fs.statSync(P.LOG_FILE).size : 0,
         };
     }
+    knownKeys(): Set<string> {
+        const keys = new Set<string>();
+        for (const e of this.cat.entries.values())
+            keys.add(e.key);
+        for (const k of Object.keys(this.store.library || {}))
+            keys.add(k);
+        try {
+            for (const r of this.emu.scanAll(false) as any[])
+                if (r?.key)
+                    keys.add(r.key);
+        }
+        catch { /* sem roms */ }
+        return keys;
+    }
+    imageGc(apply: boolean) {
+        const { safe } = require('./images');
+        const keys = this.knownKeys();
+        const want = new Set<string>();
+        for (const k of keys) {
+            want.add(safe('t:' + k));
+            want.add(safe('c:' + k));
+            want.add(safe('hb:' + k));
+            for (let i = 0; i < 16; i++)
+                want.add(safe(`s:${k}:${i}`));
+        }
+        const old = Date.now() - 30 * 86400_000;
+        let files = 0, bytes = 0;
+        const gone: string[] = [];
+        for (const d of [P.CACHE_THUMBS, P.CACHE_COVERS, P.CACHE_SHOTS]) {
+            if (!fs.existsSync(d))
+                continue;
+            for (const f of fs.readdirSync(d)) {
+                const stem = f.replace(/\.[a-z0-9]+$/i, '');
+                if (want.has(stem) || !/^[0-9a-f]{20}$/.test(stem))
+                    continue;
+                const full = path.join(d, f);
+                let st: fs.Stats;
+                try {
+                    st = fs.statSync(full);
+                }
+                catch {
+                    continue;
+                }
+                if (!st.isFile() || st.mtimeMs > old)
+                    continue;
+                files++;
+                bytes += st.size;
+                if (apply) {
+                    try {
+                        fs.rmSync(full, { force: true });
+                        gone.push(f);
+                    }
+                    catch { /* em uso */ }
+                }
+            }
+        }
+        if (apply) {
+            this.store.setConfig({ img_gc_at: util.now() });
+            if (gone.length)
+                log.info('limpeza de imagens: %d arquivo(s), %s', gone.length, util.humanSize(bytes));
+        }
+        return { files, bytes, applied: apply };
+    }
     clearCache(what: string[]) {
         what = what || [];
         const map: Record<string, string> = { web: P.CACHE_WEB, thumbs: P.CACHE_THUMBS, covers: P.CACHE_COVERS, meta: P.CACHE_META, downloads: P.DOWNLOADS };
@@ -1927,6 +2242,32 @@ class Backend {
     }
     /* -------------------------- backup completo -------------------------- */
     /** Empacota tudo (config, biblioteca, metadados, capas, temas) em um zip. */
+    autoBackupDir(): string {
+        return String(this.store.config.auto_backup_dir || '') || path.join(P.BACKUPS, 'auto');
+    }
+    autoBackup(force = false) {
+        const c = this.store.config;
+        if (!force && (c.auto_backup === false || util.now() - Number(c.auto_backup_at || 0) < 7 * 86400 || this.jobs.jobs.size))
+            return { skipped: true };
+        const dir = this.autoBackupDir();
+        try {
+            this.store.flush();
+            const r = backup.exportData(dir, VERSION);
+            const olds = fs.readdirSync(dir).filter((n) => /^Ludrix-dados-.*\.zip$/.test(n)).sort();
+            for (const f of olds.slice(0, Math.max(0, olds.length - 4)))
+                fs.rmSync(path.join(dir, f), { force: true });
+            this.store.setConfig({ auto_backup_at: util.now(), auto_backup_last: r.path });
+            log.info('backup automático: %s (%s)', r.path, util.humanSize(r.size));
+            return r;
+        }
+        catch (e: any) {
+            log.warn('backup automático: %s', e?.message || e);
+            if (force)
+                return { error: String(e?.message || e) };
+            this.notify('warn', 'Backup automático falhou', String(e?.message || e), 'auto_backup', 'settings:system');
+            return { error: String(e?.message || e) };
+        }
+    }
     async dataExport() {
         const dest = await dialogs.pickFolder(P.ROOT);
         if (!dest)
@@ -2486,8 +2827,39 @@ class Backend {
         else
             void this.discord.set(null);
     }
+    pausedByPlay = new Set<string>();
+    pauseForPlay() {
+        if (this.store.config.pause_downloads_playing === false)
+            return;
+        for (const [key, j] of this.jobs.jobs) {
+            if (j.last?.stage !== 'download' || j.pause)
+                continue;
+            this.pausedByPlay.add(key);
+            this.jobs.cancel(key, true);
+        }
+        if (this.pausedByPlay.size)
+            log.info('downloads pausados durante o jogo: %d', this.pausedByPlay.size);
+    }
+    async resumeAfterPlay() {
+        if (this.sessions.keys().length || !this.pausedByPlay.size)
+            return;
+        const keys = [...this.pausedByPlay];
+        this.pausedByPlay.clear();
+        for (const key of keys) {
+            try {
+                const r = await this.jobs.queueAction('retry', key);
+                if (r?.error)
+                    log.warn('retomar %s: %s', key, r.error);
+            }
+            catch (e) {
+                log.warn('retomar %s: %s', key, e);
+            }
+        }
+        log.info('downloads retomados após o jogo: %d', keys.length);
+    }
     async onGameStart(sess: any) {
         void this.presenceFor(sess);
+        this.pauseForPlay();
         if (sess.external) {
             this.push({ type: 'session_external', key: sess.key, title: sess.title });
             return;
@@ -2504,6 +2876,7 @@ class Backend {
     }
     async onGameEnd(sess: any, elapsed: number) {
         setTimeout(() => this.presenceAfterEnd(), 300);
+        setTimeout(() => void this.resumeAfterPlay(), 2500);
         if (!sess.external) {
             const info0 = this.store.lib(sess.key) || {};
             if (info0.post_cmd) {

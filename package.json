@@ -1,6 +1,6 @@
 {
   "name": "ludrix",
-  "version": "4.0.7",
+  "version": "4.0.8",
   "productName": "LudrixHub",
   "description": "LudrixHub - launcher de jogos portátil",
   "main": "dist/main/boot.js",
@@ -9,6 +9,7 @@
   "private": true,
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "check": "node tools/check.js",
     "start": "tsc -p tsconfig.json && electron .",
     "folder": "node tools/build.js folder",
     "release": "node tools/build.js all",

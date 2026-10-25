@@ -493,7 +493,7 @@ export class MetaHub {
             can_rename: key.startsWith('local:') || key.startsWith('rom:'), can_move: Boolean(Object.keys(info).length) && !isRom && !exe.includes('://'),
             developer: m.developer || '', publisher: m.publisher || '', year: String(m.year || d.year || ''),
             genres: [...(m.genres || d.genres || [])], summary: m.summary || d.description || '',
-            series: m.series || '', modes: m.modes || '', notes: m.notes || '', links: [...(m.links || [])],
+            series: m.series || '', modes: m.modes || '', notes: m.notes || '', links: [...(m.links || [])], tags: [...(m.tags || [])],
             status: m.status || '', score: Math.trunc(Number(m.score || 0)),
             auto_links: autoLinks,
             user: Object.keys(user).sort(), source: m.source || [], copied_from: m.copied_from || '',
@@ -575,6 +575,13 @@ export class MetaHub {
             if (typeof g === 'string')
                 g = g.split(/[,;/]/).map((x: string) => x.trim()).filter(Boolean);
             fields.genres = [...(g || [])].slice(0, 8);
+        }
+        if ('tags' in data) {
+            let t = data.tags;
+            if (typeof t === 'string')
+                t = t.split(/[,;]/);
+            const seen = new Set<string>();
+            fields.tags = [...(t || [])].map((x: any) => String(x).trim().slice(0, 24)).filter((x: string) => x && !seen.has(x.toLowerCase()) && seen.add(x.toLowerCase())).slice(0, 12);
         }
         if ('links' in data)
             fields.links = (data.links || []).filter((l: any) => String(l.url || '').trim())

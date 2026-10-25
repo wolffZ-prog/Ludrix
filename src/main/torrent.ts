@@ -33,6 +33,20 @@ async function loadWebTorrent() {
 }
 /* ------------------------------ cliente ------------------------------ */
 let QUIET = false;
+let HOLD = false;
+export function setHold(on: boolean) {
+    if (HOLD === Boolean(on))
+        return;
+    HOLD = Boolean(on);
+    const c = TorrentClient.instance;
+    if (c && c.client)
+        for (const t of c.client.torrents || []) {
+            try {
+                c.applyLimits(t);
+            }
+            catch { /* ignore */ }
+        }
+}
 export function setQuiet(on: boolean) {
     QUIET = Boolean(on);
     const c = TorrentClient.instance;
@@ -65,6 +79,10 @@ class TorrentClient {
         if (quiet) {
             down = Math.min(down || 512 * 1024, 512 * 1024);
             up = Math.min(up || 64 * 1024, 64 * 1024);
+        }
+        if (HOLD) {
+            down = 1024;
+            up = 1024;
         }
         return { down, up, quiet };
     }

@@ -53,10 +53,13 @@ export function extSystem(...names: string[]): string {
 const ARCHIVE_RE = /\.(7z|zip|rar|tar|chd|iso|bin|cue|z64|n64|v64|nds|gba|gb|gbc|sfc|smc|nes|md|gen|smd|gcm|rvz|wbfs|pbp|cso|xci|nsp|exe)(\.\d{3})?$/i;
 const IMAGE_RE = /\.(jpe?g|png|webp)$/i;
 
-export interface FileRef { name: string; url: string; size: number }
+export interface FileRef { name: string; url: string; size: number; sha256?: string }
 
-export function fileRef(name: string, url: string, size = 0): FileRef {
-    return { name, url, size: Number(size) || 0 };
+export function fileRef(name: string, url: string, size = 0, sha256 = ''): FileRef {
+    const r: FileRef = { name, url, size: Number(size) || 0 };
+    if (sha256)
+        r.sha256 = sha256;
+    return r;
 }
 
 export function basename(f: FileRef): string {
@@ -710,7 +713,7 @@ export class ManifestProvider extends Provider {
                 }));
                 continue;
             }
-            const files = (Array.isArray(g.files) ? g.files : []).filter((f: any) => f && typeof f === 'object' && typeof f.url === 'string').map((f: any) => fileRef(typeof f.name === 'string' && f.name.trim() ? f.name : String(f.url).split('/').pop()!.split('?')[0] || 'download', f.url, Math.max(0, sizeOf(f.size))));
+            const files = (Array.isArray(g.files) ? g.files : []).filter((f: any) => f && typeof f === 'object' && typeof f.url === 'string').map((f: any) => fileRef(typeof f.name === 'string' && f.name.trim() ? f.name : String(f.url).split('/').pop()!.split('?')[0] || 'download', f.url, Math.max(0, sizeOf(f.size)), typeof f.sha256 === 'string' && /^[0-9a-fA-F]{64}$/.test(f.sha256) ? f.sha256.toLowerCase() : ''));
             const patches = (Array.isArray(g.patches) ? g.patches : []).filter((x: any) => x && typeof x === 'object' && x.url).map((x: any) => ({
                 name: String(x.name || String(x.url || '').split('/').pop()), url: x.url, size: Number(x.size || 0), note: String(x.note || ''),
             }));
@@ -724,7 +727,7 @@ export class ManifestProvider extends Provider {
                 description: g.description || '', cover: g.cover || '', thumb: g.thumb || g.cover || '',
                 genres: g.genres || [], tags: g.tags || [], page_url: g.page_url || '',
                 magnet: typeof g.magnet === 'string' ? g.magnet : '', torrent_url: typeof g.torrent === 'string' ? g.torrent : '', files, files_loaded: true,
-                extra: { exe: g.exe || '', patches, hoster: String(g.host || ''), prefer: String(g.prefer || ''), hero: typeof g.hero === 'string' ? g.hero : '' },
+                extra: { exe: g.exe || '', patches, hoster: String(g.host || ''), prefer: String(g.prefer || ''), hero: typeof g.hero === 'string' ? g.hero : '', version: typeof g.version === 'string' || typeof g.version === 'number' ? String(g.version).trim() : '' },
             }));
         }
         return sortTitle(out);
@@ -1443,6 +1446,89 @@ export class RepoRegistry {
         return path.join(P.DATA, 'repos.json');
     }
 
+    get stateFile(): string {
+        return path.join(P.DATA, 'sources_state.json');
+    }
+
+    private state_: Record<string, any> | null = null;
+
+    get state(): Record<string, any> {
+        if (!this.state_) {
+            try {
+                this.state_ = JSON.parse(fs.readFileSync(this.stateFile, 'utf8'));
+            }
+            catch {
+                this.state_ = {};
+            }
+            if (!this.state_ || typeof this.state_ !== 'object')
+                this.state_ = {};
+        }
+        return this.state_!;
+    }
+
+    saveState() {
+        try {
+            fs.mkdirSync(P.DATA, { recursive: true });
+            fs.writeFileSync(this.stateFile, JSON.stringify(this.state), 'utf8');
+        }
+        catch (e) {
+            log.warn('sources_state: %s', e);
+        }
+    }
+
+    stateOf(id: string): any {
+        return this.state[id] || null;
+    }
+
+    /** Registra o resultado de uma leitura; devolve as chaves novas em relação à leitura anterior. */
+    touch(id: string, keys: string[], titles: Record<string, string>, fromSource: boolean): string[] {
+        const now = Math.floor(Date.now() / 1000);
+        const prev = this.state[id];
+        const seen = new Set<string>(prev?.keys || []);
+        const fresh = prev && prev.keys ? keys.filter((k) => !seen.has(k)) : [];
+        const oldNews: string[] = (prev?.news || []).filter((k: string) => keys.includes(k));
+        const news = [...new Set([...oldNews, ...fresh])].slice(0, 500);
+        const newsAt = fresh.length ? now : Number(prev?.news_at || 0);
+        const entry: any = {
+            checked_at: fromSource || !prev?.checked_at ? now : prev.checked_at,
+            count: keys.length,
+            keys: keys.slice(0, 20000),
+            news: newsAt && now - newsAt > 14 * 86400 ? [] : news,
+            news_at: newsAt,
+            news_titles: Object.fromEntries(news.slice(0, 500).map((k) => [k, titles[k] || prev?.news_titles?.[k] || ''])),
+        };
+        this.state[id] = entry;
+        return fresh;
+    }
+
+    clearNews(id?: string) {
+        for (const k of Object.keys(this.state)) {
+            if ((id && k !== id) || k.startsWith('__') || !this.state[k] || typeof this.state[k] !== 'object')
+                continue;
+            this.state[k].news = [];
+            this.state[k].news_titles = {};
+        }
+        this.saveState();
+    }
+
+    newsSet(): Set<string> {
+        const out = new Set<string>();
+        for (const [id, st] of Object.entries(this.state)) {
+            if (id.startsWith('__') || !st || typeof st !== 'object')
+                continue;
+            for (const k of st.news || [])
+                out.add(`${id}:${k}`);
+        }
+        return out;
+    }
+
+    forget(id: string) {
+        if (this.state[id]) {
+            delete this.state[id];
+            this.saveState();
+        }
+    }
+
     read(): any[] {
         if (!fs.existsSync(this.file))
             this.migrateLegacy();
@@ -1535,6 +1621,11 @@ export class RepoRegistry {
         const out: any[] = [];
         for (const c of this.read()) {
             const d: any = { ...c, enabled: !disabled.has(c.id) };
+            const st = this.state[c.id];
+            if (st) {
+                d.checked_at = Number(st.checked_at || 0);
+                d.new_count = (st.news || []).length;
+            }
             if (d.token) {
                 d.token = '';
                 d.token_set = true;
@@ -1593,6 +1684,7 @@ export class RepoRegistry {
 
     remove(repoId: string) {
         this.write(this.read().filter((r) => r.id !== repoId));
+        this.forget(repoId);
         this.reload();
     }
 
