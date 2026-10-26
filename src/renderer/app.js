@@ -293,7 +293,7 @@ function applyToolbar() {
   document.body.classList.remove('no-toolbar');
   for (const [id] of TOOLBAR_ITEMS) document.body.classList.toggle('tb-no-' + id, !items.has(id));
 }
-const NAV_ITEMS = [['home', 'Biblioteca', 'main'], ['store', 'Store', 'main'], ['emulation', 'Emuladores', 'main'], ['mods', 'Mods', 'tools'], ['central', 'Central', 'tools'], ['flash', 'Rápidos', 'tools'], ['downloads', 'Fila', 'sys']];
+const NAV_ITEMS = [['home', 'Biblioteca', 'main'], ['store', 'Store', 'main'], ['emulation', 'Emuladores', 'main'], ['mods', 'Mods', 'tools'], ['central', 'Central', 'tools'], ['flash', 'Rápidos', 'tools']];
 function navOrder() { const def = NAV_ITEMS.map(x => x[0]), o = (S.config.nav_order || []).filter(v => def.includes(v)); return o.concat(def.filter(v => !o.includes(v))); }
 let navDragV = '';
 function navDrag(e) { navDragV = e.currentTarget.dataset.v; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', navDragV); } catch (x) { } }
@@ -632,6 +632,7 @@ function enterFx() { const v = $('#view'); if (S._enter) { S._enter = false; v.c
 let tsvMemo = null;
 function topSearchVisible() { if (tsvMemo !== null) return tsvMemo; const el = document.querySelector('.top .search, .rail .search'); let v = false; if (el && el.offsetParent !== null) { const r = el.getBoundingClientRect(); v = r.width > 40 && r.height > 0; } tsvMemo = v; requestAnimationFrame(() => { tsvMemo = null; }); return v; }
 function renderView() {
+  qfabSync();
   closeCtx(); enterFx();
   const grid = ['home', 'store'].includes(S.view) && !(S.view === 'store' && S.tab.store === 'sources');
   parkTop(); $('#sort').style.display = grid ? '' : 'none';
@@ -751,6 +752,7 @@ async function newsSeen(id) { await api.post('/api/repos/seen', id ? { id } : {}
 function quickChips() { return `<div class="qchips">${QCHIPS.map(([id, l]) => `<button class="chip${qchipOn(id) ? ' on' : ''}" onclick="${!id || qchipOn(id) ? 'clearFlt()' : `flagOnly('${id}')`}">${l}</button>`).join('')}</div>`; }
 function renderLibrary() {
   requestAnimationFrame(fitChips);
+  qfabSync();
   renderChips();
   S._multiSrc = S.view === 'store' && new Set(S.games.filter(inStore).map(g => g.repo)).size > 1;
   const list = visible();
@@ -1068,6 +1070,20 @@ function msBar() {
 async function msFav() { const keys = [...S.sel]; const want = keys.some(k => !(S.byKey[k] || {}).fav); for (const k of keys) { const g = S.byKey[k]; if (g && !!g.fav !== want) await toggleFav(k); } toast('ok', want ? 'Adicionados aos favoritos' : 'Removidos dos favoritos', pl(keys.length, 'jogo', 'jogos')); }
 async function msPlayed() { const keys = [...S.sel].filter(k => /^(local|rom):/.test(k)); let n = 0; for (const k of keys) { const r = await api.post('/api/game/played', { key: k, played: true }); if (!r.error) n++; } msClear(); toast('ok', 'Marcados como jogados', pl(n, 'jogo', 'jogos')); loadCatalog(false); }
 async function msMeta() { const keys = [...S.sel]; msClear(); toast('', 'Atualizando metadados…', pl(keys.length, 'jogo', 'jogos')); let n = 0; for (const k of keys) { const m = await api.post('/api/metadata', { key: k, force: true }); if (!m.error) n++; } toast('ok', 'Metadados atualizados', `${n} de ${keys.length}`); loadCatalog(false); }
+const QFAB_C = 2 * Math.PI * 19;
+function qfabSync() {
+  const el = $('#qfab'); if (!el) return;
+  const jobs = Object.entries(S.jobs || {}).filter(([k]) => k !== 'update');
+  const show = jobs.length > 0 && S.view !== 'downloads';
+  el.classList.toggle('on', show);
+  if (!show) return;
+  const fr = jobs.map(([, j]) => j.fraction).filter(f => typeof f === 'number' && f >= 0);
+  const f = fr.length ? fr.reduce((a, b) => a + b, 0) / fr.length : -1;
+  el.classList.toggle('ind', f < 0);
+  const v = el.querySelector('.qr .v'); if (v) { v.style.strokeDasharray = QFAB_C; v.style.strokeDashoffset = f < 0 ? QFAB_C * .75 : QFAB_C * (1 - f); }
+  const n = el.querySelector('.qn'); if (n) n.textContent = jobs.length > 1 ? String(jobs.length) : '';
+  el.title = `${jobs.length === 1 ? '1 em andamento' : jobs.length + ' em andamento'}${f >= 0 ? ' · ' + Math.round(f * 100) + '%' : ''} — abrir Fila`;
+}
 function ringSvg(f) { const r = 24, c = 2 * Math.PI * r, off = f < 0 ? c * .75 : c * (1 - f); return `<div class="ring"><svg viewBox="0 0 56 56"><circle class="t" cx="28" cy="28" r="${r}"/><circle class="v" cx="28" cy="28" r="${r}" stroke-dasharray="${c}" stroke-dashoffset="${off}"/></svg><span>${f < 0 ? '…' : Math.round(f * 100) + '%'}</span></div>`; }
 const clock = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
 function cardSub(g) {
@@ -1367,7 +1383,7 @@ async function installNow(key, torrent, picked, where) {
   if (r.external) { toast('ok', 'Magnet enviado ao cliente de torrent', 'Quando terminar de baixar: Adicionar → Jogo de Windows (ou arraste o arquivo para Store).'); return; }
   if (r.free && r.need && r.free < r.need) toast('', 'Pouco espaço', `Livre: ${fmt(r.free)} · recomendado ~${fmt(r.need)}. A instalação continua mesmo assim.`);
   const wn = dlWindowNote(); if (wn) toast('warn', 'Na fila, esperando o horário', wn);
-  S.jobs[key] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on');
+  S.jobs[key] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; qfabSync();
   if (S.det && S.det.key === key) renderDetail(); pollSoon();
 }
 async function play(key, after, emulator, _unused, force) {
@@ -1912,8 +1928,8 @@ function chooseEmulator(key, opts, def, missing) {
     <label class="remember"><input type="checkbox" onchange="setCfg({emu_no_ask:this.checked})"> Nunca perguntar — usar sempre o padrão do console</label>` });
   setTimeout(() => gpFocusFirst('.askrow button'), 50);
 }
-async function updateEmu(id) { const r = await api.post('/api/emulator/update', { id }); if (r.error) return toast('err', 'Não foi possível atualizar', r.error); S.jobs['emu:' + id] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on'); renderEmulation(); pollSoon(); }
-async function installEmu(id) { const r = await api.post('/api/emulator/install', { id }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); S.jobs['emu:' + id] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on'); renderEmulation(); pollSoon(); }
+async function updateEmu(id) { const r = await api.post('/api/emulator/update', { id }); if (r.error) return toast('err', 'Não foi possível atualizar', r.error); S.jobs['emu:' + id] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; qfabSync(); renderEmulation(); pollSoon(); }
+async function installEmu(id) { const r = await api.post('/api/emulator/install', { id }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); S.jobs['emu:' + id] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; qfabSync(); renderEmulation(); pollSoon(); }
 async function addRomDir(sid) {
   const r = await api.post('/api/choose_folder', { what: 'rom_dir', system: sid });
   if (r.native) { if (r.folder) { toast('ok', 'Pasta adicionada', r.folder); renderEmulation(); loadCatalog(false); } return; }
@@ -2248,7 +2264,7 @@ async function poll() {
     applyPlaying();
     if (sb !== sa) { if (S.view === 'home') refreshHome(); else if (S.view === 'store') renderLibrary(); if (S.det) renderDetail(); applyPlaying(); renderRailX(); }
     const before = Object.keys(S.jobs).sort().join(); S.jobs = s.jobs || {}; const after = Object.keys(S.jobs).sort().join();
-    $('#dlDot').classList.toggle('on', after.length > 0);
+    qfabSync();
     for (const [k, j] of Object.entries(S.jobs)) {
       const c = document.querySelector(`.card[data-key="${CSS.escape(k)}"] .cov`);
       if (c) { const ring = c.querySelector('.ring'); const html = ringSvg(j.fraction); if (ring) ring.outerHTML = html; else c.insertAdjacentHTML('beforeend', html); }
@@ -2271,7 +2287,7 @@ function edMove() {
   $('#modal').classList.remove('on'); $('#modalBox').classList.remove('ged-box');
   setTimeout(() => modal({ title: 'Mover a pasta do jogo?', text: `${title}\n\nA pasta será copiada para dentro de:\n${dest}\n\nDepois de copiar tudo, a pasta original é apagada e a Biblioteca passa a usar o caminho novo. Se algo falhar no meio, nada muda.`, ok: 'Mover', cancel: 'Não fazer nada', onOk: async () => {
     const r = await api.post('/api/game/move', { key, dest }); if (r.error) { toast('err', 'Não foi possível mover', r.error); return false; }
-    S.jobs[key] = { stage: 'move', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on'); setView('downloads');
+    S.jobs[key] = { stage: 'move', fraction: 0, detail: 'Iniciando…' }; qfabSync(); setView('downloads');
   } }), 220);
 }
 async function exportSteam(user, keys) {
@@ -2402,7 +2418,7 @@ $('#modal').addEventListener('click', e => { if (e.target === $('#modal')) $('#m
     for (const x of roms) await addRom(x.path, x.system);
     for (const x of arcs) {
       await new Promise(res => modal({ title: x.name, text: x.system ? `Esse arquivo pode ser uma ROM de ${S.systems[x.system] || x.system} ou um jogo de PC compactado. O que é?` : 'Instalar como jogo de PC? O arquivo é extraído para a pasta de jogos e o jogo entra na biblioteca.', ok: x.system ? 'Jogo de PC' : 'Instalar', cancel: x.system ? `ROM de ${S.systems[x.system] || x.system}` : 'Cancelar', onClose: () => res(),
-        onOk: async () => { const a = await api.post('/api/local/install_file', { file: x.path }); if (a && a.error) toast('err', 'Não foi possível instalar', a.error); else if (a && a.ok !== false) { S.jobs[a.key] = { stage: 'extract', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on'); toast('ok', 'Instalando', `${a.title} — acompanhe em Downloads.`); pollSoon(); } },
+        onOk: async () => { const a = await api.post('/api/local/install_file', { file: x.path }); if (a && a.error) toast('err', 'Não foi possível instalar', a.error); else if (a && a.ok !== false) { S.jobs[a.key] = { stage: 'extract', fraction: 0, detail: 'Iniciando…' }; qfabSync(); toast('ok', 'Instalando', `${a.title} — acompanhe em Downloads.`); pollSoon(); } },
         onCancel: async () => { if (x.system) await addRom(x.path, x.system); } }));
     }
     for (const d of dirs) { SC.mode = d.mode; await scanRun(d.mode, d.path); }
@@ -2973,11 +2989,11 @@ async function stopGame(key, force) {
 }
 
 async function installFromFile() {
-  if (!S.config.native) { modal({ title: 'Instalar de arquivo', html: '<label class="ml">Caminho do arquivo (.zip/.7z/.rar/.iso)</label><input class="mi" id="ifPath"><label class="ml">Título (opcional)</label><input class="mi" id="ifTitle">', ok: 'Instalar', onOk: async () => { const r = await api.post('/api/local/install_file', { file: $('#ifPath').value.trim(), title: $('#ifTitle').value.trim() }); if (r.error) { toast('err', 'Não foi possível concluir', r.error); return false; } S.jobs[r.key] = { stage: 'extract', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on'); setView('downloads'); } }); return; }
+  if (!S.config.native) { modal({ title: 'Instalar de arquivo', html: '<label class="ml">Caminho do arquivo (.zip/.7z/.rar/.iso)</label><input class="mi" id="ifPath"><label class="ml">Título (opcional)</label><input class="mi" id="ifTitle">', ok: 'Instalar', onOk: async () => { const r = await api.post('/api/local/install_file', { file: $('#ifPath').value.trim(), title: $('#ifTitle').value.trim() }); if (r.error) { toast('err', 'Não foi possível concluir', r.error); return false; } S.jobs[r.key] = { stage: 'extract', fraction: 0, detail: 'Iniciando…' }; qfabSync(); setView('downloads'); } }); return; }
   const r = await api.post('/api/local/install_file', {});
   if (r.error) return toast('err', 'Não foi possível concluir', r.error);
   if (r.ok === false) return;
-  S.jobs[r.key] = { stage: 'extract', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on');
+  S.jobs[r.key] = { stage: 'extract', fraction: 0, detail: 'Iniciando…' }; qfabSync();
   toast('ok', 'Instalando', `${r.title} — acompanhe em Downloads.`); pollSoon();
 }
 function addGameMenu() {
@@ -3358,7 +3374,7 @@ function modInstallAsk(kind) {
 }
 async function modToggle(key, id, on) { const r = await api.post('/api/mods/game/toggle', { key, id, on }); if (r.error) toast('err', 'Não foi possível concluir', r.error); renderMyMods(); }
 function modRemove(key, id, name) { modal({ title: `Remover ${name}?`, text: 'Os arquivos do mod saem do jogo, os originais voltam e a cópia guardada é apagada.', ok: 'Remover', danger: true, onOk: async () => { await api.post('/api/mods/game/remove', { key, id }); renderMyMods(); } }); }
-async function installTool(id) { const r = await api.post('/api/tools/install', { id }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); S.jobs['tool:' + id] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on'); renderMods(); pollSoon(); }
+async function installTool(id) { const r = await api.post('/api/tools/install', { id }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); S.jobs['tool:' + id] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; qfabSync(); renderMods(); pollSoon(); }
 function removeTool(id, name) { modal({ title: `Remover ${name}?`, text: 'A pasta da ferramenta será apagada.', ok: 'Remover', danger: true, onOk: async () => { await api.post('/api/tools/remove', { id }); renderMods(); } }); }
 async function loadModsFor(key) {
   const r = await api.get('/api/mods/for/' + enc(key)); const el = $('#dMods'); if (!el || S.current !== key) return;
@@ -3714,7 +3730,7 @@ function guide() { }
 function guideDismiss() { }
 
 function hashStr(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
-async function installFlash(id) { const r = await api.post('/api/flash/install', { id }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); S.jobs['flash:' + id] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; $('#dlDot').classList.add('on'); renderFlash(); pollSoon(); }
+async function installFlash(id) { const r = await api.post('/api/flash/install', { id }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); S.jobs['flash:' + id] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; qfabSync(); renderFlash(); pollSoon(); }
 async function playFlash(id) {
   const g = (S.flash?.games || []).find(x => x.id === id); if (!g) return;
   if (g.type === 'web') { const r = await api.post('/api/flash/play_web', { id }); if (r.error) toast('err', 'Não foi possível abrir', r.error); else if (r.browser) toast('info', 'Aberto no navegador', g.title); return; }

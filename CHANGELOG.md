@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.0.13 — 2026-10-26
+- Versão completa: volta a existir `Ludrix-4.0.13.zip` para instalação nova (a última completa, 4.0.9, foi apagada pela limpeza de releases).
+- Ludrix-Dev: a limpeza nunca mais apaga a última release completa; se não houver uma completa no GitHub, a próxima publicação sai completa automaticamente; publicar correção rápida confere se a completa de referência ainda existe.
+
 ## 4.0.12 — 2026-10-26
 - Menu da bandeja: jogos recentes voltam a aparecer (inclui jogos instalados ou já jogados), título "Jogados recentemente" e sem quadrado vazio quando não há ícone.
 - Detalhes: botão Voltar alinhado com a capa, abaixo da faixa de controles.
@@ -8,7 +12,8 @@
 - Ajustes: espaçamento entre os botões de atualização e a lista de opções; primeira opção da lista com borda e cantos corretos.
 - Central: abre na hora. Detecção de dependências e launchers de Minecraft passa a ser assíncrona, em paralelo e com cache (a lista de desinstalação do Windows é lida uma vez, não centenas); "Re-checar" força nova leitura. Textos explicativos removidos; ficam só pacotes, dependências e Minecraft.
 - Início: estado vazio da busca redesenhado; aba Favoritos sem favoritos mostra mensagem própria.
-- Janela sem moldura: clique direito nas áreas de arrastar não abre mais o menu de sistema do Windows.
+- Janela sem moldura: clique direito nas áreas de arrastar não abre mais o menu de sistema do Windows (via evento da janela, sem mexer no estado dela).
+- Fila sai da barra lateral: vira um botão redondo flutuante no canto inferior direito, com anel de progresso e contador; aparece quando há download/instalação em andamento e some quando termina. Clique abre a Fila (também pelo menu do logo e pela bandeja).
 
 ## 4.0.11 — 2026-10-26
 

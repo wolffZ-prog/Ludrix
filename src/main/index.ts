@@ -130,14 +130,8 @@ function createWindow(url, recreate = false) {
         },
     });
     win.setMenuBarVisibility(false);
-    if (frameless && process.platform === 'win32') {
-        const w = win;
-        w.hookWindowMessage(0x0116, () => {
-            w.setEnabled(false);
-            w.setEnabled(true);
-            return 0;
-        });
-    }
+    if (frameless)
+        win.on('system-context-menu', (e) => { e.preventDefault(); });
     // links externos abrem no navegador, nunca dentro do launcher
     win.webContents.setWindowOpenHandler(({ url: target }) => {
         if (/^https?:/i.test(target))

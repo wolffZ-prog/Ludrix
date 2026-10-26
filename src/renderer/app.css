@@ -2308,3 +2308,17 @@ body.frameless[data-layout=top] .rail .wctl{margin:0 -14px 0 6px;align-self:stre
 body.frameless[data-layout=top] .rail .wctl button{height:100%}
 body.frameless .rail .brandrow,body.frameless header.top,body.frameless .h1,body.frameless .nowbar,body.frameless[data-layout=top] .rail{-webkit-app-region:drag}
 body.frameless :is(.rail .brandrow,header.top,.h1,.nowbar,[data-layout=top] .rail) :is(button,input,select,a,.chip,.dd,#sort,.brand,.rb,.search,.nbcov,.nbacts,h2,.qchips,.bell,.wctl){-webkit-app-region:no-drag}
+
+.qfab{position:fixed;right:18px;bottom:calc(26px + 16px);width:44px;height:44px;border-radius:50%;border:0;padding:0;background:var(--card);color:var(--text);box-shadow:0 0 0 1px var(--line),0 6px 18px rgba(0,0,0,.28);z-index:320;display:grid;place-items:center;cursor:pointer;opacity:0;transform:translateY(12px) scale(.85);pointer-events:none;transition:opacity .22s,transform .3s cubic-bezier(.2,.9,.3,1.2)}
+.qfab.on{opacity:1;transform:none;pointer-events:auto}
+.qfab:hover{background:color-mix(in srgb,var(--accent) 10%,var(--card))}
+.qfab .qr{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);fill:none}
+.qfab .qr .t{stroke:color-mix(in srgb,var(--text) 10%,transparent);stroke-width:2.5}
+.qfab .qr .v{stroke:var(--accent);stroke-width:2.5;stroke-linecap:round;transition:stroke-dashoffset .5s}
+.qfab.ind .qr{animation:qfabSpin 1.1s linear infinite}
+@keyframes qfabSpin{to{transform:rotate(270deg)}}
+.qfab .qi{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.qfab .qn{position:absolute;top:-3px;right:-3px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--accent);color:#fff;font:700 10px/16px var(--font-text);text-align:center}
+.qfab .qn:empty{display:none}
+body.rm .qfab,body.rm .qfab .qr .v{transition:none}body.rm .qfab.ind .qr{animation:none}
+body.frameless .qfab{bottom:calc(26px + 16px)}

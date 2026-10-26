@@ -37,10 +37,6 @@
       <button class="rb" data-view="central" title="Central Ludrix — otimizar antes de jogar, dependências e programas úteis"><svg viewBox="0 0 24 24"><path d="M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5" /></svg><span>Central</span></button>
       <button class="rb" data-view="flash" title="Jogos rápidos"><svg viewBox="0 0 24 24"><path d="M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11" /></svg><span>Rápidos</span></button>
     </div>
-    <i class="rsep"></i>
-    <div class="rg" data-g="sys">
-      <button class="rb" data-view="downloads" title="Fila de downloads"><svg viewBox="0 0 24 24"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg><span>Fila</span><i class="dot" id="dlDot"></i></button>
-    </div>
     <div class="sp"></div>
     <button class="rb" data-view="settings" title="Ajustes"><svg viewBox="0 0 24 24"><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg><span>Ajustes</span></button>
   </nav>
@@ -82,5 +78,6 @@
 <script src="/ui/settings.js"></script>
 <script src="/ui/gamepad.js"></script>
 <script src="/ui/sofa.js"></script>
+  <button class="qfab" id="qfab" title="Fila de downloads" onclick="setView('downloads')"><svg class="qr" viewBox="0 0 44 44"><circle class="t" cx="22" cy="22" r="19"/><circle class="v" cx="22" cy="22" r="19"/></svg><svg class="qi" viewBox="0 0 24 24"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" /><path d="M7 11l5 5l5 -5" /><path d="M12 4l0 12" /></svg><b class="qn"></b></button>
 </body>
 </html>

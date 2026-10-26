@@ -512,6 +512,9 @@ function cmdPublish() {
         const base = newestFull(v);
         if (!base)
             die('publish: hotfix sem versão completa anterior no feed — gere uma release completa (release: full em version.json)', 5);
+        const chk = cp.spawnSync(WIN ? 'gh.exe' : 'gh', ['release', 'view', `v${base}`, '--repo', FEED_REPO, '--json', 'tagName'], { stdio: 'ignore' });
+        if (chk.status !== 0)
+            die(`publish: a versão completa v${base} não existe mais no GitHub — publique uma release completa (node tools/build.js bump ${v} full)`, 5);
         notes = `> Correção rápida: só o patch. Quem já usa o Ludrix recebe em **Ajustes → Checar atualizações**.\n> Instalação nova: baixe \`Ludrix-${base}.zip\` em [v${base}](https://github.com/${FEED_REPO}/releases/tag/v${base}) e depois atualize por dentro.\n\n` + notes;
     }
     const notesFile = path.join(rel(), 'release-notes.md');
