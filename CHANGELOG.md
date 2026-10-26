@@ -1,5 +1,8 @@
 # Changelog
 
+## 4.0.14 — 2026-10-26
+- Mesmo conteúdo da 4.0.13 correção 1, com número novo: a 4.0.13 instalada ainda não sabia ler correções na mesma versão. A partir desta, correções rápidas podem repetir o número.
+
 ## 4.0.13-hf1 — 2026-10-26
 - Correção rápida pode repetir o número da versão: o Ludrix e o Ludrix-Dev entendem "4.0.13 correção 1" como mais nova que a 4.0.13. Release completa continua exigindo número novo.
 - Nota da release de correção rápida fala só da correção.

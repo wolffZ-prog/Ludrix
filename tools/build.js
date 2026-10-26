@@ -313,7 +313,7 @@ function srcEntries() {
 }
 async function cmdHotfix(base) {
     const v = vtag();
-    if (!/^\d+\.\d+\.\d+$/.test(base || ''))
+    if (!/^\d+\.\d+\.\d+(-hf\d+)?$/.test(base || ''))
         die('uso: build.js hotfix <versão publicada de base>  ex.: hotfix 4.0.9');
     if (!vlt(base, v))
         die(`hotfix: a base ${base} precisa ser mais antiga que ${v}`);
