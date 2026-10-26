@@ -107,6 +107,8 @@ const DEFAULT_CONFIG = {
     watch_dirs: true,
     file_assoc: true,
     file_assoc_cmd: '',
+    start_menu: true,
+    start_menu_cmd: '',
     keymap: {},
     auto_backup: true,
     auto_backup_dir: '',

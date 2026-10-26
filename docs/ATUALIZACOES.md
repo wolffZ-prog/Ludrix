@@ -17,6 +17,9 @@ Em **Ajustes → Sistema** dá pra checar na hora, apontar um endereço `https` 
 | `ludrix-<v>-patch.lxup` | só `app/` (código, interface, catálogos). Pequeno. Exige `min_version` 4.0.0. |
 | `ludrix-<v>-full.lxup` | `app/` + `runtime/` + executáveis. Quando o Electron muda — e na passagem do 3.0.x para o 4.0.0. |
 
+## Release completa e correção rápida
+`version.json` traz `"release": "full"` ou `"hotfix"`. A completa publica tudo (`Ludrix-<v>.zip`, patch, full, código, feed, AppImage). A correção rápida publica só `ludrix-<v>-patch.lxup`, `Ludrix-<v>-src.zip` e o feed: quem já usa o Ludrix recebe pelo atualizador; quem vai instalar do zero baixa o zip da última release completa (a nota da release aponta) e atualiza por dentro. O feed herda os pacotes anteriores, então um `full` antigo continua disponível para quem precisa dele antes do patch. O Ludrix-Dev nunca apaga a última release completa ao podar, e promove uma correção a completa se a versão do Electron no `package-lock.json` mudou desde a última completa publicada.
+
 ## Do 3.0.x para o 4.0.0
 O 3.0.x lê o mesmo feed, vê o `ludrix-4.0.0-full.lxup` e aplica com o atualizador antigo: remove `app/` e `runtime/` (Python), grava os novos, troca `Ludrix.exe` e `LudrixConsole.exe`. Na primeira abertura o 4.0.0 apaga `updater.exe` e os restos do Python; quando abre bem, apaga também o backup do motor antigo em `data/updates/backup/`. Versões seguintes chegam como patch normal.
 

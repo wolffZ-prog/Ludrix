@@ -12,7 +12,7 @@ npm start                        abre o Ludrix pelo código (desenvolvimento)
 | Comando | Saída |
 |---|---|
 | `check` | roda `tools/check.js` (abaixo), compila o TypeScript e confere json, changelog e executáveis nativos |
-| `bump X.Y.Z` | grava a versão em `version.json`, `package.json`, shim e recurso do exe |
+| `bump X.Y.Z [full\|hotfix]` | grava a versão em `version.json`, `package.json`, shim e recurso do exe; `hotfix` marca a versão como correção rápida (só patch + código + feed) |
 | `folder` | `release/<v>/Ludrix/` (app, runtime, Ludrix.exe, LudrixConsole.exe, pastas vazias) |
 | `zip` | `Ludrix-<v>.zip` |
 | `patch [min]` | `ludrix-<v>-patch.lxup` (só `app/`), assinado |
@@ -29,7 +29,7 @@ Cache de dependências de produção: `%LOCALAPPDATA%\Ludrix-Dev\cache` (ou `LUD
 
 ## Fluxo de uma versão
 1. `CHANGELOG.md`: seção `## X.Y.Z — data — Nome`.
-2. `node tools\build.js bump X.Y.Z`
+2. `node tools\build.js bump X.Y.Z` (ou `bump X.Y.Z hotfix` quando só o `app/` muda e não vale gerar zip e full)
 3. `build.bat all`
 4. `node tools\build.js publish` — ou, sem o `gh`: criar a release `vX.Y.Z` em *Releases → New* e anexar os arquivos de `release\X.Y.Z\`.
 

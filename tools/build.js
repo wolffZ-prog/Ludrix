@@ -32,6 +32,22 @@ const mod = (n) => {
     return require(f);
 };
 
+function releaseKind() {
+    const env = String(process.env.LUDRIX_RELEASE || '').toLowerCase();
+    if (env === 'full' || env === 'hotfix')
+        return env;
+    return vinfo().release === 'hotfix' ? 'hotfix' : 'full';
+}
+function newestFull(exclude) {
+    try {
+        const feed = JSON.parse(fs.readFileSync(path.join(rel(), 'ludrix-updates.json'), 'utf8'));
+        const fulls = (feed.all || []).filter((i) => i.kind === 'full' && i.version !== exclude).map((i) => i.version).sort((a, b) => vlt(a, b) ? 1 : -1);
+        return fulls[0] || '';
+    }
+    catch {
+        return '';
+    }
+}
 function changelogFor(v) {
     const p = path.join(ROOT, 'CHANGELOG.md');
     if (!fs.existsSync(p))
@@ -146,6 +162,8 @@ async function brandExe(exe, desc, orig) {
         rcedit = require(path.join(ROOT, 'node_modules', 'rcedit'));
     }
     catch {
+        if (process.platform === 'win32')
+            die('pacote rcedit ausente — rode npm install antes de gerar o exe');
         log('aviso: pacote rcedit ausente — ícone/versão do', path.basename(exe), 'ficam os do Electron');
         return;
     }
@@ -375,11 +393,14 @@ async function cmdFeed(base = FEED_BASE) {
     fs.writeFileSync(out, JSON.stringify({ latest, all: items }, null, 1));
     log('feed:', out, `(${items.length} pacote(s))`);
 }
-function cmdBump(v) {
+function cmdBump(v, kind) {
     if (!/^\d+\.\d+\.\d+$/.test(v))
         die('versão inválida: ' + v);
+    if (kind && kind !== 'full' && kind !== 'hotfix')
+        die('tipo inválido: ' + kind + ' (full | hotfix)');
     const info = vinfo();
     info.version = v;
+    info.release = kind || 'full';
     info.date = new Date().toISOString().slice(0, 10);
     fs.writeFileSync(VERSION_FILE, JSON.stringify(info, null, 2) + '\n');
     for (const f of ['package.json', path.join('tools', 'runtime-shim', 'package.json')]) {
@@ -391,7 +412,7 @@ function cmdBump(v) {
     const rc = path.join(ROOT, 'tools', 'native', 'launcher.rc');
     if (fs.existsSync(rc))
         fs.writeFileSync(rc, fs.readFileSync(rc, 'utf8').replace(/\d+,\d+,\d+,0/g, v.replace(/\./g, ',') + ',0').replace(/"\d+\.\d+\.\d+"/g, `"${v}"`));
-    log('versão:', v);
+    log('versão:', v, info.release === 'hotfix' ? '(correção rápida)' : '(completa)');
 }
 function cmdCheck() {
     cmdBuild();
@@ -433,10 +454,17 @@ function cmdPublish() {
     for (const f of files)
         if (/\.(lxup|zip)$/.test(f) && !/Ludrix-\d.*\.zip$/.test(path.basename(f)) && c.zipStatus(f) !== 'ok')
             die(`publish: ${path.basename(f)} não está assinado`, 4);
-    const notes = changelogFor(v) || `Ludrix ${v}`;
+    const hot = releaseKind() === 'hotfix';
+    let notes = changelogFor(v) || `Ludrix ${v}`;
+    if (hot) {
+        const base = newestFull(v);
+        if (!base)
+            die('publish: hotfix sem versão completa anterior no feed — gere uma release completa (release: full em version.json)', 5);
+        notes = `> Correção rápida: só o patch. Quem já usa o Ludrix recebe em **Ajustes → Checar atualizações**.\n> Instalação nova: baixe \`Ludrix-${base}.zip\` em [v${base}](https://github.com/${FEED_REPO}/releases/tag/v${base}) e depois atualize por dentro.\n\n` + notes;
+    }
     const notesFile = path.join(rel(), 'release-notes.md');
     fs.writeFileSync(notesFile, notes);
-    const r = cp.spawnSync(WIN ? 'gh.exe' : 'gh', ['release', 'create', `v${v}`, ...files, '--repo', FEED_REPO, '--title', `Ludrix ${v}`, '--notes-file', notesFile, '--latest'], { stdio: 'inherit' });
+    const r = cp.spawnSync(WIN ? 'gh.exe' : 'gh', ['release', 'create', `v${v}`, ...files, '--repo', FEED_REPO, '--title', `Ludrix ${v}` + (hot ? ' (correção)' : ''), '--notes-file', notesFile, '--latest'], { stdio: 'inherit' });
     try { fs.unlinkSync(notesFile); } catch { }
     if (r.error || r.status !== 0) {
         log('gh (GitHub CLI) falhou ou não existe' + (r.error ? ' (' + r.error.message + ')' : ' (código ' + r.status + ')') + '. Publique à mão:');
@@ -450,12 +478,19 @@ function cmdPublish() {
 }
 async function cmdAll(minVersion) {
     cmdCheck();
-    await cmdFolder();
-    await cmdZip();
+    const hot = releaseKind() === 'hotfix';
+    log('release:', hot ? 'correção rápida (patch + código + feed)' : 'completa (pasta, zip, patch, full, código, feed)');
+    if (!hot) {
+        await cmdFolder();
+        await cmdZip();
+    }
     await cmdPatch(minVersion);
-    await cmdFull();
+    if (!hot)
+        await cmdFull();
     await cmdSrc();
     await cmdFeed();
+    if (hot && !newestFull(version()))
+        die('hotfix: o feed anterior não tem nenhuma versão completa — publique uma release completa primeiro', 5);
     rmrf(path.join(OUT, 'stage'));
     rmrf(path.join(ROOT, 'dist'));
     log('tudo em', rel());
@@ -463,6 +498,7 @@ async function cmdAll(minVersion) {
 
 const HELP = `uso: node tools/build.js <comando>
   check            compila e valida json/changelog/binários
+  all              tudo; version.json "release": "hotfix" gera só patch + código + feed (LUDRIX_RELEASE=full força completa)
   app              monta release/stage/app (código + ui + node_modules de produção + integrity.json)
   runtime          monta release/stage/runtime (Electron renomeado + shim)
   folder           pasta Ludrix/ completa em release/<versão>/
@@ -472,7 +508,7 @@ const HELP = `uso: node tools/build.js <comando>
   src              Ludrix-<v>-src.zip
   feed [base]      ludrix-updates.json
   all [min]        tudo acima
-  bump X.Y.Z       troca a versão (version.json, package.json, shim, rc)
+  bump X.Y.Z [full|hotfix]  troca a versão (version.json, package.json, shim, rc); hotfix = só patch na release
   publish          gh release create com os arquivos de release/<versão>/`;
 
 (async () => {
@@ -489,7 +525,7 @@ const HELP = `uso: node tools/build.js <comando>
         case 'src': return cmdSrc();
         case 'feed': return cmdFeed(args[0]);
         case 'all': return cmdAll(args[0]);
-        case 'bump': return cmdBump(args[0]);
+        case 'bump': return cmdBump(args[0], args[1]);
         case 'publish': return cmdPublish();
         default: log(HELP); process.exit(cmd ? 2 : 0);
     }

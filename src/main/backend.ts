@@ -137,6 +137,7 @@ class Backend {
         setInterval(() => { try { require('./torrent').setHold?.(Boolean(this.dlHold())); } catch { /* sem torrent */ } }, 30_000);
         setTimeout(() => this.watchDirs(), 20_000);
         setTimeout(() => this.fileAssocSync(), 45_000);
+        setTimeout(() => this.startMenuSync(), 1500);
         if (this.store.schemaInfo?.newer)
             setTimeout(() => this.notify('warn', 'Dados de uma versão mais nova', `A pasta data foi gravada pelo Ludrix ${this.store.schemaInfo.app || '?'} (formato ${this.store.schemaInfo.version}). Esta versão lê o formato ${require('./store').Store.SCHEMA}. Atualize o Ludrix ou restaure um backup antes de mexer na biblioteca.`, 'schema_newer', 'updates'), 3000);
         setTimeout(() => this.autoBackup(false), 120_000);
@@ -746,6 +747,58 @@ class Backend {
         }
         catch (e) {
             log.debug(`assoc sync: ${e}`);
+        }
+    }
+    startMenuPath(): string {
+        const base = process.env.APPDATA || '';
+        return this.assocExe() && base ? path.join(base, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'LudrixHub.lnk') : '';
+    }
+    startMenu(): { supported: boolean; enabled: boolean } {
+        const lnk = this.startMenuPath();
+        if (!lnk)
+            return { supported: false, enabled: false };
+        try {
+            const d = electron.shell.readShortcutLink(lnk);
+            return { supported: true, enabled: d.target === this.assocExe() && d.appUserModelId === 'com.ludrix.hub' };
+        }
+        catch {
+            return { supported: true, enabled: false };
+        }
+    }
+    setStartMenu(on: boolean) {
+        const lnk = this.startMenuPath();
+        if (!lnk)
+            return { error: 'Só na versão instalada do Windows' };
+        try {
+            if (on) {
+                fs.mkdirSync(path.dirname(lnk), { recursive: true });
+                const exe = this.assocExe();
+                const ok = electron.shell.writeShortcutLink(lnk, 'create', { target: exe, cwd: P.ROOT, description: 'LudrixHub', icon: exe, iconIndex: 0, appUserModelId: 'com.ludrix.hub' });
+                if (!ok)
+                    return { error: 'O Windows não criou o atalho no Menu Iniciar' };
+            }
+            else if (fs.existsSync(lnk))
+                fs.rmSync(lnk, { force: true });
+            this.store.setConfig({ start_menu: on, start_menu_cmd: on ? this.assocExe() : '' });
+            return { ok: true, ...this.startMenu() };
+        }
+        catch (e: any) {
+            return { error: `Não consegui mexer no Menu Iniciar: ${e?.message || e}` };
+        }
+    }
+    startMenuSync() {
+        try {
+            const c = this.store.config;
+            if (c.start_menu === false || !this.startMenuPath())
+                return;
+            if (c.start_menu_cmd !== this.assocExe() || !this.startMenu().enabled) {
+                const r = this.setStartMenu(true);
+                if (r.error)
+                    this.notify('warn', 'Menu Iniciar', r.error, 'start_menu', 'settings');
+            }
+        }
+        catch (e) {
+            log.debug(`start menu sync: ${e}`);
         }
     }
     autostartCmd() {

@@ -286,7 +286,7 @@ function splashOff() {
 }
 splashStep('carregando interface', 18);
 setTimeout(splashOff, 6000);
-async function winCmd(cmd) { const r = await api.post('/api/window', { cmd }); if (r && r.max !== undefined) document.body.classList.toggle('maxed', !!r.max); }
+async function winCmd(cmd) { const r = await api.post('/api/window', { cmd }); winState(r); }
 const TOOLBAR_ITEMS = [['search', 'Campo de busca', 'pesquisa em tudo (atalho: /)'], ['cats', 'Categoria', 'lista suspensa com as categorias'], ['sort', 'Ordenação', 'A–Z, ano, tamanho, recentes'], ['bell', 'Notificações', 'histórico de avisos']];
 function applyToolbar() {
   const items = new Set(S.config.toolbar_items || ['search', 'cats', 'sort', 'bell']);
@@ -392,14 +392,17 @@ function applyChrome() {
   document.body.dataset.status = S.config.status_position === 'top' ? 'top' : 'bottom';
   const lay = themeLay(); delete document.body.dataset.layout; document.body.dataset.nav = lay === 'bottom' ? 'bottom' : 'side';
   if (lay === 'top' || lay === 'rail') document.body.dataset.layout = lay;
-  const qb = $('#qbox'), sp = lay === 'side' ? 'rail' : 'top'; if (qb) { const host = sp === 'titlebar' ? $('#titlebar') : sp === 'rail' ? $('#rail') : $('#brandBtn').parentElement; if (qb.parentElement !== host) { if (sp === 'titlebar') $('#tbStatus').after(qb); else if (sp === 'rail') $('#rail .brandrow').after(qb); else $('#brandBtn').after(qb); } document.body.dataset.search = sp; } document.body.dataset.navLabels = '1'; const tv = $('#tbVer'); if (tv) tv.textContent = S.config.version || '';
-  const b = $('#brand'); if (b && !b.innerHTML) b.innerHTML = logoSvg(); const t = $('#tbBrand'); if (t && !t.innerHTML) { t.innerHTML = logoSvg(); t.onclick = e => { e.stopPropagation(); const r = t.getBoundingClientRect(); if ($('#ctx').classList.contains('on')) return closeCtx(); appMenu(r.left, r.bottom + 6); }; } const hb = $('#brandBtn'); if (hb && !hb.innerHTML) { hb.innerHTML = logoSvg() + '<svg class="car" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>'; hb.onclick = e => { e.stopPropagation(); const r = hb.getBoundingClientRect(); if ($('#ctx').classList.contains('on')) return closeCtx(); appMenu(r.left, r.bottom + 6); }; }
+  const qb = $('#qbox'), sp = lay === 'side' ? 'rail' : 'top'; if (qb) { const host = sp === 'rail' ? $('#rail') : $('#brandBtn').parentElement; if (qb.parentElement !== host) { if (sp === 'rail') $('#rail .brandrow').after(qb); else $('#brandBtn').after(qb); } document.body.dataset.search = sp; } document.body.dataset.navLabels = '1';
+  placeWctl(lay);
+  const b = $('#brand'); if (b && !b.innerHTML) b.innerHTML = logoSvg(); const hb = $('#brandBtn'); if (hb && !hb.innerHTML) { hb.innerHTML = logoSvg() + '<svg class="car" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>'; hb.onclick = e => { e.stopPropagation(); const r = hb.getBoundingClientRect(); if ($('#ctx').classList.contains('on')) return closeCtx(); appMenu(r.left, r.bottom + 6); }; }
   if (b) { b.onclick = e => { e.stopPropagation(); const r = b.getBoundingClientRect(); if ($('#ctx').classList.contains('on')) return closeCtx(); appMenu(r.right + 6, r.top); }; b.style.cursor = 'pointer'; b.title = 'Menu do Ludrix'; }
 }
 let rzOn = false; document.querySelectorAll('.rz').forEach(el => el.addEventListener('mousedown', e => { if (e.button !== 0) return; e.preventDefault(); rzOn = true; api.post('/api/window', { cmd: 'resize', dir: el.dataset.rz }); }));
 const rzEnd = () => { if (!rzOn) return; rzOn = false; api.post('/api/window', { cmd: 'resize_end' }); };
 window.addEventListener('mouseup', rzEnd, true); window.addEventListener('blur', rzEnd); document.addEventListener('visibilitychange', rzEnd); window.addEventListener('pointerup', rzEnd, true); window.addEventListener('mousemove', e => { if (rzOn && !(e.buttons & 1)) rzEnd(); }, true);
-$('#titlebar').addEventListener('dblclick', e => { if (!e.target.closest('button')) winCmd('maximize'); });
+function placeWctl(lay) { const w = $('#wctl'); if (!w) return; const host = lay === 'top' ? $('#rail') : document.body; if (!host) return; if (w.parentElement !== host) host.appendChild(w); w.classList.toggle('float', host === document.body); }
+function winState(ev) { if (ev && ev.max !== undefined) document.body.classList.toggle('maxed', !!ev.max); }
+api.post('/api/window', { cmd: 'state' }).then(winState).catch(() => { });
 let ONLINE = true;
 window.addEventListener('online', () => setOnline(true)); window.addEventListener('offline', () => setOnline(false));
 function setOnline(v) { if (v === ONLINE) return; ONLINE = v; document.body.classList.toggle('offline', !v); if (S.view === 'store') renderView(); if (!v) toast('', 'Sem internet', 'Baixar jogos, capas e emuladores fica indisponível até reconectar.'); }
@@ -627,7 +630,7 @@ function setView(v) {
 }
 function enterFx() { const v = $('#view'); if (S._enter) { S._enter = false; v.classList.add('enter'); clearTimeout(S._enterT); S._enterT = setTimeout(() => v.classList.remove('enter'), 700); } }
 let tsvMemo = null;
-function topSearchVisible() { if (tsvMemo !== null) return tsvMemo; const el = document.querySelector('.top .search, .titlebar .search, .rail .search'); let v = false; if (el && el.offsetParent !== null) { const r = el.getBoundingClientRect(); v = r.width > 40 && r.height > 0; } tsvMemo = v; requestAnimationFrame(() => { tsvMemo = null; }); return v; }
+function topSearchVisible() { if (tsvMemo !== null) return tsvMemo; const el = document.querySelector('.top .search, .rail .search'); let v = false; if (el && el.offsetParent !== null) { const r = el.getBoundingClientRect(); v = r.width > 40 && r.height > 0; } tsvMemo = v; requestAnimationFrame(() => { tsvMemo = null; }); return v; }
 function renderView() {
   closeCtx(); enterFx();
   const grid = ['home', 'store'].includes(S.view) && !(S.view === 'store' && S.tab.store === 'sources');
@@ -2108,7 +2111,6 @@ function customHtml(k) {
 
   </div>
   <div class="sec"><h3>Janela e barra de tarefas</h3>
-    ${S.config.os === 'windows' ? `<div class="frow"><div class="l"><b>Barra de título</b><span>Vale com "Janela sem moldura do Windows" ligada (Aparência)</span></div>${seg('window.titlebar', [['normal', 'Normal'], ['compact', 'Compacta'], ['tall', 'Alta']], win.titlebar || 'normal')}</div>` : ''}
     <div class="frow"><div class="l"><b>Barra de tarefas interna</b><span>Busca, categorias, ordenação e sino</span></div>${seg('window.toolbar_style', [['auto', 'Do tema'], ['flat', 'Lisa'], ['outlined', 'Contornada'], ['filled', 'Preenchida']], win.toolbar_style || 'auto')}</div>
   </div>
   <div class="sec"><h3>Cartões de jogo</h3>
@@ -2126,6 +2128,7 @@ function autoScale() { const r = Math.min(window.innerWidth / 1500, window.inner
 function applyScale() { const s = (S.config.ui_scale || autoScale()) * (document.body.classList.contains('sofa') ? (S.config.sofa_zoom || 1.15) : 1); document.documentElement.style.setProperty('--scale', s); document.documentElement.style.fontSize = ((13 + (S.config.text_size || 0)) * s) + 'px'; document.body.classList.toggle('compact', (S.config.density || 'normal') === 'compact'); document.body.classList.toggle('noglass', S.config.glass === false); }
 let rzT = 0; window.addEventListener('resize', () => { if (S.config.ui_scale) return; cancelAnimationFrame(rzT); rzT = requestAnimationFrame(() => { const s = autoScale(); if (String(s) !== document.documentElement.style.getPropertyValue('--scale')) applyScale(); }); });
 async function setCfg(patch) { const r = await api.post('/api/config', patch); if (r && !r.error) { S.config = r; api.emit('config', patch); if ('language' in patch) { location.reload(); return r; } applyTheme(); applyAnim(); applyScale(); if ('rail_icons' in patch) applyRailIcons(); if ('cursor' in patch) if ('game_backdrop' in patch || 'accent_from_cover' in patch || 'cover_slideshow' in patch || 'cover_slideshow_secs' in patch) gameFocus(S._focusKey || S.stageKey || null); if ('frame_mode' in patch || 'frame_corners' in patch) { frameLast = ''; applyFrame(); } if ('nav_hide_playing' in patch) applyPlaying(); if ('nav_hidden' in patch || 'nav_order' in patch) applyNavItems(); if ('nav_layout' in patch) { applyChrome(); renderView(); } if ('watch_dirs' in patch) api.post('/api/dirs/watch', {}); if ('card_hover' in patch || 'reduce_motion' in patch || 'detail_art' in patch || 'high_contrast' in patch || 'settings_adv' in patch) applyMotion(); if ('clock' in patch) applyClock(); if ('group_by' in patch && ['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'settings') renderSettings(); if (['home', 'store'].includes(S.view) && ('card_size' in patch || 'face' in patch || 'theme' in patch || 'home_spot' in patch || 'home_rows' in patch || 'view_mode' in patch)) renderLibrary(); if ('toolbar' in patch || patch.toolbar_items) { applyToolbar(); if (['home', 'store'].includes(S.view)) renderLibrary(); } } }
+async function setStartMenu(on) { const r = await api.post('/api/start_menu', { on }); if (r.error) { if (/versão instalada/.test(r.error)) { await setCfg({ start_menu: on }); return; } return toast('err', 'Menu Iniciar', r.error); } S.config.start_menu = on; renderSettings(true); toast('ok', on ? 'LudrixHub aparece no Menu Iniciar e na barra de tarefas com nome e ícone próprios' : 'Atalho do Menu Iniciar removido'); }
 async function setFileAssoc(on) { const r = await api.post('/api/file_assoc', { on }); if (r.error) { if (/versão instalada/.test(r.error)) { await setCfg({ file_assoc: on }); return; } return toast('err', 'Associação de arquivos', r.error); } S.config.file_assoc = on; renderSettings(true); toast('ok', on ? 'Arquivos .lxtheme e .lxup abrem no Ludrix' : 'Associação removida'); }
 async function setAutostart(on) { const r = await api.post('/api/autostart', { on }); if (r.error) return toast('err', r.error); S.config.autostart = !!r.enabled; renderSettings(); toast('ok', r.enabled ? 'O Ludrix vai abrir com o Windows' : 'Não abre mais com o Windows'); }
 async function chooseFolder() { const r = await api.post('/api/choose_folder', { what: 'games' }); if (r.native) { if (r.folder) { await loadCatalog(false); renderSettings(); scanRun('windows', r.folder); } return; } modal({ title: 'Pasta dos jogos', text: 'Digite o caminho completo (modo navegador não tem diálogo nativo).', input: S.config.games_dir || '', ok: 'Salvar', onOk: v => setCfg({ games_dir: v }) }); }
@@ -2333,6 +2336,7 @@ async function handleEvent(ev) {
       const yr = c.querySelector('.info span'); if (yr) yr.textContent = g.year || '';
     });
     if (S.det && S.det.key === ev.key && !S.det.meta) { const d = await api.get('/api/game/' + enc(ev.key)); if (S.current === ev.key) { S.det = d; renderDetail(); } }
+  } else if (ev.type === 'win') { winState(ev);
   } else if (ev.type === 'sys_accent') { S.sysAccent = ev.hex || ''; if ((S.config.accent_mode || 'theme') === 'system') applyAccent();
   } else if (ev.type === 'notify') {
     loadNotifs();
@@ -3062,7 +3066,7 @@ document.addEventListener('contextmenu', e => {
   const repo = e.target.closest('[data-repo]'); if (repo) { e.preventDefault(); return repoMenu(repo.dataset.repo, e.clientX, e.clientY); }
   const rb = e.target.closest('.rb'); if (rb) { e.preventDefault(); return viewMenu(rb.dataset.view, e.clientX, e.clientY); }
   const tc = e.target.closest('.theme[data-theme]'); if (tc) { e.preventDefault(); return themeMenu(tc.dataset.theme, e.clientX, e.clientY); }
-  if (e.target.closest('#rail,#titlebar,#brandBtn')) { e.preventDefault(); return appMenu(e.clientX, e.clientY); }
+  if (e.target.closest('#rail,#brandBtn')) { e.preventDefault(); return appMenu(e.clientX, e.clientY); }
   if (e.target.closest('#detail')) { e.preventDefault(); if (S.det) return ctxMenu(S.det.key, e.clientX, e.clientY); return; }
   if (e.target.closest('#view,.top')) { e.preventDefault(); return viewMenu(S.view, e.clientX, e.clientY); }
 });
@@ -3504,7 +3508,7 @@ function flashMenu(id, x, y) {
 }
 let ctxNative = false, ctxMouse = { x: -99, y: -99 };
 document.addEventListener('mousedown', e => { ctxMouse = { x: e.clientX, y: e.clientY }; }, true);
-['#qbox', '#tbBrand', '.tb-btns'].forEach(sel => { const el = document.querySelector(sel); if (el) el.addEventListener('mousedown', e => e.stopPropagation()); });
+['#qbox', '#wctl'].forEach(sel => { const el = document.querySelector(sel); if (el) el.addEventListener('mousedown', e => e.stopPropagation()); });
 document.addEventListener('contextmenu', e => { ctxMouse = { x: e.clientX, y: e.clientY }; }, true);
 function ctxMode() { return S.config.ctx_menu || S.themeMenu || 'windows'; }
 function ctxNativeOk() { return !!(S.config.native && S.config.frameless && ctxMode() === 'windows' && !GP.active && !ctxNative && window.screenX !== undefined); }

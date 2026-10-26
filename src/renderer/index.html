@@ -18,16 +18,11 @@
 <div class="fx" id="fx" aria-hidden="true"></div>
 
 <div id="app">
-  <div class="titlebar pywebview-drag-region" id="titlebar">
-    <div class="tb-brand" id="tbBrand"></div>
-    <span class="tb-title">LudrixHub</span><span class="tb-ver" id="tbVer"></span>
-    <span class="tb-status" id="tbStatus"></span>
-    <span class="sp"></span>
-    <div class="tb-btns">
-      <button title="Minimizar" onclick="winCmd('minimize')"><svg viewBox="0 0 10 10"><path d="M1 5h8"/></svg></button>
-      <button title="Maximizar / restaurar" onclick="winCmd('maximize')"><svg viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" rx="1"/></svg></button>
-      <button class="x" title="Fechar" onclick="winCmd('close')"><svg viewBox="0 0 10 10"><path d="M2 2l6 6M8 2l-6 6"/></svg></button>
-    </div>
+  <div class="tbrow"></div>
+  <div class="wctl" id="wctl">
+    <button title="Minimizar" onclick="winCmd('minimize')"><svg viewBox="0 0 10 10"><path d="M1 5h8"/></svg></button>
+    <button id="wmax" title="Maximizar" onclick="winCmd('maximize')"><svg class="m" viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" rx="1"/></svg><svg class="r" viewBox="0 0 10 10"><path d="M3 3V1.5h5.5V7H7"/><rect x="1.5" y="3" width="5.5" height="5.5" rx="1"/></svg></button>
+    <button class="x" title="Fechar" onclick="winCmd('close')"><svg viewBox="0 0 10 10"><path d="M2 2l6 6M8 2l-6 6"/></svg></button>
   </div>
   <nav class="rail glass" id="rail" data-ctx="nav" aria-label="Navegação principal">
     <div class="brandrow"><div class="brand" title="LudrixHub" id="brand"></div><b class="bname">LudrixHub</b></div>

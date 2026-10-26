@@ -153,6 +153,8 @@ function createWindow(url, recreate = false) {
         if (backend)
             win?.setTitle(`Ludrix ${backend.publicConfig().version || ''}`.trim());
     });
+    for (const ev of ['maximize', 'unmaximize'] as const)
+        win.on(ev, () => backend?.push({ type: 'win', max: ev === 'maximize' }));
     win.on('close', (e) => {
         if (allowClose)
             return;

@@ -46,6 +46,7 @@ async function renderSettings(fresh) {
       <select class="mi" style="width:auto;min-width:200px" onchange="setCfg({language:this.value})">${[['pt-BR', 'Português (Brasil)'], ['en', 'English']].map(([v, l]) => `<option value="${v}" ${(c.language || 'pt-BR') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>`]),
     janela_geral: () => sec('janela_geral', 'Abrir e fechar', [`
     <div class="frow"><div class="l"><b>Abrir com o ${OSN()}</b><span>Inicia junto com o sistema, recolhido na bandeja</span></div><button class="sw ${c.autostart ? 'on' : ''}" onclick="setAutostart(!S.config.autostart)"></button></div>
+    ${c.os === 'windows' ? `<div class="frow"><div class="l"><b>Atalho no Menu Iniciar</b><span>Registra o LudrixHub no Windows: nome e ícone certos na barra de tarefas e nas notificações. Só na sua conta</span></div><button class="sw ${c.start_menu !== false ? 'on' : ''}" onclick="setStartMenu(${c.start_menu === false})"></button></div>` : ''}
     ${c.os === 'windows' ? `<div class="frow"><div class="l"><b>Abrir .lxtheme e .lxup com o Ludrix</b><span>Duplo clique num tema ou numa atualização baixada já importa. Só mexe no registro do seu usuário</span></div><button class="sw ${c.file_assoc !== false ? 'on' : ''}" onclick="setFileAssoc(${c.file_assoc === false})"></button></div>` : ''}
     ${sw('notify_hidden', 'Avisar pela bandeja com a janela escondida', 'Balão do Windows quando um download ou emulador termina e o Ludrix está recolhido')}
     ${sw('tray_enabled', 'Ícone na bandeja', 'Mantém o launcher acessível ao lado do relógio quando recolhido. Botão direito no ícone: jogar um dos últimos jogos, ir direto a uma tela, ver a fila, verificar atualizações ou sair. Desligado, ele apenas minimiza para a barra de tarefas')}
@@ -234,7 +235,7 @@ function toggleAdv() {
   });
 }
 const TAB_KEYS = {
-  general: ['file_assoc', 'notify_hidden', 'tray_enabled', 'tray_sleep', 'close_action', 'hotkey_enabled', 'popups', 'notify_sound', 'ui_sounds', 'ui_sounds_level', 'keymap'],
+  general: ['start_menu', 'file_assoc', 'notify_hidden', 'tray_enabled', 'tray_sleep', 'close_action', 'hotkey_enabled', 'popups', 'notify_sound', 'ui_sounds', 'ui_sounds_level', 'keymap'],
   appearance: ['accent_from_cover', 'gamepad', 'sofa_zoom', 'theme', 'theme_mode', 'face', 'accent', 'theme_schedule', 'theme_light_from', 'theme_light_to', 'frameless', 'frame_mode', 'frame_corners', 'status_position', 'nav_layout', 'clock', 'ctx_menu', 'layout', 'nav', 'nav_hidden', 'nav_order', 'rail_icons', 'toolbar', 'toolbar_items', 'ui_scale', 'text_size', 'card_size', 'density', 'acrylic', 'animations', 'fx_type', 'fx_intensity', 'glass', 'card_hover', 'reduce_motion', 'parallax', 'high_contrast'],
   library: ['home_spot', 'fav_first', 'home_rows', 'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'cover_slideshow', 'cover_slideshow_secs', 'view_mode', 'group_by', 'card_ribbons', 'card_origin', 'card_playtime', 'detail_art', 'auto_metadata', 'web_covers', 'auto_rename'],
   play: ['discord_enabled', 'after_launch', 'launch_splash', 'pause_downloads_playing', 'nav_hide_playing', 'save_auto_backup', 'emu_no_ask', 'gamepad_enabled', 'gamepad_speed', 'gamepad_wake'],

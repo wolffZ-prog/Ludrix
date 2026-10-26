@@ -402,6 +402,8 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, be.resetConfig(b?.keys || []));
     if (p === '/api/file_assoc')
         return sendJson(res, 'on' in b ? be.setFileAssoc(Boolean(b.on)) : be.fileAssoc());
+    if (p === '/api/start_menu')
+        return sendJson(res, 'on' in b ? be.setStartMenu(Boolean(b.on)) : be.startMenu());
     if (p === '/api/autostart')
         return sendJson(res, be.setAutostart(b?.on));
     // ---- biblioteca ----
@@ -598,6 +600,8 @@ async function windowCmd(b, getWindow, be) {
         case 'maximize':
         case 'max':
             return { ok: true, ...(be.windowHooks?.maximize?.() || {}) };
+        case 'state':
+            return { ok: true, max: win.isMaximized(), fs: win.isFullScreen() };
         case 'fullscreen':
             win.setFullScreen(b.on === undefined ? !win.isFullScreen() : Boolean(b.on));
             return { ok: true, fs: win.isFullScreen() };

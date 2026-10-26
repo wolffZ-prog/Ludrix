@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.0.9 — 2026-10-25
+
+- Janela: a barra de título própria sumiu. Com a janela sem moldura, só os três botões (minimizar, maximizar/restaurar, fechar) ficam no canto; eles seguem o layout do tema — na barra do topo quando o menu é no alto, flutuando sobre o canto nos demais. A janela arrasta pela faixa da marca, pelo cabeçalho do jogo e pelo título da tela. O botão do meio mostra o ícone de restaurar quando a janela está maximizada (e acompanha quando se maximiza pelo Windows).
+- Marca: um só "LudrixHub" com o ícone alinhado ao texto em todos os layouts e temas (antes o ícone podia ficar colado ou desalinhado, e aparecia duas vezes com a barra de título).
+- Windows: atalho `LudrixHub` no Menu Iniciar com o identificador do aplicativo (Ajustes › Geral › "Atalho no Menu Iniciar", ligado por padrão). Com ele a barra de tarefas e as notificações mostram "LudrixHub" e o ícone certo em vez de "Electron". Desligar apaga o atalho.
+- Compilação: no Windows, gerar o exe sem o pacote `rcedit` agora é erro (antes seguia em silêncio e o exe ficava com nome e ícone do Electron).
+- Atualizações: `version.json` passa a ter `release` (`full` ou `hotfix`). Uma correção rápida publica só o patch, o código e o feed; a release completa continua com zip, full e AppImage. A nota da release de correção aponta o zip da última completa para quem instala do zero. Ludrix-Dev: mostra o tipo antes de lançar, promove para completa se o Electron mudou, e nunca poda a última release completa. A Action do AppImage não roda em correções.
+- Temas XP (pacote `Ludrix-Temas-XP`): Luna Prata, Oliva, Energia, Royale Noir e Bliss refeitos em edição 2026 — superfícies planas, cantos arredondados, sombras suaves, sem relevo nem degradê; paleta e layout de cada um mantidos.
+- Tema personalizado: a opção de altura da barra de título foi retirada (não há mais barra).
+
 ## 4.0.8 — 2026-10-25
 
 - Fontes vivas: o Ludrix relê as fontes da Store sozinho, em segundo plano (Ajustes › Store › "Reler as fontes sozinho": nunca, 6 h, 12 h ou uma vez por dia; padrão 12 h). Só roda sem jogo aberto, sem download em andamento e com internet; o primeiro ciclo espera 2 minutos e meio depois de abrir. O botão Atualizar da Store zera a contagem.

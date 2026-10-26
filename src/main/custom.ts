@@ -22,7 +22,7 @@ export const DEFAULT: any = {
     gradient: { preset: 'off', shape: 'mesh', c1: '#6d28d9', c2: '#0ea5e9', angle: 160, opacity: 55 },
     fx: { mode: 'theme', icons: [], count: 10, speed: 1.0, size: 56, opacity: 45, direction: 'up', pixel: false, spin: true },
     nav: { style: 'auto', shape: 'pill', icon_size: 0, gap: 0 },
-    window: { titlebar: 'normal', toolbar_style: 'auto' },
+    window: { toolbar_style: 'auto' },
     cards: { shape: 'poster', labels: 'below', shadow: true },
     splash: '', icon: '',
 };
@@ -199,7 +199,7 @@ export class CustomUX {
         nav.icon_size = Math.trunc(clamp(nav.icon_size, 0, 34, 0));
         nav.gap = Math.trunc(clamp(nav.gap, 0, 16, 0));
         const win = n.window;
-        win.titlebar = ['normal', 'compact', 'tall'].includes(win.titlebar) ? win.titlebar : 'normal';
+        delete win.titlebar;
         win.toolbar_style = ['auto', 'flat', 'outlined', 'filled'].includes(win.toolbar_style) ? win.toolbar_style : 'auto';
         const cards = n.cards;
         cards.shape = ['poster', 'square', 'wide', 'tall'].includes(cards.shape) ? cards.shape : 'poster';
@@ -408,10 +408,6 @@ export class CustomUX {
         if (nav.gap)
             out.push(`.rail{gap:${nav.gap}px}body[data-nav=bottom] .rail{gap:${nav.gap}px}`);
         const win = c.window;
-        if (win.titlebar === 'compact')
-            out.push('body.frameless{--tb:28px}.titlebar{font-size:11px}.titlebar .wb{width:34px}');
-        else if (win.titlebar === 'tall')
-            out.push('body.frameless{--tb:44px}');
         if (win.toolbar_style === 'flat')
             out.push('.top{background:transparent;border-bottom:0;box-shadow:none}.search input,.chip,.bell{background:transparent;border-color:transparent}');
         else if (win.toolbar_style === 'outlined')
