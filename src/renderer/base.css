@@ -251,6 +251,8 @@ html body.bs[data-face] .frow>.btn,html body.bs[data-face] .frow>.sw{flex:none}
 html body.bs[data-face] .frow>p{margin:0}
 html body.bs[data-face] .sec>.frow+:not(.frow):not(.adv){margin-top:12px}
 html body.bs[data-face] .sec>:not(h3):not(p):not(.frow):not(.adv):not(.sub){margin:0}
+html body.bs[data-face] .sec>.updcard{margin:0 0 12px}
+html body.bs[data-face] .sec>.updbtns{margin:0 0 14px}
 html body.bs[data-face] .sec>.cache,html body.bs[data-face] .sec>.themes,html body.bs[data-face] .sec>.thlist,html body.bs[data-face] .sec>.hw,html body.bs[data-face] .sec>.tabsort,html body.bs[data-face] .sec>.mchk,html body.bs[data-face] .sec>.dirs,html body.bs[data-face] .sec>.radio{padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
 html body.bs[data-face] .setwrap .settings .adv{margin:0;padding:0;border:0;border-radius:0;background:transparent}
 html body.bs[data-face] .setwrap .settings .frow+.adv .frow:first-of-type,html body.bs[data-face] .setwrap .settings .adv .frow:first-of-type{border-top-width:0;border-top-left-radius:0;border-top-right-radius:0}

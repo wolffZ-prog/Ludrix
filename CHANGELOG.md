@@ -1,5 +1,8 @@
 # Changelog
 
+## 4.0.14-hf1 — 2026-10-26
+- Ajustes › Atualizações: botões com espaço entre o cartão de versão e a lista de opções.
+
 ## 4.0.14 — 2026-10-26
 - Mesmo conteúdo da 4.0.13 correção 1, com número novo: a 4.0.13 instalada ainda não sabia ler correções na mesma versão. A partir desta, correções rápidas podem repetir o número.
 
