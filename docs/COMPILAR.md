@@ -12,6 +12,7 @@ npm start                        abre o Ludrix pelo código (desenvolvimento)
 | Comando | Saída |
 |---|---|
 | `check` | roda `tools/check.js` (abaixo), compila o TypeScript e confere json, changelog e executáveis nativos |
+| `hotfix <base>` | `Ludrix-<v>-hotfix.zip`: só os arquivos que mudaram desde a versão `<base>` publicada no GitHub (+ `hotfix.json` com a lista e o que remover). O Ludrix-Dev aplica sobre o código que já tem |
 | `bump X.Y.Z [full\|hotfix]` | grava a versão em `version.json`, `package.json`, shim e recurso do exe; `hotfix` marca a versão como correção rápida (só patch + código + feed) |
 | `folder` | `release/<v>/Ludrix/` (app, runtime, Ludrix.exe, LudrixConsole.exe, pastas vazias) |
 | `zip` | `Ludrix-<v>.zip` |

@@ -295,6 +295,58 @@ async function cmdZip() {
     log('zip:', out, `(${Math.round(fs.statSync(out).size / 1024)} KB)`);
     return out;
 }
+function srcEntries() {
+    const z = new ZipOut('');
+    const skip = (p, e) => !(e.isDirectory() && ['node_modules', 'dist', 'release', 'build-cache', '.git'].includes(e.name));
+    for (const d of ['src', 'tools', 'docs'])
+        if (fs.existsSync(path.join(ROOT, d)))
+            z.tree(path.join(ROOT, d), d, skip);
+    for (const f of ['package.json', 'package-lock.json', 'tsconfig.json', 'version.json', 'electron-builder.yml', 'build.bat', 'README.md', 'README.en.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md', 'LICENSE', '.gitignore'])
+        if (fs.existsSync(path.join(ROOT, f)))
+            z.file(f, path.join(ROOT, f));
+    return z.items;
+}
+async function cmdHotfix(base) {
+    const v = version();
+    if (!/^\d+\.\d+\.\d+$/.test(base || ''))
+        die('uso: build.js hotfix <versão publicada de base>  ex.: hotfix 4.0.9');
+    if (!vlt(base, v))
+        die(`hotfix: a base ${base} precisa ser mais antiga que ${v}`);
+    const url = `https://github.com/${FEED_REPO}/releases/download/v${base}/Ludrix-${base}-src.zip`;
+    log('base:', url);
+    const r = await fetch(url, { headers: { 'User-Agent': 'ludrix-build' }, signal: AbortSignal.timeout(120000) });
+    if (!r.ok)
+        die(`hotfix: não achei o código da ${base} no GitHub (HTTP ${r.status})`);
+    const old = new (AdmZip())(Buffer.from(await r.arrayBuffer()));
+    const was = new Map();
+    for (const e of old.getEntries())
+        if (!e.isDirectory && e.entryName.startsWith('Ludrix-src/'))
+            was.set(e.entryName.slice('Ludrix-src/'.length), crypto.createHash('sha256').update(e.getData()).digest('hex'));
+    const now = srcEntries();
+    const z = new ZipOut(path.join(rel(), `Ludrix-${v}-hotfix.zip`));
+    const changed = [], removed = [];
+    for (const [n, it] of now) {
+        const h = crypto.createHash('sha256').update(fs.readFileSync(it.src)).digest('hex');
+        if (was.get(n) !== h) {
+            changed.push(n);
+            z.file(`Ludrix-src/${n}`, it.src);
+        }
+    }
+    for (const n of was.keys())
+        if (!now.has(n) && !/^(src\/main\/assets\/bin\/|tools\/native\/)/.test(n))
+            removed.push(n);
+    if (!changed.length)
+        die('hotfix: nada mudou em relação à ' + base);
+    z.data('Ludrix-src/hotfix.json', JSON.stringify({ version: v, base, date: new Date().toISOString().slice(0, 10), changed, remove: removed }, null, 1));
+    fs.mkdirSync(rel(), { recursive: true });
+    await z.write(seedOrDie(false));
+    log('hotfix:', z.out, `(${Math.round(fs.statSync(z.out).size / 1024)} KB, ${changed.length} arquivo(s)` + (removed.length ? `, ${removed.length} a remover` : '') + ')');
+    for (const n of changed)
+        log('   +', n);
+    for (const n of removed)
+        log('   -', n);
+    return z.out;
+}
 async function cmdSrc() {
     const v = version();
     const out = path.join(rel(), `Ludrix-${v}-src.zip`);
@@ -498,6 +550,7 @@ async function cmdAll(minVersion) {
 
 const HELP = `uso: node tools/build.js <comando>
   check            compila e valida json/changelog/binários
+  hotfix <base>    Ludrix-<v>-hotfix.zip: só os arquivos que mudaram desde a versão <base> publicada (para o Ludrix-Dev aplicar sobre o código)
   all              tudo; version.json "release": "hotfix" gera só patch + código + feed (LUDRIX_RELEASE=full força completa)
   app              monta release/stage/app (código + ui + node_modules de produção + integrity.json)
   runtime          monta release/stage/runtime (Electron renomeado + shim)
@@ -523,6 +576,7 @@ const HELP = `uso: node tools/build.js <comando>
         case 'patch': return cmdPatch(args[0]);
         case 'full': return cmdFull();
         case 'src': return cmdSrc();
+        case 'hotfix': return cmdHotfix(args[0]);
         case 'feed': return cmdFeed(args[0]);
         case 'all': return cmdAll(args[0]);
         case 'bump': return cmdBump(args[0], args[1]);

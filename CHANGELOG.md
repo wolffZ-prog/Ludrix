@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.0.10 — 2026-10-26
+
+- Marca: o ícone ficava mais alto que o texto "LudrixHub" (herdava uma margem de baixo de uma regra antiga). Ícone e nome agora ficam centrados na mesma linha, e o nome alinha com os itens do menu.
+- Botões da janela (sem moldura): ficavam grudados no canto da janela e metade caía fora do cabeçalho do jogo, por causa da margem e da barra de rolagem. Agora se posicionam pela borda direita do conteúdo — alinhados com o cabeçalho do jogo e com os botões da tela — em janela ou maximizado, em qualquer tamanho; recalculam ao redimensionar.
+- Temas com menu embaixo ou só ícones: a barra de busca não perde mais largura por causa dos botões da janela.
+- Desenvolvimento: `build.js hotfix <base>` gera `Ludrix-<v>-hotfix.zip` só com o que mudou desde a versão publicada; o Ludrix-Dev aplica sobre o código que já tem (opção 1), sem baixar o código inteiro.
+
 ## 4.0.9 — 2026-10-25
 
 - Janela: a barra de título própria sumiu. Com a janela sem moldura, só os três botões (minimizar, maximizar/restaurar, fechar) ficam no canto; eles seguem o layout do tema — na barra do topo quando o menu é no alto, flutuando sobre o canto nos demais. A janela arrasta pela faixa da marca, pelo cabeçalho do jogo e pelo título da tela. O botão do meio mostra o ícone de restaurar quando a janela está maximizada (e acompanha quando se maximiza pelo Windows).

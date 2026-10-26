@@ -400,7 +400,9 @@ function applyChrome() {
 let rzOn = false; document.querySelectorAll('.rz').forEach(el => el.addEventListener('mousedown', e => { if (e.button !== 0) return; e.preventDefault(); rzOn = true; api.post('/api/window', { cmd: 'resize', dir: el.dataset.rz }); }));
 const rzEnd = () => { if (!rzOn) return; rzOn = false; api.post('/api/window', { cmd: 'resize_end' }); };
 window.addEventListener('mouseup', rzEnd, true); window.addEventListener('blur', rzEnd); document.addEventListener('visibilitychange', rzEnd); window.addEventListener('pointerup', rzEnd, true); window.addEventListener('mousemove', e => { if (rzOn && !(e.buttons & 1)) rzEnd(); }, true);
-function placeWctl(lay) { const w = $('#wctl'); if (!w) return; const host = lay === 'top' ? $('#rail') : document.body; if (!host) return; if (w.parentElement !== host) host.appendChild(w); w.classList.toggle('float', host === document.body); }
+function placeWctl(lay) { const w = $('#wctl'); if (!w) return; const host = lay === 'top' ? $('#rail') : document.body; if (!host) return; if (w.parentElement !== host) host.appendChild(w); const fl = host === document.body; w.classList.toggle('float', fl); if (fl) wctlFit(); else w.removeAttribute('style'); }
+function wctlFit() { const w = $('#wctl'), v = $('#view'); if (!w || !v || !w.classList.contains('float')) return; const r = v.getBoundingClientRect(), cs = getComputedStyle(v); w.style.right = Math.max(0, Math.round(window.innerWidth - (r.left + v.clientWidth) + parseFloat(cs.paddingRight))) + 'px'; w.style.top = Math.max(0, Math.round(r.top + parseFloat(cs.paddingTop))) + 'px'; }
+window.addEventListener('resize', () => wctlFit());
 function winState(ev) { if (ev && ev.max !== undefined) document.body.classList.toggle('maxed', !!ev.max); }
 api.post('/api/window', { cmd: 'state' }).then(winState).catch(() => { });
 let ONLINE = true;
