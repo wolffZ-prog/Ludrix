@@ -2303,7 +2303,7 @@ async function exportLibrary(fmt, keys) {
 async function handleEvent(ev) {
   if (ev.type === 'flash_cover') { if (S.view === 'flash') { const c = document.querySelector(`.fcard[data-fid="${CSS.escape(ev.id)}"] .fart`); if (c && !c.querySelector('img')) c.insertAdjacentHTML('afterbegin', `<img src="/flash/cover/${esc(ev.id)}?t=${Date.now()}" onload="this.classList.add('ld')" onerror="this.remove()">`); } return; }
   if (ev.type === 'theme_reload') { if (ev.theme) S.config.theme = ev.theme; reloadTheme(true); if (S.view === 'settings') renderSettings(true); return; }
-  if (ev.type === 'update_available') { toast('info', 'Tem atualização nova', 'Versão ' + ev.version + ' — veja em Ajustes › Sistema › Atualizações', [{ label: 'Abrir', fn: () => { setView('settings'); S.tab.settings = 'system'; S._settingsJump = 'Atualizações'; renderSettings(true); } }]); return; }
+  if (ev.type === 'update_available') { toast('info', 'Tem atualização nova', 'Versão ' + ev.version + (ev.rev ? ' (correção ' + ev.rev + ')' : '') + ' — veja em Ajustes › Sistema › Atualizações', [{ label: 'Abrir', fn: () => { setView('settings'); S.tab.settings = 'system'; S._settingsJump = 'Atualizações'; renderSettings(true); } }]); return; }
   if (ev.type === 'done') {
     if (ev.kind === 'update') { toast('ok', 'Atualização baixada', 'Pronta para aplicar', [{ label: 'Ver', fn: () => { setView('settings'); S.tab.settings = 'system'; S._settingsJump = 'Atualizações'; renderSettings(true); } }]); S.upd = null; if (S.view === 'settings' && S.tab.settings === 'system') loadUpdates(false); return; }
     if (ev.kind === 'emulator') { toast('ok', 'Emulador instalado', ev.title); if (S.view === 'emulation') renderEmulation(); return; }

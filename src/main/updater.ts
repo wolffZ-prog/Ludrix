@@ -290,7 +290,7 @@ export function notesFor(m: any, fromVer: string) {
     const parts: string[] = [];
     for (const sec of m.changelog_all || []) {
         const v = sec.version;
-        if ((vcmp(fromVer, v) < 0 && vcmp(v, m.version) <= 0) || (m.restore && vcmp(v, m.version) === 0)) {
+        if ((vcmp(fromVer, v) < 0 && vcmp(v, m.version) <= 0) || (vcmp(v, m.version) === 0 && Number(m.rev || 0) > 0) || (m.restore && vcmp(v, m.version) === 0)) {
             const head = `${sec.version}` + (sec.title ? `  -  ${sec.title}` : '') + (sec.date ? `  (${sec.date})` : '');
             parts.push('## ' + head + '\n' + String(sec.text || '').trim());
         }
@@ -467,6 +467,7 @@ export class Apply {
             cur = {};
         }
         cur.version = ver;
+        cur.rev = Number(m.rev || 0) || undefined;
         cur.date = m.date || '';
         cur.channel = m.channel || cur.channel || 'stable';
         fs.mkdirSync(path.dirname(vf), { recursive: true });

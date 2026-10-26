@@ -5,5 +5,6 @@
   "name": "LudrixHub",
   "changelog": "",
   "patch_min": "4.0.1",
-  "release": "full"
+  "release": "hotfix",
+  "rev": 1
 }

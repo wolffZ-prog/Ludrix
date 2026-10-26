@@ -19,6 +19,9 @@ export function parseVersion(v: any): number[] {
     return nums;
 }
 const gt = (a: any, b: any) => vcmp(a, b) > 0;
+const revOf = (m: any) => Number((m && m.rev) || 0);
+export const newer = (m: any, cur: any) => vcmp(m.version, cur.version) > 0 || (vcmp(m.version, cur.version) === 0 && revOf(m) > revOf(cur));
+export const vlabel = (m: any) => String((m && m.version) || '') + (revOf(m) ? ` (correção ${revOf(m)})` : '');
 
 export function currentVersion(): any {
     try {
@@ -87,7 +90,8 @@ export class UpdateManager {
     }
 
     async check(online = true) {
-        const cur = currentVersion().version;
+        const curInfo = currentVersion();
+        const cur = curInfo.version;
         this.state.error = '';
         this.state.text = 'Procurando…';
         let best: any = null;
@@ -103,7 +107,7 @@ export class UpdateManager {
                     log.info('ignorando %s: %s', n, e?.message || e);
                     continue;
                 }
-                if (gt(m.version, cur) && this.applies(m) && (!best || gt(m.version, best.version)))
+                if (newer(m, curInfo) && this.applies(m) && (!best || newer(m, best)))
                     best = m;
             }
         }
@@ -127,13 +131,13 @@ export class UpdateManager {
                 for (const it of [data.latest || {}, ...(Array.isArray(data.all) ? data.all : [])]) {
                     if (!it || typeof it !== 'object' || !it.url)
                         continue;
-                    if (vcmp(it.version, cur) <= 0 || (pick && vcmp(it.version, pick.version) <= 0))
+                    if (!newer(it, curInfo) || (pick && !newer(it, pick)))
                         continue;
                     if (it.min_version && gt(it.min_version, cur) && it.kind !== 'full')
                         continue;
                     pick = it;
                 }
-                if (pick && (!best || gt(pick.version, best.version)))
+                if (pick && (!best || newer(pick, best)))
                     this.remote = pick;
             }
             catch (e: any) {
@@ -150,7 +154,7 @@ export class UpdateManager {
         const rem = this.remote;
         if (!rem)
             return { error: 'Nenhuma atualização remota' };
-        const dest = path.join(P.UPDATES, `ludrix-${rem.version}-${rem.kind || 'patch'}.lxup`);
+        const dest = path.join(P.UPDATES, `ludrix-${rem.version}${revOf(rem) ? '-hf' + revOf(rem) : ''}-${rem.kind || 'patch'}.lxup`);
         const tmp = dest.replace(/\.lxup$/, '.part');
         this.state.busy = true;
         this.state.text = 'Baixando atualização…';
@@ -227,9 +231,9 @@ export class UpdateManager {
         catch (e: any) {
             return { error: String(e?.message || e) };
         }
-        const cur = currentVersion().version;
-        if (vcmp(m.version, cur) <= 0)
-            return { error: `Esse pacote é da versão ${m.version} — você já está na ${cur}` };
+        const curInfo = currentVersion();
+        if (!newer(m, curInfo))
+            return { error: `Esse pacote é da versão ${vlabel(m)} — você já está na ${vlabel(curInfo)}` };
         if (!this.applies(m))
             return { error: `Esse patch precisa da versão ${m.min_version} instalada antes` };
         fs.mkdirSync(P.UPDATES, { recursive: true });
@@ -272,11 +276,12 @@ export class UpdateManager {
             const msg = String(e?.message || e);
             return { error: /zip inválido|diretório central/i.test(msg) ? 'O arquivo está danificado' : msg };
         }
-        const cur = currentVersion().version || '';
-        const same = vcmp(m.version, cur) === 0;
+        const curInfo = currentVersion();
+        const cur = curInfo.version || '';
+        const same = vcmp(m.version, cur) === 0 && revOf(m) === revOf(curInfo);
         if (same && !allowSame)
-            return { error: `Essa já é a versão instalada (${cur})` };
-        return { ok: true, version: m.version, current: cur, same, newer: gt(m.version, cur), changelog: m.changelog || '', path: p };
+            return { error: `Essa já é a versão instalada (${vlabel(curInfo)})` };
+        return { ok: true, version: m.version, rev: revOf(m), current: cur, same, newer: newer(m, curInfo), changelog: m.changelog || '', path: p };
     }
 
     apply(relaunch = true, restore: string | null = null) {

@@ -680,7 +680,7 @@ async function handleFileArg(file) {
             if (r.error)
                 electron.dialog.showErrorBox('Atualização recusada', String(r.error));
             else
-                backend.push({ type: 'update_available', version: r.available?.version });
+                backend.push({ type: 'update_available', version: r.available?.version, rev: Number(r.available?.rev || 0) });
         }
         else if (ext === '.lxtheme') {
             const themes = await import('./themes');

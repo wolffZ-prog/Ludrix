@@ -1,8 +1,11 @@
 # Changelog
 
+## 4.0.13-hf1 — 2026-10-26
+- Correção rápida pode repetir o número da versão: o Ludrix e o Ludrix-Dev entendem "4.0.13 correção 1" como mais nova que a 4.0.13. Release completa continua exigindo número novo.
+- Nota da release de correção rápida fala só da correção.
+
 ## 4.0.13 — 2026-10-26
-- Versão completa: volta a existir `Ludrix-4.0.13.zip` para instalação nova (a última completa, 4.0.9, foi apagada pela limpeza de releases).
-- Ludrix-Dev: a limpeza nunca mais apaga a última release completa; se não houver uma completa no GitHub, a próxima publicação sai completa automaticamente; publicar correção rápida confere se a completa de referência ainda existe.
+- Nota da release de correção rápida fala só da correção; a linha de instalação nova fica para as releases completas.
 
 ## 4.0.12 — 2026-10-26
 - Menu da bandeja: jogos recentes voltam a aparecer (inclui jogos instalados ou já jogados), título "Jogados recentemente" e sem quadrado vazio quando não há ícone.

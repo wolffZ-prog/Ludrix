@@ -1205,10 +1205,11 @@ class Backend {
             const front = require('./server2').frontFor(this);
             const up = front.updates;
             await up.check(true);
-            const v = (up.available || up.remote || {}).version;
+            const m = up.available || up.remote || {};
+            const v = m.version ? String(m.version) + (Number(m.rev || 0) ? '-hf' + Number(m.rev) : '') : '';
             if (v && v !== this.updateTold) {
                 this.updateTold = v;
-                this.push({ type: 'update_available', version: v });
+                this.push({ type: 'update_available', version: m.version, rev: Number(m.rev || 0) });
             }
         }
         catch (e: any) {

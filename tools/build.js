@@ -15,7 +15,10 @@ const FEED_BASE = `https://github.com/${FEED_REPO}/releases/latest/download`;
 
 const vinfo = () => JSON.parse(fs.readFileSync(VERSION_FILE, 'utf8'));
 const version = () => vinfo().version;
-const rel = () => { const d = path.join(OUT, version()); fs.mkdirSync(d, { recursive: true }); return d; };
+const rev = () => Number(vinfo().rev || 0);
+const vtag = () => version() + (rev() ? `-hf${rev()}` : '');
+const vkey = (i) => String(i.version) + (Number(i.rev || 0) ? `-hf${Number(i.rev)}` : '');
+const rel = () => { const d = path.join(OUT, vtag()); fs.mkdirSync(d, { recursive: true }); return d; };
 const log = (...a) => console.log(...a);
 const die = (m, code = 1) => { console.error(m); process.exit(code); };
 const run = (cmd, args, opts = {}) => {
@@ -52,6 +55,8 @@ function changelogFor(v) {
     const p = path.join(ROOT, 'CHANGELOG.md');
     if (!fs.existsSync(p))
         return '';
+    if (v === version() && rev() && changelogFor(vtag()))
+        return changelogFor(vtag());
     const esc = v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const m = new RegExp(`^## +${esc}\\b[^\\n]*\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, 'm').exec(fs.readFileSync(p, 'utf8'));
     return (m ? m[1] : '').trim();
@@ -187,7 +192,7 @@ async function brandExe(exe, desc, orig) {
     die('rcedit falhou em ' + path.basename(exe) + ': ' + (last && last.message || last));
 }
 async function cmdFolder() {
-    const v = version();
+    const v = vtag();
     const folder = path.join(rel(), 'Ludrix');
     rmrf(folder);
     fs.mkdirSync(folder, { recursive: true });
@@ -284,7 +289,7 @@ function verifySigned(file) {
 }
 
 async function cmdZip() {
-    const v = version();
+    const v = vtag();
     const folder = path.join(rel(), 'Ludrix');
     if (!fs.existsSync(path.join(folder, 'runtime')))
         await cmdFolder();
@@ -307,7 +312,7 @@ function srcEntries() {
     return z.items;
 }
 async function cmdHotfix(base) {
-    const v = version();
+    const v = vtag();
     if (!/^\d+\.\d+\.\d+$/.test(base || ''))
         die('uso: build.js hotfix <versão publicada de base>  ex.: hotfix 4.0.9');
     if (!vlt(base, v))
@@ -348,7 +353,7 @@ async function cmdHotfix(base) {
     return z.out;
 }
 async function cmdSrc() {
-    const v = version();
+    const v = vtag();
     const out = path.join(rel(), `Ludrix-${v}-src.zip`);
     const z = new ZipOut(out);
     const skip = (p, e) => !(e.isDirectory() && ['node_modules', 'dist', 'release', 'build-cache', '.git'].includes(e.name));
@@ -364,7 +369,7 @@ async function cmdSrc() {
 }
 function manifest(kind, dirs, files, minVersion) {
     const v = version();
-    return { version: v, kind, min_version: minVersion || '', date: new Date().toISOString().slice(0, 10), title: (kind === 'patch' ? 'Patch ' : 'Ludrix ') + v, changelog: changelogFor(v), changelog_all: changelogAll(), dirs, files };
+    return { version: v, rev: rev(), kind, min_version: minVersion || '', date: new Date().toISOString().slice(0, 10), title: (kind === 'patch' ? 'Patch ' : 'Ludrix ') + vtag(), changelog: changelogFor(v), changelog_all: changelogAll(), dirs, files };
 }
 function stageApp() {
     const folder = path.join(rel(), 'Ludrix');
@@ -376,7 +381,7 @@ function stageApp() {
 async function cmdPatch(minVersion) {
     const v = version();
     const app = stageApp();
-    const out = path.join(rel(), `ludrix-${v}-patch.lxup`);
+    const out = path.join(rel(), `ludrix-${vtag()}-patch.lxup`);
     const seed = seedOrDie(true);
     const z = new ZipOut(out);
     z.data('manifest.json', JSON.stringify(manifest('patch', ['app'], {}, minVersion || vinfo().patch_min || (v.startsWith('4.') ? '4.0.0' : '')), null, 1));
@@ -387,7 +392,7 @@ async function cmdPatch(minVersion) {
     return out;
 }
 async function cmdFull() {
-    const v = version();
+    const v = vtag();
     const folder = path.join(rel(), 'Ludrix');
     if (!fs.existsSync(path.join(folder, 'runtime')))
         await cmdFolder();
@@ -405,8 +410,8 @@ async function cmdFull() {
     verifySigned(out);
     return out;
 }
-const vt = (v) => (String(v || '0').match(/\d+/g) || ['0']).slice(0, 3).map(Number);
-const vlt = (a, b) => { const x = vt(a), y = vt(b); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); return false; };
+const vt = (v) => (String(v || '0').match(/\d+/g) || ['0']).slice(0, 4).map(Number);
+const vlt = (a, b) => { const x = vt(a), y = vt(b); for (let i = 0; i < 4; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) < (y[i] || 0); return false; };
 function feedUrl(base, ver, name) {
     if (base.replace(/\/$/, '') === FEED_BASE)
         return `https://github.com/${FEED_REPO}/releases/download/v${ver}/${name}`;
@@ -418,7 +423,7 @@ async function feedPrevious(base) {
     try {
         const r = await fetch(FEED_BASE + '/ludrix-updates.json', { headers: { 'User-Agent': 'ludrix-build', 'Cache-Control': 'no-cache' }, signal: AbortSignal.timeout(15000) });
         const data = await r.json();
-        return (data.all || []).filter((it) => it && it.version && it.url).map((it) => ({ ...it, url: feedUrl(base, it.version, String(it.url).split('/').pop()) }));
+        return (data.all || []).filter((it) => it && it.version && it.url).map((it) => ({ ...it, url: feedUrl(base, vkey(it), String(it.url).split('/').pop()) }));
     }
     catch (e) {
         log('feed: sem feed anterior pra herdar (' + String(e.message || e).slice(0, 60) + ')');
@@ -426,20 +431,20 @@ async function feedPrevious(base) {
     }
 }
 async function cmdFeed(base = FEED_BASE) {
-    const v = version();
+    const v = vtag();
     const items = [];
     for (const kind of ['patch', 'full']) {
         const p = path.join(rel(), `ludrix-${v}-${kind}.lxup`);
         if (!fs.existsSync(p))
             continue;
         const m = JSON.parse(new (AdmZip())(p).readAsText('manifest.json'));
-        items.push({ version: v, kind, url: feedUrl(base, v, path.basename(p)), sha256: sha256File(p), size: fs.statSync(p).size, min_version: m.min_version || '', title: m.title, changelog: m.changelog || '', date: m.date });
+        items.push({ version: version(), rev: rev(), kind, url: feedUrl(base, v, path.basename(p)), sha256: sha256File(p), size: fs.statSync(p).size, min_version: m.min_version || '', title: m.title, changelog: m.changelog || '', date: m.date });
     }
     if (!items.length)
         die('feed: nenhum .lxup em ' + rel());
     const latest = items.find((i) => i.kind === 'patch') || items[0];
-    const seen = new Set(items.map((i) => i.version + '|' + i.kind));
-    const older = (await feedPrevious(base)).filter((i) => !seen.has(i.version + '|' + i.kind) && vlt(i.version, v)).sort((a, b) => vlt(a.version, b.version) ? 1 : -1);
+    const seen = new Set(items.map((i) => vkey(i) + '|' + i.kind));
+    const older = (await feedPrevious(base)).filter((i) => !seen.has(vkey(i) + '|' + i.kind) && vlt(vkey(i), v)).sort((a, b) => vlt(vkey(a), vkey(b)) ? 1 : -1);
     items.push(...older.slice(0, 12));
     const out = path.join(rel(), 'ludrix-updates.json');
     fs.writeFileSync(out, JSON.stringify({ latest, all: items }, null, 1));
@@ -451,6 +456,13 @@ function cmdBump(v, kind) {
     if (kind && kind !== 'full' && kind !== 'hotfix')
         die('tipo inválido: ' + kind + ' (full | hotfix)');
     const info = vinfo();
+    if (v === info.version) {
+        if ((kind || 'full') !== 'hotfix')
+            die(`a versão ${v} já é a atual: release completa precisa de número novo (só correção rápida repete a versão)`);
+        info.rev = Number(info.rev || 0) + 1;
+    }
+    else
+        delete info.rev;
     info.version = v;
     info.release = kind || 'full';
     info.date = new Date().toISOString().slice(0, 10);
@@ -464,7 +476,7 @@ function cmdBump(v, kind) {
     const rc = path.join(ROOT, 'tools', 'native', 'launcher.rc');
     if (fs.existsSync(rc))
         fs.writeFileSync(rc, fs.readFileSync(rc, 'utf8').replace(/\d+,\d+,\d+,0/g, v.replace(/\./g, ',') + ',0').replace(/"\d+\.\d+\.\d+"/g, `"${v}"`));
-    log('versão:', v, info.release === 'hotfix' ? '(correção rápida)' : '(completa)');
+    log('versão:', v + (info.rev ? `-hf${info.rev}` : ''), info.release === 'hotfix' ? '(correção rápida)' : '(completa)');
 }
 function cmdCheck() {
     cmdBuild();
@@ -498,7 +510,7 @@ function cmdCheck() {
     log('check: ok');
 }
 function cmdPublish() {
-    const v = version();
+    const v = vtag();
     const files = [`ludrix-${v}-patch.lxup`, `ludrix-${v}-full.lxup`, 'ludrix-updates.json', `Ludrix-${v}.zip`, `Ludrix-${v}-src.zip`].map((f) => path.join(rel(), f)).filter((f) => fs.existsSync(f));
     if (!files.some((f) => f.endsWith('.lxup')))
         die('publish: gere o patch antes (build.js patch)', 5);
@@ -507,15 +519,12 @@ function cmdPublish() {
         if (/\.(lxup|zip)$/.test(f) && !/Ludrix-\d.*\.zip$/.test(path.basename(f)) && c.zipStatus(f) !== 'ok')
             die(`publish: ${path.basename(f)} não está assinado`, 4);
     const hot = releaseKind() === 'hotfix';
-    let notes = changelogFor(v) || `Ludrix ${v}`;
+    let notes = changelogFor(version()) || `Ludrix ${v}`;
     if (hot) {
         const base = newestFull(v);
         if (!base)
             die('publish: hotfix sem versão completa anterior no feed — gere uma release completa (release: full em version.json)', 5);
-        const chk = cp.spawnSync(WIN ? 'gh.exe' : 'gh', ['release', 'view', `v${base}`, '--repo', FEED_REPO, '--json', 'tagName'], { stdio: 'ignore' });
-        if (chk.status !== 0)
-            die(`publish: a versão completa v${base} não existe mais no GitHub — publique uma release completa (node tools/build.js bump ${v} full)`, 5);
-        notes = `> Correção rápida: só o patch. Quem já usa o Ludrix recebe em **Ajustes → Checar atualizações**.\n> Instalação nova: baixe \`Ludrix-${base}.zip\` em [v${base}](https://github.com/${FEED_REPO}/releases/tag/v${base}) e depois atualize por dentro.\n\n` + notes;
+        notes = `> Correção rápida: só o patch. Quem já usa o Ludrix recebe em **Ajustes → Checar atualizações**.\n\n` + notes;
     }
     const notesFile = path.join(rel(), 'release-notes.md');
     fs.writeFileSync(notesFile, notes);
