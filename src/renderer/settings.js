@@ -100,7 +100,7 @@ async function renderSettings(fresh) {
     ${sw('high_contrast', 'Alto contraste', 'Bordas e textos mais fortes, sem transparência nem desfoque, foco bem marcado. Liga sozinho quando o Windows está em modo de alto contraste')}`]),
     cartoes: () => sec('cartoes', 'Cartões e listas', [`
     <div class="frow"><div class="l"><b>Biblioteca e Store</b><span>Com painel, clicar numa capa abre o jogo ao lado; grade mostra só as capas; lista mostra uma linha por jogo com ano, gênero, tamanho e tempo jogado</span></div>${cfgSel('view_mode', [['mural', 'Capas com painel lateral'], ['grid', 'Grade de capas'], ['list', 'Lista']], c.view_mode || 'mural')}</div>
-    <div class="frow"><div class="l"><b>Agrupar por</b><span>Cabeçalhos recolhíveis na Biblioteca e na Store; a ordenação vale dentro de cada grupo. Também no menu de ordenar</span></div>${cfgSel('group_by', GROUPS, c.group_by ?? 'letter')}</div>
+    <div class="frow"><div class="l"><b>Agrupar por</b><span>Cabeçalhos recolhíveis na Biblioteca; a ordenação vale dentro de cada grupo. A Store tem o próprio agrupamento no menu Exibição</span></div>${cfgSel('group_by', GROUPS, c.group_by ?? 'letter')}</div>
     ${sw('fav_first', 'Favoritos primeiro', 'Mantém os favoritos no topo da lista em qualquer ordenação')}
     ${sw('card_ribbons', 'Fitas "Novo" e "Hoje" nas capas', '"Novo" marca jogos instalados há menos de 7 dias que você ainda não abriu; "Hoje" marca os que você jogou hoje')}
     ${sw('card_origin', 'Origem embaixo da capa', 'Selo pequeno com de onde o jogo veio: Steam, Epic, GOG, ROM, Manual…')}

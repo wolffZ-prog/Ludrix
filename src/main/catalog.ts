@@ -118,7 +118,10 @@ export class Catalog {
                 try {
                     const keys: string[] = [];
                     const titles: Record<string, string> = {};
-                    for (const e of await prov.catalog(force)) {
+                    const tp = Date.now();
+                    const got = await prov.catalog(force);
+                    this.repos.noteFetch(prov.id, Date.now() - tp, got.length, force);
+                    for (const e of got) {
                         const old = this.entries.get(e.key);
                         if (old && old.files_loaded && !force) {
                             e.files = old.files;
@@ -269,7 +272,7 @@ export class Catalog {
             playtime: info.playtime || 0, status: (m || {}).status || '', score: Math.trunc(Number((m || {}).score || 0)),
             last_played: info.last_played || 0,
             added_at: info.installed_at || e.extra.posted || 0,
-            fav: this.favs.has(e.key), cv: this.cv(e.key, m),
+            fav: this.favs.has(e.key), cv: this.cv(e.key, m), ...(this.repos.linkDead(e.repo, e.key) ? { link_dead: true } : {}),
         };
     }
 

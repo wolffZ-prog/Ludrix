@@ -10,6 +10,8 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import * as cp from 'node:child_process';
 import os from 'node:os';
+import v8 from 'node:v8';
+import vm from 'node:vm';
 import * as electron from 'electron';
 import AdmZip from 'adm-zip';
 import * as P from './paths';
@@ -141,6 +143,7 @@ class Backend {
         if (this.store.schemaInfo?.newer)
             setTimeout(() => this.notify('warn', 'Dados de uma versão mais nova', `A pasta data foi gravada pelo Ludrix ${this.store.schemaInfo.app || '?'} (formato ${this.store.schemaInfo.version}). Esta versão lê o formato ${require('./store').Store.SCHEMA}. Atualize o Ludrix ou restaure um backup antes de mexer na biblioteca.`, 'schema_newer', 'updates'), 3000);
         setTimeout(() => this.autoBackup(false), 120_000);
+        { const rec = util.recovered(); if (rec.length) { for (const r of rec) log.warn('dados recuperados: %s ← %s (%s)', r.file, r.from || 'nada', r.detail); setTimeout(() => this.notify(rec.every((r) => r.from) ? 'ok' : 'warn', rec.every((r) => r.from) ? 'Dados recuperados' : 'Arquivo de dados corrompido', rec.map((r) => `${r.file}: ${r.from ? 'restaurado de ' + r.from : 'sem cópia — começou vazio (o original ficou em ' + r.file + '.bad)'}`).join('\n'), 'data:recovered'), 4000); } }
         setTimeout(() => { try { if (util.now() - Number(this.store.config.img_gc_at || 0) > 7 * 86400 && !this.jobs.jobs.size) this.imageGc(true); } catch (e) { log.debug(`limpeza de imagens: ${e}`); } }, 180_000);
         setInterval(() => this.watchDirs(), 5 * 60_000);
     }
@@ -520,6 +523,7 @@ class Backend {
             activity: this.activityPayload(jobs),
             meta_pending: this.hub.pending,
             sessions: this.sessions.status(),
+            after_queue: this.jobs.afterState(),
         };
     }
     /**
@@ -3085,6 +3089,27 @@ class Backend {
     }
     /** Preparacao final: garante flush antes de sair. */
     closing = false;
+    standby() {
+        const mb = (n: number) => Math.round(n / 1048576);
+        const before = process.memoryUsage().rss;
+        this.cat.slimCache.clear();
+        this.cat.catCache.clear();
+        this.cat.existsCache.clear();
+        this.hub.meta.drop();
+        this.hub.meta.candCache.clear();
+        this.hub.covers.candCache.clear();
+        try {
+            void electron.session.defaultSession.clearCache();
+        }
+        catch { /* sem sessao */ }
+        try {
+            v8.setFlagsFromString('--expose_gc');
+            vm.runInNewContext('gc')();
+        }
+        catch { /* gc indisponivel */ }
+        const t = setTimeout(() => log.info('em espera: memória do servidor %d MB → %d MB', mb(before), mb(process.memoryUsage().rss)), 1500);
+        t.unref?.();
+    }
     shutdown() {
         this.closing = true;
         this.gamepad?.stop();

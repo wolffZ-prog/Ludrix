@@ -82,6 +82,8 @@ async function routeGet2(res, p, q, be, port) {
 async function routePost2(res, p, b, be, getWindow, port) {
     const front = frontFor(be);
     /* ------------------------- Store por fontes ------------------------- */
+    if (p === '/api/repos/links')
+        return (0, server.sendJson)(res, await front.repoLinks(String(b?.id || ''))), true;
     if (p === '/api/repos/add')
         return (0, server.sendJson)(res, front.repoAdd(b || {})), true;
     if (p === '/api/repos/update')
@@ -142,6 +144,10 @@ async function routePost2(res, p, b, be, getWindow, port) {
         return (0, server.sendJson)(res, await front.addRomFile(b?.path || null, b?.system || null, b?.title || null, b?.emulator || null, Boolean(b?.add_folder))), true;
     if (p === '/api/rom/preview')
         return (0, server.sendJson)(res, await front.romPreview(b?.path || null)), true;
+    if (p === '/api/romroot/scan')
+        return (0, server.sendJson)(res, front.scanRomRoot(String(b?.folder || ''))), true;
+    if (p === '/api/romroot/apply')
+        return (0, server.sendJson)(res, front.applyRomRoot(b?.items || [])), true;
     if (p === '/api/romdir/add')
         return (0, server.sendJson)(res, front.addRomDir(String(b?.system || ''), String(b?.folder || ''))), true;
     if (p === '/api/romdir/remove')

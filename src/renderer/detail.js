@@ -54,7 +54,7 @@ function renderDetail() {
     m.status || m.score ? ['Para você', `${m.status ? `<span class="pill">${esc(statusName(m.status))}</span>` : ''}${scoreHtml(m.score, 'big')} <a href="#" onclick="editGame(${jsq(key)},'avancado');return false" style="color:var(--accent2);margin-left:6px">editar</a>`] : null,
     m.notes ? ['Notas', `<span style="white-space:pre-wrap">${esc(m.notes)}</span> <a href="#" onclick="editGame(${jsq(key)},'avancado');return false" style="color:var(--accent2);margin-left:6px">editar</a>`] : null
   ].filter(x => x && x[1]);
-  const lbl = [d.system_name || 'PC', m.developer || d.creator, m.year || d.year].filter(Boolean).map(esc).join(' &nbsp;·&nbsp; ') + (live ? ' &nbsp;·&nbsp; <b>Jogando agora</b>' : d.missing ? ' &nbsp;·&nbsp; <b style="color:var(--amber)">Arquivo não encontrado</b>' : d.installed || isRom ? ' &nbsp;·&nbsp; <b>Instalado</b>' : '');
+  const lbl = [d.system_name || 'PC', m.developer || d.creator, m.year || d.year].filter(Boolean).map(esc).join(' &nbsp;·&nbsp; ') + (live ? ' &nbsp;·&nbsp; <b>Jogando agora</b>' : d.missing ? ' &nbsp;·&nbsp; <b style="color:var(--amber)">Arquivo não encontrado</b>' : d.installed || isRom ? ' &nbsp;·&nbsp; <b>Instalado</b>' : (S.byKey[d.key] || {}).link_dead ? ' &nbsp;·&nbsp; <b style="color:var(--amber)" title="O link direto não respondeu no último teste da fonte">Link fora do ar</b>' : '');
   $('#detail').classList.toggle('art', !!(m.hero || m.hero_url || m.background_file));
   const dimg = !!((S.byKey[key] || {}).hero_ok || m.hero || m.hero_url || m.background_file) && (S.config.detail_art || 'auto') !== 'off';
   $('#dWrap').innerHTML = `

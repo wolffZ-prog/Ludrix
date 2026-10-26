@@ -117,6 +117,7 @@ const I = {
   trash: '<svg viewBox="0 0 24 24"><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>',
   ext: '<svg viewBox="0 0 24 24"><path d="M12 6h-6a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-6" /><path d="M11 13l9 -9" /><path d="M15 4h5v5" /></svg>',
   spark: '<svg viewBox="0 0 24 24"><path d="M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2m0 -12a2 2 0 0 1 2 2a2 2 0 0 1 2 -2a2 2 0 0 1 -2 -2a2 2 0 0 1 -2 2m-7 12a6 6 0 0 1 6 -6a6 6 0 0 1 -6 -6a6 6 0 0 1 -6 6a6 6 0 0 1 6 6" /></svg>',
+  link: '<svg viewBox="0 0 24 24"><path d="M9 15l6 -6"/><path d="M11 6l.463 -.536a5 5 0 0 1 7.071 7.072l-.534 .464"/><path d="M13 18l-.397 .534a5.068 5.068 0 0 1 -7.127 0a4.972 4.972 0 0 1 0 -7.071l.524 -.463"/></svg>',
   magnet: '<svg viewBox="0 0 24 24"><path d="M4 13v-8a2 2 0 0 1 2 -2h1a2 2 0 0 1 2 2v8a2 2 0 0 0 6 0v-8a2 2 0 0 1 2 -2h1a2 2 0 0 1 2 2v8a8 8 0 0 1 -16 0" /><path d="M4 8l5 0" /><path d="M15 8l4 0" /></svg>',
   chip: '<svg viewBox="0 0 24 24"><path d="M5 6a1 1 0 0 1 1 -1h12a1 1 0 0 1 1 1v12a1 1 0 0 1 -1 1h-12a1 1 0 0 1 -1 -1l0 -12" /><path d="M8 10v-2h2m6 6v2h-2m-4 0h-2v-2m8 -4v-2h-2" /><path d="M3 10h2" /><path d="M3 14h2" /><path d="M10 3v2" /><path d="M14 3v2" /><path d="M21 10h-2" /><path d="M21 14h-2" /><path d="M14 21v-2" /><path d="M10 21v-2" /></svg>',
   gamepad: '<svg viewBox="0 0 24 24"><path d="M12 5h3.5a5 5 0 0 1 0 10h-5.5l-4.015 4.227a2.3 2.3 0 0 1 -3.923 -2.035l1.634 -8.173a5 5 0 0 1 4.904 -4.019h3.4" /><path d="M14 15l4.07 4.284a2.3 2.3 0 0 0 3.925 -2.023l-1.6 -8.232" /><path d="M8 9v2" /><path d="M7 10h2" /><path d="M14 10h2" /></svg>',
@@ -496,11 +497,20 @@ function sysMenu(sid, x, y) {
   else items.push({ label: `Instalar ${s.emulator_title}`, icon: 'dl', fn: () => installEmu(s.emulator) });
   showCtx(items, x, y);
 }
+async function repoLinksTest(id, name) {
+  toast('', 'Testando links', id ? `${name}: amostra de até 25 links diretos` : 'Todas as fontes ligadas (amostra de até 25 links cada)');
+  const r = await api.post('/api/repos/links', { id: id || '' }); if (r.error) return toast('err', 'Teste de links', r.error);
+  const res = Object.values(r.results || {}); const tested = res.reduce((a, x) => a + (x.tested || 0), 0), dead = res.reduce((a, x) => a + Object.keys(x.dead || {}).length, 0);
+  if (!tested) toast('', 'Nada para testar', 'Essa fonte só tem torrents (magnet não dá para testar) ou está vazia');
+  else toast(dead ? 'warn' : 'ok', dead ? `${dead} de ${tested} links fora do ar` : `Links ok (${tested} testados)`, dead ? 'Os jogos afetados ganharam o aviso "link fora do ar" na Store' : '');
+  if (S.view === 'store') { if (S.tab.store === 'sources') renderSources(); else loadCatalog(false); }
+}
 function repoMenu(id, x, y) {
   const r = (S.repos || []).find(z => z.id === id) || {};
   showCtx([
     { label: r.enabled ? 'Desligar fonte' : 'Ligar fonte', icon: 'power', fn: () => api.post('/api/repos/toggle', { id, enabled: !r.enabled }).then(() => { renderSources(); loadCatalog(false); }) },
     { label: 'Atualizar', icon: 'refresh', fn: () => loadCatalog(true) },
+    { label: 'Testar links', icon: 'link', fn: () => repoLinksTest(id, r.name) },
     ...(r.builtin ? [] : [{ sep: true }, { label: 'Editar…', icon: 'edit', fn: () => editRepo(id) }, { label: 'Remover', icon: 'trash', danger: true, fn: () => removeRepo(id, r.name) }]),
   ], x, y);
 }
@@ -573,7 +583,7 @@ async function loadCatalog(refresh) {
   S.games.forEach(g => { if (g.job && !S.jobs[g.key]) S.jobs[g.key] = { stage: 'download', fraction: 0, detail: '' }; });
   if (d.loading) { renderView(); setTimeout(() => loadCatalog(false), 900); return; }
   if (d.roms_pending && !S._romPoll) { S._romPoll = setTimeout(() => { S._romPoll = 0; loadCatalog(false); }, 1500); }
-  if (!S._sortInit) { S._sortInit = true; if (S.config.sort_by && SORTS.some(x => x[0] === S.config.sort_by)) { S.sort = S.config.sort_by; renderSortBtn(); } }
+  if (!S._sortInit) { S._sortInit = true; S.sort = sortForView(S.view); renderSortBtn(); }
   S.loaded = true; splashOff(); { const n = S.games.filter(g => g.installed).length; document.title = n ? `LudrixHub — ${pl(n, 'jogo', 'jogos')}` : 'LudrixHub'; applyQPlaceholder(); }
   if (!S.config.welcome_done && !S._welcomed) { S._welcomed = true; setTimeout(firstRun, 400); }
   if (S.config.welcome_done && S.config.version && S.config.seen_version !== S.config.version && !S._verTold) { S._verTold = true; const prev = S.config.seen_version; api.post('/api/config', { seen_version: S.config.version }, { quiet: true }); S.config.seen_version = S.config.version; if (prev) setTimeout(() => toast('ok', `Atualizado para ${S.config.version}`, 'Veja o que mudou nesta versão.', [{ label: 'Ver novidades', fn: whatsNew }, { label: 'Depois', fn: () => {} }]), 1200); }
@@ -620,13 +630,18 @@ document.querySelectorAll('.rb').forEach(b => b.onclick = () => setView(b.datase
 function setView(v) {
   if (v === 'redists' || v === 'gamemode') { S.tab.central = 'redists'; v = 'central'; }
   if (v === S.view && !S.current && !$('#modal').classList.contains('on')) { $('#view').scrollTop = 0; return; }
-  { const vw = $('#view'); vw.classList.remove('vin'); void vw.offsetWidth; vw.classList.add('vin'); clearTimeout(S._vinT); S._vinT = setTimeout(() => vw.classList.remove('vin'), 400); }
+  const vtOk = ['home', 'store'].includes(v) && ['home', 'store', 'mods', 'flash'].includes(S.view) && v !== S.view && !S.current && document.documentElement.dataset.anim !== 'off' && !document.body.classList.contains('rm') && !!document.startViewTransition;
+  if (!vtOk) { const vw = $('#view'); vw.classList.remove('vin'); void vw.offsetWidth; vw.classList.add('vin'); clearTimeout(S._vinT); S._vinT = setTimeout(() => vw.classList.remove('vin'), 400); }
+  else { const order = gpViews(); const dir = order.indexOf(v) < order.indexOf(S.view) ? 'back' : 'fwd'; document.documentElement.dataset.vdir = dir; S._vtView = true; }
   if (S._metaDirty && ['home', 'store'].includes(v)) { S._metaDirty = false; api.get('/api/catalog').then(d => { if (d && !d.loading) { setGames(d.games || []); if (['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'home') refreshHome(); } }); }
   S.page = 1;
   if (v !== 'home') gameFocus(null);
+  if (['home', 'store'].includes(v) && v !== S.view) { S.sort = sortForView(v); S.sortRev = false; }
   S.view = v; closeDetail();
   document.querySelectorAll('.rb').forEach(b => b.classList.toggle('on', b.dataset.view === v));
-  $('#view').scrollTop = 0; S._enter = true; guideDismiss(); renderView(); zoomVis();
+  $('#view').scrollTop = 0; S._enter = true; guideDismiss();
+  if (S._vtView) { S._vtView = false; vtRun(() => { renderView(); }, 'view').then(() => { delete document.documentElement.dataset.vdir; }); } else renderView();
+  zoomVis();
 }
 function enterFx() { const v = $('#view'); if (S._enter) { S._enter = false; v.classList.add('enter'); clearTimeout(S._enterT); S._enterT = setTimeout(() => v.classList.remove('enter'), 700); } }
 let tsvMemo = null;
@@ -701,7 +716,7 @@ function visible() {
   else if (S.sort === 'dev') list.sort((a, b) => COLL.compare(a.creator || a.fr || '\uffff', b.creator || b.fr || '\uffff') || az(a, b));
   else if (S.sort === 'count') list.sort((a, b) => (b.play_count || 0) - (a.play_count || 0) || (b.playtime || 0) - (a.playtime || 0) || az(a, b));
   else if (S.sort === 'score') list.sort((a, b) => (b.score || 0) - (a.score || 0) || az(a, b));
-  else if (S.sort === 'fresh') list.sort((a, b) => (b.fresh ? 1 : 0) - (a.fresh ? 1 : 0) || az(a, b));
+  else if (S.sort === 'fresh') list.sort((a, b) => (b.fresh ? 1 : 0) - (a.fresh ? 1 : 0) || (b.added_at || 0) - (a.added_at || 0) || az(a, b));
   if (S.sortRev) list.reverse();
   if (S.config.fav_first && S.view === 'home') { const f = list.filter(g => g.fav), o = list.filter(g => !g.fav); list = f.concat(o); }
   return list;
@@ -743,10 +758,13 @@ $('#chips').addEventListener('click', e => { const b = e.target.closest('[data-d
 function parkTop() { const top = $('.top'), sb = $('#sort'); if (top && sb && sb.parentElement !== top) top.appendChild(sb); }
 const QCHIPS = [['', 'Todos'], ['fav', 'Favoritos'], ['recent', 'Jogados esta semana'], ['never', 'Nunca joguei']];
 function qchipOn(id) { if (!id) return !filtersActive(); return S.flt.flags.size === 1 && S.flt.flags.has(id) && fltCount() === 1 && S.cat === 'all'; }
+const STORE_CHIPS = [['', 'Tudo'], ['fresh', 'Novos'], ['direct', 'Download direto'], ['torrent', 'Torrent']];
 function storeChips() {
-  if (!S.newsCount && !S.flt.flags.has('fresh')) return '';
-  const on = qchipOn('fresh');
-  return `<div class="qchips one">${on ? (S.newsCount ? `<button class="chip ghost" onclick="newsSeen()" title="Tira a marca NOVO desses jogos">Marcar como vistos</button>` : '') : `<button class="chip" title="Jogos que apareceram nas fontes desde a leitura anterior" onclick="flagOnly('fresh')">Novos <span class="n">${S.newsCount}</span></button>`}</div>`;
+  const chips = STORE_CHIPS.filter(([id]) => id !== 'fresh' || S.newsCount || S.flt.flags.has('fresh')).map(([id, l]) => `<button class="chip${qchipOn(id) ? ' on' : ''}" onclick="${!id || qchipOn(id) ? 'clearFlt()' : `flagOnly('${id}')`}" ${id === 'fresh' ? 'title="Jogos que apareceram nas fontes desde a leitura anterior"' : ''}>${l}${id === 'fresh' && S.newsCount ? ` <span class="n">${S.newsCount}</span>` : ''}</button>`);
+  if (qchipOn('fresh') && S.newsCount) chips.push(`<button class="chip ghost" onclick="newsSeen()" title="Tira a marca NOVO desses jogos">Marcar como vistos</button>`);
+  const hid = S.config.store_hide_installed !== false;
+  chips.push(`<button class="chip ghost${hid ? '' : ' on'}" onclick="setCfg({store_hide_installed:${hid ? 'false' : 'true'}}).then(()=>{S._poolKey='';renderLibrary()})" title="${hid ? 'Os jogos que já estão no PC ficam escondidos na Store' : 'Mostrando também os jogos que já estão no PC'}">${hid ? 'Já instalados' : 'Com instalados'}</button>`);
+  return `<div class="qchips">${chips.join('')}</div>`;
 }
 async function newsSeen(id) { await api.post('/api/repos/seen', id ? { id } : {}); clearFlt(); await loadCatalog(false); if (S.view === 'store' && S.tab.store === 'sources') renderSources(); }
 function quickChips() { return `<div class="qchips">${QCHIPS.map(([id, l]) => `<button class="chip${qchipOn(id) ? ' on' : ''}" onclick="${!id || qchipOn(id) ? 'clearFlt()' : `flagOnly('${id}')`}">${l}</button>`).join('')}</div>`; }
@@ -757,7 +775,7 @@ function renderLibrary() {
   S._multiSrc = S.view === 'store' && new Set(S.games.filter(inStore).map(g => g.repo)).size > 1;
   const list = visible();
   const fltNames = fltLabels().map(x => x[2]);
-  const catName = S.view === 'home' ? 'Biblioteca' : S.cat !== 'all' ? (S.cats.find(c => c.id === S.cat) || {}).name : fltNames.length ? fltNames.slice(0, 3).join(' · ') + (fltNames.length > 3 ? ` +${fltNames.length - 3}` : '') : 'Disponíveis para baixar';
+  const catName = S.view === 'home' ? 'Biblioteca' : S.cat !== 'all' ? (S.cats.find(c => c.id === S.cat) || {}).name : fltNames.length ? fltNames.slice(0, 3).join(' · ') + (fltNames.length > 3 ? ` +${fltNames.length - 3}` : '') : 'Catálogo';
   parkTop();
   let h = '';
   if (S.view === 'store') h += storeTabs();
@@ -766,7 +784,7 @@ function renderLibrary() {
   h += `<div class="h1"><h2>${esc(catName)}</h2>${S.view === 'home' ? quickChips() : storeChips()}<span class="cnt">${list.length} ${list.length === 1 ? 'jogo' : 'jogos'}</span><span class="sp"></span>
         ${!topSearchVisible() ? `<div class="qmini ${S.q ? 'on' : ''}"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="qm" placeholder="Buscar…" value="${esc(S.q)}" autocomplete="off" spellcheck="false" oninput="miniSearch(this.value)" onfocus="this.parentElement.classList.add('on')" onblur="if(!this.value)this.parentElement.classList.remove('on')"><kbd>/</kbd></div>` : ''}
         <span class="slot" id="sortSlot"></span>${['home', 'store'].includes(S.view) ? viewBtn() : ''}${filterBtn()}
-        ${S.view === 'home' ? `<button class="btn s xs ic" onclick="surprise()" title="Me surpreenda — escolhe um jogo para você jogar agora">${I.dice}</button><button class="btn p xs addbtn" onclick="addGameMenu()">+ Adicionar</button>` : `<button class="btn s xs" onclick="loadCatalog(true)" title="${S.checkedAt ? 'Última leitura das fontes: ' + new Date(S.checkedAt * 1000).toLocaleString('pt-BR') : 'Fontes ainda não lidas'}">${I.refresh} Atualizar</button>`}</div>`;
+        ${S.view === 'home' ? `<button class="btn s xs ic" onclick="surprise()" title="Me surpreenda — escolhe um jogo para você jogar agora">${I.dice}</button><button class="btn p xs addbtn" onclick="addGameMenu()">+ Adicionar</button>` : `<button class="btn s xs" onclick="loadCatalog(true)" title="${S.checkedAt ? 'Última leitura das fontes: ' + new Date(S.checkedAt * 1000).toLocaleString('pt-BR') : 'Fontes ainda não lidas'}">${I.refresh}<span class="lb">Atualizar</span></button>`}</div>`;
   h += activeChips();
   const noSrc = S.view === 'store' && !S.repos.some(r => r.enabled && r.kind !== 'rom');
   if (!S.games.length && !noSrc && !(S.view === 'home' && S.loaded)) h += `<div class="grid">${Array.from({ length: 18 }, () => '<div class="card sk"><div class="cov"></div><h4>&nbsp;</h4></div>').join('')}</div>`;
@@ -841,13 +859,17 @@ function groupSort(by, a, b) {
   if (by === 'genre' || by === 'dev') return a.startsWith('Sem ') ? 1 : b.startsWith('Sem ') ? -1 : a.localeCompare(b, 'pt');
   return a.localeCompare(b, 'pt');
 }
+function groupBy() { return S.view === 'store' ? (S.config.group_store ?? '') : (S.config.group_by ?? 'letter'); }
+function setGroupBy(id) { return setCfg(S.view === 'store' ? { group_store: id } : { group_by: id }); }
+function gcolKey(k) { return `${S.view}|${k}`; }
+function groupsAll(col) { document.querySelectorAll('#view .ggrp').forEach(w => { w.classList.toggle('col', col); if (col) S._gcol.add(gcolKey(w.dataset.g)); else S._gcol.delete(gcolKey(w.dataset.g)); }); try { localStorage.setItem('lx_gcol', JSON.stringify([...S._gcol])); } catch (_) {} }
 function groupedList(list) {
-  const by = S.config.group_by ?? 'letter'; if (!by || !['home', 'store'].includes(S.view)) return null;
+  const by = groupBy(); if (!by || !['home', 'store'].includes(S.view)) return null;
   const m = new Map(); for (const g of list) { const k = groupKey(g, by); if (!m.has(k)) m.set(k, []); m.get(k).push(g); }
   return [...m.keys()].sort((a, b) => groupSort(by, a, b)).map(k => [k, m.get(k)]);
 }
 S._gcol = S._gcol || new Set((() => { try { return JSON.parse(localStorage.getItem('lx_gcol') || '[]'); } catch (_) { return []; } })());
-function groupToggle(el) { const w = el.closest('.ggrp'); w.classList.toggle('col'); const k = w.dataset.g; if (w.classList.contains('col')) S._gcol.add(k); else S._gcol.delete(k); try { localStorage.setItem('lx_gcol', JSON.stringify([...S._gcol])); } catch (_) {} }
+function groupToggle(el) { const w = el.closest('.ggrp'); w.classList.toggle('col'); const k = gcolKey(w.dataset.g); if (w.classList.contains('col')) S._gcol.add(k); else S._gcol.delete(k); try { localStorage.setItem('lx_gcol', JSON.stringify([...S._gcol])); } catch (_) {} }
 function groupHead(k, n, pt) { return `<div class="ggh" onclick="groupToggle(this)"><b>${esc(k)}</b><span>${n}${pt >= 3600 ? ` · ${fmtTime(pt)}` : ''}</span><i>${I.chev || '<svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>'}</i></div>`; }
 function fillGrid(list) {
   const gen = ++gridGen, grid = $('#grid'); if (!grid) return;
@@ -864,7 +886,7 @@ function fillGrid(list) {
       for (let j = i; j < Math.min(i + CH, flat.length); j++) {
         if (gidx[j] !== curGi) {
           flush(); curGi = gidx[j]; const [k, gs] = groups[curGi];
-          grid.insertAdjacentHTML('beforeend', `<div class="ggrp${S._gcol.has(k) ? ' col' : ''}" data-g="${esc(k)}">${groupHead(k, gs.length, gs.reduce((a, g) => a + (g.playtime || 0), 0))}<div class="grid${listMode() ? ' lst' : ''}"></div></div>`);
+          grid.insertAdjacentHTML('beforeend', `<div class="ggrp${S._gcol.has(gcolKey(k)) ? ' col' : ''}" data-g="${esc(k)}">${groupHead(k, gs.length, gs.reduce((a, g) => a + (g.playtime || 0), 0))}<div class="grid${listMode() ? ' lst' : ''}"></div></div>`);
           cur = grid.lastElementChild.lastElementChild;
         }
         pending += cardHtml(flat[j], j);
@@ -941,7 +963,7 @@ async function gpanelFill(key) {
 }
 const cap = t => t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
 function azBar(list) {
-  if (!muralMode() || S.config.group_by || S.sort !== 'az' || S.sortRev || S.config.fav_first || list.length < 30) return '';
+  if (!muralMode() || groupBy() || S.sort !== 'az' || S.sortRev || S.config.fav_first || list.length < 30) return '';
   const have = new Set(list.map(g => { const ch = (g.title || '?').trim().charAt(0).toUpperCase(); return /[A-Z]/.test(ch) ? ch : '#'; }));
   return `<div class="azbar">${['#', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'].map(l => `<span class="${have.has(l) ? '' : 'off'}" onclick="azGo(${jsq(l)})">${l}</span>`).join('')}</div>`;
 }
@@ -1086,7 +1108,14 @@ function qfabSync() {
 }
 function ringSvg(f) { const r = 24, c = 2 * Math.PI * r, off = f < 0 ? c * .75 : c * (1 - f); return `<div class="ring"><svg viewBox="0 0 56 56"><circle class="t" cx="28" cy="28" r="${r}"/><circle class="v" cx="28" cy="28" r="${r}" stroke-dasharray="${c}" stroke-dashoffset="${off}"/></svg><span>${f < 0 ? '…' : Math.round(f * 100) + '%'}</span></div>`; }
 const clock = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+function storeSub(g) {
+  const kind = g.torrent && g.direct ? 'Torrent e direto' : g.torrent ? 'Torrent' : g.direct ? 'Direto' : '';
+  const l1 = g.size ? fmt(g.size) : kind;
+  const l2 = (g.genres && g.genres[0]) || (g.kind === 'rom' && g.system ? (S.systems[g.system] || g.system) : '') || (g.creator || g.fr || '') || (g.year ? String(g.year) : '');
+  return `${l1 ? `<div class="sub ci" title="${esc(kind)}"><span>${g.torrent ? I.magnet : ''}${g.direct ? I.dl : ''}${esc(l1)}</span></div>` : ''}${l2 ? `<div class="sub ci"><span>${I.tag}${esc(l2)}</span></div>` : ''}`;
+}
 function cardSub(g) {
+  if (S.view === 'store' && g.repo !== 'local') return storeSub(g);
   if (S.config.card_playtime === false) { const a = g.genres && g.genres[0] ? g.genres[0] : g.kind === 'rom' && g.system ? (S.systems[g.system] || g.system) : (g.creator || g.fr || ''); return a ? `<div class="sub"><span class="g">${esc(a)}</span></div>` : ''; }
   const t = g.playtime >= 60 ? fmtTime(g.playtime) : 'Não jogado';
   const l2 = g.last_played ? cap(lastPlayedText(g.last_played)) : (g.genres && g.genres[0]) || (g.kind === 'rom' && g.system ? (S.systems[g.system] || g.system) : '') || (g.year ? String(g.year) : '');
@@ -1115,14 +1144,14 @@ function cardHtml(g, i) {
   const qpB = (g.installed || g.owned) && !job ? `<button class="qp ${live ? 'live' : ''}" data-qp="${esc(g.owned || g.key)}" title="${live ? 'Em execução — clique para encerrar' : 'Jogar'}">${live ? I.x : I.play}</button>` : !g.installed && g.avail && !job ? `<button class="qp dl" data-dl="${esc(g.avail)}" title="Não está no PC — baixar pela Loja">${I.dl}</button>` : '';
   if (lst) return `<div class="card${dim}${S.sel.has(g.key) ? ' msel' : ''}" data-key="${esc(g.key)}">
     <div class="cov"><div class="ph">${esc(g.title)}</div><img loading="lazy" decoding="async" class="${TH.ok.has(g.key) ? 'ld inst' : TH.err.has(g.key) ? 'err' : ''}" src="/thumb/${enc(g.key)}?v=${g.cv || 0}" alt="" onload="this.classList.add('ld');TH.ok.add(${jsq(g.key)})" onerror="thumbFail(this,${jsq(g.key)})">${job ? ringSvg(job.fraction) : ''}</div>
-    <h4>${esc(g.title)}${live ? '<span class="live">JOGANDO</span>' : ''}${g.mc_nolauncher ? '<span class="badge warn" title="Falta um launcher de Minecraft — clique em Jogar para escolher um">SEM LAUNCHER</span>' : g.repo === 'local' && !g.installed && !job ? '<span class="badge warn" title="O executável ou a ROM não está mais no lugar — clique em Jogar para apontar o novo caminho">NÃO ENCONTRADO</span>' : g.installed && S.view !== 'home' ? '<span class="badge ok">INSTALADO</span>' : ''}${sys}${srcB}</h4>
+    <h4>${esc(g.title)}${live ? '<span class="live">JOGANDO</span>' : ''}${g.mc_nolauncher ? '<span class="badge warn" title="Falta um launcher de Minecraft — clique em Jogar para escolher um">SEM LAUNCHER</span>' : g.repo === 'local' && !g.installed && !job ? '<span class="badge warn" title="O executável ou a ROM não está mais no lugar — clique em Jogar para apontar o novo caminho">NÃO ENCONTRADO</span>' : g.installed && S.view !== 'home' ? '<span class="badge ok">INSTALADO</span>' : g.link_dead ? '<span class="badge warn" title="O link direto não respondeu no último teste da fonte">LINK FORA DO AR</span>' : ''}${sys}${srcB}</h4>
     <div class="lm">${listCols().map(id => `<span class="c-${id}" title="${(LIST_COLS.find(x => x[0] === id) || [])[1] || ''}">${listCell(g, id)}</span>`).join('')}</div>
     <div class="la">${favB}${qpB}</div></div>`;
   return `<div class="card${dim}${S.sel.has(g.key) ? ' msel' : ''}${S.panelKey === g.key && S.view === 'home' ? ' sel' : ''}" data-key="${esc(g.key)}" style="animation-delay:${Math.min(i, 24) * 8}ms">
     <div class="cov" data-t="${esc(g.title)}"><div class="ph">${esc(g.title)}${g.kind === 'rom' && g.key.startsWith('rom:') ? '<small>ROM LOCAL</small>' : g.kind === 'rom' ? '<small>ROM · BAIXAR</small>' : ''}</div>
       <img loading="lazy" decoding="async" class="${TH.ok.has(g.key) ? 'ld inst' : TH.err.has(g.key) ? 'err' : ''}" src="/thumb/${enc(g.key)}?v=${g.cv || 0}" alt="" onload="this.classList.add('ld');TH.ok.add(${jsq(g.key)})" onerror="thumbFail(this,${jsq(g.key)})">
       <div class="sh"></div><div class="info"><span>${esc(g.year || '')}</span><span>${g.score ? '★' + g.score : fmt(g.size)}</span></div>
-      ${live ? '<span class="live">JOGANDO</span>' : ''}${g.mc_nolauncher ? '<span class="badge warn" title="Falta um launcher de Minecraft — clique em Jogar para escolher um">SEM LAUNCHER</span>' : g.repo === 'local' && !g.installed && !job ? '<span class="badge warn" title="O executável ou a ROM não está mais no lugar — clique em Jogar para apontar o novo caminho">NÃO ENCONTRADO</span>' : g.installed && S.view !== 'home' ? '<span class="badge ok">INSTALADO</span>' : g.kind === 'recomp' ? '<span class="badge rc">RECOMP</span>' : ''}${live || (g.repo === 'local' && !g.installed) ? '' : sys}
+      ${live ? '<span class="live">JOGANDO</span>' : ''}${g.mc_nolauncher ? '<span class="badge warn" title="Falta um launcher de Minecraft — clique em Jogar para escolher um">SEM LAUNCHER</span>' : g.repo === 'local' && !g.installed && !job ? '<span class="badge warn" title="O executável ou a ROM não está mais no lugar — clique em Jogar para apontar o novo caminho">NÃO ENCONTRADO</span>' : g.installed && S.view !== 'home' ? '<span class="badge ok">INSTALADO</span>' : g.link_dead ? '<span class="badge warn" title="O link direto não respondeu no último teste da fonte">LINK FORA DO AR</span>' : g.kind === 'recomp' ? '<span class="badge rc">RECOMP</span>' : ''}${live || (g.repo === 'local' && !g.installed) ? '' : sys}
       ${favB}${rib}${ptb}
       ${qpB}
       ${job ? ringSvg(job.fraction) + prog : ''}</div>
@@ -1133,7 +1162,7 @@ function sortMenu(btn) {
   const items = SORTS.filter(([id]) => id !== 'fresh' || S.view === 'store').map(([id, l]) => ({ label: l, icon: S.sort === id ? 'check' : '', fn: () => setSort(id) }));
   items.push({ label: 'Ordem inversa', icon: S.sortRev ? 'check' : '', fn: () => { S.sortRev = !S.sortRev; S.page = 1; renderSortBtn(); renderLibrary(); } });
   if (S.view === 'home') items.push({ label: 'Favoritos primeiro', icon: S.config.fav_first ? 'check' : '', fn: () => setCfg({ fav_first: !S.config.fav_first }).then(() => { S.page = 1; renderLibrary(); }) });
-  if (['home', 'store'].includes(S.view)) { items.push({ sep: true }); for (const [id, l] of GROUPS) items.push({ label: id ? 'Agrupar: ' + l : 'Sem grupos', icon: (S.config.group_by || '') === id ? 'check' : '', fn: () => setCfg({ group_by: id }) }); }
+  if (['home', 'store'].includes(S.view)) { items.push({ sep: true }); for (const [id, l] of GROUPS) items.push({ label: id ? 'Agrupar: ' + l : 'Sem grupos', icon: groupBy() === id ? 'check' : '', fn: () => setGroupBy(id) }); if (groupBy()) { items.push({ sep: true }, { label: 'Recolher todos os grupos', icon: 'chev', fn: () => groupsAll(true) }, { label: 'Expandir todos os grupos', icon: '', fn: () => groupsAll(false) }); } }
   const r = btn.getBoundingClientRect(); showCtx(items, r.right - 230, r.bottom + 6, 'Ordenar e agrupar');
 }
 const FILTER_VIEWS = ['settings', 'central', 'emulation', 'mods', 'downloads', 'flash'];
@@ -1182,7 +1211,7 @@ function searchInView() {
 function applyQPlaceholder() { const i = $('#q'); if (!i) return; const n = S.view === 'home' ? S.games.filter(g => g.installed).length : 0; i.title = n ? 'Prefixos: dev:, ano:, gen:, sis:, origem:' : ''; i.placeholder = n ? `Buscar em ${n} jogos…  (/)` : (Q_PLACEHOLDER[S.view] || Q_PLACEHOLDER.home); }
 const qObs = new MutationObserver(() => { if (S.q && FILTER_VIEWS.includes(S.view) && !S._qfBusy) { S._qfBusy = true; requestAnimationFrame(() => { S._qfBusy = false; viewFilter(); }); } });
 qObs.observe($('#view'), { childList: true, subtree: true });
-function renderSortBtn() { const b = $('#sort'); if (!b) return; const cur = SORTS.find(x => x[0] === S.sort) || SORTS[0]; b.innerHTML = `${I.sort}<span class="lbl">${esc(cur[1])}</span><svg class="car" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>`; b.classList.toggle('on', S.sort !== 'az' || !!S.sortRev); if (S.sortRev) b.querySelector('.lbl').textContent += ' ↓'; }
+function renderSortBtn() { const b = $('#sort'); if (!b) return; const cur = SORTS.find(x => x[0] === S.sort) || SORTS[0]; b.innerHTML = `${I.sort}<span class="lbl">${esc(cur[1])}</span><svg class="car" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>`; b.classList.toggle('on', S.sort !== (S.view === 'store' ? 'fresh' : 'az') || !!S.sortRev); if (S.sortRev) b.querySelector('.lbl').textContent += ' ↓'; }
 function focusSearch() { const m = $('#qm'); if (m && m.offsetParent) { m.parentElement.classList.add('on'); m.focus(); return; } if (topSearchVisible()) { $('#q').focus(); return; } if (!['home', 'store'].includes(S.view)) { setView(S.repos.some(r => r.enabled) ? 'store' : 'home'); return setTimeout(focusSearch, 80); } $('#q').focus(); }
 let qmt; function miniSearch(v) { S._siteQ = ''; clearTimeout(qmt); qmt = setTimeout(() => { S.q = v; S.page = 1; const i = $('#q'); if (i) i.value = v; renderLibrary(); const m = $('#qm'); if (m) { m.parentElement.classList.add('on'); m.focus(); m.setSelectionRange(v.length, v.length); } }, 160); }
 $('#q').addEventListener('keydown', e => { if (e.key === 'Escape' && e.target.value) { e.preventDefault(); e.stopPropagation(); clearSearch(); } else if (e.key === 'Escape') e.target.blur(); });
@@ -1226,11 +1255,11 @@ async function openConsole() {
 }
 
 const HERO_PICK = /pro evolution soccer 2008|need for speed: most wanted|fifa 07|colin mcrae rally 2005|simpsons hit and run|underground 2|halo: combat|midtown madness 2|tony hawk's underground 2|sleeping dogs|majora|sonic unleashed/i;
-function setupHero() { const pool = S.games.filter(g => g.repo !== 'local' && !g.installed && !isRepoRom(g)); S.hero = pool.filter(g => HERO_PICK.test(g.title)).slice(0, 8); if (!S.hero.length) S.hero = pool.filter(g => g.thumb_ok).slice(0, 6); if (!S.hero.length) S.hero = pool.slice(0, 6); clearInterval(S.heroT); S.heroT = setInterval(() => { if ($('#hero')) showHero((S.heroIdx + 1) % S.hero.length); }, 7000); renderView(); }
-function heroHtml() { return `<div class="hero" id="hero"><div class="bg" id="heroBg"></div><div class="grad"></div><div class="dots" id="heroDots">${S.hero.map((_, i) => `<i class="${i === S.heroIdx ? 'on' : ''}"></i>`).join('')}</div><img class="cov" id="heroCov" alt=""><div class="txt"><span class="tag" id="heroTag">EM DESTAQUE</span><h1 id="heroTitle"></h1><div class="meta" id="heroMeta"></div><button class="btn p" id="heroBtn">Ver detalhes</button></div></div>`; }
+function setupHero() { const pool = S.games.filter(g => g.repo !== 'local' && !g.installed && !isRepoRom(g)); S.hero = pool.filter(g => HERO_PICK.test(g.title) && g.thumb_ok).slice(0, 8); if (S.hero.length < 3) S.hero = pool.filter(g => HERO_PICK.test(g.title)).slice(0, 8); if (!S.hero.length) S.hero = pool.filter(g => g.thumb_ok).slice(0, 6); if (!S.hero.length) S.hero = pool.slice(0, 6); clearInterval(S.heroT); S.heroT = setInterval(() => { if ($('#hero')) showHero((S.heroIdx + 1) % S.hero.length); }, 7000); renderView(); }
+function heroHtml() { return `<div class="hero" id="hero"><div class="bg" id="heroBg"></div><div class="grad"></div><div class="dots" id="heroDots">${S.hero.map((_, i) => `<i class="${i === S.heroIdx ? 'on' : ''}"></i>`).join('')}</div><img class="cov" id="heroCov" alt="" onload="this.classList.add('ld')" onerror="this.classList.remove('ld')"><div class="txt"><span class="tag" id="heroTag">EM DESTAQUE</span><h1 id="heroTitle"></h1><div class="meta" id="heroMeta"></div><button class="btn p" id="heroBtn">Ver detalhes</button></div></div>`; }
 function showHero(i) {
   const g = S.hero[i]; if (!g || !$('#hero')) return; S.heroIdx = i;
-  $('#heroBg').style.backgroundImage = `url(/hero/${enc(g.key)})`; $('#heroCov').src = `/cover/${enc(g.key)}`;
+  $('#heroBg').style.backgroundImage = `url(/hero/${enc(g.key)})`; const hc = $('#heroCov'); hc.classList.remove('ld'); hc.src = `/cover/${enc(g.key)}?v=${g.cv || 0}`;
   $('#heroTitle').textContent = g.title;
   $('#heroMeta').innerHTML = [g.creator, g.year, fmt(g.size), g.genres?.[0]].filter(Boolean).map(esc).join(' · ') + (g.installed ? ' · <span style="color:var(--green2)">Instalado</span>' : '');
   $('#heroTag').textContent = g.installed ? 'NA SUA BIBLIOTECA' : g.kind === 'recomp' ? 'RECOMPILADO' : 'EM DESTAQUE';
@@ -1825,7 +1854,7 @@ async function renderEmulation() {
   const e = await api.get('/api/emulation'); S.emu = e; if (S.view !== 'emulation') return;
   const sys = Object.values(e.systems);
   let h = `<div class="h1"><h2>Emuladores</h2><span>${sys.filter(s => s.installed).length} de ${sys.length} consoles ${sys.filter(s => s.installed).length === 1 ? 'pronto' : 'prontos'}</span><div class="acts">
-    <button class="btn s" onclick="openPath(${jsq(e.games_root)})" title="Abrir a pasta de ROMs do Ludrix">${I.folder} ROMs</button>
+    <button class="btn s" onclick="romRootScan()" title="Escolha a pasta onde ficam suas ROMs: as subpastas de cada console são reconhecidas de uma vez">${I.search} Varrer pasta de ROMs</button>    <button class="btn s" onclick="openPath(${jsq(e.games_root)})" title="Abrir a pasta de ROMs do Ludrix">${I.folder} ROMs</button>
     <button class="btn p" onclick="addCustomEmu()">${I.plus} Meu próprio emulador</button></div></div>${emuTabs()}
     <div class="hint">Coloque suas ROMs em <span class="code">emulation${SEP()}games${SEP()}&lt;sistema&gt;</span> (ou aponte outra pasta no console) e elas entram na Biblioteca. Emuladores são baixados do site oficial e ficam portáteis em <span class="code">emulation\\emulators</span>.</div>`;
   const POP = ['ps2', 'ps1', 'psp', 'snes', 'gba', 'n64', 'nds', 'gc', 'wii', 'genesis', 'nes', 'switch'];
@@ -1840,7 +1869,7 @@ async function renderEmulation() {
     const isCustom = !!em.custom;
     const nInst = (s.installed_options || []).length;
     const dirs = [`games${SEP()}${s.id}`, ...(s.extra_dirs || [])];
-    return `<div class="tile ${s.installed ? 'ok' : ''} ${quiet ? 'quiet' : ''}" data-sys="${s.id}"><div class="tt">${sysIcon(s.id)}<b title="${esc(s.name)}">${esc(s.name)}</b>${s.installed ? `<span class="pill ok">pronto${nInst > 1 ? ` · ${nInst}` : ''}</span>` : '<span class="pill">sem emulador</span>'}${em.update ? `<span class="pill warn" title="Versão ${esc(em.update)} disponível">${esc(em.update)}</span>` : ''}${s.guide ? `<button class="pill ${s.installed && !s.setup_ok ? 'warn' : ''}" style="cursor:pointer" title="${s.installed && !s.setup_ok ? 'Falta BIOS/keys/firmware — abrir o guia' : 'Guia de configuração deste console'}" onclick="emuGuide('${s.id}')">${s.installed && !s.setup_ok ? 'falta configurar' : 'guia'}</button>` : ''}<button class="ib" title="Emuladores deste console, pasta de ROMs e extensões" onclick="sysEmus('${s.id}')">${I.cog}</button></div>
+    return `<div class="tile ${s.installed ? 'ok' : ''} ${quiet ? 'quiet' : ''}" data-sys="${s.id}"><div class="tt">${sysIcon(s.id)}<b title="${esc(s.name)}">${esc(s.name)}</b>${s.installed ? `<span class="pill ok">pronto${nInst > 1 ? ` · ${nInst}` : ''}</span>` : '<span class="pill">sem emulador</span>'}${em.update ? `<span class="pill warn" title="Versão ${esc(em.update)} disponível">${esc(em.update)}</span>` : ''}${s.guide ? `<button class="pill ${s.installed && !s.setup_ok ? 'warn' : ''}" style="cursor:pointer" title="${s.installed && !s.setup_ok ? 'Falta BIOS/keys/firmware — abrir o guia' : 'Guia de configuração deste console'}" onclick="emuGuide('${s.id}')">${s.installed && !s.setup_ok ? 'falta ' + ((s.setup_missing || []).length === 1 ? esc(s.setup_missing[0].replace(/\s*\(.*$/, '').replace(/ e .*$/, '')) : 'configurar') : 'guia'}</button>` : ''}<button class="ib" title="Emuladores deste console, pasta de ROMs e extensões" onclick="sysEmus('${s.id}')">${I.cog}</button></div>
       <div class="tm">${opts.length > 1 ? `<select onchange="api.post('/api/emulator/select',{system:'${s.id}',id:this.value}).then(renderEmulation)">${opts.map(o => `<option value="${o.id}" ${o.id === s.emulator ? 'selected' : ''}>${esc(o.title)}${o.custom ? ' (meu)' : ''}</option>`).join('')}</select>` : `<span>${esc(s.emulator_title)}</span>`}<span>·</span><span>${s.rom_count} ${s.rom_count === 1 ? 'jogo' : 'jogos'}</span>${(() => { const nb = S.games.filter(g => g.system === s.id && g.kind === 'rom' && g.repo === 'local' && !g.installed).length; return nb ? `<span>·</span><a href="#" style="color:var(--amber)" title="ROMs da biblioteca cujo arquivo não foi encontrado" onclick="closeDetail();setView('home');setTimeout(()=>{clearFlt();S.flt.sys.add('${s.id}');S.flt.flags.add('broken');renderLibrary()},80);return false">${pl(nb, 'não encontrada', 'não encontradas')}</a>` : ''; })()}</div>
       <div class="tm"><span class="mono" title="${esc(dirs.join('\n'))}">${esc(dirs[0])}${dirs.length > 1 ? ` +${dirs.length - 1}` : ''}</span><span class="sp"></span><button class="lnk" style="font-size:11.5px" onclick="addRomDir('${s.id}')">+ pasta de ROMs</button></div>
       <div class="tm"><span title="Para onde vão os downloads de ROM deste console">${I.dl}</span><span class="mono" title="${esc(s.dest || s.games_dir)}">${esc(s.dest ? s.dest.split(/[\\/]/).slice(-2).join(SEP()) : `games${SEP()}${s.id}`)}</span><span class="sp"></span><button class="lnk" style="font-size:11.5px" onclick="romDestMenu(this,'${s.id}')">Baixar em…</button></div>
@@ -1930,6 +1959,25 @@ function chooseEmulator(key, opts, def, missing) {
 }
 async function updateEmu(id) { const r = await api.post('/api/emulator/update', { id }); if (r.error) return toast('err', 'Não foi possível atualizar', r.error); S.jobs['emu:' + id] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; qfabSync(); renderEmulation(); pollSoon(); }
 async function installEmu(id) { const r = await api.post('/api/emulator/install', { id }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); S.jobs['emu:' + id] = { stage: 'download', fraction: 0, detail: 'Iniciando…' }; qfabSync(); renderEmulation(); pollSoon(); }
+async function romRootScan(folder) {
+  if (!folder) {
+    const r = await api.post('/api/choose_folder', { what: 'any' });
+    if (r.native === false) return modal({ title: 'Varrer pasta de ROMs', text: 'Digite a pasta raiz (ex.: D:\\ROMs). Dentro dela, cada subpasta de console é reconhecida pelo nome ou pelas extensões.', input: '', ok: 'Varrer', onOk: v => { if (v) romRootScan(v); } });
+    if (!r.folder) return;
+    folder = r.folder;
+  }
+  const r = await api.post('/api/romroot/scan', { folder }); if (r.error) return toast('err', 'Varredura', r.error);
+  const found = r.found || [];
+  if (!found.length) return modal({ title: 'Nada reconhecido', text: `Não achei subpastas com ROMs em ${folder}. Dica: uma pasta por console (snes, ps1, gba…) ou arquivos com as extensões do console.`, ok: 'OK', noCancel: true });
+  const sysOpts = Object.entries(S.systems).filter(([id]) => id !== 'pc').sort((a, b) => COLL.compare(a[1], b[1]));
+  const rows = found.map((f, i) => `<label class="rrow ${f.already ? 'dim' : ''}"><input type="checkbox" data-i="${i}" ${f.already ? '' : 'checked'}><span class="mono" title="${esc(f.dir)}">${esc(f.dir.replace(folder, '').replace(/^[\\/]/, '') || f.dir)}</span><em>${f.count} ${f.count === 1 ? 'arquivo' : 'arquivos'}</em><select data-s="${i}">${sysOpts.map(([id, n]) => `<option value="${id}" ${id === f.system ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>${f.already ? '<i title="Já está na lista deste console">já mapeada</i>' : ''}</label>`).join('');
+  modal({ title: `Pastas encontradas em ${folder.split(/[\\/]/).pop()}`, wide: true, html: `<p class="mut">Confira o console de cada pasta. As marcadas entram como pasta de ROMs do console e os jogos aparecem na Biblioteca.</p><div class="rrows">${rows}</div>`, ok: 'Adicionar marcadas', onOk: async () => {
+    const box = $('#modalBox'); const items = [...box.querySelectorAll('input[data-i]:checked')].map(c => { const i = +c.dataset.i; return { system: box.querySelector(`select[data-s="${i}"]`).value, dir: found[i].dir }; });
+    if (!items.length) return;
+    const x = await api.post('/api/romroot/apply', { items }); if (x.error) return toast('err', 'Varredura', x.error);
+    toast('ok', 'Pastas adicionadas', pl(x.added, 'pasta de ROMs mapeada', 'pastas de ROMs mapeadas') + ' — os jogos entram na Biblioteca em instantes'); renderEmulation(); setTimeout(() => loadCatalog(false), 1500);
+  } });
+}
 async function addRomDir(sid) {
   const r = await api.post('/api/choose_folder', { what: 'rom_dir', system: sid });
   if (r.native) { if (r.folder) { toast('ok', 'Pasta adicionada', r.folder); renderEmulation(); loadCatalog(false); } return; }
@@ -1979,7 +2027,7 @@ async function renderDownloads() {
       : `${i.can_retry ? `<button class="btn p xs" onclick="qAct('retry',${jsq(i.key)})">${i.status === 'paused' ? 'Retomar' : 'Tentar de novo'}</button>` : ''}${i.dir ? `<button class="btn s xs" onclick="openPath(${jsq(i.dir)})">${I.folder} Pasta</button>` : ''}${g && i.installed ? `<button class="btn s xs" onclick="openGame(${jsq(i.key)})">Abrir</button>` : ''}<button class="btn s xs" onclick="qAct('remove',${jsq(i.key)})" title="Tira da lista">✕</button>`;
     return `<div class="item q ${cls}"><div class="ic">${g ? `<img src="/thumb/${enc(i.key)}" onerror="this.remove()">` : I.dl}</div><div class="tx"><b>${esc(i.title)}</b><span><em class="qst ${cls}">${lbl}</em> · ${KIND[i.kind] || i.kind} · ${when(i.at)}${i.message ? ` · ${esc(i.message)}` : ''}</span>${i.job ? progHtml(i.job, i.key) : ''}</div><div class="qa">${acts}</div></div>`;
   };
-  let h = `<div class="h1"><h2>Fila</h2><span>${running.length ? `${running.length} em andamento` : 'nada baixando agora'}${rest.length ? ` · ${rest.length} no histórico` : ''}</span><div class="acts"><button class="btn p xs" onclick="linkDownload()">${I.dl} Baixar de link</button>${running.length ? `<button class="btn s xs" onclick="qAct('clear_all')">Parar tudo</button>` : ''}${rest.length ? `<button class="btn s xs" onclick="qAct('clear')">Limpar histórico</button>` : ''}<button class="btn s xs" onclick="openPath(${jsq(S.config.downloads_dir || 'downloads')})">${I.folder} downloads\\</button></div></div>`;
+  let h = `<div class="h1"><h2>Fila</h2><span>${running.length ? `${running.length} em andamento` : 'nada baixando agora'}${rest.length ? ` · ${rest.length} no histórico` : ''}</span><div class="acts"><button class="btn p xs" onclick="linkDownload()">${I.dl} Baixar de link</button>${running.length ? `<button class="btn s xs" onclick="qAct('pause_all')" title="Pausa tudo guardando o parcial para retomar">Pausar tudo</button><button class="btn s xs" onclick="qAct('clear_all')">Parar tudo</button>` : ''}${paused.length ? `<button class="btn s xs" onclick="qAct('resume_all')">Retomar tudo</button>` : ''}${rest.length ? `<button class="btn s xs" onclick="qAct('clear')">Limpar histórico</button>` : ''}<label class="afterq" title="O que fazer quando todos os downloads terminarem"><span>Ao terminar</span><select onchange="afterQueueSet(this)">${AFTER_Q.map(([v, n]) => `<option value="${v}" ${(S.config.after_queue || 'none') === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label><button class="btn s xs ic" onclick="openPath(${jsq(S.config.downloads_dir || 'downloads')})" title="Abrir a pasta downloads">${I.folder}</button></div></div>`;
   const sec = (title, sub, list, extra) => list.length ? `<div class="gh qh"><h3>${title} <em>${list.length}</em></h3><span>${sub}</span>${extra || ''}</div><div class="list">${list.map(row).join('')}</div>` : '';
   if (!items.length) h += emptyHtml(I.dl, 'Nada por aqui', 'Jogos, emuladores, ferramentas e dependências que você baixar aparecem nesta lista, com pausa, retomada e histórico. Tem um link do Google Drive, MEGA, Gofile, MediaFire ou Pixeldrain? <b>Baixar de link</b> traz o arquivo, extrai e adiciona à Biblioteca.', [['Baixar de link', 'linkDownload()', 1], ['Ir para a Store', "setView('store')"]]);
   else h += `<div class="qsecs">${sec('Agora', running.length ? 'em andamento' : 'nada baixando', running)}${sec('Pausados', 'retome quando quiser', paused)}${sec('Precisam de atenção', 'não terminaram — tente de novo ou remova', failed)}${sec('Concluídos', 'histórico do que já passou por aqui', done, `<button class="btn s xs" onclick="qAct('clear_done')">Limpar concluídos</button>`)}</div>`;
@@ -2016,7 +2064,26 @@ function linkDownload(preset) {
   $('#lkUrl').onpaste = () => setTimeout(read, 50);
   setTimeout(() => { $('#lkUrl').focus(); if (preset) read(); }, 30);
 }
+const AFTER_Q = [['none', 'Nada'], ['quit', 'Fechar o Ludrix'], ['sleep', 'Suspender o PC'], ['shutdown', 'Desligar o PC']];
+function afterQueueSync(st) {
+  const cur = $('#afterq');
+  if (!st) { if (cur) cur.remove(); S._afterQ = null; return; }
+  if (cur && S._afterQ && S._afterQ.at === st.at) return;
+  S._afterQ = st; if (cur) cur.remove();
+  const lbl = (AFTER_Q.find(x => x[0] === st.action) || [])[1] || st.action;
+  const t = document.createElement('div'); t.className = 'toast warn act'; t.id = 'afterq';
+  t.innerHTML = `<div><b>Fila terminou</b><span>${esc(lbl)} em <em id="afterqN">60</em> s</span><div class="ta"><button class="btn p xs">Cancelar</button><button class="btn s xs">Agora</button></div></div>`;
+  const [bc, bn] = t.querySelectorAll('button');
+  bc.onclick = () => { api.post('/api/queue/action', { action: 'after_cancel' }); t.remove(); S._afterQ = null; toast('', 'Cancelado', 'Nada vai acontecer ao terminar'); };
+  bn.onclick = () => { api.post('/api/queue/action', { action: 'after_now' }); t.remove(); };
+  $('#toasts').appendChild(t); uiSound('notify');
+  const tick = () => { if (!document.contains(t)) return; const left = Math.max(0, Math.round(st.at - Date.now() / 1000)); const n = t.querySelector('#afterqN'); if (n) n.textContent = left; if (left > 0) setTimeout(tick, 1000); };
+  tick();
+}
+function afterQueueSet(sel) { const v = sel.value, lbl = (AFTER_Q.find(x => x[0] === v) || [])[1] || v; setCfg({ after_queue: v }).then(() => { if (v !== 'none') toast('', 'Combinado', `${lbl} quando a fila terminar (dá para cancelar no aviso)`); }); }
 async function qAct(action, key) {
+  if (action === 'pause_all') { const r = await api.post('/api/queue/action', { action }); toast('', 'Pausado', r.n ? pl(r.n, 'download guardado para retomar', 'downloads guardados para retomar') : 'Nada em andamento'); setTimeout(renderDownloads, 400); return; }
+  if (action === 'resume_all') { toast('', 'Retomando', 'Os downloads pausados voltam para a fila'); const r = await api.post('/api/queue/action', { action }); if (r && r.error) toast('err', 'Fila', r.error); setTimeout(renderDownloads, 600); return; }
   if (action === 'clear_all') { modal({ title: 'Parar tudo', text: 'Parar todos os downloads em andamento? Os parciais serão apagados.', ok: 'Parar tudo', danger: true, onOk: () => qAct('_clear_all') }); return; }
   if (action === '_clear_all') action = 'clear_all';
   const r = await api.post('/api/queue/action', { action, key }); if (r && r.error) toast('err', 'Fila', r.error);
@@ -2275,6 +2342,7 @@ async function poll() {
     if (s.gamepad) gpIndicator(s.gamepad);
     if (s.online !== undefined) setOnline(!!s.online && navigator.onLine !== false);
     S.metaPending = s.meta_pending || 0; statusBar(s.activity, s.loading);
+    afterQueueSync(s.after_queue || null);
     for (const ev of (s.events || [])) handleEvent(ev);
   } catch (e) { }
   const busy = Object.keys(S.jobs).length, playing = Object.keys(S.sessions || {}).length;
@@ -2304,6 +2372,7 @@ async function handleEvent(ev) {
   if (ev.type === 'flash_cover') { if (S.view === 'flash') { const c = document.querySelector(`.fcard[data-fid="${CSS.escape(ev.id)}"] .fart`); if (c && !c.querySelector('img')) c.insertAdjacentHTML('afterbegin', `<img src="/flash/cover/${esc(ev.id)}?t=${Date.now()}" onload="this.classList.add('ld')" onerror="this.remove()">`); } return; }
   if (ev.type === 'theme_reload') { if (ev.theme) S.config.theme = ev.theme; reloadTheme(true); if (S.view === 'settings') renderSettings(true); return; }
   if (ev.type === 'update_available') { toast('info', 'Tem atualização nova', 'Versão ' + ev.version + (ev.rev ? ' (correção ' + ev.rev + ')' : '') + ' — veja em Ajustes › Sistema › Atualizações', [{ label: 'Abrir', fn: () => { setView('settings'); S.tab.settings = 'system'; S._settingsJump = 'Atualizações'; renderSettings(true); } }]); return; }
+  if (ev.type === 'after_queue') { afterQueueSync({ action: ev.action, at: ev.at }); return; }
   if (ev.type === 'done') {
     if (ev.kind === 'update') { toast('ok', 'Atualização baixada', 'Pronta para aplicar', [{ label: 'Ver', fn: () => { setView('settings'); S.tab.settings = 'system'; S._settingsJump = 'Atualizações'; renderSettings(true); } }]); S.upd = null; if (S.view === 'settings' && S.tab.settings === 'system') loadUpdates(false); return; }
     if (ev.kind === 'emulator') { toast('ok', 'Emulador instalado', ev.title); if (S.view === 'emulation') renderEmulation(); return; }
@@ -2502,7 +2571,7 @@ function safeModeNotice() {
 async function showDiag() {
   const d = await api.get('/api/diag');
   const rows = d.checks.map(c => `<div class="frow"><div class="l"><b>${esc(c.name)}</b><span>${esc(c.detail)}</span></div><span class="tag ${c.ok && !c.warn ? 'ok' : (c.ok ? 'warn' : 'bad')}">${c.ok && !c.warn ? 'OK' : (c.ok ? 'atenção' : 'problema')}</span></div>`).join('');
-  modal({ title: 'Diagnóstico', wide: true, html: `<div class="diag">${rows}${d.log.length ? `<details style="margin-top:10px"><summary>Últimas linhas do log</summary><pre class="dlog">${esc(d.log.join('\n'))}</pre></details>` : ''}</div>`, ok: 'Copiar tudo', cancel: 'Fechar', onOk: () => { navigator.clipboard.writeText(d.text).then(() => toast('ok', 'Copiado', 'Cole onde quiser (chat, e-mail, bloco de notas).')); } });
+  modal({ title: 'Diagnóstico', wide: true, html: `<div class="diag">${rows}${d.log.length ? `<details style="margin-top:10px"><summary>Últimas linhas do log</summary><pre class="dlog">${esc(d.log.join('\n'))}</pre></details>` : ''}</div>`, ok: 'Copiar tudo', cancel: 'Fechar', extra: 'Gerar zip', onExtra: async () => { const r = await api.post('/api/diag/zip', {}); if (r.error) return toast('err', 'Não foi possível gerar', r.error); toast('ok', 'Zip de diagnóstico pronto', `${r.path.split(/[\\/]/).pop()} · ${fmt(r.size)} — a pasta foi aberta`); }, onOk: () => { navigator.clipboard.writeText(d.text).then(() => toast('ok', 'Copiado', 'Cole onde quiser (chat, e-mail, bloco de notas).')); } });
 }
 const _uiErrSeen = new Set();
 window.addEventListener('error', e => { const msg = String(e.message || e.error || 'erro'); if (_uiErrSeen.has(msg) || _uiErrSeen.size > 20) return; _uiErrSeen.add(msg); try { api.post('/api/log/ui', { msg, src: e.filename || '', line: e.lineno || 0 }); } catch (_) {} });
@@ -2782,12 +2851,12 @@ function activeChips() {
   return `<div class="fchips">${S.cat !== 'all' ? `<button class="fchip" onclick="S.cat='all';S.page=1;renderLibrary()" title="Remover">${esc((S.cats.find(c => c.id === S.cat) || {}).name || S.cat)}${I.x}</button>` : ''}${L.map(([k, id, nm]) => `<button class="fchip" onclick="toggleFlt('${k}',${jsq(id)})" title="Remover">${esc(nm)}${I.x}</button>`).join('')}${L.length + (S.cat !== 'all' ? 1 : 0) > 1 ? `<button class="lnk" onclick="clearFlt()">Limpar tudo</button>` : ''}</div>`;
 }
 function viewBtn() {
-  const g = S.config.group_by ?? 'letter', lm = listMode(), n = (S.sort !== 'az' ? 1 : 0) + (g !== 'letter' ? 1 : 0) + ((S.config.view_mode || 'mural') !== 'mural' ? 1 : 0);
+  const g = groupBy(), defS = S.view === 'store' ? 'fresh' : 'az', defG = S.view === 'store' ? '' : 'letter', lm = listMode(), n = (S.sort !== defS ? 1 : 0) + (g !== defG ? 1 : 0) + ((S.config.view_mode || 'mural') !== 'mural' ? 1 : 0);
   return `<div class="filt" id="vpop"><button class="btn s xs ${n ? 'p' : ''}" onclick="toggleFilt(undefined,'vpop')" title="Ordem, grupos, grade ou lista e tamanho das capas">${I.layout}<span class="lb">Exibição</span></button>
     <div class="pop wide" onclick="event.stopPropagation()">
-      <div class="fhead"><b>Exibição</b><span>como os jogos aparecem nesta tela</span>${n ? `<button class="btn s xs" onclick="S.sort='az';setCfg({group_by:'letter',view_mode:'mural'});renderSortBtn()">Padrão</button>` : ''}</div>
+      <div class="fhead"><b>Exibição</b><span>como os jogos aparecem nesta tela</span>${n ? `<button class="btn s xs" onclick="setSort(${jsq(defS)});setGroupBy(${jsq(defG)}).then(()=>setCfg({view_mode:'mural'}))">Padrão</button>` : ''}</div>
       <div class="fsec"><h5>Ordem</h5><div class="seg fsort">${SORTS.filter(([id]) => id !== 'fresh' || S.view === 'store').map(([id, l]) => `<button class="${S.sort === id ? 'on' : ''}" onclick="setSort('${id}');toggleFilt(true,'vpop')">${l}</button>`).join('')}</div></div>
-      <div class="fsec"><h5>Agrupar</h5><div class="seg fsort">${GROUPS.map(([id, l]) => `<button class="${g === id ? 'on' : ''}" onclick="setCfg({group_by:${jsq(id)}}).then(()=>toggleFilt(true,'vpop'))">${l}</button>`).join('')}</div></div>
+      <div class="fsec"><h5>Agrupar</h5><div class="seg fsort">${GROUPS.map(([id, l]) => `<button class="${g === id ? 'on' : ''}" onclick="setGroupBy(${jsq(id)}).then(()=>toggleFilt(true,'vpop'))">${l}</button>`).join('')}</div>${g ? `<div class="gall"><button class="lnk" onclick="groupsAll(true)">Recolher todos</button><button class="lnk" onclick="groupsAll(false)">Expandir todos</button></div>` : ''}</div>
       <div class="fsec"><h5>Modo</h5><div class="seg fsort">${[['mural', 'Mural com painel'], ['grid', 'Grade de capas'], ['list', 'Lista']].map(([id, l]) => `<button class="${(S.config.view_mode || 'mural') === id ? 'on' : ''}" onclick="setViewMode(${jsq(id)});requestAnimationFrame(()=>toggleFilt(true,'vpop'))">${l}</button>`).join('')}</div></div>
       ${lm ? `<div class="fsec"><h5>Colunas da lista</h5><div class="seg fsort">${LIST_COLS.map(([id, l]) => `<button class="${listCols().includes(id) ? 'on' : ''}" onclick="toggleListCol(${jsq(id)})">${l}</button>`).join('')}</div></div>` : ''}
       ${lm ? '' : `<div class="fsec"><h5>Tamanho das capas</h5><label class="zoom vz"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><input type="range" min="100" max="300" step="10" value="${S.config.card_size || 136}" oninput="setCardSize(this.value,false)" onchange="setCardSize(this.value,true)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></label></div>`}
@@ -2817,7 +2886,9 @@ function toggleFilt(force, id) {
 function toggleFlt(kind, id) { const set = S.flt[kind]; set.has(id) ? set.delete(id) : set.add(id); S._fpreset = undefined; S.page = 1; renderLibrary(); renderRailX(); }
 function flagOnly(id) { clearFlt(); S.flt.flags.add(id); S.page = 1; const want = id === 'fresh' ? 'store' : 'home'; if (S.view !== want) setView(want); else renderLibrary(); }
 function clearFlt() { for (const k of FLT_KINDS) S.flt[k].clear(); S._fpreset = undefined; S.cat = 'all'; S.sort = 'az'; S.sortRev = false; S.page = 1; renderLibrary(); }
-function setSort(id) { S.sort = id; S.page = 1; renderSortBtn(); renderLibrary(); if (S.config.sort_by !== id) { S.config.sort_by = id; api.post('/api/config', { sort_by: id }, { quiet: true }); } }
+function sortKey() { return S.view === 'store' ? 'sort_store' : 'sort_by'; }
+function setSort(id) { S.sort = id; S.page = 1; renderSortBtn(); renderLibrary(); const k = sortKey(); if (S.config[k] !== id) { S.config[k] = id; api.post('/api/config', { [k]: id }, { quiet: true }); } }
+function sortForView(v) { const k = v === 'store' ? 'sort_store' : 'sort_by', def = v === 'store' ? 'fresh' : 'az'; const c = S.config[k]; return c && SORTS.some(x => x[0] === c) ? c : def; }
 const HOME_ROWS = [['recent', 'Continuar jogando'], ['favorites', 'Favoritos'], ['added', 'Adicionados há pouco'], ['most', 'Mais jogados']];
 function homeRows() {
   const hm = S.home, rows = S.config.home_rows || []; if (!hm || !rows.length || listMode()) return '';
@@ -3144,14 +3215,14 @@ async function renderSources() {
   const kindName = { pc: 'Jogos PC', rom: 'ROMs', recomp: 'Ports / recompilações' };
   const typeName = { telegram: 'canal do Telegram (bot lê posts com .torrent)', webpage: 'página da web (links diretos / torrents)', archive_uploader: 'coleção de um uploader', archive_creator: 'coleção de um criador', archive_item: 'pacote (um arquivo por jogo)', archive_search: 'busca', github_release: 'releases do GitHub', manifest: 'lista .json', local_folder: 'pasta do PC' };
   $('#view').innerHTML = storeTabs() + `
-    <div class="h1"><h2>Fontes de jogos</h2><span>${repos.length ? `${repos.filter(r => r.enabled).length} de ${repos.length} ligadas` : 'de onde a Store puxa o catálogo'}</span><div class="acts"><button class="btn s" onclick="sourceMaker()" title="Monta um .json de fonte a partir de uma pasta com os arquivos dos jogos">${I.plus} Criar fonte</button><button class="btn s" onclick="addRepo()">${I.cog} Manual (avançado)</button></div></div>
+    <div class="h1"><h2>Fontes de jogos</h2><span>${repos.length ? `${repos.filter(r => r.enabled).length} de ${repos.length} ligadas` : 'de onde a Store puxa o catálogo'}</span><div class="acts">${repos.some(r => r.enabled) ? `<button class="btn s" onclick="repoLinksTest('', '')" title="Testa uma amostra dos links diretos de cada fonte ligada">${I.link} Testar links</button>` : ''}<button class="btn s" onclick="sourceMaker()" title="Monta um .json de fonte a partir de uma pasta com os arquivos dos jogos">${I.plus} Criar fonte</button><button class="btn s" onclick="addRepo()">${I.cog} Manual (avançado)</button></div></div>
     <div class="hint">Cole um link ou escolha um arquivo .json com fontes de jogos ${help('Uma fonte é uma lista de jogos que a Store lê: um arquivo .json (local ou por link), uma coleção do archive.org, uma página com downloads, um repositório do GitHub ou uma pasta do PC.')} <a href="#" class="fmtlink" onclick="api.post('/api/open_url',{url:'https://github.com/wolffZ-prog/Ludrix/blob/main/docs/FONTES.md'});return false">formato do .json</a>${ONLINE ? '' : ' <span class="offl">Sem internet — conecte-se para ligar fontes e baixar.</span>'}</div>
     <div class="detbox"><div class="mrow"><input class="mi" id="detq" placeholder="https://…/fontes.json  ·  archive.org/details/@usuario  ·  página com jogos  ·  GitHub  ·  pasta do PC" onkeydown="if(event.key==='Enter')doDetect()"><button class="btn p sm" onclick="doDetect()">${I.search} Analisar</button>${S.config.native ? `<button class="btn s sm" onclick="pickSourceJson()">${I.doc} Arquivo .json</button><button class="btn s sm" title="Pasta do PC com jogos ou ROMs" onclick="api.post('/api/choose_folder',{what:'any'}).then(r=>{if(r.folder){$('#detq').value=r.folder;doDetect()}})">${I.folder} Pasta</button>` : ''}</div>
     </div>
     <div class="browse" id="browse"></div>
     <div class="gh"><h3>Suas fontes</h3><span>botão direito numa fonte mostra mais opções</span></div>
     ${repos.length ? '' : `<div class="empty" style="padding:24px 0 16px"><b>Nenhuma fonte ainda</b>Cole um link acima ou use Manual (avançado).</div>`}
-    <div class="srcs">${repos.map(r => `<div class="src ${r.enabled ? 'on' : ''} ${!ONLINE && !r.enabled ? 'off' : ''}" data-repo="${esc(r.id)}" title="${ONLINE ? 'Botão direito: mais opções' : 'Sem internet'}"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b>${esc(r.name)}</b><button class="sw ${r.enabled ? 'on' : ''}" ${!ONLINE && !r.enabled ? 'disabled title="Sem conexão com a internet"' : ''} onclick="event.stopPropagation();if(!ONLINE&&!${r.enabled})return toast('err','Sem internet','Conecte-se para ligar essa fonte.');api.post('/api/repos/toggle',{id:${jsq(r.id)},enabled:${!r.enabled}}).then(()=>{renderSources();loadCatalog(false)})"></button></div><span>${esc(typeName[r.type] || r.type)} · ${esc(kindName[r.kind] || r.kind)}${r.system && r.system !== 'pc' ? ' · ' + esc(S.systems[r.system] || r.system) : ''}</span><span class="n">${r.error ? `<span class="rep bad" title="${esc(r.error)}">${I.warn} não carregou</span>` : r.report ? `<a href="#" class="rep ${r.report.errors.length ? 'bad' : r.report.warnings.length ? 'warn' : 'ok'}" onclick="event.stopPropagation();repoReport(${jsq(r.id)});return false" title="Ver relatório do JSON">${esc(r.report.summary)}</a>` : r.enabled ? `${r.count} ${r.count === 1 ? 'jogo' : 'jogos'}` : 'desligada'}${r.enabled && r.checked_at ? `<em class="age" title="${esc(new Date(r.checked_at * 1000).toLocaleString('pt-BR'))}">lida ${ago(r.checked_at)}</em>` : ''}${r.new_count ? `<a href="#" class="fresh" title="Ver os jogos novos dessa fonte" onclick="event.stopPropagation();S.tab.store='games';flagOnly('fresh');S.flt.repos.add(${jsq(r.id)});renderLibrary();return false">${r.new_count} ${r.new_count === 1 ? 'novo' : 'novos'}</a>` : ''}${r.builtin ? '' : `<button class="srcedit" title="Editar fonte" onclick="event.stopPropagation();editRepo(${jsq(r.id)})">${I.edit}</button>`}</span>${r.note ? `<span class="u" style="direction:ltr" title="${esc(r.note)}">${esc(r.note)}</span>` : ''}${r.url ? `<span class="u" title="${esc(r.url)}">${esc(r.url.replace(/^https?:\/\/(www\.)?/, '').replace(/^[A-Za-z]:\\/, ''))}</span>` : ''}</div>`).join('')}</div>`;
+    <div class="srcs">${repos.map(r => `<div class="src ${r.enabled ? 'on' : ''} ${!ONLINE && !r.enabled ? 'off' : ''}" data-repo="${esc(r.id)}" title="${ONLINE ? 'Botão direito: mais opções' : 'Sem internet'}"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><b>${esc(r.name)}</b><button class="sw ${r.enabled ? 'on' : ''}" ${!ONLINE && !r.enabled ? 'disabled title="Sem conexão com a internet"' : ''} onclick="event.stopPropagation();if(!ONLINE&&!${r.enabled})return toast('err','Sem internet','Conecte-se para ligar essa fonte.');api.post('/api/repos/toggle',{id:${jsq(r.id)},enabled:${!r.enabled}}).then(()=>{renderSources();loadCatalog(false)})"></button></div><span>${[typeName[r.type] || r.type, kindName[r.kind] || r.kind, r.system && r.system !== 'pc' ? (S.systems[r.system] || r.system) : ''].filter(Boolean).map(esc).join(' · ')}</span><span class="n">${r.error ? `<span class="rep bad" title="${esc(r.error)}">${I.warn} não carregou</span>` : r.report ? `<a href="#" class="rep ${r.report.errors.length ? 'bad' : r.report.warnings.length ? 'warn' : 'ok'}" onclick="event.stopPropagation();repoReport(${jsq(r.id)});return false" title="Ver relatório do JSON">${esc(r.report.summary)}</a>` : r.enabled ? `${r.count} ${r.count === 1 ? 'jogo' : 'jogos'}` : 'desligada'}${r.enabled && r.checked_at ? `<em class="age" title="${esc(new Date(r.checked_at * 1000).toLocaleString('pt-BR'))}${r.fetch_ms ? ` · respondeu em ${r.fetch_ms < 1000 ? r.fetch_ms + ' ms' : (r.fetch_ms / 1000).toFixed(1) + ' s'}` : ''}">lida ${ago(r.checked_at)}${r.fetch_ms ? ` · ${r.fetch_ms < 1000 ? r.fetch_ms + ' ms' : (r.fetch_ms / 1000).toFixed(1) + ' s'}` : ''}</em>` : ''}${r.enabled && r.links ? `<em class="age lk ${r.links.dead ? 'bad' : 'ok'}" title="Links diretos testados ${esc(new Date(r.links.at * 1000).toLocaleString('pt-BR'))}: ${r.links.ok} de ${r.links.tested} responderam">${r.links.dead ? `${r.links.dead} de ${r.links.tested} links fora do ar` : `links ok (${r.links.tested} testados)`}</em>` : ''}${r.new_count ? `<a href="#" class="fresh" title="Ver os jogos novos dessa fonte" onclick="event.stopPropagation();S.tab.store='games';flagOnly('fresh');S.flt.repos.add(${jsq(r.id)});renderLibrary();return false">${r.new_count} ${r.new_count === 1 ? 'novo' : 'novos'}</a>` : ''}${r.builtin ? '' : `<button class="srcedit" title="Editar fonte" onclick="event.stopPropagation();editRepo(${jsq(r.id)})">${I.edit}</button>`}</span>${r.note ? `<span class="u" style="direction:ltr" title="${esc(r.note)}">${esc(r.note)}</span>` : ''}${r.url ? `<span class="u" title="${esc(r.url)}">${esc(r.url.replace(/^https?:\/\/(www\.)?/, '').replace(/^[A-Za-z]:\\/, ''))}</span>` : ''}</div>`).join('')}</div>`;
   setTimeout(() => $('#detq')?.focus(), 50);
 }
 function reportHtml(rep) {

@@ -5,6 +5,7 @@ const api = (p, body) => fetch(p, body ? {method: 'POST', headers: {'Content-Typ
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const LOGO = '<svg viewBox="0 0 128 128"><defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff7fae"/><stop offset=".3" stop-color="#ffb37a"/><stop offset=".55" stop-color="#ffe58a"/><stop offset=".78" stop-color="#7fe6c6"/><stop offset="1" stop-color="#6fb6ff"/></linearGradient><linearGradient id="vs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><filter id="vb" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="4"/></filter><filter id="vb2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2"/></filter></defs><rect x="2" y="2" width="124" height="124" rx="28" fill="#1a1d22"/><path d="M24 52 Q24 40 36 40 H92 Q104 40 104 52 L109 78 Q110 92 97 92 Q88 92 83 82 L78 72 H50 L45 82 Q40 92 31 92 Q18 92 19 78 Z" fill="none" stroke="url(#vg)" stroke-width="7" opacity=".45" filter="url(#vb)"/><path d="M24 52 Q24 40 36 40 H92 Q104 40 104 52 L109 78 Q110 92 97 92 Q88 92 83 82 L78 72 H50 L45 82 Q40 92 31 92 Q18 92 19 78 Z" fill="#23272e"/><path d="M24 52 Q24 40 36 40 H92 Q104 40 104 52 L109 78 Q110 92 97 92 Q88 92 83 82 L78 72 H50 L45 82 Q40 92 31 92 Q18 92 19 78 Z" fill="url(#vs)"/><path d="M24 52 Q24 40 36 40 H92 Q104 40 104 52 L109 78 Q110 92 97 92 Q88 92 83 82 L78 72 H50 L45 82 Q40 92 31 92 Q18 92 19 78 Z" fill="none" stroke="url(#vg)" stroke-width="3.2" stroke-linejoin="round"/><g filter="url(#vb2)" opacity=".9"><rect x="44.75" y="53.0" width="4.5" height="14" rx="1.5" fill="#ffd27a"/><rect x="40.0" y="57.75" width="14" height="4.5" rx="1.5" fill="#ffd27a"/><circle cx="81" cy="53.5" r="2.8" fill="#8be0c4"/><circle cx="87.5" cy="60" r="2.8" fill="#6fb3f2"/><circle cx="81" cy="66.5" r="2.8" fill="#f3d58a"/><circle cx="74.5" cy="60" r="2.8" fill="#f5a07f"/></g><rect x="44.75" y="53.0" width="4.5" height="14" rx="1.5" fill="#ffd27a"/><rect x="40.0" y="57.75" width="14" height="4.5" rx="1.5" fill="#ffd27a"/><circle cx="81" cy="53.5" r="2.8" fill="#8be0c4"/><circle cx="87.5" cy="60" r="2.8" fill="#6fb3f2"/><circle cx="81" cy="66.5" r="2.8" fill="#f3d58a"/><circle cx="74.5" cy="60" r="2.8" fill="#f5a07f"/></svg>';
 const IC = {
+  down: '<svg viewBox="0 0 24 24"><path d="M12 4v12m0 0 5-5m-5 5-5-5M4 20h16"/></svg>',
   x: '<svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>', pause: '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>', refresh: '<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>',
   sort: '<svg viewBox="0 0 24 24"><path d="M3 9l4-4 4 4M7 5v14M21 15l-4 4-4-4M17 19V5"/></svg>',
   check: '<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>',
@@ -43,12 +44,16 @@ function setFocus(z, i, step) {
 }
 function legend(pad) {
   const el = $('#legend'); if (!el) return;
+  if (pad === undefined) pad = !!(S.data && S.data.gamepad && S.data.gamepad.connected > 0);
+  const main = S.view === 'store' ? 'Baixar' : S.view === 'queue' || S.view === 'settings' ? 'Escolher' : 'Jogar';
   el.innerHTML = pad
-    ? '<span><b class="k a">A</b>Jogar</span><span><b class="k b">B</b>Voltar</span><span><b class="k x">X</b>Opções</span><span><b class="k y">Y</b>Buscar</span><span><b class="k lb">LB</b><b class="k rb">RB</b>Abas</span><span><b class="k st">≡</b>Menu</span>'
-    : '<span><b class="k kb">Enter</b>Jogar</span><span><b class="k kb">Esc</b>Voltar</span><span><b class="k kb">M</b>Opções</span><span><b class="k kb">F</b>Buscar</span><span><b class="k kb">Tab</b>Abas</span><span><b class="k kb">↑ ↓</b>Botões</span>';
+    ? '<span><b class="k a">A</b>' + main + '</span><span><b class="k b">B</b>Voltar</span><span><b class="k x">X</b>Opções</span><span><b class="k y">Y</b>Buscar</span><span><b class="k lb">LB</b><b class="k rb">RB</b>Abas</span><span><b class="k st">≡</b>Menu</span>'
+    : '<span><b class="k kb">Enter</b>' + main + '</span><span><b class="k kb">Esc</b>Voltar</span><span><b class="k kb">M</b>Opções</span><span><b class="k kb">F</b>Buscar</span><span><b class="k kb">Tab</b>Abas</span><span><b class="k kb">↑ ↓</b>Botões</span>';
 }
-const VIEWS = ['library', 'recent', 'favorites', 'queue', 'settings'];
-const VNAME = {library: 'Biblioteca', recent: 'Recentes', favorites: 'Favoritos', queue: 'Fila', settings: 'Ajustes'};
+const VIEWS = ['library', 'recent', 'favorites', 'store', 'queue', 'settings'];
+const VNAME = {library: 'Biblioteca', recent: 'Recentes', favorites: 'Favoritos', store: 'Loja', queue: 'Fila', settings: 'Ajustes'};
+const isStore = g => !!(g && g.repo);
+const fmtSize = b => { b = +b || 0; if (!b) return ''; if (b >= 1073741824) return (b / 1073741824).toFixed(b >= 10737418240 ? 0 : 1) + ' GB'; return Math.round(b / 1048576) + ' MB'; };
 const tabsHtml = () => `<div class="tabs">${VIEWS.map(v => `<button class="tab${S.view === v ? ' on' : ''}" data-view="${v}">${VNAME[v]}${v === 'queue' ? '<i class="dot" id="qdot"></i>' : ''}</button>`).join('')}</div>`;
 const bindTabs = () => $$('.tab').forEach(t => t.onclick = () => setView(t.dataset.view));
 const SYSN = k => (S.data && S.data.systems && S.data.systems[k]) || k || '';
@@ -69,18 +74,34 @@ async function load(first) {
     $('#brand').onclick = () => confirmQuit();
     legend(d.gamepad.connected > 0);
     render();
-  } else if (!S.layer) render(true);
+  } else if (!S.layer) {
+    if (S.view === 'store' && S.store && Date.now() - (S.storeT || 0) > 30000) { S.storeT = Date.now(); loadStore(true).then(() => { if (S.view === 'store' && !S.layer) render(true); }); }
+    render(true);
+  }
 }
 
+async function loadStore(force) {
+  if (S.store && !force) return S.store;
+  if (S.storeP) return S.storeP;
+  S.storeP = api('/api/catalog').then(d => {
+    const seen = new Set();
+    S.store = (d.games || []).filter(g => g.repo && !g.installed && !g.owned && !g.dup_of && !seen.has(g.key) && seen.add(g.key));
+    S.storeLoading = !!d.loading; S.storeRepos = (d.repos || []).length;
+    S.store.forEach(g => S.byKey[g.key] = g);
+    S.storeP = null; return S.store;
+  }).catch(() => { S.storeP = null; S.store = S.store || []; return S.store; });
+  return S.storeP;
+}
 function listFor(view) {
   let g = S.data.games;
+  if (view === 'store') g = S.store || [];
   if (view === 'recent') g = S.data.recent.map(k => S.byKey[k]).filter(Boolean);
   if (view === 'favorites') g = g.filter(x => x.fav);
   if (S.sys) g = g.filter(x => (x.system || 'pc') === S.sys);
   if (S.q) { const q = S.q.toLowerCase(); g = g.filter(x => (x.title || '').toLowerCase().includes(q)); }
   const srt = S.data.config.console_sort || 'title';
   if (view !== 'recent' && srt !== 'title') { g = [...g]; if (srt === 'recent') g.sort((a, b) => (b.last_played || 0) - (a.last_played || 0)); else if (srt === 'playtime') g.sort((a, b) => (b.playtime || 0) - (a.playtime || 0)); else if (srt === 'count') g.sort((a, b) => (b.play_count || 0) - (a.play_count || 0) || (b.playtime || 0) - (a.playtime || 0)); else if (srt === 'added') g.sort((a, b) => (b.installed_at || 0) - (a.installed_at || 0)); }
-  if (S.data.config.fav_first && view !== 'recent' && view !== 'favorites') g = g.filter(x => x.fav).concat(g.filter(x => !x.fav));
+  if (S.data.config.fav_first && view !== 'recent' && view !== 'favorites' && view !== 'store') g = g.filter(x => x.fav).concat(g.filter(x => !x.fav));
   return g;
 }
 const SORTN = {title: 'A–Z', recent: 'Jogados por último', playtime: 'Mais jogados', count: 'Mais vezes jogados', added: 'Adicionados por último'};
@@ -92,8 +113,9 @@ function render(keep) {
     if (!STG.key && S.data.games.length) stageBg(S.data.games[Math.min(S.sel, S.data.games.length - 1)] || S.data.games[0]);
     return S.view === 'queue' ? renderQueue() : renderSettings();
   }
+  if (S.view === 'store' && !S.store) { loadStore().then(() => { if (S.view === 'store') render(keep); }); m.innerHTML = `<div class="empty"><div><b>Carregando a loja…</b></div></div><div class="head">${tabsHtml()}</div><div class="strip" id="strip"></div>`; bindTabs(); return; }
   S.games = listFor(S.view);
-  const more = S.view !== 'library' && S.games.length > 0 && S.data.games.length > S.games.length;
+  const more = S.view !== 'library' && S.view !== 'store' && S.games.length > 0 && S.data.games.length > S.games.length;
   S.more = more;
   if (!keep) S.sel = 0; else S.sel = Math.min(S.sel, Math.max(0, S.games.length - (more ? 0 : 1)));
   const sig = S.view + '|' + S.games.map(g => g.key + (g.fav ? '*' : '') + (S.data.sessions[g.key] ? '!' : '')).join(',') + (more ? '|+' : '');
@@ -103,21 +125,22 @@ function render(keep) {
     const msg = S.q ? ['Nada encontrado', 'Tente outro nome ou limpe a busca (Y).'] :
       S.view === 'favorites' ? ['Nenhum favorito', 'Marque um jogo com X › Favoritar e ele aparece aqui.'] :
       S.view === 'recent' ? ['Nada jogado ainda', 'Os últimos jogos abertos ficam nesta aba.'] :
+      S.view === 'store' ? (S.storeRepos ? ['Loja vazia', S.storeLoading ? 'As fontes ainda estão carregando. Volte em instantes.' : 'Nada novo para baixar: tudo que as fontes oferecem já está instalado.'] : ['Nenhuma fonte ativa', 'Ative uma fonte pelo Ludrix em janela, em Loja › Fontes.']) :
       ['Biblioteca vazia', 'Instale ou adicione jogos pelo Ludrix em janela; aqui aparecem só os instalados.'];
     m.innerHTML = `<div class="empty"><div><b>${msg[0]}</b>${msg[1]}</div></div><div class="head">${tabsHtml()}</div><div class="strip" id="strip"></div>`;
     bindTabs(); chip(null); stageClear(); S.sig = '';
     return;
   }
-  const systems = [...new Set(S.data.games.map(g => g.system || 'pc'))];
+  const systems = [...new Set((S.view === 'store' ? S.games : S.data.games).map(g => g.system || 'pc'))];
   const sysBar = systems.length > 1 ? `<div class="sys"><button class="${S.sys ? '' : 'on'}" data-sys="">Todos</button>${systems.map(s => `<button class="${S.sys === s ? 'on' : ''}" data-sys="${esc(s)}">${esc(SYSN(s))}</button>`).join('')}</div>` : '';
   m.innerHTML = `
     <div class="txt" id="sttxt"></div>
-    <div class="head">${tabsHtml()}<span class="n">${S.games.length} ${S.games.length === 1 ? 'jogo' : 'jogos'}${S.q ? ` · busca “${esc(S.q)}”` : ''}</span><div class="sp"></div>${sysBar}<div class="sys tools"><button data-tool="sort" title="Ordenar">${IC.sort || ''}${esc(SORTN[S.data.config.console_sort] || 'A–Z')}</button><button data-tool="grid" title="Ver todos em grade">${IC.grid}Grade</button></div></div>
+    <div class="head">${tabsHtml()}<span class="n">${S.games.length} ${S.games.length === 1 ? 'jogo' : 'jogos'}${S.q ? ` · busca “${esc(S.q)}”` : ''}</span><div class="sp"></div>${sysBar}<div class="sys tools">${S.view === 'store' ? '' : `<button data-tool="sort" title="Ordenar">${IC.sort || ''}${esc(SORTN[S.data.config.console_sort] || 'A–Z')}</button>`}<button data-tool="grid" title="Ver todos em grade">${IC.grid}Grade</button></div></div>
     <div class="strip" id="strip">${S.games.map((g, i) => card(g, i)).join('')}${more ? `<div class="card more" data-i="${S.games.length}">${IC.grid}Todos os jogos<small>+${S.data.games.length - S.games.length}</small></div>` : ''}</div>`;
   fitCards();
   if (S.lastView !== S.view) { S.lastView = S.view; const st = $('#strip'); st.classList.add('swap'); st.addEventListener('animationend', () => st.classList.remove('swap'), {once: true}); }
   bindTabs();
-  $$('#strip .card').forEach(c => { c.onclick = () => { const i = +c.dataset.i; if (c.classList.contains('more')) return setView('library'); if (S.focus !== 'strip') setFocus('strip', 0); if (i === S.sel) { const g = S.games[i]; if (S.data.sessions[g.key]) openMenu(); else play(g.key); } else select(i); }; c.ondblclick = () => { const i = +c.dataset.i; if (c.classList.contains('more')) return; const g = S.games[i]; if (g && !S.data.sessions[g.key]) play(g.key); }; c.oncontextmenu = e => { e.preventDefault(); if (c.classList.contains('more')) return; select(+c.dataset.i); openMenu(); }; });
+  $$('#strip .card').forEach(c => { c.onclick = () => { const i = +c.dataset.i; if (c.classList.contains('more')) return setView('library'); if (S.focus !== 'strip') setFocus('strip', 0); if (i === S.sel) primary(S.games[i]); else select(i); }; c.ondblclick = () => { const i = +c.dataset.i; if (c.classList.contains('more')) return; const g = S.games[i]; if (g && !S.data.sessions[g.key]) primary(g); }; c.oncontextmenu = e => { e.preventDefault(); if (c.classList.contains('more')) return; select(+c.dataset.i); openMenu(); }; });
   $$('.head .sys button[data-sys]').forEach(b => b.onclick = () => { S.sys = b.dataset.sys; render(); });
   $$('.head .tools button').forEach(b => b.onclick = () => b.dataset.tool === 'sort' ? sortMenu() : openGrid());
   select(S.sel, true);
@@ -128,7 +151,7 @@ function card(g, i) {
   const k = encodeURIComponent(g.key);
   return `<div class="card${i === S.sel ? ' sel' : ''}" data-i="${i}" data-key="${esc(g.key)}">
     <img src="/hero/${k}" loading="lazy" alt="" onerror="if(!this.dataset.f){this.dataset.f=1;this.className='cv';this.src='/cover/${k}'}else this.remove()">
-    <div class="ph">${esc(g.title)}</div><div class="n">${esc(g.title)}</div>${g.fav ? `<i class="fav">${IC.star}</i>` : ''}${live ? '<i class="live">Jogando</i>' : ''}</div>`;
+    <div class="ph">${esc(g.title)}</div><div class="n">${esc(g.title)}</div>${g.fav ? `<i class="fav">${IC.star}</i>` : ''}${live ? '<i class="live">Jogando</i>' : isStore(g) && g.job ? '<i class="live">Na fila</i>' : isStore(g) && g.size ? `<i class="live sz">${fmtSize(g.size)}</i>` : ''}</div>`;
 }
 
 function fitCards() {
@@ -180,12 +203,12 @@ function stage(g, keep) {
   const txt = $('#sttxt'); if (!txt) return;
   const wasActs = keep && S.focus === 'acts' ? S.fx : -1;
   stageBg(g);
-  const live = S.data.sessions[g.key];
-  const meta = [g.year, g.creator, SYSN(g.system || 'pc'), (g.genres || []).slice(0, 3).join(', ')].filter(Boolean);
-  txt.innerHTML = `<span class="tag">${live ? 'Em andamento' : g.fav ? 'Favorito' : (g.last_played ? 'Jogado ' + ago(g.last_played) : 'Instalado')}</span>
+  const live = S.data.sessions[g.key], st = isStore(g);
+  const meta = [g.year, g.creator, SYSN(g.system || 'pc'), (g.genres || []).slice(0, 3).join(', '), st ? fmtSize(g.size) : ''].filter(Boolean);
+  txt.innerHTML = `<span class="tag">${st ? (g.job ? 'Na fila' : 'Loja · ' + (g.torrent && !g.direct ? 'torrent' : 'download')) : live ? 'Em andamento' : g.fav ? 'Favorito' : (g.last_played ? 'Jogado ' + ago(g.last_played) : 'Instalado')}</span>
     <h1>${esc(g.title)}</h1>
     <div class="meta">${meta.map(esc).join('<i>·</i>')}</div>
-    <div class="acts">${live ? `<button class="btn d" data-act="stop">${IC.stop}Encerrar</button>` : `<button class="btn p" data-act="play">${IC.play}Jogar</button>`}<button class="btn" data-act="detail">${IC.info}Detalhes</button><button class="btn" data-act="menu">Opções</button></div>`;
+    <div class="acts">${st ? (g.job ? `<button class="btn" data-act="queue">${IC.grid}Ver fila</button>` : `<button class="btn p" data-act="install">${IC.down}Baixar</button>`) : live ? `<button class="btn d" data-act="stop">${IC.stop}Encerrar</button>` : `<button class="btn p" data-act="play">${IC.play}Jogar</button>`}<button class="btn" data-act="detail">${IC.info}Detalhes</button><button class="btn" data-act="menu">Opções</button></div>`;
   $$('#sttxt .btn').forEach(b => b.onclick = () => act(b.dataset.act));
   if (STG.txt !== g.key) { STG.txt = g.key; txt.classList.remove('in'); void txt.offsetWidth; txt.classList.add('in'); }
   chip(g);
@@ -195,8 +218,8 @@ function chip(g) {
   const c = $('#chip'); if (!c) return;
   if (!g) { c.classList.remove('on'); return; }
   const live = S.data.sessions[g.key];
-  const line1 = [live ? 'Jogando agora' : 'Instalado', g.playtime ? human(g.playtime) : '', g.play_count ? g.play_count + 'x' : '', g.store_src || ''].filter(Boolean).join(' · ');
-  const line2 = g.last_played ? 'Última vez ' + ago(g.last_played) : 'Nunca jogado';
+  const line1 = isStore(g) ? [g.repo, fmtSize(g.size)].filter(Boolean).join(' · ') : [live ? 'Jogando agora' : 'Instalado', g.playtime ? human(g.playtime) : '', g.play_count ? g.play_count + 'x' : '', g.store_src || ''].filter(Boolean).join(' · ');
+  const line2 = isStore(g) ? (g.job ? 'Na fila de downloads' : 'Não instalado') : g.last_played ? 'Última vez ' + ago(g.last_played) : 'Nunca jogado';
   const k = encodeURIComponent(g.key);
   c.innerHTML = `<img src="/thumb/${k}" alt="" onerror="this.outerHTML='<div class=ph>${IC.play.replace(/"/g, '&quot;')}</div>'"><div class="t"><span>${esc(line1)}</span><b>${esc(line2)}</b></div>`;
   c.classList.add('on');
@@ -205,7 +228,30 @@ function chip(g) {
 
 function act(a) {
   const g = S.games[S.sel]; if (!g) return;
-  if (a === 'play') play(g.key); else if (a === 'stop') stop(g.key); else if (a === 'detail') openDetail(g.key); else if (a === 'menu') openMenu();
+  if (a === 'play') play(g.key); else if (a === 'stop') stop(g.key); else if (a === 'detail') openDetail(g.key); else if (a === 'menu') openMenu(); else if (a === 'install') askInstall(g.key); else if (a === 'queue') setView('queue');
+}
+function primary(g) {
+  if (!g) return;
+  if (isStore(g)) return g.job ? setView('queue') : askInstall(g.key);
+  if (S.data.sessions[g.key]) openMenu(); else play(g.key);
+}
+function askInstall(key) {
+  const g = S.byKey[key]; if (!g) return;
+  const tor = !!(g.torrent && !g.direct);
+  layer('menu', `<div class="mbox"><h3>${esc(g.title)}</h3><p>${[fmtSize(g.size), tor ? 'via torrent' : 'download direto', g.repo].filter(Boolean).map(esc).join(' · ')}</p>
+    <button class="opt" data-a="go">${IC.down}<span>Baixar agora<small>Entra na fila e começa assim que possível.</small></span></button>
+    <button class="opt" data-a="detail">${IC.info}<span>Ver detalhes</span></button>
+    <button class="opt" data-a="cancel">${IC.back}<span>Cancelar</span></button></div>`, async a => {
+    closeLayer();
+    if (a === 'detail') return openDetail(key);
+    if (a !== 'go') return;
+    try {
+      const r = await api('/api/install', {key, torrent: tor});
+      if (r && r.error) return toast('Não deu para baixar', r.error, 'bad');
+      g.job = true; toast('Na fila', g.title + ' entrou na fila de downloads.');
+      rumble(); S.sig = ''; render(true);
+    } catch (e) { toast('Não deu para baixar', String(e && e.message || e), 'bad'); }
+  });
 }
 
 const STAGEN = {download: 'Baixando', extract: 'Extraindo', install: 'Instalando', verify: 'Conferindo', mount: 'Montando', copy: 'Copiando', move: 'Movendo', setup: 'Instalador aberto'};
@@ -422,6 +468,16 @@ function layerFocus(i) {
 function openMenu() {
   const g = S.games[S.sel]; if (!g) return;
   const live = S.data.sessions[g.key];
+  if (isStore(g)) return layer('menu', `<div class="mbox"><h3>${esc(g.title)}</h3><p>${[SYSN(g.system || 'pc'), fmtSize(g.size), g.repo].filter(Boolean).map(esc).join(' · ')}</p>
+    ${g.job ? `<button class="opt" data-a="queue">${IC.grid}<span>Ver fila</span></button>` : `<button class="opt" data-a="install">${IC.down}<span>Baixar</span></button>`}
+    <button class="opt" data-a="detail">${IC.info}<span>Detalhes</span></button>
+    <button class="opt" data-a="grid">${IC.grid}<span>Ver tudo em grade</span></button>
+    <button class="opt" data-a="search">${IC.search || IC.info}<span>Buscar</span></button>
+    <button class="opt" data-a="refresh">${IC.sort || IC.grid}<span>Atualizar a loja</span></button>
+    <button class="opt" data-a="cancel">${IC.back}<span>Fechar</span></button></div>`, a => {
+    closeLayer();
+    if (a === 'install') askInstall(g.key); else if (a === 'queue') setView('queue'); else if (a === 'detail') openDetail(g.key); else if (a === 'grid') openGrid(); else if (a === 'search') openSearch(); else if (a === 'refresh') { S.store = null; S.sig = ''; render(true); }
+  });
   layer('menu', `<div class="mbox"><h3>${esc(g.title)}</h3><p>${esc(SYSN(g.system || 'pc'))}${g.playtime ? ' · ' + human(g.playtime) : ''}</p>
     ${live ? `<button class="opt danger" data-a="stop">${IC.stop}<span>Encerrar jogo</span></button>` : `<button class="opt" data-a="play">${IC.play}<span>Jogar</span></button>`}
     <button class="opt" data-a="detail">${IC.info}<span>Detalhes</span></button>
@@ -464,17 +520,18 @@ async function openDetail(key) {
   const m = d.meta || {};
   const live = S.data.sessions[key];
   const info = [['Sistema', SYSN(g.system || 'pc')], ['Desenvolvedor', d.creator || m.developer], ['Publicadora', m.publisher], ['Ano', d.year || m.year], ['Gêneros', (d.genres || []).join(', ')],
+    ['Tamanho', isStore(g) ? fmtSize(d.size || g.size) : ''], ['Fonte', isStore(g) ? g.repo : ''], ['Download', isStore(g) ? (g.torrent && !g.direct ? 'torrent' : 'direto') : ''],
     ['Tempo jogado', d.playtime ? d.playtime_h : ''], ['Vezes jogado', d.play_count ? String(d.play_count) : ''], ['Última vez', d.last_played ? ago(d.last_played) : ''], ['Origem', d.source === 'playnite' ? 'Playnite' + (d.store_src ? ' · ' + d.store_src : '') : d.store_src || ''], ['Emulador', d.emu && d.emu.emulator_title || ''], ['Pasta', d.dir]].filter(x => x[1]);
   layer('detail', `<div class="dbg" style="background-image:url('/hero/${encodeURIComponent(key)}'),url('/cover/${encodeURIComponent(key)}')"></div><div class="dgrad"></div>
     <button class="btn back" data-a="cancel">${IC.back}Voltar</button>
     <div class="dwrap"><div class="dcov"><img src="/cover/${encodeURIComponent(key)}" alt="" onerror="this.remove()"></div>
     <div class="dmain"><h1>${esc(g.title)}</h1><div class="meta">${[d.year, d.creator, SYSN(g.system || 'pc')].filter(Boolean).map(esc).join(' · ')}</div>
-      ${d.description ? `<div class="desc">${esc(d.description)}</div>` : '<div class="desc" style="color:var(--muted)">Sem descrição. Você pode preencher os dados deste jogo pelo Ludrix em janela (Editar).</div>'}
+      ${d.description ? `<div class="desc">${esc(d.description)}</div>` : `<div class="desc" style="color:var(--muted)">${isStore(g) ? 'Sem descrição nesta fonte.' : 'Sem descrição. Você pode preencher os dados deste jogo pelo Ludrix em janela (Editar).'}</div>`}
       <div class="info">${info.map(([k, v]) => `<b>${k}</b><span>${esc(v)}</span>`).join('')}</div>
-      <div class="acts">${live ? `<button class="btn d" data-a="stop">${IC.stop}Encerrar</button>` : `<button class="btn p" data-a="play">${IC.play}Jogar</button>`}<button class="btn" data-a="fav">${IC.star}${g.fav ? 'Tirar dos favoritos' : 'Favoritar'}</button></div>
+      <div class="acts">${isStore(g) ? (g.job ? `<button class="btn" data-a="queue">${IC.grid}Ver fila</button>` : `<button class="btn p" data-a="install">${IC.down}Baixar</button>`) : live ? `<button class="btn d" data-a="stop">${IC.stop}Encerrar</button>` : `<button class="btn p" data-a="play">${IC.play}Jogar</button>`}${isStore(g) ? '' : `<button class="btn" data-a="fav">${IC.star}${g.fav ? 'Tirar dos favoritos' : 'Favoritar'}</button>`}</div>
     </div></div>`, a => {
     if (a === 'cancel') return closeLayer();
-    if (a === 'play') { closeLayer(); play(key); } else if (a === 'stop') { closeLayer(); stop(key); } else if (a === 'fav') { fav(key); closeLayer(); openDetail(key); }
+    if (a === 'install') { closeLayer(); askInstall(key); } else if (a === 'queue') { closeLayer(); setView('queue'); } else if (a === 'play') { closeLayer(); play(key); } else if (a === 'stop') { closeLayer(); stop(key); } else if (a === 'fav') { fav(key); closeLayer(); openDetail(key); }
   });
   layerFocus(1);
 }
@@ -500,7 +557,7 @@ $('#search').onclick = e => { if (e.target === $('#search')) closeSearch(); };
 function setView(v) {
   if (!VIEWS.includes(v)) return;
   S.view = v; S.focus = 'strip';
-  render(); tick();
+  render(); legend(); tick();
 }
 function nav(dir) {
   if (idleT || document.body.classList.contains('dim')) idleArm();
@@ -546,7 +603,7 @@ function nav(dir) {
   if (dir === 'right') select(S.sel + 1);
   else if (dir === 'left') select(S.sel - 1);
   else if (dir === 'up') { setFocus(S.games.length ? 'acts' : 'head', 0, -1); tick(); }
-  else if (dir === 'ok') { if (S.more && S.sel >= S.games.length) return setView('library'); const g = S.games[S.sel]; if (g) { if (S.data.sessions[g.key]) openMenu(); else play(g.key); } }
+  else if (dir === 'ok') { if (S.more && S.sel >= S.games.length) return setView('library'); primary(S.games[S.sel]); }
   else if (dir === 'back') { if (S.q) { S.q = ''; render(); } else if (S.sys) { S.sys = ''; render(); } else if (S.view !== 'library') setView('library'); else confirmQuit(); }
 }
 

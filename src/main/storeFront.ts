@@ -65,6 +65,23 @@ class StoreFront {
             return { ...r, count: counts[r.id] || 0, report: prov && prov.report ? prov.report : null, error: errors[r.id] ? errors[r.id].msg : '' };
         });
     }
+    async repoLinks(id: string) {
+        const ids = id ? [id] : this.be.repos.list().filter((r: any) => r.enabled).map((r: any) => r.id);
+        const entries = [...this.be.cat.entries.values()];
+        const out: Record<string, any> = {};
+        for (const rid of ids) {
+            this.be.act(`Testando links: ${rid}`);
+            try {
+                out[rid] = await this.be.repos.checkLinks(rid, entries);
+            }
+            catch (e: any) {
+                out[rid] = { error: String(e?.message || e) };
+            }
+        }
+        this.be.act('');
+        this.be.cat.slimCache.clear();
+        return { ok: true, results: out };
+    }
     async repoValidate(url: string) {
         const src = String(url || '').trim();
         if (!src)
@@ -563,6 +580,16 @@ class StoreFront {
     addRomDir(system: string, folder: string) {
         this.emu.addRomDir(system, folder);
         return { ok: true };
+    }
+    scanRomRoot(folder: string) {
+        return this.emu.scanRomRoot(folder);
+    }
+    applyRomRoot(items: any[]) {
+        const r = this.emu.applyRomRoot(Array.isArray(items) ? items : []);
+        for (const sid of new Set((items || []).map((it: any) => String(it.system))))
+            this.emu.scanSystem(sid, true);
+        this.be.cat.reload(false);
+        return r;
     }
     removeRomDir(system: string, folder: string) {
         this.emu.removeRomDir(system, folder);

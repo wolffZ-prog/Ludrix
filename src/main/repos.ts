@@ -6,6 +6,7 @@ import * as P from './paths';
 import * as log from './log';
 import * as http from './http';
 import * as webcache from './webcache';
+import * as util from './util';
 
 export const UA = { 'User-Agent': 'Ludrix/1.0' };
 export const CATALOG_TTL = 12 * 3600;
@@ -1454,13 +1455,8 @@ export class RepoRegistry {
 
     get state(): Record<string, any> {
         if (!this.state_) {
-            try {
-                this.state_ = JSON.parse(fs.readFileSync(this.stateFile, 'utf8'));
-            }
-            catch {
-                this.state_ = {};
-            }
-            if (!this.state_ || typeof this.state_ !== 'object')
+            this.state_ = util.readJson(this.stateFile, {});
+            if (!this.state_ || typeof this.state_ !== 'object' || Array.isArray(this.state_))
                 this.state_ = {};
         }
         return this.state_!;
@@ -1468,8 +1464,7 @@ export class RepoRegistry {
 
     saveState() {
         try {
-            fs.mkdirSync(P.DATA, { recursive: true });
-            fs.writeFileSync(this.stateFile, JSON.stringify(this.state), 'utf8');
+            util.writeJson(this.stateFile, this.state);
         }
         catch (e) {
             log.warn('sources_state: %s', e);
@@ -1497,6 +1492,9 @@ export class RepoRegistry {
             news_at: newsAt,
             news_titles: Object.fromEntries(news.slice(0, 500).map((k) => [k, titles[k] || prev?.news_titles?.[k] || ''])),
         };
+        for (const k of ['links', 'fetch_ms', 'fetch_n', 'fetch_at'])
+            if (prev && prev[k] !== undefined)
+                entry[k] = prev[k];
         this.state[id] = entry;
         return fresh;
     }
@@ -1532,19 +1530,13 @@ export class RepoRegistry {
     read(): any[] {
         if (!fs.existsSync(this.file))
             this.migrateLegacy();
-        let repos: any[];
-        try {
-            repos = JSON.parse(fs.readFileSync(this.file, 'utf8')).repos;
-            if (!Array.isArray(repos))
-                return [];
-        }
-        catch {
+        const repos: any[] = (util.readJson(this.file, {}) as any).repos;
+        if (!Array.isArray(repos))
             return [];
-        }
         const keep = repos.filter((r) => r && typeof r === 'object' && !r.official && r.id !== 'ludrix-oficial');
         if (keep.length !== repos.length) {
             try {
-                fs.writeFileSync(this.file, JSON.stringify({ repos: keep }, null, 1), 'utf8');
+                util.writeJson(this.file, { repos: keep });
             }
             catch { /* nada */ }
         }
@@ -1571,7 +1563,7 @@ export class RepoRegistry {
     }
 
     write(repos: any[]) {
-        fs.writeFileSync(this.file, JSON.stringify({ repos }, null, 2), 'utf8');
+        util.writeJson(this.file, { repos });
     }
 
     reload() {
@@ -1616,6 +1608,53 @@ export class RepoRegistry {
             this.write(repos);
     }
 
+    noteFetch(id: string, ms: number, n: number, fresh: boolean) {
+        const st = (this.state[id] = this.state[id] || {});
+        if (fresh || !st.fetch_ms)
+            st.fetch_ms = Math.max(1, ms);
+        st.fetch_n = n;
+        st.fetch_at = Math.floor(Date.now() / 1000);
+    }
+    linkDead(repo: string, key: string): boolean {
+        const l = this.state[repo]?.links;
+        return Boolean(l && l.dead && l.dead[key]);
+    }
+    async checkLinks(id: string, entries: any[], onProgress?: (done: number, total: number) => void) {
+        const cand = entries.filter((e) => e.repo === id && e.files && e.files.some((f: any) => /^https?:/i.test(String(f.url || ''))));
+        const step = Math.max(1, Math.floor(cand.length / 25));
+        const sample = cand.filter((_, i) => i % step === 0).slice(0, 25);
+        const dead: Record<string, string> = {};
+        let ok = 0, done = 0;
+        const one = async (e: any) => {
+            const url = String(e.files.find((f: any) => /^https?:/i.test(String(f.url || ''))).url);
+            let status = 0, why = '';
+            try {
+                const r = await this.session.head(url, { timeout: 8000, redirect: 'follow' });
+                status = Number(r.status || 0);
+                if (status === 405 || status === 403 || status === 501) {
+                    const r2 = await this.session.get(url, { timeout: 8000, headers: { Range: 'bytes=0-0' } });
+                    status = Number(r2.status || 0);
+                    try { r2.body?.cancel?.(); } catch { /* nada */ }
+                }
+            }
+            catch (err: any) {
+                status = Number(err?.status || 0);
+                why = String(err?.message || err).slice(0, 80);
+            }
+            if (status >= 200 && status < 400)
+                ok++;
+            else
+                dead[e.key] = status ? `HTTP ${status}` : (why || 'sem resposta');
+            done++;
+            onProgress?.(done, sample.length);
+        };
+        const queue = [...sample];
+        await Promise.all(Array.from({ length: 4 }, async () => { while (queue.length) await one(queue.shift()); }));
+        const st = (this.state[id] = this.state[id] || {});
+        st.links = { at: Math.floor(Date.now() / 1000), tested: sample.length, total: cand.length, ok, dead };
+        this.saveState();
+        return st.links;
+    }
     list(): any[] {
         const disabled = this.disabled();
         const out: any[] = [];
@@ -1625,6 +1664,9 @@ export class RepoRegistry {
             if (st) {
                 d.checked_at = Number(st.checked_at || 0);
                 d.new_count = (st.news || []).length;
+                d.fetch_ms = Number(st.fetch_ms || 0);
+                if (st.links)
+                    d.links = { at: st.links.at, tested: st.links.tested, total: st.links.total, ok: st.links.ok, dead: Object.keys(st.links.dead || {}).length };
             }
             if (d.token) {
                 d.token = '';

@@ -380,6 +380,79 @@ export class EmulationManager {
         return null;
     }
 
+    scanRomRoot(root: string) {
+        const out: { system: string; name: string; dir: string; count: number; already: boolean }[] = [];
+        if (!root || !isDir(root))
+            return { error: 'Pasta não encontrada' };
+        const byExt: Record<string, string[]> = {};
+        for (const [sid, sc] of Object.entries<any>(this.presets.systems)) {
+            if (sid === 'pc')
+                continue;
+            for (const e of sc.exts || [])
+                (byExt[e.toLowerCase()] = byExt[e.toLowerCase()] || []).push(sid);
+        }
+        const alias: Record<string, string> = { psx: 'ps1', playstation: 'ps1', ps: 'ps1', psone: 'ps1', ps2: 'ps2', playstation2: 'ps2', psp: 'psp', n64: 'n64', nintendo64: 'n64', gc: 'gc', gamecube: 'gc', ngc: 'gc', wii: 'wii', dc: 'dc', dreamcast: 'dc', xbox: 'xbox', x360: 'x360', xbox360: 'x360', gba: 'gba', gb: 'gba', gbc: 'gba', gameboy: 'gba', snes: 'snes', sfc: 'snes', supernintendo: 'snes', nds: 'nds', ds: 'nds', genesis: 'genesis', megadrive: 'genesis', md: 'genesis', nes: 'nes', famicom: 'nes', ps3: 'ps3', wiiu: 'wiiu', switch: 'switch', nsw: 'switch', '3ds': '3ds', n3ds: '3ds', saturn: 'saturn', sms: 'sms', mastersystem: 'sms', gg: 'sms', gamegear: 'sms', pce: 'pce', pcengine: 'pce', tg16: 'pce', turbografx: 'pce', atari2600: 'atari2600', atari: 'atari2600', arcade: 'arcade', mame: 'arcade', fbneo: 'arcade', dos: 'dos', msdos: 'dos' };
+        const known = new Set<string>();
+        for (const v of Object.values<any>(this.store.config.rom_dirs || {}))
+            for (const d of v || [])
+                known.add(path.resolve(d).toLowerCase());
+        const look = (dir: string, depth: number) => {
+            let ents: fs.Dirent[] = [];
+            try {
+                ents = fs.readdirSync(dir, { withFileTypes: true });
+            }
+            catch {
+                return;
+            }
+            const counts: Record<string, number> = {};
+            let files = 0;
+            for (const e of ents) {
+                if (e.isFile()) {
+                    files++;
+                    const ext = path.extname(e.name).toLowerCase();
+                    for (const sid of byExt[ext] || [])
+                        counts[sid] = (counts[sid] || 0) + 1;
+                }
+            }
+            const nameKey = path.basename(dir).toLowerCase().replace(/[^a-z0-9]/g, '');
+            const hinted = alias[nameKey];
+            let pick = '';
+            if (hinted && (counts[hinted] || !Object.keys(counts).length) && files)
+                pick = counts[hinted] ? hinted : '';
+            if (!pick) {
+                const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+                if (best && best[1] >= 1 && (!hinted || hinted === best[0]))
+                    pick = best[0];
+                else if (best && hinted && counts[hinted])
+                    pick = hinted;
+                else if (best && !hinted && best[1] >= 2)
+                    pick = best[0];
+            }
+            if (pick && dir !== root) {
+                out.push({ system: pick, name: this.presets.systems[pick]?.name || pick, dir, count: counts[pick] || 0, already: known.has(path.resolve(dir).toLowerCase()) || path.resolve(dir) === path.resolve(path.join(P.EMU_GAMES, pick)) });
+                return;
+            }
+            if (depth <= 0)
+                return;
+            for (const e of ents)
+                if (e.isDirectory() && !e.name.startsWith('.') && !/^(bios|saves?|states?|screenshots?|cheats|covers?|media|images|manuals|videos|music|dlc|updates?)$/i.test(e.name))
+                    look(path.join(dir, e.name), depth - 1);
+        };
+        look(root, 2);
+        return { root, found: out };
+    }
+
+    applyRomRoot(items: { system: string; dir: string }[]) {
+        let n = 0;
+        for (const it of items || []) {
+            if (!this.presets.systems[it.system] || !isDir(it.dir))
+                continue;
+            this.addRomDir(it.system, it.dir);
+            n++;
+        }
+        return { ok: true, added: n };
+    }
+
     systemStatus(sid: string, allemu: Record<string, any> | null = null) {
         const sc = this.presets.systems[sid];
         if (!sc || sid === 'pc')
@@ -403,6 +476,7 @@ export class EmulationManager {
             emu_dir: exe ? path.dirname(exe) : '',
             guide: sid in emuguide.GUIDES,
             setup_ok: exe && sid in emuguide.GUIDES ? !emuguide.missingRequired(sid, emu || '', exe).length : true,
+            setup_missing: exe && sid in emuguide.GUIDES ? emuguide.missingRequired(sid, emu || '', exe) : [],
         };
     }
 

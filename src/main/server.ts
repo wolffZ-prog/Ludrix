@@ -461,6 +461,8 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, await be.folderSize(b.key));
     if (p === '/api/open')
         return sendJson(res, be.openPath(b.path || '', b.key || ''));
+    if (p === '/api/diag/zip')
+        return sendJson(res, await diagMod.zip(be));
     if (p === '/api/open_select')
         return sendJson(res, be.openSelect(b.key));
     if (p === '/api/open_url')

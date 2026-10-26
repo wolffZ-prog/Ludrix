@@ -255,6 +255,15 @@ export async function report(be: any, apiOk: boolean | null = null): Promise<any
     }
     add('online', 'Internet', true, online ? 'conectado' : 'sem conexão (o Ludrix funciona offline; Store e capas ficam indisponíveis)', !online);
     add('safe', 'Modo seguro', true, be.safeMode ? 'ativo nesta sessão' : 'não', Boolean(be.safeMode));
+    {
+        const rec = require('./util').recovered() as any[];
+        const guarded = ['config.json', 'library.json', 'repos.json', 'sources_state.json'];
+        const withBak = guarded.filter((f) => fs.existsSync(path.join(P.DATA, f + '.bak'))).length;
+        if (rec.length)
+            add('data', 'Arquivos de dados', rec.every((r) => r.from), rec.map((r) => `${r.file} ${r.from ? 'restaurado de ' + r.from : 'corrompido e sem cópia'}`).join(' · '), true);
+        else
+            add('data', 'Arquivos de dados', true, `íntegros · ${withBak} de ${guarded.length} com cópia anterior (.bak)`);
+    }
     const tail = logTail(30);
     const ok = checks.every((c) => c.ok);
     const lines = [`LudrixHub ${ver} — diagnóstico ${fmtNow()}`];
@@ -267,4 +276,58 @@ export async function report(be: any, apiOk: boolean | null = null): Promise<any
     if (tail.length)
         lines.push('', '--- últimas linhas do log ---', ...tail);
     return { ok, checks, log: tail, text: lines.join('\n') };
+}
+
+function sanitizeConfig(cfg: any) {
+    const out: any = {};
+    for (const [k, v] of Object.entries(cfg || {})) {
+        if (/token|secret|key$|password|senha/i.test(k))
+            out[k] = v ? '<oculto>' : v;
+        else
+            out[k] = v;
+    }
+    return out;
+}
+export async function zip(be: any): Promise<any> {
+    const AdmZip = require('adm-zip');
+    const rep = await report(be, true);
+    const z = new AdmZip();
+    z.addFile('diagnostico.txt', Buffer.from(rep.text, 'utf8'));
+    try {
+        if (fs.existsSync(P.LOG_FILE)) {
+            const st = fs.statSync(P.LOG_FILE);
+            const fd = fs.openSync(P.LOG_FILE, 'r');
+            const n = Math.min(st.size, 2 * 1024 * 1024);
+            const buf = Buffer.alloc(n);
+            fs.readSync(fd, buf, 0, n, st.size - n);
+            fs.closeSync(fd);
+            z.addFile('ludrix.log', buf);
+        }
+    }
+    catch { /* sem log */ }
+    z.addFile('config.json', Buffer.from(JSON.stringify(sanitizeConfig(be.store.config), null, 1), 'utf8'));
+    for (const f of ['schema.json', 'boot.json', 'instance.json']) {
+        try {
+            if (fs.existsSync(path.join(P.DATA, f)))
+                z.addLocalFile(path.join(P.DATA, f));
+        }
+        catch { /* pula */ }
+    }
+    const repos = (be.repos?.list?.() || []).map((r: any) => ({ id: r.id, type: r.type, name: r.name, enabled: r.enabled, url: String(r.url || '').replace(/[?#].*$/, ''), count: r.count, error: r.error }));
+    z.addFile('fontes.json', Buffer.from(JSON.stringify(repos, null, 1), 'utf8'));
+    const lib = Object.entries(be.store.library || {}).map(([k, e]: any) => ({ key: k, title: e.title, system: e.system, source: e.source, installed: e.installed, has_exe: Boolean(e.exe), has_dir: Boolean(e.dir) }));
+    z.addFile('biblioteca-resumo.json', Buffer.from(JSON.stringify(lib, null, 1), 'utf8'));
+    const mem = memoryUsage();
+    const env = { versao: String(require('./backend').VERSION || '?'), electron: process.versions.electron, node: process.versions.node, so: `${process.platform} ${os.release()} ${os.arch()}`, memoria: mem, exe: P.FROZEN, pasta: P.ROOT, gerado: new Date().toISOString(), ui_erros: UI_ERRORS.slice(-20) };
+    z.addFile('ambiente.json', Buffer.from(JSON.stringify(env, null, 1), 'utf8'));
+    const d = new Date();
+    const stamp = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}-${String(d.getMinutes()).padStart(2, '0')}`;
+    fs.mkdirSync(P.BACKUPS, { recursive: true });
+    const out = path.join(P.BACKUPS, `Ludrix-diagnostico-${stamp}.zip`);
+    z.writeZip(out);
+    try {
+        electron.shell.showItemInFolder(out);
+    }
+    catch { /* sem shell */ }
+    return { ok: true, path: out, size: fs.statSync(out).size };
 }

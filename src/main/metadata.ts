@@ -204,6 +204,11 @@ export class MetadataService {
     touch() {
         this.namesT = 0;
     }
+    drop() {
+        this.mem.clear();
+        this.names = {};
+        this.namesT = 0;
+    }
     mtime(key: string): number {
         return this.listing()[this.fname(key)] || 0;
     }

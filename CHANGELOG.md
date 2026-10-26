@@ -1,5 +1,17 @@
 # Changelog
 
+## 4.0.15 — 2026-10-26
+- Loja com a cara da biblioteca: grade de capas, busca instantânea, filtros (gênero, tamanho, torrent/direto, já instalado), ordenação e agrupamento próprios da Loja; capa do jogo da biblioteca quando a fonte não traz imagem.
+- Saúde das fontes: cada JSON mostra se respondeu, quantos itens tem e quando foi atualizado; teste de links marca "Link fora do ar" no catálogo e nos detalhes.
+- Downloads: limite de velocidade, "Pausar tudo"/"Continuar tudo" e "Ao terminar a fila: nada / desligar o PC".
+- Emuladores: "Varrer pasta de ROMs" reconhece as subpastas por console (snes, psx, Nintendo 64…) e mapeia tudo de uma vez; aviso no cartão do sistema quando falta BIOS ou chaves.
+- Biblioteca: agrupar por plataforma, gênero, letra ou recentes; grupos recolhíveis (lembrados por visão), cabeçalho com contagem e tempo jogado; "Recolher/Expandir todos" no menu de visualização; ordenação salva por visão.
+- Modo console: aba Loja no controle (A baixa, Y busca, LB/RB troca de aba), detalhes de itens da loja, legenda muda conforme a aba.
+- Transições entre telas (Início ↔ Loja) e mola em modais, painéis, filtros e avisos; tudo desliga com "Reduzir movimento".
+- Auto-reparo dos dados: JSONs do usuário são validados ao abrir; se corrompidos, o Ludrix restaura do último backup em vez de apagar; arquivo ruim fica guardado como .bad. Ajustes › Sobre › "Diagnóstico" gera um zip com logs, configuração e memória.
+- Em espera na bandeja: além de fechar a janela, o servidor solta os caches em memória (catálogo, metadados, capas) e registra no log a memória antes/depois.
+- Pôster do jogo selecionado na biblioteca: na aparência Base é o banner do topo (já existente); não há pôster de página inteira para manter o visual plano.
+
 ## 4.0.14-hf2 — 2026-10-26
 - Ajustes › Atualizações: espaço entre o cartão de versão, os botões e a lista (a correção 1 não pegava: regra genérica de margem vencia).
 

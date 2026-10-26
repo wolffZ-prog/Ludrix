@@ -19,20 +19,128 @@ function now() {
 function clamp(n, lo, hi) {
     return Math.max(lo, Math.min(hi, n));
 }
-/** Le um JSON tolerando BOM/encoding; devolve `fallback` se nao der. */
-function readJson(file, fallback) {
+const GUARDED = /^(config|library|repos|sources_state|downloads)\.json$/;
+const recoveredList: { file: string; from: string; at: number; detail: string }[] = [];
+function recovered() {
+    return recoveredList;
+}
+function parseFile(file) {
+    const raw = fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '');
+    const parsed = JSON.parse(raw);
+    if (parsed === null || typeof parsed !== 'object')
+        throw new Error('json sem objeto');
+    return parsed;
+}
+function looksJson(file) {
     try {
-        const raw = fs.readFileSync(file, 'utf8').replace(/^\uFEFF/, '');
-        const parsed = JSON.parse(raw);
-        return (parsed ?? fallback);
+        const st = fs.statSync(file);
+        if (st.size < 2)
+            return false;
+        const fd = fs.openSync(file, 'r');
+        try {
+            const head = Buffer.alloc(4), tail = Buffer.alloc(4);
+            fs.readSync(fd, head, 0, 4, 0);
+            fs.readSync(fd, tail, 0, 4, Math.max(0, st.size - 4));
+            const h = head.toString('utf8').replace(/^\uFEFF/, '').trim()[0], t = tail.toString('utf8').trim().slice(-1);
+            return (h === '{' && t === '}') || (h === '[' && t === ']');
+        }
+        finally {
+            fs.closeSync(fd);
+        }
     }
     catch {
+        return false;
+    }
+}
+function restoreFromZip(file) {
+    const name = path.basename(file), dir = path.join(path.dirname(file), 'backups');
+    const good = (data) => data && typeof data === 'object' && !Array.isArray(data);
+    if (name === 'library.json') {
+        let daily = [];
+        try {
+            daily = fs.readdirSync(dir).filter((f) => /^library-\d+\.json$/.test(f)).sort().reverse();
+        }
+        catch { /* sem pasta */ }
+        for (const f of daily) {
+            try {
+                const data = parseFile(path.join(dir, f));
+                if (good(data) && Object.keys(data).length)
+                    return { data, from: `backups/${f}` };
+            }
+            catch { /* proximo */ }
+        }
+    }
+    let zips = [];
+    for (const d of [path.join(dir, 'auto'), dir]) {
+        try {
+            zips.push(...fs.readdirSync(d).filter((f) => /^Ludrix-dados-.*\.zip$/i.test(f)).map((f) => path.join(d, f)));
+        }
+        catch { /* sem pasta */ }
+    }
+    zips.sort((a, b) => path.basename(b).localeCompare(path.basename(a)));
+    for (const z of zips) {
+        try {
+            const AdmZip = require('adm-zip');
+            const e = new AdmZip(z).getEntries().find((x) => !x.isDirectory && path.basename(x.entryName) === name);
+            if (!e)
+                continue;
+            const data = JSON.parse(e.getData().toString('utf8').replace(/^\uFEFF/, ''));
+            if (good(data))
+                return { data, from: path.basename(z) };
+        }
+        catch { /* proximo */ }
+    }
+    return null;
+}
+function recover(file, why) {
+    const bad = `${file}.bad`;
+    try {
+        fs.copyFileSync(file, bad);
+    }
+    catch { /* sem copia */ }
+    const bak = `${file}.bak`;
+    let got = null;
+    if (fs.existsSync(bak)) {
+        try {
+            got = { data: parseFile(bak), from: 'cópia anterior (.bak)' };
+        }
+        catch { /* bak tambem ruim */ }
+    }
+    if (!got)
+        got = restoreFromZip(file);
+    if (got) {
+        try {
+            fs.writeFileSync(file, JSON.stringify(got.data, null, 1), 'utf8');
+        }
+        catch { /* segue so em memoria */ }
+    }
+    recoveredList.push({ file: path.basename(file), from: got ? got.from : '', at: Math.floor(Date.now() / 1000), detail: why });
+    return got ? got.data : undefined;
+}
+/** Le um JSON tolerando BOM/encoding; devolve `fallback` se nao der. Arquivos de dados corrompidos sao restaurados do .bak ou do ultimo backup. */
+function readJson(file, fallback) {
+    let parsed;
+    try {
+        parsed = parseFile(file);
+    }
+    catch (e) {
+        if (GUARDED.test(path.basename(file)) && fs.existsSync(file)) {
+            const r = recover(file, String(e?.message || e));
+            return (r ?? fallback);
+        }
         return fallback;
     }
+    return (parsed ?? fallback);
 }
 function writeJson(file, data) {
     try {
         fs.mkdirSync(path.dirname(file), { recursive: true });
+        if (GUARDED.test(path.basename(file)) && looksJson(file)) {
+            try {
+                fs.copyFileSync(file, `${file}.bak`);
+            }
+            catch { /* sem .bak desta vez */ }
+        }
         const tmp = `${file}.${process.pid}.tmp`;
         fs.writeFileSync(tmp, JSON.stringify(data, null, 1), 'utf8');
         try {
@@ -123,7 +231,7 @@ function safeJoin(root, rel) {
     return full;
 }
 
-export { slug, sha1, now, clamp, readJson, writeJson, humanSize, humanTime, openExternal, exists, isDir, safeJoin };
+export { slug, sha1, now, clamp, readJson, writeJson, recovered, humanSize, humanTime, openExternal, exists, isDir, safeJoin };
 
 export function safeFolderName(title: string) {
     const name = String(title || '').replace(/[<>:"/\\|?*]+/g, '').replace(/^[ .]+|[ .]+$/g, '');

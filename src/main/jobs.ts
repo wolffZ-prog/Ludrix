@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import * as cp from 'node:child_process';
 import * as P from './paths';
 import * as log from './log';
 import * as util from './util';
@@ -25,6 +26,7 @@ export function prog(stage: string, fraction: number, detail = '', speed?: numbe
     return p;
 }
 
+const AFTER_LABEL: Record<string, string> = { shutdown: 'desligar o PC', sleep: 'suspender o PC', quit: 'fechar o Ludrix' };
 export class Jobs {
     jobs = new Map<string, Job>();
     private hist: any[] | null = null;
@@ -67,6 +69,10 @@ export class Jobs {
             }
             finally {
                 this.jobs.delete(key);
+                if (kind !== 'update')
+                    this.batch.add(key);
+                if (![...this.jobs.values()].some((j) => j.kind !== 'update'))
+                    this.idle();
             }
         })();
         return { ok: true };
@@ -175,9 +181,87 @@ export class Jobs {
         return { items: hist, active: this.jobs.size };
     }
 
+    batch: Set<string> = new Set();
+    after: { action: string; at: number; timer: any } | null = null;
+    idle() {
+        const act = String(this.be.store.config.after_queue || 'none');
+        const n = this.batch.size;
+        this.batch.clear();
+        if (!n || act === 'none' || this.after)
+            return;
+        const hist = this.histLoad();
+        if (!hist.some((h) => ['done', 'error'].includes(h.status) && h.kind !== 'update'))
+            return;
+        const at = util.now() + 60;
+        const timer = setTimeout(() => this.afterRun(act), 60_000);
+        timer.unref?.();
+        this.after = { action: act, at, timer };
+        this.be.push({ type: 'after_queue', action: act, at });
+        this.be.windowHooks?.notify_hidden?.(`Fila terminou: ${AFTER_LABEL[act] || act} em 1 minuto`);
+    }
+    afterRun(act: string) {
+        this.after = null;
+        this.be.store.setConfig({ after_queue: 'none' });
+        log.info('fila terminou: %s', act);
+        const win = process.platform === 'win32';
+        try {
+            if (act === 'quit')
+                this.be.windowHooks?.quit?.();
+            else if (act === 'shutdown')
+                cp.spawn(win ? 'shutdown' : 'systemctl', win ? ['/s', '/t', '5'] : ['poweroff'], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+            else if (act === 'sleep')
+                cp.spawn(win ? 'rundll32.exe' : 'systemctl', win ? ['powrprof.dll,SetSuspendState', '0,1,0'] : ['suspend'], { detached: true, stdio: 'ignore', windowsHide: true }).unref();
+        }
+        catch (e) {
+            log.warn('após a fila: %s', e);
+        }
+    }
+    afterCancel() {
+        if (this.after)
+            clearTimeout(this.after.timer);
+        this.after = null;
+        return { ok: true };
+    }
+    afterState() {
+        return this.after ? { action: this.after.action, at: this.after.at } : null;
+    }
     async queueAction(action: string, key?: string) {
         if (action === 'pause')
             return this.cancel(String(key), true);
+        if (action === 'after_cancel')
+            return this.afterCancel();
+        if (action === 'after_now') {
+            const act = this.after?.action || String(this.be.store.config.after_queue || 'none');
+            this.afterCancel();
+            if (act !== 'none')
+                this.afterRun(act);
+            return { ok: true };
+        }
+        if (action === 'pause_all') {
+            let n = 0;
+            for (const [k, j] of this.jobs)
+                if (j.kind !== 'update') {
+                    this.cancel(k, true);
+                    n++;
+                }
+            return { ok: true, n };
+        }
+        if (action === 'resume_all') {
+            let n = 0;
+            for (const h of this.histLoad().filter((x) => x.status === 'paused' && x.retry)) {
+                const m = this.be.retryTarget?.(h.retry.m);
+                if (!m)
+                    continue;
+                try {
+                    await m(...(h.retry.a || []));
+                    n++;
+                }
+                catch (e) {
+                    log.warn('retomar %s: %s', h.key, e);
+                }
+            }
+            return { ok: true, n };
+        }
         if (action === 'stop') {
             this.cancel(String(key));
             const h = this.histFind(String(key));

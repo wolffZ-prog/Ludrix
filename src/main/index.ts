@@ -281,6 +281,7 @@ function scheduleStandby() {
             menuMod.dispose();
             w.destroy();
             log.info('em espera na bandeja: janela liberada da memória');
+            setTimeout(() => { try { backend?.standby(); } catch (e) { log.warn('em espera: %s', e); } }, 1000).unref?.();
         }
         catch (e) {
             standby = false;
