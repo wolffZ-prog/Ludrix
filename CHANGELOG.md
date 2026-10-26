@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.0.12 — 2026-10-26
+- Menu da bandeja: jogos recentes voltam a aparecer (inclui jogos instalados ou já jogados), título "Jogados recentemente" e sem quadrado vazio quando não há ícone.
+- Detalhes: botão Voltar alinhado com a capa, abaixo da faixa de controles.
+- Início: filtros rápidos não cortam mais o texto; rolam com fade quando não cabem; botões compactos em janelas estreitas.
+- Mods e Store: linhas de chips quebram em várias linhas em vez de cortar.
+- Ajustes: espaçamento entre os botões de atualização e a lista de opções; primeira opção da lista com borda e cantos corretos.
+- Central: abre na hora. Detecção de dependências e launchers de Minecraft passa a ser assíncrona, em paralelo e com cache (a lista de desinstalação do Windows é lida uma vez, não centenas); "Re-checar" força nova leitura. Textos explicativos removidos; ficam só pacotes, dependências e Minecraft.
+- Início: estado vazio da busca redesenhado; aba Favoritos sem favoritos mostra mensagem própria.
+- Janela sem moldura: clique direito nas áreas de arrastar não abre mais o menu de sistema do Windows.
+
 ## 4.0.11 — 2026-10-26
 
 - Destaque do jogo (cabeçalho da biblioteca) mais para baixo: ganhou respiro do topo da janela.

@@ -645,7 +645,11 @@ function renderView() {
   else if (S.view === 'flash') renderFlash();
   else if (S.view === 'central') renderCentral();
   else if (S.view === 'settings') renderSettings(true).then(() => guide('settings'));
+  requestAnimationFrame(fitChips);
 }
+const QRO = typeof ResizeObserver === 'function' ? new ResizeObserver(es => es.forEach(e => { const q = e.target.classList.contains('qchips') ? e.target : e.target.querySelector('.qchips'); if (q) q.classList.toggle('ov', q.scrollWidth > q.clientWidth + 1); })) : null;
+function fitChips() { document.querySelectorAll('.qchips').forEach(q => { q.classList.toggle('ov', q.scrollWidth > q.clientWidth + 1); if (!q._ovw) { q._ovw = true; if (QRO) { QRO.observe(q); if (q.parentElement) QRO.observe(q.parentElement); } q.addEventListener('wheel', e => { if (q.classList.contains('ov') && Math.abs(e.deltaY) > Math.abs(e.deltaX)) { q.scrollLeft += e.deltaY; e.preventDefault(); } }, { passive: false }); } }); }
+window.addEventListener('resize', () => requestAnimationFrame(fitChips));
 
 const isRepoRom = g => g.kind === 'rom' && g.repo !== 'local' && !g.key.startsWith('rom:');
 const inStore = g => g.repo !== 'local' && !isRepoRom(g) && !((g.installed || g.owned) && !S.jobs[g.key] && S.config.store_hide_installed !== false);
@@ -746,6 +750,7 @@ function storeChips() {
 async function newsSeen(id) { await api.post('/api/repos/seen', id ? { id } : {}); clearFlt(); await loadCatalog(false); if (S.view === 'store' && S.tab.store === 'sources') renderSources(); }
 function quickChips() { return `<div class="qchips">${QCHIPS.map(([id, l]) => `<button class="chip${qchipOn(id) ? ' on' : ''}" onclick="${!id || qchipOn(id) ? 'clearFlt()' : `flagOnly('${id}')`}">${l}</button>`).join('')}</div>`; }
 function renderLibrary() {
+  requestAnimationFrame(fitChips);
   renderChips();
   S._multiSrc = S.view === 'store' && new Set(S.games.filter(inStore).map(g => g.repo)).size > 1;
   const list = visible();
@@ -764,7 +769,7 @@ function renderLibrary() {
   const noSrc = S.view === 'store' && !S.repos.some(r => r.enabled && r.kind !== 'rom');
   if (!S.games.length && !noSrc && !(S.view === 'home' && S.loaded)) h += `<div class="grid">${Array.from({ length: 18 }, () => '<div class="card sk"><div class="cov"></div><h4>&nbsp;</h4></div>').join('')}</div>`;
   else if (!list.length && noSrc && !S.q && !filtersActive()) h += `${emptyHtml('sources', S.repos.length ? 'Nenhuma fonte ligada' : 'Nenhuma fonte adicionada', `A Store mostra o que as suas fontes de jogos de PC oferecem${S.repos.some(r => r.enabled && r.kind === 'rom') ? ' — as fontes de ROM ficam na aba <b>Emuladores</b>' : ''}. ${S.repos.length ? 'Ligue uma em' : 'Adicione uma em'} <b>Fontes</b>: site de download, coleção do archive.org, GitHub ou lista .json.`, [['Abrir Fontes', "S.tab.store='sources';renderView()", 1], ['Adicionar jogo que já tenho', 'addLocal()']])}`;
-  else if (!list.length) h += `${S.view === 'home' ? (S.q || filtersActive() ? emptyHtml(I.search, 'Nenhum jogo com esse filtro', /\b(dev|ano|gen|sis|origem|src):/.test(S.q) ? 'Prefixos aceitos: dev: (desenvolvedora), ano: (ano ou década, ex. 2010s), gen: (gênero), sis: (sistema), origem: (Steam, Epic, ROM…).' : 'Tente outro termo ou limpe os filtros.', [['Limpar busca e filtros', 'clearSearch();clearFlt()', 1]]) : emptyHtml(I.home, 'Sua biblioteca está vazia', 'Baixe algo na Store ou adicione um jogo que você já tem — um .exe, um atalho ou uma ROM.', [['Abrir Store', "setView('store')", 1], ['Adicionar jogo', 'addLocal()'], ['Importar de outro launcher', 'importWizard()']])) : emptyHtml(I.search, 'Nenhum resultado', 'Tente outro termo ou categoria.', [['Limpar busca e filtros', 'clearSearch();clearFlt()', 1]])}`;
+  else if (!list.length) h += `${S.view === 'home' ? (S.q || filtersActive() ? (S.flt.flags.has('fav') && !S.q && S.flt.flags.size === 1 ? emptyHtml('stars', 'Nenhum favorito ainda', 'Clique na estrela de um jogo para ele aparecer aqui.', [['Ver todos', 'clearFlt()', 1]]) : emptyHtml(I.search, 'Nenhum jogo com esse filtro', /\b(dev|ano|gen|sis|origem|src):/.test(S.q) ? 'Prefixos aceitos: dev: (desenvolvedora), ano: (ano ou década, ex. 2010s), gen: (gênero), sis: (sistema), origem: (Steam, Epic, ROM…).' : 'Tente outro termo ou limpe os filtros.', [['Limpar busca e filtros', 'clearSearch();clearFlt()', 1]])) : emptyHtml(I.home, 'Sua biblioteca está vazia', 'Baixe algo na Store ou adicione um jogo que você já tem — um .exe, um atalho ou uma ROM.', [['Abrir Store', "setView('store')", 1], ['Adicionar jogo', 'addLocal()'], ['Importar de outro launcher', 'importWizard()']])) : emptyHtml(I.search, 'Nenhum resultado', 'Tente outro termo ou categoria.', [['Limpar busca e filtros', 'clearSearch();clearFlt()', 1]])}`;
   if (S.view === 'store' && list.length && q.length >= 3 && S.repos.some(r => r.enabled && /^site-/.test(r.id)) && !S._siteQ) h += `<div class="sitehint">Não achou? <button class="lnk" onclick="siteSearch()">Buscar "${esc(S.q.trim())}" direto nos sites ligados</button></div>`;
   else h += `${listHead()}${azBar(list)}<div class="grid${listMode() ? ' lst' : muralMode() ? ' mural' : ''}" id="grid" style="--lmw:${lmWidth()}px"></div>`;
   const pin = fpOn(), oldP = $('#fpanel'), pst = oldP ? oldP.scrollTop : 0;
@@ -1278,7 +1283,8 @@ const ART = (() => {
     tools: w(`<path ${D} d="M24 82h112"/><path ${F} d="M48 74l34-34-6-6-34 34a4 4 0 006 6z"/><path d="M80 32a14 14 0 0118-18l-8 8 2 8 8 2 8-8a14 14 0 01-18 18"/><path ${A} d="M106 54l14 14M120 54l-14 14"/><circle ${D} cx="46" cy="71" r="1.5"/>`),
     mods: w(`<path ${D} d="M24 82h112"/><path ${F} d="M50 36h22v-6a8 8 0 0116 0v6h22v22h-6a8 8 0 000 16h6v22H88v-6a8 8 0 00-16 0v6H50V74h6a8 8 0 000-16h-6z" transform="translate(0 -8) scale(.92) translate(7 8)"/><path ${A} d="M118 20l4 8 8 4-8 4-4 8-4-8-8-4 8-4z"/>`),
     flash: w(`<path ${D} d="M24 82h112"/><path ${F} d="M86 14L54 56h22l-6 28 34-44H82z"/><path ${A} d="M116 30l-6 2M118 42l-6-1M40 30l6 2M38 42l6-1"/>`),
-    search: w(`<path ${D} d="M24 82h112"/><circle ${F} cx="72" cy="44" r="22"/><path d="M88 60l20 20"/><path ${A} d="M62 44q10-12 20 0"/><path ${D} d="M30 24l4-4M126 20l-4 4"/>`),
+    search: w(`<path ${D} d="M24 82h112"/><rect ${F} x="36" y="34" width="20" height="28" rx="2"/><rect ${F} x="62" y="34" width="20" height="28" rx="2"/><rect ${D} x="88" y="34" width="20" height="28" rx="2" stroke-dasharray="3 3"/><circle ${A} cx="102" cy="48" r="17" fill="var(--bg,#0000)" fill-opacity=".85"/><path ${A} d="M114 60l14 14"/><path ${D} d="M96 48h12"/>`),
+    stars: w(`<path ${D} d="M24 82h112"/><rect ${F} x="40" y="34" width="20" height="28" rx="2"/><rect ${F} x="66" y="34" width="20" height="28" rx="2"/><rect ${F} x="92" y="34" width="20" height="28" rx="2"/><path ${A} d="M102 18l3.2 6.6 7.2 1-5.2 5.1 1.2 7.2-6.4-3.4-6.4 3.4 1.2-7.2-5.2-5.1 7.2-1z"/>`),
     sources: w(`<path ${D} d="M24 82h112"/><path ${F} d="M58 26h44a4 4 0 014 4v44a4 4 0 01-4 4H58a4 4 0 01-4-4V30a4 4 0 014-4z"/><path d="M66 42h28M66 52h28M66 62h16"/><circle ${A} cx="112" cy="68" r="10"/><path ${A} d="M112 63v10M107 68h10"/>`),
     done: w(`<path ${D} d="M24 82h112"/><circle ${F} cx="80" cy="46" r="26"/><path ${A} d="M66 46l10 10 20-22"/><path ${D} d="M36 28l4 4M124 28l-4 4M30 56h6M124 56h6"/>`),
     warn: w(`<path ${D} d="M24 82h112"/><path ${F} d="M80 18l34 58H46z"/><path ${A} d="M80 38v18M80 64v2"/>`),
@@ -3612,23 +3618,40 @@ function editFlash(id) {
 }
 
 const CENTRAL_TABS = [['redists', 'Dependências'], ['minecraft', 'Minecraft']];
-async function renderCentral() {
+async function renderCentral(force) {
   let tab = S.tab.central || 'redists'; if (!CENTRAL_TABS.some(([id]) => id === tab)) tab = 'redists';
-  if (!S.central) $('#view').innerHTML = `<div class="h1"><h2>Central Ludrix</h2><span>verificando o PC…</span></div>`;
-  const [r, mc] = await Promise.all([api.get('/api/redists'), api.get('/api/minecraft')]);
+  const cached = S.redists && S.mc;
+  if (cached && !force) { centralHtml(tab, S.redists, S.mc); refreshCentral(tab); return; }
+  if (!cached) $('#view').innerHTML = `<div class="h1"><h2>Central Ludrix</h2><span>verificando o PC…</span></div>`;
+  else { const sp = $('#view .h1>span'); if (sp) sp.textContent = 'verificando o PC…'; }
+  const q = force ? '?refresh=1' : '';
+  const [r, mc] = await Promise.all([api.get('/api/redists' + q), api.get('/api/minecraft' + q)]);
   if (S.view !== 'central') return;
   S.redists = r; S.mc = mc; S.central = true;
+  centralHtml(tab, r, mc);
+}
+let CENTRAL_BG = null;
+function refreshCentral(tab) {
+  if (CENTRAL_BG) return;
+  const before = JSON.stringify([S.redists, S.mc]);
+  CENTRAL_BG = Promise.all([api.get('/api/redists'), api.get('/api/minecraft')]).then(([r, mc]) => {
+    CENTRAL_BG = null; if (!r || !mc || r.error || mc.error) return;
+    if (JSON.stringify([r, mc]) === before) return;
+    S.redists = r; S.mc = mc;
+    if (S.view === 'central') centralHtml(S.tab.central || tab, r, mc);
+  }).catch(() => { CENTRAL_BG = null; });
+}
+function centralHtml(tab, r, mc) {
   const missing = r.items.filter(i => i.state === 'missing').length;
   const mcInst = mc.items.filter(i => i.installed).length;
   const body = tab === 'minecraft' ? minecraftHtml(mc) : redistsHtml(r);
   const badge = { redists: missing && (r.windows || r.prefix_ready) ? `<span class="n">${missing}</span>` : '', minecraft: mcInst ? `<span class="n">${mcInst}</span>` : '' };
   const sub = { redists: missing && (r.windows || r.prefix_ready) ? pl(missing, 'dependência faltando — jogos podem fechar na hora', 'dependências faltando — jogos podem fechar na hora') : 'bibliotecas que os jogos pedem (Visual C++, DirectX, .NET…)', minecraft: 'edições e launchers encontrados neste PC' }[tab];
-  const acts = { redists: `<button class="btn s" onclick="api.post('/api/redist/open',{})" title="Abrir a pasta redists\\">${I.folder}</button><button class="btn s" onclick="renderCentral()">${I.refresh} Re-checar</button>`,
-    minecraft: `<button class="btn s" onclick="renderCentral()">${I.refresh} Procurar de novo</button>` }[tab];
+  const acts = { redists: `<button class="btn s" onclick="api.post('/api/redist/open',{})" title="Abrir a pasta redists\\">${I.folder}</button><button class="btn s" onclick="renderCentral(true)">${I.refresh} Re-checar</button>`,
+    minecraft: `<button class="btn s" onclick="renderCentral(true)">${I.refresh} Procurar de novo</button>` }[tab];
   $('#view').innerHTML = `<div class="h1"><h2>Central Ludrix</h2><span>${sub}</span><div class="acts">${ONLINE ? '' : '<span class="offl">sem conexão</span>'}${acts}</div></div>
     <div class="tabs ctabs">${CENTRAL_TABS.map(([id, n]) => `<button class="${tab === id ? 'on' : ''}" onclick="centralTab('${id}')">${n}${badge[id]}</button>`).join('')}</div>
     <div class="cbody">${body}</div>`;
-  guide('central');
 }
 async function centralTab(id) { S.tab.central = id; await renderCentral(); }
 function minecraftHtml(m) {
@@ -3658,7 +3681,7 @@ function minecraftHtml(m) {
     return `<div class="tile ${inst ? 'ok' : ''}"><div class="tt"><b>${esc(e.title)}</b>${inst ? '<span class="pill ok">instalado</span>' : ''}${e.in_library ? '<span class="pill">na Biblioteca</span>' : ''}</div><div class="td">${esc(e.desc)}</div><div class="td" style="display:flex;gap:6px;flex-wrap:wrap">${info}</div>${warn}${acts}</div>`;
   }).join('');
   const show = m.items.filter(i => i.installed || i.suggest);
-  return `<div class="hint">O Ludrix não substitui o launcher do Minecraft: ele descobre qual edição está no PC (Java e Bedrock), coloca na Biblioteca e, ao clicar em Jogar, abre pelo launcher certo (conta, versões e mods continuam lá). Se não houver launcher para o Java, o Ludrix indica um. <b>Baixar no site</b> abre a página oficial do launcher; depois de instalar, use <b>Localizar</b> se o Ludrix não o encontrar sozinho.</div>
+  return `
     <div class="gh"><h3>No seu PC</h3><span>Edições encontradas neste computador</span></div><div class="tiles">${eds}</div>
     <div class="gh"><h3>Launchers</h3><span>os instalados e dois sugeridos: Prism Launcher (código aberto, modpacks) e SKLauncher (leve e prático)</span></div><div class="tiles">${show.map(tile).join('')}</div>`;
 }
@@ -3678,9 +3701,7 @@ function redistsHtml(r) {
   const bundleJob = id => S.jobs['redist:bundle:' + id];
   const item = i => { const j = jobOf(i.id); return `<div class="tile ${st[i.state][0]}"><div class="tt"><b title="${esc(i.title)}">${esc(i.title)}</b><span class="pill">${esc(i.arch)}</span>${st[i.state][1] ? `<span class="pill ${st[i.state][0] === 'warn' ? 'warn' : st[i.state][0]}">${st[i.state][1]}</span>` : ''}</div>${i.note ? `<div class="td">${esc(i.note)}</div>` : ''}
     ${j ? progHtml(j, 'redist:' + i.id) : `<div class="ta">${i.state === 'installed' ? `<button class="btn s" onclick="redistInstall('${i.id}')" title="Reinstalar/reparar">${I.refresh} Reparar</button>` : `<button class="btn ${i.state === 'missing' ? 'p' : 's'}" ${ONLINE || i.downloaded ? '' : 'disabled'} onclick="redistInstall('${i.id}')">${I.dl} Instalar${i.downloaded ? '' : ' · ' + fmt(i.size)}</button>`}</div>`}</div>`; };
-  return `<div class="hint">Jogo que fecha na hora ou reclama de <span class="code">.dll</span> faltando quase sempre pede uma destas bibliotecas. Instaladores oficiais (Microsoft/OpenAL), silenciosos, guardados em <span class="code">redists${SEP()}</span>.${r.windows ? '' : ' No Linux elas são instaladas <b>dentro do prefixo do Proton</b> (' + esc(r.prefix || '') + '), que é onde os jogos de Windows rodam.'}</div>
-    ${!r.windows && !r.prefix_ready ? `<div class="note warn">O prefixo do Proton ainda não existe. Ele é criado na primeira instalação daqui ou ao abrir um jogo de Windows.</div>` : ''}
-    <details class="exp"><summary>Qual instalar?</summary><div>Sem saber qual, use o pacote <b>Clássico</b> (cobre quase tudo). Se um jogo reclamar de uma <span class="code">.dll</span> específica: <span class="code">msvcp/vcruntime</span> → Visual C++ do ano indicado · <span class="code">d3dx9/d3dx10/d3dx11/xinput1_3</span> → DirectX · <span class="code">xna</span> → XNA · <span class="code">openal32</span> → OpenAL · <span class="code">.NET Framework</span> → .NET. Cada jogo carrega a versão para a qual foi feito, por isso é normal ter várias instaladas.</div></details>
+  return `${!r.windows && !r.prefix_ready ? `<div class="note warn">O prefixo do Proton ainda não existe. Ele é criado na primeira instalação daqui ou ao abrir um jogo de Windows.</div>` : ''}
     <div class="gh"><h3>Pacotes</h3><span>instalam várias de uma vez</span></div>
     <div class="tiles narrow">${r.bundles.map(b => { const j = bundleJob(b.id); const todo = b.items.filter(id => (r.items.find(i => i.id === id) || {}).state !== 'installed').length; return `<div class="tile"><div class="tt"><b>${esc(b.title)}</b></div><div class="td">${esc(b.desc)}</div>${j ? progHtml(j, 'redist:bundle:' + b.id) : `<div class="ta"><button class="btn ${b.id === 'classic' ? 'p' : 's'}" ${todo && ONLINE ? '' : 'disabled'} onclick="redistBundle('${b.id}')">${I.dl} ${todo ? `Instalar ${todo === 1 ? '1 que falta' : todo + ' que faltam'}` : 'Tudo instalado'}</button></div>`}</div>`; }).join('')}</div>
     ${r.groups.map(g => `<div class="gh"><h3>${esc(g.name)}</h3><span>${esc(g.desc)}</span></div><div class="tiles wide">${r.items.filter(i => i.group === g.id).map(item).join('')}</div>`).join('')}`;

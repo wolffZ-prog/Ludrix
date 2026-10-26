@@ -57,7 +57,9 @@ html body.bs[data-face] .h1{position:sticky;top:0;z-index:5;background:var(--bg)
 html body.bs[data-face] .h1 h2{font:600 20px/1.2 var(--font-text);letter-spacing:-.3px;margin-right:8px;white-space:nowrap}
 html body.bs[data-face] .h1 .cnt{font-size:12px;color:var(--muted2);white-space:nowrap}
 html body.bs[data-face] .h1 .slot:empty{display:none}
-html body.bs[data-face] .qchips{display:flex;gap:2px;min-width:0;overflow:hidden;flex:0 1 auto}
+html body.bs[data-face] .qchips{display:flex;gap:2px;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;flex:0 1 auto}
+html body.bs[data-face] .qchips::-webkit-scrollbar{display:none}
+html body.bs[data-face] .qchips.ov{mask-image:linear-gradient(90deg,#000 calc(100% - 26px),transparent)}
 html body.bs[data-face] .h1 .sp{flex:1 0 8px}
 html body.bs[data-face] .qchips .chip{height:30px;padding:0 10px;border-radius:var(--r);color:var(--muted);font:500 12.5px var(--font-text);border:1px solid transparent;background:transparent;white-space:nowrap}
 html body.bs[data-face] .qchips .chip:hover{color:var(--text);background:var(--bg2)}
@@ -191,7 +193,7 @@ html body.bs[data-face] .fpanel{background:var(--bg2);border:1px solid var(--lin
 html body.bs[data-face] .detail{left:var(--side);background:var(--bg)}
 html body.bs[data-face] .dbg{display:none}
 html body.bs[data-face] .dwrap{display:block;max-width:none;margin:0;padding:0 0 60px}
-html body.bs[data-face] .dclose{position:fixed;top:calc(var(--tb,0px) + var(--toph,0px) + 14px);left:calc(var(--side) + 18px);height:30px;padding:0 10px 0 6px;border-radius:var(--r);background:rgba(0,0,0,.35);color:#fff;border:0;font:500 12.5px var(--font-text);z-index:6;display:flex;align-items:center;gap:4px;backdrop-filter:none}
+html body.bs[data-face] .dclose{position:fixed;top:calc(var(--tb,0px) + var(--toph,0px) + 26px);left:calc(var(--side) + 36px);height:30px;padding:0 10px 0 6px;border-radius:var(--r);background:rgba(0,0,0,.35);color:#fff;border:0;font:500 12.5px var(--font-text);z-index:6;display:flex;align-items:center;gap:4px;backdrop-filter:none}
 html body.bs[data-face] .dclose svg{width:16px;height:16px}
 html body.bs[data-face] .dhero{display:block;padding:0;min-height:0}
 html body.bs[data-face] .dhero::before{content:"";display:block;height:180px;background:var(--dband,var(--card2))}
@@ -237,8 +239,9 @@ html body.bs[data-face] .sec{background:transparent;border:0;border-radius:0;pad
 html body.bs[data-face] .sec h3,html body.bs[data-face] .settings .sec h3{font:600 15px/1.3 var(--font-text);letter-spacing:-.2px;text-transform:none;color:var(--text);margin:0 0 10px;padding:0 2px}
 html body.bs[data-face] .sec>p,html body.bs[data-face] .sec .sub{color:var(--muted);font-size:12.5px;line-height:1.5;margin:-4px 2px 12px;max-width:72ch}
 html body.bs[data-face] .frow{display:flex;align-items:center;gap:24px;min-height:58px;padding:12px 16px;margin:0;background:var(--card);border:1px solid var(--line);border-top-width:0;border-radius:0}
-html body.bs[data-face] .frow:first-of-type{border-top-width:1px;border-top-left-radius:var(--r);border-top-right-radius:var(--r)}
-html body.bs[data-face] .frow:last-of-type{border-bottom-left-radius:var(--r);border-bottom-right-radius:var(--r)}
+html body.bs[data-face] .frow:first-child,html body.bs[data-face] :not(.frow)+.frow{border-top-width:1px;border-top-left-radius:var(--r);border-top-right-radius:var(--r)}
+html body.bs[data-face] .frow:not(:has(+.frow)){border-bottom-left-radius:var(--r);border-bottom-right-radius:var(--r)}
+html body.bs[data-face] .sec>:not(h3):not(p):not(.frow)+.frow{margin-top:12px}
 html body.bs[data-face] .frow .l{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 html body.bs[data-face] .frow .l b{font:500 13px/1.35 var(--font-text);color:var(--text)}
 html body.bs[data-face] .frow .l span{font-size:12px;color:var(--muted2);line-height:1.45;max-width:64ch}
@@ -289,9 +292,10 @@ html body.bs[data-face] .ggh span{background:transparent;padding:0;border:0;bord
 html body.bs[data-face] .libwrap.pw .libmain .h1{margin-right:0;padding-right:0}
 html body.bs[data-face] .libwrap.pw .libmain .ggh{margin-right:0}
 html body.bs[data-face] .gpanel{z-index:6}
-html body.bs[data-face] .libmain{container-type:inline-size}
+html body.bs[data-face] .libmain,html body.bs[data-face] #view{container-type:inline-size}
+html body.bs[data-face] .chips{flex-wrap:wrap;row-gap:6px;overflow:visible;mask-image:none}
 html body.bs[data-face] .h1 .btn.xs .lb{margin-left:4px}
-@container (max-width:900px){
+@container (max-width:1000px){
 html body.bs[data-face] .h1 .cnt,html body.bs[data-face] .h1 .btn.xs .lb,html body.bs[data-face] .h1 #sort .lbl,html body.bs[data-face] .h1 #sort .car{display:none}
 html body.bs[data-face] .h1 .btn.xs,html body.bs[data-face] .h1 .filt>.btn,html body.bs[data-face] .h1 #sort{width:30px;padding:0;justify-content:center}
 html body.bs[data-face] .h1 .btn.xs.p{width:auto;padding:0 10px}

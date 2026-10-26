@@ -6,7 +6,7 @@ import * as P from './paths';
 import * as log from './log';
 import * as menu from './menu';
 
-type Spec = { label?: string; fn?: () => any; sep?: boolean; sub?: Spec[]; danger?: boolean; primary?: boolean; disabled?: boolean; icon_key?: string };
+type Spec = { label?: string; fn?: () => any; sep?: boolean; sub?: Spec[]; danger?: boolean; primary?: boolean; disabled?: boolean; title?: boolean; icon_key?: string };
 type Host = {
     be: any;
     show: () => void;
@@ -95,7 +95,7 @@ function trayClientsScan(): Spec[] {
 }
 function trayGames(n = 10): [Spec[], Spec[]] {
     const be = host!.be;
-    const lib: [string, any][] = Object.entries<any>(be.store.library).filter(([k, g]) => g && typeof g === 'object' && g.installed && g.kind !== 'emulator' && !be.sessions.active.has(k));
+    const lib: [string, any][] = Object.entries<any>(be.store.library).filter(([k, g]) => g && typeof g === 'object' && g.kind !== 'emulator' && !g.hidden && !be.sessions.active.has(k) && (g.installed || (g.exe || g.dir ? be.store.isInstalled(k) : Boolean(g.last_played))));
     const rec = lib.filter(([, g]) => g.last_played).sort((a, b) => Number(b[1].last_played || 0) - Number(a[1].last_played || 0));
     const fav = lib.filter(([, g]) => g.favorite).sort((a, b) => String(a[1].title || a[0]).toLowerCase().localeCompare(String(b[1].title || b[0]).toLowerCase()));
     const item = (k: string, g: any): Spec => ({ label: String(g.title || k).slice(0, 48), fn: trayPlay(k), icon_key: k });
@@ -112,10 +112,14 @@ export function traySpecs(rich: boolean): Spec[] {
     if (act.length)
         specs.push({ sep: true });
     const [rec, fav] = trayGames();
-    specs.push(...(rec.length ? rec : [{ label: 'Nenhum jogo recente', disabled: true }]));
+    if (rec.length) {
+        specs.push({ label: 'Jogados recentemente', title: true });
+        specs.push(...rec);
+    }
     if (fav.length)
         specs.push({ label: 'Favoritos', sub: fav });
-    specs.push({ sep: true });
+    if (rec.length || fav.length)
+        specs.push({ sep: true });
     if (rich)
         specs.push({ label: 'Abrir Ludrix', fn: () => host!.show(), primary: true });
     const views: [string, string][] = [['home', 'Biblioteca'], ['store', 'Store'], ['emulation', 'Emuladores'], ['mods', 'Mods e ferramentas'], ['central', 'Central'], ['flash', 'Jogos rápidos'], ['downloads', 'Fila'], ['settings', 'Ajustes']];
@@ -157,7 +161,7 @@ async function toMenuItems(specs: Spec[]): Promise<menu.MenuItem[]> {
             out.push({ sep: true });
             continue;
         }
-        out.push({ label: s.label, danger: s.danger, primary: s.primary, disabled: s.disabled, icon: s.icon_key ? await thumbData(s.icon_key) : null, sub: s.sub ? await toMenuItems(s.sub) : null });
+        out.push({ label: s.label, danger: s.danger, primary: s.primary, disabled: s.disabled, title: s.title, icon: s.icon_key ? await thumbData(s.icon_key) : null, sub: s.sub ? await toMenuItems(s.sub) : null });
     }
     return out;
 }
@@ -199,7 +203,7 @@ async function popup() {
 
 function nativeMenu() {
     const specs = traySpecs(false);
-    const conv = (list: Spec[]): electron.MenuItemConstructorOptions[] => list.map((s) => s.sep ? { type: 'separator' } : {
+    const conv = (list: Spec[]): electron.MenuItemConstructorOptions[] => list.filter((s) => !s.title).map((s) => s.sep ? { type: 'separator' } : {
         label: String(s.label || ''), enabled: !s.disabled, submenu: s.sub ? conv(s.sub) : undefined, click: s.fn ? () => { void Promise.resolve().then(s.fn!).catch((e) => log.warn('bandeja: %s', e?.message || e)); } : undefined,
     });
     return electron.Menu.buildFromTemplate([

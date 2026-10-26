@@ -3041,9 +3041,9 @@ class Backend {
                 if (!(await ensure7z(http.shared)))
                     throw new Error('não consegui baixar o 7-Zip; tento de novo quando precisar');
             }]);
-            steps.push(['Conferindo Visual C++ e DirectX', () => {
+            steps.push(['Conferindo Visual C++ e DirectX', async () => {
                 try {
-                    this.central.redistsStatus();
+                    await Promise.all([this.central.redistsStatus(), this.central.minecraftStatus()]);
                 }
                 catch { /* ignore */ }
             }]);

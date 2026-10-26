@@ -2281,7 +2281,7 @@ body.rm .empty .eart .a{animation:none}
 .h1 .qchips{display:flex;gap:6px;flex:0 1 auto;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;padding:2px 0}.h1 .qchips::-webkit-scrollbar{display:none}
 .h1 .qchips .chip{flex:none}.h1>span.cnt{flex:none;max-width:none;overflow:visible}
 @media (max-width:1000px){.view .h1:has(.qchips){flex-wrap:wrap!important;row-gap:4px}.h1 .qchips{order:5;flex:1 0 100%;padding-top:2px;mask-image:none}}
-.h1 .qchips{mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent)}
+.h1 .qchips.ov{mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent)}
 .files2 .fr{align-items:center}.files2 .fr .l{min-width:0}.files2 .fr .path{display:block;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;user-select:text}
 .files2 .fr b{display:inline-flex;align-items:center;gap:6px}.files2 .fr b svg{width:14px;height:14px;color:var(--muted)}
 .exelist{display:flex;flex-direction:column;gap:4px}.exelist .exe{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:var(--r2);background:color-mix(in srgb,var(--text) 3%,transparent)}

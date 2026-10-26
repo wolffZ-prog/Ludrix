@@ -46,11 +46,11 @@ async function routeGet2(res, p, q, be, port) {
         return (0, server.sendJson)(res, be.mods.forGame(String(g.title || ''), String(g.system || 'pc'))), true;
     }
     if (p === '/api/redists')
-        return (0, server.sendJson)(res, be.central.redistsStatus()), true;
+        return (0, server.sendJson)(res, await be.central.redistsStatus(q.get('refresh') === '1')), true;
     if (p.startsWith('/api/saves/'))
         return (0, server.sendJson)(res, await be.savesInfo(decodeURIComponent(p.slice(11)), Boolean(q.get('deep')))), true;
     if (p === '/api/minecraft')
-        return (0, server.sendJson)(res, be.central.minecraftStatus()), true;
+        return (0, server.sendJson)(res, await be.central.minecraftStatus(q.get('refresh') === '1')), true;
     // ---- importacao ----
     if (p === '/api/import/launchers')
         return (0, server.sendJson)(res, be.imp.importLaunchers()), true;

@@ -21,6 +21,7 @@ function execText(file: string, args: string[], timeout: number, env?: any): Pro
     });
 }
 const REDISTS_DIR = P.REDISTS;
+const CACHE_MS = 5 * 60 * 1000;
 
 export function expandVars(p: string): string {
     let s = String(p || '');
@@ -72,6 +73,81 @@ function regInt(v: string): number {
     return s.toLowerCase().startsWith('0x') ? parseInt(s, 16) : parseInt(s, 10);
 }
 
+function regQueryA(key: string, view: '64' | '32', value?: string, recursive = false): Promise<string | null> {
+    return execText('reg', ['query', key, ...(value !== undefined ? ['/v', value] : []), ...(recursive ? ['/s'] : []), `/reg:${view}`], 20000);
+}
+function regSplit(p: string): [string, string] {
+    const i = p.indexOf('\\');
+    const rootName = i >= 0 ? p.slice(0, i) : p;
+    const sub = i >= 0 ? p.slice(i + 1) : '';
+    const root = ({ HKLM: 'HKLM', HKCU: 'HKCU' } as any)[rootName];
+    return root ? [root, sub] : ['HKLM', p];
+}
+function regJudge(out: string, sub: string, value: string | null, minimum: number | null): boolean | null {
+    const vals = regValues(out);
+    if (value === null) {
+        const low = sub.toLowerCase();
+        if (low.endsWith('\\x86') || low.endsWith('\\x64') || sub.includes('Runtimes') || sub.includes('VCRedist')) {
+            if (vals.installed !== undefined && regInt(vals.installed) !== 1)
+                return null;
+        }
+        return true;
+    }
+    const v = vals[value.toLowerCase()];
+    if (v === undefined)
+        return null;
+    return minimum !== null ? regInt(v) >= minimum : true;
+}
+export async function regExistsA(p: string, wow = false, value: string | null = null, minimum: number | null = null): Promise<boolean | null> {
+    if (!WIN)
+        return null;
+    const [root, sub] = regSplit(p);
+    const views: Array<'64' | '32'> = wow ? ['64', '32'] : ['64'];
+    const outs = await Promise.all(views.map((v) => regQueryA(`${root}\\${sub}`, v)));
+    for (const out of outs) {
+        if (out === null)
+            continue;
+        const r = regJudge(out, sub, value, minimum);
+        if (r !== null)
+            return r;
+    }
+    return false;
+}
+type UninstEntry = { name: string; loc: string; icon: string };
+let UNINST: { t: number; data: UninstEntry[] } | null = null;
+const UNINST_ROOTS = ['HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall', 'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall', 'HKLM\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall'];
+export async function uninstallIndex(force = false): Promise<UninstEntry[]> {
+    if (!WIN)
+        return [];
+    if (!force && UNINST && Date.now() - UNINST.t < CACHE_MS)
+        return UNINST.data;
+    const outs = await Promise.all(UNINST_ROOTS.map((r) => regQueryA(r, '64', undefined, true)));
+    const data: UninstEntry[] = [];
+    for (const out of outs) {
+        if (!out)
+            continue;
+        let cur: UninstEntry | null = null;
+        for (const line of out.split(/\r?\n/)) {
+            if (/^HK/i.test(line)) {
+                cur = { name: '', loc: '', icon: '' };
+                data.push(cur);
+                continue;
+            }
+            const m = cur && /^\s{2,}(\S.*?)\s{2,}REG_\w+\s*(.*)$/.exec(line);
+            if (!m)
+                continue;
+            const k = m[1].toLowerCase(), v = (m[2] || '').trim();
+            if (k === 'displayname')
+                cur!.name = v.toLowerCase();
+            else if (k === 'installlocation')
+                cur!.loc = v;
+            else if (k === 'displayicon')
+                cur!.icon = v;
+        }
+    }
+    UNINST = { t: Date.now(), data };
+    return data;
+}
 export function regExists(p: string, wow = false, value: string | null = null, minimum: number | null = null): boolean | null {
     if (!WIN)
         return null;
@@ -265,20 +341,25 @@ export class RedistManager {
     item(rid: string): any | null {
         return this.presets.items.find((x: any) => x.id === rid) || null;
     }
-    detect(it: any, pfx: WinePrefix | null = null): string {
+    async detect(it: any, pfx: WinePrefix | null = null): Promise<string> {
         const d = it.detect || {};
-        const reg = pfx ? pfx.regExists.bind(pfx) : regExists;
+        const reg = pfx ? async (a: string, b?: boolean, c?: string | null, m?: number | null) => pfx.regExists(a, b, c, m) : regExistsA;
         const fil = pfx ? pfx.fileExists.bind(pfx) : fileExists;
         let r: boolean | null = null;
         if ('reg' in d)
-            r = reg(d.reg, Boolean(d.wow), d.value ?? null, d.min ?? null);
+            r = await reg(d.reg, Boolean(d.wow), d.value ?? null, d.min ?? null);
         else if ('file' in d)
             r = fil(d.file);
         if (r === false && it.detect_alt) {
             const a = it.detect_alt;
-            r = 'reg' in a ? reg(a.reg, Boolean(a.wow)) : fil(a.file || '');
+            r = 'reg' in a ? await reg(a.reg, Boolean(a.wow)) : fil(a.file || '');
         }
         return r === null ? 'unknown' : r ? 'installed' : 'missing';
+    }
+    private cache: { t: number; pfx: string; data: any } | null = null;
+    private pending: Promise<any> | null = null;
+    invalidate() {
+        this.cache = null;
     }
     prefix(config: any): WinePrefix | null {
         if (WIN)
@@ -291,22 +372,31 @@ export class RedistManager {
             name = it.id + '.exe';
         return path.join(REDISTS_DIR, `${it.id}_${name}`);
     }
-    status(config: any = null): any {
+    async status(config: any = null, force = false): Promise<any> {
         const pfx = this.prefix(config);
-        const items = this.presets.items.map((it: any) => {
-            const lf = this.localFile(it);
-            const o: any = {};
-            for (const [k, v] of Object.entries(it))
-                if (k !== 'detect' && k !== 'detect_alt')
-                    o[k] = v;
-            return { ...o, state: this.detect(it, pfx), downloaded: exists(lf), local: lf };
-        });
-        const out: any = { groups: this.presets.groups, items, bundles: this.presets.bundles, dir: REDISTS_DIR, windows: WIN };
-        if (pfx) {
-            out.prefix = pfx.pfx;
-            out.prefix_ready = pfx.exists();
-        }
-        return out;
+        const pk = pfx ? pfx.pfx : '';
+        if (!force && this.cache && this.cache.pfx === pk && Date.now() - this.cache.t < CACHE_MS)
+            return this.cache.data;
+        if (this.pending)
+            return this.pending;
+        this.pending = (async () => {
+            const items = await Promise.all(this.presets.items.map(async (it: any) => {
+                const lf = this.localFile(it);
+                const o: any = {};
+                for (const [k, v] of Object.entries(it))
+                    if (k !== 'detect' && k !== 'detect_alt')
+                        o[k] = v;
+                return { ...o, state: await this.detect(it, pfx), downloaded: exists(lf), local: lf };
+            }));
+            const out: any = { groups: this.presets.groups, items, bundles: this.presets.bundles, dir: REDISTS_DIR, windows: WIN };
+            if (pfx) {
+                out.prefix = pfx.pfx;
+                out.prefix_ready = pfx.exists();
+            }
+            this.cache = { t: Date.now(), pfx: pk, data: out };
+            return out;
+        })().finally(() => { this.pending = null; });
+        return this.pending;
     }
     async install(rid: string, cb: (p: Progress) => void, cancel: Cancel, silent = true, config: any = null): Promise<any> {
         const it = this.item(rid);
@@ -354,15 +444,16 @@ export class RedistManager {
             cmd = [exe, ...(silent ? (it.silent || []) : [])];
         }
         const rc = await runProc(cmd, { timeout: 1800, cancel });
+        this.invalidate();
         if (!OK_RC.includes(rc)) {
-            const state = this.detect(it);
+            const state = await this.detect(it);
             if (state === 'installed')
                 return { dir: REDISTS_DIR, rc, state, restart: false };
             const why = ({ 1603: 'o Windows recusou a instalação: normalmente já existe uma versão mais nova, ou faltou permissão de administrador', 1602: 'instalação cancelada',
                 1618: 'outra instalação está em andamento; espere ela terminar', 1633: 'pacote de outra arquitetura', 5: 'faltou permissão de administrador' } as Record<number, string>)[rc] || '';
             throw new Error(`O instalador devolveu código ${rc}` + (why ? ` (${why})` : ''));
         }
-        const state = this.detect(it);
+        const state = await this.detect(it);
         return { dir: REDISTS_DIR, rc, state, restart: rc === 3010 };
     }
     private async installWine(it: any, dest: string, cb: (p: Progress) => void, cancel: Cancel, config: any): Promise<any> {
@@ -411,7 +502,8 @@ export class RedistManager {
             rc = await run([exe, ...(it.silent || [])]);
         }
         pfx.invalidate();
-        const state = this.detect(it, pfx);
+        this.invalidate();
+        const state = await this.detect(it, pfx);
         if (!OK_RC.includes(rc) && state !== 'installed')
             throw new Error(`O instalador devolveu código ${rc} dentro do Proton`);
         return { dir: REDISTS_DIR, rc, state, restart: false };
@@ -520,7 +612,15 @@ export function glob(pattern: string, recursive = false): string[] {
     return bases;
 }
 
+let JAVA: { t: number; p: string } | null = null;
 export function javaPath(): string {
+    if (JAVA && Date.now() - JAVA.t < CACHE_MS)
+        return JAVA.p;
+    const p = javaPathNow();
+    JAVA = { t: Date.now(), p };
+    return p;
+}
+function javaPathNow(): string {
     for (const name of ['javaw', 'java']) {
         const p = compat.which(name);
         if (p)
@@ -582,39 +682,25 @@ const REG_NAMES: Record<string, [string, string]> = {
     gdlauncher: ['gdlauncher', 'GDLauncher.exe'], curseforge: ['curseforge', 'CurseForge.exe'], sklauncher: ['sklauncher', 'SKlauncher.exe'],
 };
 
-function regFind(lid: string): string {
+function regFind(lid: string, idx: UninstEntry[]): string {
     if (!WIN || !REG_NAMES[lid])
         return '';
     const [needle, exe] = REG_NAMES[lid];
-    const roots = ['HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall', 'HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall', 'HKLM\\Software\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall'];
-    for (const root of roots) {
-        const out = regQueryRaw(root, '64');
-        if (out === null)
+    for (const e of idx) {
+        if (!e.name.includes(needle))
             continue;
-        for (const line of out.split(/\r?\n/)) {
-            const k = line.trim();
-            if (!k.toLowerCase().startsWith(root.toLowerCase() + '\\'))
+        for (const raw of [e.loc, e.icon]) {
+            const v = raw.replace(/^"|"$/g, '').split(',')[0].trim();
+            if (!v)
                 continue;
-            const sub = regQueryRaw(k, '64');
-            if (sub === null)
-                continue;
-            const vals = regValues(sub);
-            const disp = String(vals.displayname || '').toLowerCase();
-            if (!disp.includes(needle))
-                continue;
-            for (const val of ['installlocation', 'displayicon']) {
-                const v = String(vals[val] || '').replace(/^"|"$/g, '').split(',')[0].trim();
-                if (!v)
-                    continue;
-                if (v.toLowerCase().endsWith('.exe') && isFile(v))
-                    return v;
-                const cand = path.join(v, exe);
-                if (isFile(cand))
-                    return cand;
-                const hits = glob(path.join(v, '**', exe), true);
-                if (hits.length)
-                    return hits[0];
-            }
+            if (v.toLowerCase().endsWith('.exe') && isFile(v))
+                return v;
+            const cand = path.join(v, exe);
+            if (isFile(cand))
+                return cand;
+            const hits = glob(path.join(v, '**', exe), true);
+            if (hits.length)
+                return hits[0];
         }
     }
     return '';
@@ -624,14 +710,51 @@ export class MinecraftManager {
     item(lid: string): any | null {
         return MC_LAUNCHERS.find((x) => x.id === lid) || null;
     }
-    detect(it: any): string {
+    private memo = new Map<string, string>();
+    private memoT = 0;
+    private pending: Promise<void> | null = null;
+    private fresh(): boolean {
+        return Date.now() - this.memoT < CACHE_MS;
+    }
+    private detectNow(it: any, idx: UninstEntry[]): string {
         const pats = WIN ? it.win : (it.linux || []);
-        let p = findLauncher(pats) || regFind(it.id);
+        let p = findLauncher(pats) || regFind(it.id, idx);
         if (!p && it.id === 'official' && WIN && isDir(expandVars(STORE_PKG)))
             p = 'shell:AppsFolder\\' + STORE_AUMID;
         return p;
     }
-    status(libraryKeys: Record<string, string>): any {
+    detect(it: any): string {
+        if (this.fresh() && this.memo.has(it.id))
+            return this.memo.get(it.id)!;
+        const p = this.detectNow(it, UNINST ? UNINST.data : []);
+        this.memo.set(it.id, p);
+        if (!this.memoT)
+            this.memoT = Date.now();
+        return p;
+    }
+    invalidate() {
+        this.memo.clear();
+        this.memoT = 0;
+    }
+    async refresh(force = false): Promise<void> {
+        if (!force && this.fresh() && this.memo.size >= MC_LAUNCHERS.length)
+            return;
+        if (this.pending)
+            return this.pending;
+        this.pending = (async () => {
+            const idx = await uninstallIndex(force);
+            if (force)
+                JAVA = null;
+            const next = new Map<string, string>();
+            for (const it of MC_LAUNCHERS)
+                next.set(it.id, this.detectNow(it, idx));
+            this.memo = next;
+            this.memoT = Date.now();
+        })().finally(() => { this.pending = null; });
+        return this.pending;
+    }
+    async status(libraryKeys: Record<string, string>, force = false): Promise<any> {
+        await this.refresh(force);
         const items = MC_LAUNCHERS.map((it) => {
             const p = this.detect(it);
             const fp = ((it.linux || []).find((x: string) => x.startsWith('flatpak:')) || '').slice(8);
@@ -774,8 +897,8 @@ export class CentralFront {
         return [...this.be.jobs.jobs.keys()].filter((k: string) => k.startsWith(prefix)).map((k: string) => k.slice(prefix.length));
     }
 
-    redistsStatus(): any {
-        const st = this.redists.status(this.store.config);
+    async redistsStatus(force = false): Promise<any> {
+        const st = { ...(await this.redists.status(this.store.config, force)) };
         st.jobs = this.jobKeys('redist:');
         return st;
     }
@@ -794,7 +917,7 @@ export class CentralFront {
         if (!(await this.be.online()))
             return { error: 'Sem conexão com a internet' };
         const st: Record<string, any> = {};
-        for (const i of this.redists.status(this.store.config).items)
+        for (const i of (await this.redists.status(this.store.config)).items)
             st[i.id] = i;
         const todo: string[] = b.items.filter((i: string) => (st[i] || {}).state !== 'installed');
         if (!todo.length)
@@ -846,9 +969,9 @@ export class CentralFront {
         }
         return out;
     }
-    minecraftStatus(): any {
+    async minecraftStatus(force = false): Promise<any> {
         const keys = this.mcKeys();
-        const st = this.mc.status(keys);
+        const st = await this.mc.status(keys, force);
         st.editions = this.mced.list(keys, this.mcPref());
         st.launchers_installed = this.mced.installedLaunchers();
         st.recommend = this.mced.recommend();

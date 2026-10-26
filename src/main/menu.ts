@@ -13,7 +13,7 @@ function fontFace(): string {
     }
 }
 
-export type MenuItem = { id?: string; sep?: boolean; label?: string; hint?: string; primary?: boolean; danger?: boolean; disabled?: boolean; icon?: string | null; sub?: MenuItem[] | null };
+export type MenuItem = { id?: string; sep?: boolean; label?: string; hint?: string; primary?: boolean; danger?: boolean; disabled?: boolean; title?: boolean; icon?: string | null; sub?: MenuItem[] | null };
 export type MenuHead = { title?: string; sub?: string; thumb?: string | null };
 export type MenuOpts = { items: MenuItem[]; title?: string; head?: MenuHead | null; colors?: any; ui?: any; light?: boolean; x: number; y: number; atCursor?: boolean; owner?: electron.BrowserWindow | null };
 
@@ -44,7 +44,7 @@ function esc(s: any) {
 function strip(items: MenuItem[], pre = ''): MenuItem[] {
     return (items || []).map((it, i) => ({
         id: pre + i, sep: Boolean(it?.sep), label: String(it?.label || '').slice(0, 80), hint: String(it?.hint || '').slice(0, 40),
-        primary: Boolean(it?.primary), danger: Boolean(it?.danger), disabled: Boolean(it?.disabled),
+        primary: Boolean(it?.primary), danger: Boolean(it?.danger), disabled: Boolean(it?.disabled), title: Boolean(it?.title),
         icon: typeof it?.icon === 'string' && it.icon.startsWith('data:image/') ? it.icon : null,
         sub: Array.isArray(it?.sub) && it.sub.length ? strip(it.sub, pre + i + '.') : null,
     }));
@@ -71,13 +71,14 @@ html.rm .m,html.rm .r,html.rm .r .ic,html.rm .r .lb{transition:none!important}
 .r .ht{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;margin-left:10px}
 .r .ar{width:14px;height:14px;color:var(--muted);margin-left:2px;margin-right:-3px}.r .ar svg{width:14px;height:14px;display:block}
 .r.sel:not(.disabled){background:var(--hover)}
-.r.sel:not(.disabled) .ic{background:color-mix(in srgb,var(--primary) 16%,transparent);transform:scale(1.06)}
+.r.sel:not(.disabled) .ic:has(img){background:color-mix(in srgb,var(--primary) 16%,transparent);transform:scale(1.06)}
+.m.noic .r .ic{display:none}.m.noic .r{padding-left:12px}
 .r.sel:not(.disabled) .lb{transform:translateX(2px)}
-.r.danger{color:var(--danger)}.r.danger.sel:not(.disabled){background:color-mix(in srgb,var(--danger) 12%,transparent)}.r.danger.sel .ic{background:color-mix(in srgb,var(--danger) 16%,transparent)}
+.r.danger{color:var(--danger)}.r.danger.sel:not(.disabled){background:color-mix(in srgb,var(--danger) 12%,transparent)}.r.danger.sel .ic:has(img){background:color-mix(in srgb,var(--danger) 16%,transparent)}
 .r.disabled{opacity:.45}
 .r.primary{height:34px;margin:2px 0 4px;background:var(--primary);color:var(--onprimary);font-weight:700;letter-spacing:-.005em}
-.r.primary .ht{color:var(--onprimary);opacity:.75}.r.primary .ic{background:color-mix(in srgb,var(--onprimary) 14%,transparent)}
-.r.primary.sel{background:color-mix(in srgb,var(--primary) 88%,var(--text))}.r.primary.sel .ic{background:color-mix(in srgb,var(--onprimary) 24%,transparent);transform:scale(1.06)}
+.r.primary .ht{color:var(--onprimary);opacity:.75}.r.primary .ic:has(img){background:color-mix(in srgb,var(--onprimary) 14%,transparent)}
+.r.primary.sel{background:color-mix(in srgb,var(--primary) 88%,var(--text))}.r.primary.sel .ic:has(img){background:color-mix(in srgb,var(--onprimary) 24%,transparent);transform:scale(1.06)}
 .sep{height:1px;background:var(--line);margin:4px 10px}
 .sub{transform:translateX(-6px) scale(.98)}
 `;
@@ -85,8 +86,8 @@ html.rm .m,html.rm .r,html.rm .r .ic,html.rm .r .lb{transition:none!important}
 let D=null,U={};const send=(t,v)=>window.lxm.send(t,v);
 const CHEV='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-const rowHtml=(it)=>it.sep?'<div class="sep"></div>':'<div class="r '+(it.primary?'primary ':'')+(it.danger?'danger ':'')+(it.disabled?'disabled ':'')+'" data-id="'+it.id+'"><span class="ic">'+(it.icon?'<img src="'+it.icon+'" alt="">':'')+'</span><span class="lb">'+esc(it.label)+'</span>'+(it.hint?'<span class="ht">'+esc(it.hint)+'</span>':'')+(it.sub?'<span class="ar">'+CHEV+'</span>':'')+'</div>';
-function build(items,cls){const m=document.createElement('div');m.className='m '+cls;m.innerHTML=items.map(rowHtml).join('');return m}
+const rowHtml=(it)=>it.sep?'<div class="sep"></div>':it.title?'<div class="ttl">'+esc(it.label)+'</div>':'<div class="r '+(it.primary?'primary ':'')+(it.danger?'danger ':'')+(it.disabled?'disabled ':'')+'" data-id="'+it.id+'"><span class="ic">'+(it.icon?'<img src="'+it.icon+'" alt="">':'')+'</span><span class="lb">'+esc(it.label)+'</span>'+(it.hint?'<span class="ht">'+esc(it.hint)+'</span>':'')+(it.sub?'<span class="ar">'+CHEV+'</span>':'')+'</div>';
+function build(items,cls){const m=document.createElement('div');m.className='m '+cls+(items.some(i=>i&&i.icon)?'':' noic');m.innerHTML=items.map(rowHtml).join('');return m}
 let root=null,A=null,openSub=null,subOwner=null,subT=null,cur=-1;const pad=6;
 function place(el,x,y,flipW){const r=el.getBoundingClientRect();let l=x,t=y,ox='0',oy='0';if(l+r.width>A.width-pad){l=Math.max(pad,(flipW?x-flipW-r.width:x-r.width));ox='100%'}if(t+r.height>A.height-pad){t=Math.max(pad,A.height-pad-r.height);oy='100%'}el.style.left=l+'px';el.style.top=t+'px';el.style.setProperty('--ox',ox);el.style.setProperty('--oy',oy)}
 function closeSub(){if(openSub){openSub.remove();openSub=null;subOwner&&subOwner.classList.remove('sel');subOwner=null}}
