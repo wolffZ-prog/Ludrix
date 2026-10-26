@@ -2301,10 +2301,10 @@ body.fs .wctl{display:none}
 .wctl #wmax svg.r{display:none}
 body.maxed .wctl #wmax svg.m{display:none}
 body.maxed .wctl #wmax svg.r{display:block}
-body.frameless .wctl.float{position:fixed;top:6px;right:28px;background:color-mix(in srgb,var(--bg) 70%,transparent);border-radius:var(--r);overflow:hidden}
-body.frameless .wctl.float button{height:30px}
+body.frameless main>.wctl{height:28px;align-self:stretch;justify-content:flex-end;padding:0 12px 0 0;-webkit-app-region:drag}
+body.frameless main>.wctl button{height:28px;-webkit-app-region:no-drag}
+body.frameless:not([data-layout=top]) .detail,body.frameless:not([data-layout=top]) .flashwin{top:28px}
 body.frameless[data-layout=top] .rail .wctl{margin:0 -14px 0 6px;align-self:stretch;height:auto}
 body.frameless[data-layout=top] .rail .wctl button{height:100%}
 body.frameless .rail .brandrow,body.frameless header.top,body.frameless .h1,body.frameless .nowbar,body.frameless[data-layout=top] .rail{-webkit-app-region:drag}
 body.frameless :is(.rail .brandrow,header.top,.h1,.nowbar,[data-layout=top] .rail) :is(button,input,select,a,.chip,.dd,#sort,.brand,.rb,.search,.nbcov,.nbacts,h2,.qchips,.bell,.wctl){-webkit-app-region:no-drag}
-body.frameless:not([data-layout]):not([data-nav=bottom]) #view>.h1:first-child,body.frameless:not([data-layout]):not([data-nav=bottom]) #view>*>.h1:first-child{padding-right:128px}

@@ -48,7 +48,11 @@ html body.bs[data-face] .bellpop{position:fixed;left:calc(var(--side) + 8px);rig
 html body.bs[data-face] .helppop{left:calc(var(--side) + 8px)}
 html[data-light="1"] body.bs[data-face] .bellpop{box-shadow:0 16px 40px -24px rgba(0,0,0,.3)}
 
-html body.bs[data-face] .view{padding:0 22px 30px}
+html body.bs[data-face] .view{padding:10px 22px 30px}
+html body.bs[data-face] #view::-webkit-scrollbar{width:13px}
+html body.bs[data-face] #view::-webkit-scrollbar-track{margin:14px 0;background:transparent}
+html body.bs[data-face] #view::-webkit-scrollbar-thumb{background:var(--line2);border:3px solid var(--bg);border-left-width:2px;border-radius:9px;min-height:48px}
+html body.bs[data-face] #view::-webkit-scrollbar-thumb:hover{background:var(--muted2)}
 html body.bs[data-face] .h1{position:sticky;top:0;z-index:5;background:var(--bg);margin:0 -22px 14px;padding:14px 22px 12px;gap:8px;min-height:0;flex-wrap:nowrap}
 html body.bs[data-face] .h1 h2{font:600 20px/1.2 var(--font-text);letter-spacing:-.3px;margin-right:8px;white-space:nowrap}
 html body.bs[data-face] .h1 .cnt{font-size:12px;color:var(--muted2);white-space:nowrap}

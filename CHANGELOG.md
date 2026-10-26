@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.0.11 — 2026-10-26
+
+- Destaque do jogo (cabeçalho da biblioteca) mais para baixo: ganhou respiro do topo da janela.
+- Botões da janela ganharam uma faixa própria de 28 px no topo da área principal (sem título, sem marca). Com isso nada passa por baixo deles ao rolar a biblioteca, e a faixa inteira arrasta a janela. Na ficha do jogo a faixa continua visível.
+- Barra de rolagem da área principal: mais curta (não encosta no topo nem no rodapé), um pouco mais larga e afastada da borda da janela.
+
 ## 4.0.10 — 2026-10-26
 
 - Marca: o ícone ficava mais alto que o texto "LudrixHub" (herdava uma margem de baixo de uma regra antiga). Ícone e nome agora ficam centrados na mesma linha, e o nome alinha com os itens do menu.
