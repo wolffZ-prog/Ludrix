@@ -1,5 +1,8 @@
 # Changelog
 
+## 4.0.14-hf2 — 2026-10-26
+- Ajustes › Atualizações: espaço entre o cartão de versão, os botões e a lista (a correção 1 não pegava: regra genérica de margem vencia).
+
 ## 4.0.14-hf1 — 2026-10-26
 - Ajustes › Atualizações: botões com espaço entre o cartão de versão e a lista de opções.
 
