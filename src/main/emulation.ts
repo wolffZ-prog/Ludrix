@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import * as cp from 'node:child_process';
 import AdmZip from 'adm-zip';
@@ -1102,4 +1101,3 @@ function safeExtractAll(buf: Buffer, dest: string) {
     }
 }
 
-export const homeDir = () => os.homedir();

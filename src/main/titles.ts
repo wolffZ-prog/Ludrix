@@ -196,12 +196,24 @@ function nums(t: string) {
 
 const sameSet = (a: Set<string>, b: Set<string>) => a.size === b.size && [...a].every((x) => b.has(x));
 
-export function sameNumbering(query: string, canonical: string) {
-    return sameSet(nums(cmp(query)), nums(cmp(canonical)));
+const GAME_TAG = /^(\d{4} )?(video ?game|videogame|game|jogo( eletr[oô]nico| de v[ií]deo)?)$/;
+
+export function foreignTag(query: string, canonical: string) {
+    const m = /\(([^()]*)\)\s*$/.exec(String(canonical || '').trim());
+    if (!m)
+        return false;
+    const tag = m[1].trim().toLowerCase();
+    if (!tag || GAME_TAG.test(tag))
+        return false;
+    return !String(query || '').toLowerCase().includes(tag);
+}
+
+export function stripGameTag(title: string) {
+    return String(title || '').replace(/\s*\((\d{4} )?(video ?game|videogame|game)\)\s*$/i, '').trim();
 }
 
 export function canonicalOk(query: string, canonical: string, minSim = 0.55) {
-    if (!canonical)
+    if (!canonical || foreignTag(query, canonical))
         return false;
     const q = cmp(query), c = cmp(canonical);
     if (!q || !c)
@@ -220,7 +232,7 @@ export function canonicalOk(query: string, canonical: string, minSim = 0.55) {
 
 export function canonicalConfident(query: string, canonical: string) {
     const q = cmp(query), c = cmp(canonical);
-    if (!q || !c || !sameSet(nums(q), nums(c)))
+    if (!q || !c || !sameSet(nums(q), nums(c)) || foreignTag(query, canonical))
         return false;
     if (q === c || q.split(' ').join('') === c.split(' ').join(''))
         return true;

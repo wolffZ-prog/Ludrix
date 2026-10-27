@@ -3,7 +3,7 @@ import path from 'node:path';
 import * as P from './paths';
 import * as log from './log';
 import * as http from './http';
-import { normalizeTitle, canonicalOk, canonicalConfident, similarity, cmp } from './titles';
+import { normalizeTitle, canonicalOk, canonicalConfident, stripGameTag, similarity, cmp } from './titles';
 import { CoverService } from './covers';
 import { WebImageSearch } from './websearch';
 
@@ -721,10 +721,10 @@ export class MetadataService {
         if (!cands.length)
             return;
         cands.sort((a, b) => (b[0] - a[0]) || (b[1] - a[1]) || (b[2] < a[2] ? -1 : b[2] > a[2] ? 1 : 0));
-        const best = cands[0][2].trim();
+        const best = stripGameTag(cands[0][2]);
         meta.canonical_title = best;
         meta.canonical_confident = canonicalConfident(clean, best);
-        meta.title_candidates = cands.map((c) => c[2]).slice(0, 5);
+        meta.title_candidates = [...new Set(cands.map((c) => stripGameTag(c[2])))].slice(0, 5);
     }
 
     private async wget(url: string, opts: any = {}): Promise<any> {

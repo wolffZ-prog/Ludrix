@@ -94,7 +94,7 @@ async function startServer(backend, getWindow) {
             log.info('servidor local em 127.0.0.1:%d', port);
             resolve({
                 port,
-                token: exports.TOKEN,
+                token: TOKEN,
                 close: () => {
                     try {
                         server.close();
@@ -199,7 +199,7 @@ function allowed(req, p) {
         }
     }
     const given = String(req.headers['x-ludrix-token'] || '');
-    return given.length === exports.TOKEN.length && crypto.timingSafeEqual(Buffer.from(given), Buffer.from(exports.TOKEN));
+    return given.length === TOKEN.length && crypto.timingSafeEqual(Buffer.from(given), Buffer.from(TOKEN));
 }
 export let lastRoute = '';
 async function handle(req, res, be, getWindow) {
@@ -236,7 +236,7 @@ async function routeGet(req, res, p, q, be, getWindow) {
         if (!fs.existsSync(file))
             return sendJson(res, { error: 'not found' }, 404);
         let html = fs.readFileSync(file, 'utf8');
-        html = html.replace('<head>', `<head><meta name="ludrix-token" content="${exports.TOKEN}">`);
+        html = html.replace('<head>', `<head><meta name="ludrix-token" content="${TOKEN}">`);
         try {
             const sp = be.customUX.splashPath();
             if (sp)
@@ -345,7 +345,7 @@ async function routeGet(req, res, p, q, be, getWindow) {
         return sendJson(res, be.randomPick(String(q.get('f') || 'any'), String(q.get('x') || '').split(',').filter(Boolean)));
     if (p === '/api/favicon.ico')
         return sendFile(res, path.join(P.UI, 'icon.png'), true);
-    if (await (0, server2.routeGet2)(res, p, q, be, LOCAL_PORT))
+    if (await server2.routeGet2(res, p, q, be, LOCAL_PORT))
         return;
     void req;
     return sendJson(res, { error: 'not found' }, 404);
@@ -477,10 +477,6 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, be.themeDelete(b.id));
     if (p === '/api/theme/export')
         return sendJson(res, be.themeExport(b.id, b.format || 'lxtheme'));
-    if (p === '/api/theme/export_all')
-        return sendJson(res, be.themeExportAll(b.format || 'zip'));
-    if (p === '/api/theme/reload')
-        return sendJson(res, be.themeReload(b.theme || ''));
     if (p === '/api/custom/set')
         return sendJson(res, be.customSet(b));
     if (p === '/api/custom/reset')
@@ -528,7 +524,7 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, be.backupExport(b?.dest || null));
     if (p === '/api/backup/import')
         return sendJson(res, await be.backupImport(b?.path || null));
-    if (await (0, server2.routePost2)(res, p, b, be, getWindow, LOCAL_PORT))
+    if (await server2.routePost2(res, p, b, be, getWindow, LOCAL_PORT))
         return;
     return sendJson(res, { error: 'not found' }, 404);
 }

@@ -187,7 +187,7 @@ async function renderSettings(fresh) {
     ${c.auto_backup !== false ? `<div class="frow"><div class="l"><b>Pasta dos backups automáticos</b><span><code>${esc(c.auto_backup_dir || 'data\\backups\\auto')}</code>${c.auto_backup_dir ? '' : ' — o padrão fica dentro do Ludrix; para sobreviver a um disco morto, aponte outro disco ou uma pasta sincronizada'}</span></div><div class="ta"><button class="btn s sm" onclick="autoBackupDir('pick')">${I.folder} Escolher…</button>${c.auto_backup_dir ? `<button class="btn s sm" onclick="autoBackupDir('reset')">Padrão</button>` : ''}<button class="btn s sm" onclick="autoBackupNow(this)">Fazer agora</button></div></div>` : ''}
     <div class="frow"><div class="l"><b>Importar um backup</b><span>Escolha um Ludrix-dados-*.zip. O conteúdo é listado antes de aplicar</span></div><button class="btn s sm" onclick="dataImport()">${I.folder} Importar…</button></div>`], { help: 'O backup é um zip com configurações, biblioteca (com tempo jogado e favoritos), capas personalizadas, fontes, temas importados, cópias de saves e jogos rápidos adicionados por você. Não inclui os jogos em si nem caches. Importar substitui o que existe hoje pelo que está no zip e reabre o Ludrix — antes disso, o estado atual é guardado em data/updates.' }),
     diagnostico: () => sec('diagnostico', 'Diagnóstico', [`
-    <div class="frow"><div class="l"><b>Diagnóstico</b><span>Confere pasta, espaço em disco, WebView2, ferramentas e mostra o fim do log — copie e cole quando algo der errado</span></div><button class="btn s sm" onclick="showDiag()">Ver diagnóstico</button></div>`]),
+    <div class="frow"><div class="l"><b>Diagnóstico</b><span>Confere pasta, espaço em disco, ferramentas e mostra o fim do log — copie e cole quando algo der errado</span></div><button class="btn s sm" onclick="showDiag()">Ver diagnóstico</button></div>`]),
     limpeza: () => sec('limpeza', 'Limpeza', [`
     <div class="cache" id="cacheBox">${[['web', 'Listas das fontes'], ['thumbs', 'Miniaturas'], ['covers', 'Capas grandes'], ['meta', 'Informações dos jogos'], ['downloads', 'Downloads incompletos'], ['log', 'Registro de erros']].map(([k, n]) => `<label><input type="checkbox" value="${k}"><div><b>${n}</b><span>${cache ? (fmt(cache[k]) || '0 B') : '…'}</span></div></label>`).join('')}</div>
     <div class="frow" style="margin-top:10px"><div class="l"><b>Imagens órfãs</b><span>Capas e miniaturas de jogos que não estão mais em nenhuma fonte nem na biblioteca (com mais de 30 dias). O Ludrix faz essa limpeza sozinho uma vez por semana</span></div><button class="btn s sm" onclick="imgGc(this)">${I.trash} Conferir</button></div>
@@ -207,7 +207,7 @@ async function renderSettings(fresh) {
   <div class="sec about" id="s-sobre" data-sec="Sobre"><div class="abt"><div class="abtlogo">${logoSvg()}</div><div><h3>LudrixHub</h3><p>Criado e idealizado por <b>WOLFFZ</b></p></div></div>
     <p>Um lugar só para os seus jogos: os de PC, os emulados, os atalhos e os Flash, com capa, tempo jogado e favoritos. Portátil — a pasta inteira vai com você.</p>
     <p>O launcher não hospeda nem distribui jogos. Ele organiza o que você tem e lê as fontes que você adiciona.</p>
-    <div class="kv" style="margin-top:14px"><b>Versão</b><span>${esc(c.version || '')}${c.version_date ? ` <small style="color:var(--muted)">(${esc(c.version_date)})</small>` : ''} ${c.version_changelog ? `<a href="#" onclick="whatsNew();return false" style="color:var(--accent2);margin-left:8px">novidades</a>` : ''}</span><b>Pasta</b><span>${esc(c.root)}</span><b>Motor da janela</b><span>${esc(c.webview2 ? (/^GTK/.test(c.webview2) ? c.webview2 : 'WebView2 ' + c.webview2) : '')}</span></div>
+    <div class="kv" style="margin-top:14px"><b>Versão</b><span>${esc(c.version || '')}${c.version_date ? ` <small style="color:var(--muted)">(${esc(c.version_date)})</small>` : ''} ${c.version_changelog ? `<a href="#" onclick="whatsNew();return false" style="color:var(--accent2);margin-left:8px">novidades</a>` : ''}</span><b>Pasta</b><span>${esc(c.root)}</span><b>Motor da janela</b><span>${esc(c.engine || '')}</span></div>
     <div class="frow" style="margin-top:12px"><div class="l"><b>Arquivos do launcher</b><span>${integrityLine(c.integrity)}</span></div><div class="ta"><button class="btn s sm" onclick="integrityCheck()">${I.check} Verificar arquivos</button></div></div>
     <p class="mut" style="margin-top:12px;font-size:11.5px">Ícones: Tabler, Phosphor e Pixelarticons (licença MIT). Fontes: Outfit e Manrope (SIL Open Font License).</p>
   </div>`,
@@ -238,8 +238,8 @@ function toggleAdv() {
 }
 const TAB_KEYS = {
   general: ['start_menu', 'file_assoc', 'win_notify', 'tray_enabled', 'tray_sleep', 'close_action', 'hotkey_enabled', 'popups', 'notify_sound', 'ui_sounds', 'ui_sounds_level', 'keymap'],
-  appearance: ['accent_from_cover', 'gamepad', 'sofa_zoom', 'theme', 'theme_mode', 'face', 'accent', 'theme_schedule', 'theme_light_from', 'theme_light_to', 'frameless', 'frame_mode', 'frame_corners', 'status_position', 'nav_layout', 'clock', 'ctx_menu', 'layout', 'nav', 'nav_hidden', 'nav_order', 'rail_icons', 'toolbar', 'toolbar_items', 'ui_scale', 'text_size', 'card_size', 'density', 'acrylic', 'animations', 'fx_type', 'fx_intensity', 'glass', 'card_hover', 'reduce_motion', 'parallax', 'high_contrast'],
-  library: ['home_spot', 'fav_first', 'home_rows', 'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'cover_slideshow', 'cover_slideshow_secs', 'view_mode', 'group_by', 'card_ribbons', 'card_origin', 'card_playtime', 'detail_art', 'auto_metadata', 'web_covers', 'auto_rename'],
+  appearance: ['accent_from_cover', 'gamepad', 'sofa_zoom', 'theme', 'theme_mode', 'face', 'accent', 'theme_schedule', 'theme_light_from', 'theme_light_to', 'frameless', 'frame_mode', 'frame_corners', 'status_position', 'nav_layout', 'clock', 'ctx_menu', 'layout', 'nav', 'nav_hidden', 'nav_order', 'rail_icons', 'ui_scale', 'text_size', 'card_size', 'density', 'acrylic', 'animations', 'fx_type', 'fx_intensity', 'glass', 'card_hover', 'reduce_motion', 'parallax', 'high_contrast'],
+  library: ['home_spot', 'fav_first', 'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'cover_slideshow', 'cover_slideshow_secs', 'view_mode', 'group_by', 'card_ribbons', 'card_origin', 'card_playtime', 'detail_art', 'auto_metadata', 'web_covers', 'auto_rename'],
   play: ['discord_enabled', 'after_launch', 'launch_splash', 'pause_downloads_playing', 'nav_hide_playing', 'crash_watch', 'crash_mute', 'save_auto_backup', 'emu_no_ask', 'gamepad_enabled', 'gamepad_speed', 'gamepad_wake'],
   store: ['hero_enabled', 'store_hide_installed', 'dim_not_installed', 'store_auto_refresh', 'store_notify_new', 'taskbar_progress', 'keep_archive', 'concurrent_downloads', 'dl_max_down', 'dl_schedule', 'dl_from', 'dl_to', 'shortcut_ask', 'repack_auto_open', 'torrent_max_down', 'torrent_max_up', 'torrent_seed_after'],
   system: ['bg_warmup', 'bg_sites', 'update_auto_check', 'terminal_enabled', 'auto_backup', 'auto_backup_dir'],
@@ -308,7 +308,7 @@ function updatesHtml() {
   const job = S.jobs.update;
   const ready = !!av, remote = !ready && !!rem;
   const kind = k => k === 'full' ? 'Nova versão do launcher' : 'Atualização';
-  const when = st.checked_at ? new Date(st.checked_at * 1000).toLocaleTimeString().slice(0, 5) : '';
+  const when = st.checked_at ? new Date(st.checked_at * 1000).toLocaleTimeString(S.config.language === 'en' ? 'en-US' : 'pt-BR', { hour: '2-digit', minute: '2-digit' }) : '';
   let card = '';
   if (!u) card = `<p class="mut">Consultando…</p>`;
   else if (ready) card = `<div class="updcard on"><div class="l"><b>v${esc(av.version)}${av.rev ? ' · correção ' + av.rev : ''}${av.title && !/^(patch|ludrix) /i.test(av.title) ? ' · ' + esc(av.title) : ''}</b><span>${kind(av.kind)}${av.date ? ' · ' + esc(av.date) : ''}${av.size ? ' · ' + fmt(av.size) : ''} · verificada, pronta para instalar</span></div>${chlogHtml(notesBetween(av, cur.version))}</div>`;
@@ -344,7 +344,6 @@ async function restoreVersion(repair) {
     ok: r.same ? 'Fechar e reinstalar' : r.newer ? 'Fechar e instalar' : 'Fechar e voltar', cancel: 'Não fazer nada',
     onOk: async () => { const x = await api.post('/api/updates/apply', { relaunch: true, restore: r.path }); if (x && x.error) toast('err', 'Voltar de versão', x.error); else toast('ok', 'Fechando para trocar de versão…'); } });
 }
-const LAYOUT_NAMES = { top: 'navegação no topo', side: 'menu lateral largo', dock: 'barra embaixo', taskbar: 'barra embaixo', rail: 'ícones à esquerda', bottom: 'barra embaixo' };
 function pickFace(id) { const prev = faceInfo(S.config.face || DEFAULT_FACE), patch = { face: id }; if ((S.config.theme || '').startsWith('file:')) patch.theme = 'system'; if (S.config.accent && S.config.accent === prev.accent) patch.accent = ''; setCfg(patch); }
 async function pickTheme(id) { if (!(S.themes || []).length) S.themes = await api.get('/api/themes/full'); const t = (S.themes || []).find(x => x.id === id), prev = (S.themes || []).find(x => x.id === (S.config.theme || 'system')); const patch = { theme: id }; if (prev && prev.accent && S.config.accent === prev.accent) patch.accent = ''; setCfg(patch); }
 const toHex = v => { v = (v || '').trim(); if (/^#([0-9a-f]{6})$/i.test(v)) return v; const m = v.match(/rgba?\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)/i); if (m) return '#' + [m[1], m[2], m[3]].map(x => (+x).toString(16).padStart(2, '0')).join(''); return ''; };
@@ -357,21 +356,9 @@ function themeMenu(id, x, y) {
     { sep: true }, { label: 'Apagar', icon: 'trash', danger: true, fn: () => themeDelete(id, t.name || id) });
   showCtx(items, x, y);
 }
-function themeExportMenu(id, e) { showCtx([{ label: 'Exportar .lxtheme', hint: 'oficial', icon: 'ext', fn: () => themeExport(id, 'lxtheme') }, { label: 'Exportar .zip', hint: 'mesmo esqueleto', icon: 'ext', fn: () => themeExport(id, 'zip') }], e.clientX, e.clientY); }
-async function themeExportAll() { const r = await api.post('/api/theme/export_all', { format: 'zip' }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); toast('ok', `Arquivo com ${pl(r.count, 'tema', 'temas')}`, r.path, [{ label: 'Abrir pasta', fn: () => openPath(r.path.replace(/[\\/][^\\/]*$/, '')) }]); }
 async function themeImport() {
   if (S.config.native) { const r = await api.post('/api/theme/import', {}); if (r.error) return toast('err', 'Não foi possível concluir', r.error); if (r.ok) { toast('ok', r.count > 1 ? 'Temas importados' : 'Tema importado', r.name || ''); renderSettings(true); } return; }
   modal({ title: 'Importar temas', text: 'Caminho do .lxtheme, .zip (um ou vários estilos) ou theme.json. Para vários arquivos, um por linha.', textarea: '', ok: 'Importar', onOk: async v => { const r = await api.post('/api/theme/import', { path: v }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); if (r.ok) toast('ok', r.count > 1 ? 'Temas importados' : 'Tema importado', r.name || ''); renderSettings(true); } });
-}
-function themeSel(id, builtin) { if (builtin) return; S._tsel.has(id) ? S._tsel.delete(id) : S._tsel.add(id); renderSettings(); }
-function themeSelGroup(ids) { const list = ids.split('|'); const all = list.every(i => S._tsel.has(i)); list.forEach(i => all ? S._tsel.delete(i) : S._tsel.add(i)); renderSettings(); }
-function themeDeleteSel() {
-  const ids = [...S._tsel]; if (!ids.length) return;
-  modal({ title: `Apagar ${ids.length} estilo${ids.length > 1 ? 's' : ''}?`, text: 'As pastas deles em themes serão removidas. É possível importar de novo depois.', ok: 'Apagar', danger: true, onOk: async () => {
-    for (const id of ids) await api.post('/api/theme/delete', { id });
-    if (ids.includes(S.config.theme)) S.config.theme = 'system';
-    S._tsel.clear(); S._tselMode = false; reloadTheme(true); renderSettings(true); toast('ok', 'Apagados', `${ids.length} estilo${ids.length > 1 ? 's' : ''}`);
-  } });
 }
 function themeDeleteAll() {
   const ids = (S.themes || []).filter(t => t.id && t.id.startsWith('file:')).map(t => t.id); if (!ids.length) return;

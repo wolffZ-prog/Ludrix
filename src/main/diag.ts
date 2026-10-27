@@ -7,7 +7,7 @@ import * as log from './log';
 import { DEFAULT_CONFIG } from './store';
 
 export const SAFE_KEYS = ['theme', 'face', 'accent', 'layout', 'nav', 'custom', 'ctx_menu', 'animations', 'fx_type',
-    'fx_intensity', 'glass', 'ui_scale', 'density', 'rail_icons', 'toolbar', 'hero_enabled'];
+    'fx_intensity', 'glass', 'ui_scale', 'density', 'rail_icons', 'hero_enabled'];
 const MIN_FREE = 512 * 1024 * 1024;
 const WIN = process.platform === 'win32';
 
@@ -108,8 +108,8 @@ export function logTail(n = 30): string[] {
     }
 }
 
-export function webview2Mode(): string {
-    return WIN ? 'embutido (Electron)' : 'Electron';
+export function engineInfo(): string {
+    return `Electron ${process.versions.electron} · Chromium ${(process.versions.chrome || '').split('.')[0]} · Node ${process.versions.node}`;
 }
 
 export const UI_ERRORS: string[] = [];
@@ -185,10 +185,8 @@ export async function report(be: any, apiOk: boolean | null = null): Promise<any
         const fb = freeBytes(p);
         add(cid, name, fb < 0 || fb >= 2 * 1024 ** 3, fb >= 0 ? `${human(fb)} em ${anchorOf(p)}` : 'não deu para medir', fb >= 0 && fb < 2 * 1024 ** 3);
     }
-    if (WIN)
-        add('webview2', 'Motor da janela', true, webview2Mode());
-    else {
-        add('webview', 'Motor da janela', true, 'Electron (Linux)');
+    add('engine', 'Motor da janela', true, engineInfo());
+    if (!WIN) {
         try {
             const st = compat.status(store.config);
             if (st.runner === 'wine')

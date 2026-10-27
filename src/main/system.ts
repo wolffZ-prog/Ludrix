@@ -1,21 +1,5 @@
-import os from 'node:os';
-import fs from 'node:fs';
-import path from 'node:path';
-import * as cp from 'node:child_process';
 import * as electron from 'electron';
-import * as P from './paths';
-import * as util from './util';
 import * as hwmod from './hardware';
-function run(cmd, args, timeout = 6000) {
-    return new Promise<any>((resolve) => {
-        try {
-            cp.execFile(cmd, args, { timeout, windowsHide: true, maxBuffer: 8 << 20 }, (err, stdout) => resolve(err ? '' : String(stdout || '')));
-        }
-        catch {
-            resolve('');
-        }
-    });
-}
 function hardware(force = false) {
     return hwmod.detect(force);
 }

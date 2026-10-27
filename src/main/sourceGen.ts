@@ -5,7 +5,6 @@ import { normalizeTitle } from './titles';
 import { sha256File } from './installer';
 
 const ARCHIVE = /\.(zip|7z|rar|iso|exe|bin|tar|gz|xz|zst|wim|\d{3}|z\d\d|part\d+\.rar)$/i;
-const PART = /(\.part\d+(?=\.rar$)|\.\d{3}$|\.z\d\d$|\.7z\.\d{3}$|\.zip\.\d{3}$)/i;
 const SKIP = /^(\.|_|desktop\.ini$|thumbs\.db$)/i;
 
 export interface GenFile { name: string; rel: string; size: number }

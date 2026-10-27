@@ -41,8 +41,8 @@ function initLog() {
     catch {
         started = false;
     }
-    process.on('uncaughtException', (e) => (0, exports.error)('erro: ' + (e && e.stack ? e.stack : String(e))));
-    process.on('unhandledRejection', (e) => (0, exports.error)('promessa rejeitada: ' + String(e)));
+    process.on('uncaughtException', (e) => error('erro: ' + (e && e.stack ? e.stack : String(e))));
+    process.on('unhandledRejection', (e) => error('promessa rejeitada: ' + String(e)));
 }
 const info = (m, ...r) => emit('INFO', m, ...r);
 const warn = (m, ...r) => emit('WARN', m, ...r);

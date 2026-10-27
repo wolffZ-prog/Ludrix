@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import * as cp from 'node:child_process';
 import os from 'node:os';
 import v8 from 'node:v8';
@@ -22,7 +21,6 @@ import { SaveManager } from './saves';
 import { safeFolderName, freeBytes } from './installer';
 import { Terminal } from './terminal';
 import { CentralFront, expandVars, bedrockInstalled, BEDROCK_AUMID, BEDROCK_STORE, JAVA_STORE } from './central';
-import * as presets from './presets';
 import * as themes from './themes';
 import * as sys from './system';
 import { Jobs, prog } from './jobs';
@@ -1877,16 +1875,6 @@ class Backend {
     themeSave(data: Record<string, any>) {
         return themes.themeSave(data || {});
     }
-    themeReload(tid: string) {
-        tid = String(tid || '');
-        if (tid) {
-            if (tid.startsWith('file:') && !fs.existsSync(path.join(themes.themeDir(tid.slice(5)), 'theme.json')))
-                return { error: 'Tema não encontrado' };
-            this.store.setConfig({ theme: tid });
-        }
-        this.push({ type: 'theme_reload', theme: tid });
-        return { ok: true };
-    }
     async themeImport(p: any) {
         let files = Array.isArray(p) ? p.map((x) => String(x).trim()) : String(p || '').split(/[\r\n;|]+/).map((x) => x.trim()).filter(Boolean);
         if (!files.length) {
@@ -1902,9 +1890,6 @@ class Backend {
     }
     themeExport(id: string, fmt = 'lxtheme') {
         return themes.themeExport(String(id || ''), fmt);
-    }
-    themeExportAll(fmt = 'zip') {
-        return themes.themeExportAll(fmt);
     }
     custom() {
         return this.customUX.get();
@@ -2583,7 +2568,7 @@ class Backend {
             walk(base, (f) => {
                 const relp = path.relative(P.ROOT, f).split(path.sep).join('/');
                 const ext = path.extname(f);
-                if (ext === '.tmp' || ext === '.log' || relp.split('/').includes('webview'))
+                if (ext === '.tmp' || ext === '.log' || relp.split('/').some((d) => d === 'webview' || d === 'chromium' || d === 'webview-console' || d === 'chromium-console'))
                     return;
                 if (rel === 'data' && this.BACKUP_SKIP.some((s) => relp.startsWith(s)))
                     return;

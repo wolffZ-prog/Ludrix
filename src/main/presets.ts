@@ -16,7 +16,7 @@ function load(name) {
     ];
     for (const f of candidates) {
         if (fs.existsSync(f)) {
-            data = (0, util.readJson)(f, null);
+            data = util.readJson(f, null);
             if (data)
                 break;
         }
@@ -36,10 +36,10 @@ const saves = () => load('saves.json');
 const mods = () => load('mods.json');
 const flash = () => load('flash.json');
 function systems() {
-    return ((0, exports.emulators)()?.systems || {});
+    return (emulators()?.systems || {});
 }
 function emulatorList() {
-    const raw = ((0, exports.emulators)()?.emulators || {});
+    const raw = (emulators()?.emulators || {});
     const out = {};
     for (const [id, e] of Object.entries(raw))
         out[id] = { ...e, id };

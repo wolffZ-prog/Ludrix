@@ -1,10 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import * as cp from 'node:child_process';
-import AdmZip from 'adm-zip';
-import * as P from './paths';
 import * as log from './log';
-import * as http from './http';
 import * as installer_types from './installer-types';
 const nativeImport = new Function('spec', 'return import(spec);');
 let WtModule;
@@ -150,8 +146,8 @@ class TorrentClient {
                     }
                     const eta = torrent.downloadSpeed > 0 ? (total - done) / torrent.downloadSpeed : 0;
                     const frac = total ? done / total : -1;
-                    cb(frac, `${(0, installer_types.humanSize)(done)} / ${(0, installer_types.humanSize)(total)}  •  ↓ ${(0, installer_types.humanSize)(torrent.downloadSpeed)}/s  ` +
-                        `↑ ${(0, installer_types.humanSize)(torrent.uploadSpeed)}/s  •  ${torrent.numPeers} peers  •  ` +
+                    cb(frac, `${installer_types.humanSize(done)} / ${installer_types.humanSize(total)}  •  ↓ ${installer_types.humanSize(torrent.downloadSpeed)}/s  ` +
+                        `↑ ${installer_types.humanSize(torrent.uploadSpeed)}/s  •  ${torrent.numPeers} peers  •  ` +
                         `ETA ${Math.floor(eta / 60)}m${String(Math.floor(eta % 60)).padStart(2, '0')}s`);
                 }, 700);
                 torrent.on('error', (e) => {

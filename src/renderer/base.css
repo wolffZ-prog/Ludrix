@@ -178,7 +178,7 @@ html body.bs[data-face] .btn{border-radius:var(--r);box-shadow:none}
 html body.bs[data-face] .btn.s{background:var(--bg2);border:1px solid var(--line);color:var(--text)}
 html body.bs[data-face] .btn.s:hover{border-color:var(--line2);background:var(--card2)}
 html body.bs[data-face] .btn.p,html body.bs[data-face] .btn.g{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-html body.bs[data-face] .pop,html body.bs[data-face] .ctx,html body.bs[data-face] .modal .box{border-radius:10px;background:var(--bg2);border:1px solid var(--line);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 16px 40px -20px rgba(0,0,0,.6)}
+html body.bs[data-face] .pop,html body.bs[data-face] .ctx,html body.bs[data-face] .ctx .sub,html body.bs[data-face] .modal .box{border-radius:10px;background:var(--bg2);border:1px solid var(--line);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 16px 40px -20px rgba(0,0,0,.6)}
 html body.bs[data-face] .ctx button:hover{background:var(--card2);color:var(--text)}
 html body.bs[data-face] .ctx button:hover svg{color:var(--text)}
 html body.bs[data-face] .toast{border-radius:10px;background:var(--bg2);border:1px solid var(--line);backdrop-filter:none;box-shadow:0 16px 40px -20px rgba(0,0,0,.6)}
@@ -296,7 +296,8 @@ html body.bs[data-face] .libwrap.pw .libmain .ggh{margin-right:0}
 html body.bs[data-face] .gpanel{z-index:6}
 html body.bs[data-face] .libmain,html body.bs[data-face] #view{container-type:inline-size}
 html body.bs[data-face] .chips{flex-wrap:wrap;row-gap:6px;overflow:visible;mask-image:none}
-html body.bs[data-face] .h1 .btn.xs .lb{margin-left:4px}
+html body.bs[data-face] .h1 .btn.xs .lb{margin-left:4px;color:inherit}
+html body.bs[data-face] .h1 .btn.xs.p svg{color:inherit}
 @container (max-width:1000px){
 html body.bs[data-face] .h1 .cnt,html body.bs[data-face] .h1 .btn.xs .lb,html body.bs[data-face] .h1 #sort .lbl,html body.bs[data-face] .h1 #sort .car{display:none}
 html body.bs[data-face] .h1 .btn.xs,html body.bs[data-face] .h1 .filt>.btn,html body.bs[data-face] .h1 #sort{width:30px;padding:0;justify-content:center}

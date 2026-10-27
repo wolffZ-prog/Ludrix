@@ -5,7 +5,6 @@ import * as P from './paths';
 import * as log from './log';
 import * as http from './http';
 import * as installer_types from './installer-types';
-const CHUNK = 256 * 1024;
 function safeName(name, fallback = 'download') {
     const clean = String(name || '')
         .replace(/[\\/:*?"<>|]+/g, '_')
@@ -31,7 +30,6 @@ function uniquePath(dir, name) {
 async function downloadFile(req: any, onProgress: (p: any) => any = () => undefined, cancel: any = { aborted: false }, session: any = http.shared) {
     fs.mkdirSync(req.dir, { recursive: true });
     let finalPath = '';
-    const partPath = () => finalPath + '.part';
     const probeHeaders = { 'User-Agent': http.UA, ...(req.headers || {}) };
     if (req.cookies) {
         probeHeaders.Cookie = Object.entries(req.cookies).map(([k, v]) => `${k}=${v}`).join('; ');
@@ -120,8 +118,8 @@ async function downloadFile(req: any, onProgress: (p: any) => any = () => undefi
                     frac: grandTotal ? done / grandTotal : -1,
                     speed,
                     eta,
-                    text: `${(0, installer_types.humanSize)(done)} / ${(0, installer_types.humanSize)(grandTotal)}  •  ↓ ${(0, installer_types.humanSize)(speed)}/s` +
-                        (eta ? `  •  ETA ${(0, installer_types.humanEta)(eta)}` : ''),
+                    text: `${installer_types.humanSize(done)} / ${installer_types.humanSize(grandTotal)}  •  ↓ ${installer_types.humanSize(speed)}/s` +
+                        (eta ? `  •  ETA ${installer_types.humanEta(eta)}` : ''),
                 });
             }
             if (limit > 0 && speed > limit) {

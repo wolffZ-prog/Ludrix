@@ -3,7 +3,6 @@ import path from 'node:path';
 import * as cp from 'node:child_process';
 import * as P from './paths';
 import * as log from './log';
-import * as crypto from './crypto';
 import * as util from './util';
 import { Restore, vcmp } from './updater';
 
@@ -12,12 +11,6 @@ export const MAX_UPDATE_BYTES = 600 * 1024 * 1024;
 export const DEFAULT_FEED = 'https://github.com/wolffZ-prog/Ludrix/releases/latest/download/ludrix-updates.json';
 const VERSION_FILE = path.join(P.APP_DIR, 'version.json');
 
-export function parseVersion(v: any): number[] {
-    const nums = (String(v || '0').match(/\d+/g) || []).slice(0, 4).map(Number);
-    while (nums.length < 3)
-        nums.push(0);
-    return nums;
-}
 const gt = (a: any, b: any) => vcmp(a, b) > 0;
 const revOf = (m: any) => Number((m && m.rev) || 0);
 export const newer = (m: any, cur: any) => vcmp(m.version, cur.version) > 0 || (vcmp(m.version, cur.version) === 0 && revOf(m) > revOf(cur));

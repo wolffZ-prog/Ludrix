@@ -5,7 +5,6 @@ import { pathToFileURL } from 'node:url';
 import * as P from './paths';
 import * as log from './log';
 import * as http from './http';
-import * as webcache from './webcache';
 import * as util from './util';
 
 export const UA = { 'User-Agent': 'Ludrix/1.0' };

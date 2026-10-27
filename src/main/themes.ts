@@ -4,7 +4,6 @@ import os from 'node:os';
 import AdmZip from 'adm-zip';
 import * as P from './paths';
 import * as sign from './crypto';
-import * as log from './log';
 
 export const THEME_VARS = ['bg', 'bg2', 'panel', 'card', 'card2', 'line', 'line2', 'text', 'muted', 'muted2', 'green', 'green2', 'red', 'amber',
     'shadow', 'glow1', 'glow2', 'glow3', 'ph-from', 'ph-to', 'img-fade'];
@@ -395,15 +394,6 @@ export function themeExport(tid: string, fmt = 'lxtheme') {
     zipThemes(out, [d]);
     return { ok: true, path: out };
 }
-export function themeExportAll(fmt = 'zip') {
-    const dirs = exists(P.THEMES) ? fs.readdirSync(P.THEMES).sort().map((n) => path.join(P.THEMES, n)).filter((d) => isDir(d) && exists(path.join(d, 'theme.json'))) : [];
-    if (!dirs.length)
-        return { error: 'Nenhum tema personalizado pra exportar' };
-    const out = path.join(exportDest(), `ludrix-temas.${fmt === 'lxtheme' ? 'lxtheme' : 'zip'}`);
-    zipThemes(out, dirs);
-    return { ok: true, path: out, count: dirs.length };
-}
-
 function markOfficial(d: string, official: boolean) {
     const tj = path.join(d, 'theme.json');
     let t: any;
@@ -545,17 +535,3 @@ export function themePalette(cfg: Cfg) {
         green: hexc(vals.green2 || vals.green, bg) || '#22c55e', theme: tid };
 }
 
-export function previewStamp(themeId: string, cfg: Cfg) {
-    try {
-        const fsc = faceOf(themeId, cfg);
-        if (fsc) {
-            const face = fsc[0];
-            return face + '-' + ['dark.css', 'light.css', 'face.css'].filter((n) => exists(path.join(P.UI, 'themes', face, n))).map((n) => String(Math.trunc(fs.statSync(path.join(P.UI, 'themes', face, n)).mtimeMs / 1000))).join('-');
-        }
-        if (themeId.startsWith('file:'))
-            return String(Math.trunc(fs.statSync(path.join(themeDir(themeId.slice(5)), 'theme.json')).mtimeMs / 1000));
-    } catch (e) {
-        log.debug(`mock preview ${themeId}: ${e}`);
-    }
-    return 'builtin';
-}

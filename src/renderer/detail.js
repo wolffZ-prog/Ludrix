@@ -141,7 +141,7 @@ function shotsHtml(key, d, m) {
 }
 function reqsHtml(d, m) {
   const r = m.reqs || d.requirements;
-  const q = encodeURIComponent(`${d.title || ''} requisitos de sistema pc`);
+  const q = encodeURIComponent(`${d.title || ''} ${S.config.language === 'en' ? 'system requirements pc' : 'requisitos de sistema pc'}`);
   if (!r || (!(r.min || []).length && !(r.rec || []).length)) return `<div class="dsec dempty"><p class="mut">${d.system && d.system !== 'pc' ? 'Jogo emulado: o que pesa é o emulador, não o jogo. Veja os requisitos na aba Emuladores.' : d.meta ? 'Nenhuma fonte disponível publicou os requisitos deste jogo.' : 'Os requisitos chegam junto com os metadados.'}</p><div class="row">${d.meta ? `<button class="btn s" onclick="fetchMeta(${jsq(d.key)}, true)">${I.refresh} Buscar de novo</button>` : `<button class="btn p" onclick="fetchMeta(${jsq(d.key)}, true)">${I.refresh} Buscar metadados</button>`}${d.system && d.system !== 'pc' ? '' : `<button class="btn s" onclick="api.post('/api/open_url', {url: 'https://www.bing.com/search?q=${q}'})">${I.ext} Procurar na web</button>`}</div></div>`;
   const col = (t, ls) => ls && ls.length ? `<div class="reqcol"><h3>${t}</h3><ul>${ls.map(x => { const i = x.indexOf(':'); return i > 0 && i < 30 ? `<li><b>${esc(x.slice(0, i))}</b><span>${esc(x.slice(i + 1).trim())}</span></li>` : `<li><span>${esc(x)}</span></li>`; }).join('')}</ul></div>` : '';
   return `${reqCompare(r, d)}<div class="reqs">${col('MÍNIMOS', r.min)}${col('RECOMENDADOS', r.rec)}</div>${m.reqs_src === 'pcgamingwiki' ? '<p class="mut" style="margin-top:8px;font-size:12px">Fonte: PCGamingWiki.</p>' : ''}`;

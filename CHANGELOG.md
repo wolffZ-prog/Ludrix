@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.0.16-hf3 — 2026-10-27
+- Ajustes › Sistema mostrava "WebView2" no motor da janela: nome herdado, sem relação com o que roda. Agora mostra Electron e a versão do Chromium.
+- Botão "Exibição" ativo com texto e ícone apagados: corrigido.
+- Menu de contexto: o submenu "Editar" (e os demais) abre ao passar o mouse também em janelas baixas, com o item visível; submenus com o mesmo fundo do menu.
+- Metadados: o nome do jogo não é mais trocado por páginas de outro assunto ("Bayonetta (character)", "(film)"); o sufixo "(video game)" não entra no nome.
+- Remoção de recursos antigos sem uso: fita de luz, fileiras da tela inicial, itens da barra de tarefas, exportar todos os temas e código morto correspondente (limpeza nos dois idiomas).
+- Inglês: textos restantes em "Emuladores", "Mods", "Ao abrir um jogo" e "Atualizações" traduzidos.
+
 ## 4.0.16-hf2 — 2026-10-27
 - Menu de contexto refeito: a janela flutuante usada para o menu foi removida. O menu do Ludrix (dentro da própria janela, com cabeçalho, ícones e submenus) passa a ser o padrão; a opção "Menu nativo do Windows" usa o menu do próprio sistema. Vale para jogos, listas e demais menus.
 - Menu da bandeja passa a ser o menu nativo do sistema.

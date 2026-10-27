@@ -23,7 +23,10 @@ const getWindow = () => win;
 const CONSOLE = process.argv.includes('--console');
 const MODE = CONSOLE ? 'console' : 'window';
 try {
-    const ud = path.join(P.CACHE, CONSOLE ? 'webview-console' : 'webview');
+    const ud = path.join(P.CACHE, CONSOLE ? 'chromium-console' : 'chromium');
+    const old = path.join(P.CACHE, CONSOLE ? 'webview-console' : 'webview');
+    if (!fs.existsSync(ud) && fs.existsSync(old))
+        fs.renameSync(old, ud);
     fs.mkdirSync(ud, { recursive: true });
     electron.app.setPath('userData', ud);
     electron.app.setPath('sessionData', ud);
@@ -378,7 +381,6 @@ function onClosing(): boolean {
     win?.webContents.executeJavaScript('window.onCloseAsk ? (onCloseAsk(), 1) : 0', true).then((r) => { if (!r) hideWindow(); }).catch(() => hideWindow());
     return false;
 }
-let emulationStatusCache = null;
 function updateGuard() {
     const pv = P.PENDING_VERIFY;
     if (!fs.existsSync(pv))
@@ -487,7 +489,6 @@ async function main() {
     P.ensureDirs();
     log.initLog();
     log.info('Ludrix (Electron) iniciando em %s', P.ROOT);
-    const args = process.argv.slice(1);
     if (updateGuard())
         return;
     const safe = CONSOLE ? false : P.bootBegin();
@@ -512,7 +513,7 @@ async function main() {
     catch (e) {
         log.warn('verificação de arquivos falhou: %s', e);
     }
-    server = await (0, serverMod.startServer)(backend, getWindow);
+    server = await serverMod.startServer(backend, getWindow);
     setTimeout(legacySweep, 90000).unref();
     util.writeJson(P.INSTANCE_FILE, {
         mode: MODE,

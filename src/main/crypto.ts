@@ -47,7 +47,7 @@ function privateKeyObject(seed) {
         type: 'pkcs8',
     });
 }
-function verify(msg, sig, pubHex = exports.PUBLIC_KEY) {
+function verify(msg, sig, pubHex = PUBLIC_KEY) {
     try {
         if (sig.length !== 64)
             return false;
@@ -72,7 +72,7 @@ function zipDigest(zipPath) {
     const h = crypto.createHash('sha256');
     const names = zip.getEntries().map((e) => e.entryName).sort();
     for (const n of names) {
-        if (n === exports.SIG_NAME || n.endsWith('/'))
+        if (n === SIG_NAME || n.endsWith('/'))
             continue;
         h.update(Buffer.from(n, 'utf8'));
         h.update(Buffer.from([0]));
@@ -80,10 +80,10 @@ function zipDigest(zipPath) {
     }
     return h.digest();
 }
-function zipStatus(zipPath, pubHex = exports.PUBLIC_KEY) {
+function zipStatus(zipPath, pubHex = PUBLIC_KEY) {
     try {
         const zip = new AdmZip(zipPath);
-        const entry = zip.getEntry(exports.SIG_NAME);
+        const entry = zip.getEntry(SIG_NAME);
         if (!entry)
             return 'none';
         let hex = zip.readAsText(entry, 'utf8').trim();
@@ -99,7 +99,7 @@ function zipStatus(zipPath, pubHex = exports.PUBLIC_KEY) {
         return 'bad';
     }
 }
-function isSigned(zipPath, pubHex = exports.PUBLIC_KEY) {
+function isSigned(zipPath, pubHex = PUBLIC_KEY) {
     return zipStatus(zipPath, pubHex) === 'ok';
 }
 function signZip(zipPath, seed, keepExtraKeys = []) {
@@ -107,7 +107,7 @@ function signZip(zipPath, seed, keepExtraKeys = []) {
         const src = new AdmZip(zipPath);
         const out = new AdmZip();
         for (const e of src.getEntries()) {
-            if (e.entryName === exports.SIG_NAME || e.isDirectory)
+            if (e.entryName === SIG_NAME || e.isDirectory)
                 continue;
             out.addFile(e.entryName, src.readFile(e) || Buffer.alloc(0), e.comment || '', e.attr || 0);
             if (keepExtraKeys.includes(e.entryName))
@@ -119,7 +119,7 @@ function signZip(zipPath, seed, keepExtraKeys = []) {
         out.writeZip(tmp);
         const sig = sign(zipDigest(tmp), seed);
         const signed = new AdmZip(tmp);
-        signed.addFile(exports.SIG_NAME, Buffer.from(sig.toString('hex'), 'utf8'));
+        signed.addFile(SIG_NAME, Buffer.from(sig.toString('hex'), 'utf8'));
         signed.writeZip(zipPath);
         fs.rmSync(tmp, { force: true });
         return { ok: true };

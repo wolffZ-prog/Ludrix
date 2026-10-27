@@ -10,7 +10,6 @@ const DEFAULT_CONFIG = {
     theme: 'dark',
     theme_mode: '',
     face: 'padrao',
-    lights: ['#9ec5ff', '#b48cff', '#7c4dff'],
     accent: '',
     games_dir: '',
     shortcut_ask: true,
@@ -95,7 +94,6 @@ const DEFAULT_CONFIG = {
     acrylic: true,
     parallax: true,
     high_contrast: false,
-    home_rows: [],
     clock: 'off',
     settings_adv: false,
     filter_panel: false,
@@ -155,8 +153,6 @@ const DEFAULT_CONFIG = {
     density: 'normal',
     glass: true,
     hero_enabled: true,
-    toolbar: true,
-    toolbar_items: ['search', 'cats', 'sort', 'bell'],
     language: 'pt-BR',
     popups: true,
     notify_sound: true,
@@ -239,26 +235,26 @@ class Store {
     dirty: Set<string> = new Set();
     timer: any = null;
     constructor() {
-        const raw = (0, util.readJson)(P.CONFIG_FILE, {});
+        const raw = util.readJson(P.CONFIG_FILE, {});
         const out = { ...raw };
-        for (const k of Object.keys(exports.DEFAULT_CONFIG)) {
+        for (const k of Object.keys(DEFAULT_CONFIG)) {
             if (!(k in raw))
                 continue;
-            const v = coerce(k, raw[k], exports.DEFAULT_CONFIG[k]);
+            const v = coerce(k, raw[k], DEFAULT_CONFIG[k]);
             if (v !== raw[k])
                 this.configFixed.push(k);
             out[k] = v;
         }
-        this.config = { ...exports.DEFAULT_CONFIG, ...out };
+        this.config = { ...DEFAULT_CONFIG, ...out };
         this.migrateLook();
-        this.library = (0, util.readJson)(P.LIBRARY_FILE, {});
+        this.library = util.readJson(P.LIBRARY_FILE, {});
         this.migrateSchema();
     }
     static SCHEMA = 1;
     static SCHEMA_FILE = () => path.join(P.DATA, 'schema.json');
     schemaInfo: { version: number; app: string; at: number; newer?: boolean; migrated?: number[] } = { version: 0, app: '', at: 0 };
     migrateSchema() {
-        const cur = (0, util.readJson)(Store.SCHEMA_FILE(), null) as any;
+        const cur = util.readJson(Store.SCHEMA_FILE(), null) as any;
         const had = cur && Number.isFinite(Number(cur.version)) ? Number(cur.version) : (fs.existsSync(P.CONFIG_FILE) ? 0 : Store.SCHEMA);
         let app = '';
         try { app = String(require('./updates').currentVersion().version || ''); } catch { }
@@ -280,7 +276,7 @@ class Store {
         }
         this.schemaInfo = { version: Store.SCHEMA, app, at: Date.now() / 1000, migrated };
         if (had !== Store.SCHEMA || !cur || cur.app !== app) {
-            (0, util.writeJson)(Store.SCHEMA_FILE(), { version: Store.SCHEMA, app, at: Math.floor(Date.now() / 1000), files: ['config.json', 'library.json', 'repos.json', 'sources_state.json'] });
+            util.writeJson(Store.SCHEMA_FILE(), { version: Store.SCHEMA, app, at: Math.floor(Date.now() / 1000), files: ['config.json', 'library.json', 'repos.json', 'sources_state.json'] });
             if (migrated.length)
                 this.markDirty('library');
         }
@@ -291,10 +287,10 @@ class Store {
         if (!this.config.rail_icons)
             this.config.rail_icons = 'solid';
         if (this.config.card_size === 164)
-            this.config.card_size = exports.DEFAULT_CONFIG.card_size;
+            this.config.card_size = DEFAULT_CONFIG.card_size;
         if (this.config.backdrop_blur === 24 && this.config.backdrop_dim === 55) {
-            this.config.backdrop_blur = exports.DEFAULT_CONFIG.backdrop_blur;
-            this.config.backdrop_dim = exports.DEFAULT_CONFIG.backdrop_dim;
+            this.config.backdrop_blur = DEFAULT_CONFIG.backdrop_blur;
+            this.config.backdrop_dim = DEFAULT_CONFIG.backdrop_dim;
         }
         const steps = [
             [2, () => {
@@ -310,13 +306,6 @@ class Store {
                 }],
             [4, () => { if (this.config.face === 'grafite')
                     this.config.face = 'temperado'; }],
-            [5, () => {
-                    const lights = (this.config.lights || []).map((c) => String(c).toLowerCase());
-                    const old = [['#19d3ff', '#3dff9a', '#ffb02e'], ['#19d3ff', '#ffb02e', '#ff6a3d']];
-                    if (old.some((o) => JSON.stringify(o) === JSON.stringify(lights))) {
-                        this.config.lights = [...exports.DEFAULT_CONFIG.lights];
-                    }
-                }],
             [6, () => { if (this.config.face === 'temperado')
                     this.config.face = 'padrao'; }],
             [7, () => { if (this.config.animations === 'full')
@@ -331,12 +320,15 @@ class Store {
             [10, () => {
                     if (this.config.view_mode === 'mural')
                         this.config.view_mode = 'grid';
-                    this.config.home_rows = [];
                     this.config.layout = '';
                     this.config.cover_slideshow = false;
                 }],
             [11, () => {
                     for (const k of ['home_spot_style', 'home_autoplay', 'guides', 'guides_done', 'start_done', 'start_hide', 'game_mode_auto', 'game_mode_ask', 'game_mode_plan', 'game_mode_quiet', 'game_mode_power', 'game_mode_priority', 'game_mode_reopen', 'game_mode_close'])
+                        delete this.config[k];
+                }],
+            [12, () => {
+                    for (const k of ['lights', 'home_rows', 'toolbar', 'toolbar_items'])
                         delete this.config[k];
                 }],
         ];
@@ -354,9 +346,9 @@ class Store {
     setConfig(patch) {
         const changed = [];
         for (const [k, v] of Object.entries(patch || {})) {
-            if (!(k in exports.DEFAULT_CONFIG))
+            if (!(k in DEFAULT_CONFIG))
                 continue;
-            const nv = coerce(k, v, exports.DEFAULT_CONFIG[k]);
+            const nv = coerce(k, v, DEFAULT_CONFIG[k]);
             if (JSON.stringify(this.config[k]) !== JSON.stringify(nv)) {
                 this.config[k] = nv;
                 changed.push(k);
@@ -367,10 +359,10 @@ class Store {
         return { ok: true, changed };
     }
     resetConfig(keys) {
-        const list = (keys || []).filter((k) => k in exports.DEFAULT_CONFIG && !['language', 'welcome_done'].includes(k));
+        const list = (keys || []).filter((k) => k in DEFAULT_CONFIG && !['language', 'welcome_done'].includes(k));
         const patch = {};
         for (const k of list)
-            patch[k] = JSON.parse(JSON.stringify(exports.DEFAULT_CONFIG[k]));
+            patch[k] = JSON.parse(JSON.stringify(DEFAULT_CONFIG[k]));
         return this.setConfig(patch);
     }
     lib(key) {
@@ -443,16 +435,16 @@ class Store {
         if (this.frozen)
             return;
         if (which === 'config')
-            (0, util.writeJson)(P.CONFIG_FILE, this.config);
+            util.writeJson(P.CONFIG_FILE, this.config);
         else
-            (0, util.writeJson)(P.LIBRARY_FILE, this.library);
+            util.writeJson(P.LIBRARY_FILE, this.library);
     }
     publicConfig(extra: any = {}) {
         const c = { ...this.config };
         c.games_dir_effective = this.gamesDir();
         c.downloads_dir = P.DOWNLOADS;
         c.root = P.ROOT;
-        c.webview2 = 'electron';
+        c.engine = `Electron ${process.versions.electron} · Chromium ${(process.versions.chrome || '').split('.')[0]}`;
         c.discord_status = (this as any).discordStatus ? (this as any).discordStatus() : { connected: false, error: '' };
         try {
             c.hotkey_status = require('./index').hotkeyStatus;

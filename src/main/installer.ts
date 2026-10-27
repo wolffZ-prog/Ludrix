@@ -5,7 +5,6 @@ import path from 'node:path';
 import * as cp from 'node:child_process';
 import AdmZip from 'adm-zip';
 import * as P from './paths';
-import * as log from './log';
 import * as http from './http';
 import { CancelledError, Progress, Cancel, prog } from './jobs';
 import { FileRef, basename } from './repos';
@@ -828,43 +827,6 @@ export function findMainExe(dir: string, title = ''): string | null {
     return findExecutables(dir, title)[0] || null;
 }
 
-export function runInstaller(exe: string, opts: any = {}): Promise<any> {
-    return new Promise((resolve, reject) => {
-        const cancel = opts.cancel || { aborted: false };
-        const args: string[] = opts.args && opts.args.length ? opts.args : [];
-        let proc: cp.ChildProcess;
-        try {
-            proc = cp.spawn(exe, args, { cwd: opts.cwd || path.dirname(exe), detached: false, stdio: 'ignore', windowsHide: false });
-        }
-        catch (e) {
-            reject(e);
-            return;
-        }
-        const poll = setInterval(() => {
-            if (cancel.aborted) {
-                clearInterval(poll);
-                try {
-                    proc.kill('SIGKILL');
-                }
-                catch { }
-                reject(new CancelledError());
-            }
-        }, 500);
-        proc.on('error', (e) => {
-            clearInterval(poll);
-            reject(e);
-        });
-        proc.on('close', (code) => {
-            clearInterval(poll);
-            if (cancel.aborted)
-                return;
-            resolve({ ok: code === 0 || code === null, code });
-        });
-    });
-}
-
 export function homeDownloads(): string {
     return path.join(os.homedir(), 'Downloads');
 }
-
-void log;

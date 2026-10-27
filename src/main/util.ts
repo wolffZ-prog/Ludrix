@@ -179,15 +179,15 @@ function openExternal(target) {
     return new Promise<any>((resolve) => {
         try {
             if (process.platform === 'win32') {
-                const child = (0, cp.spawn)('cmd', ['/c', 'start', '', target], { detached: true, stdio: 'ignore' });
+                const child = cp.spawn('cmd', ['/c', 'start', '', target], { detached: true, stdio: 'ignore' });
                 child.unref();
             }
             else if (process.platform === 'darwin') {
-                const child = (0, cp.spawn)('open', [target], { detached: true, stdio: 'ignore' });
+                const child = cp.spawn('open', [target], { detached: true, stdio: 'ignore' });
                 child.unref();
             }
             else {
-                const child = (0, cp.spawn)('xdg-open', [target], { detached: true, stdio: 'ignore' });
+                const child = cp.spawn('xdg-open', [target], { detached: true, stdio: 'ignore' });
                 child.unref();
             }
         }

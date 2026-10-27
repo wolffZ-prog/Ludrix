@@ -43,7 +43,7 @@ async function ensureSevenZip(session = http.shared) {
     if (process.platform !== 'win32')
         return null;
     try {
-        const r = await session.request(exports.SEVENZ_URL_WIN, { timeout: 120_000 });
+        const r = await session.request(SEVENZ_URL_WIN, { timeout: 120_000 });
         const buf = Buffer.from(await r.arrayBuffer());
         if (buf.length < 50_000)
             return null;
@@ -108,7 +108,7 @@ function extractSevenZip(file, dest, opts) {
             if (opts.password)
                 args.push(`-p${opts.password}`);
             args.push(file);
-            const proc = (0, cp.spawn)(exe, args, { windowsHide: true });
+            const proc = cp.spawn(exe, args, { windowsHide: true });
             let out = '';
             const kill = () => {
                 try {

@@ -27,7 +27,7 @@ function segments(raw) {
     for (const m of raw.matchAll(/(?:title|placeholder|aria-label|data-help)="([^"]*)"/g)) out.push(m[1]);
     const body = raw.replace(/\b[a-z-]+="[^"]*"/g, ' ').replace(/^[^<]*>/, ' ').replace(/<[^>]*$/, ' ').replace(/<[^>]*>/g, '\n');
     out.push(...body.split(/\\n|\n/));
-    return out.map((s) => s.replace(/&[a-z]+;/g, ' ').replace(/\$\{[^}]*\}/g, '\u0000').replace(/^(\s*\u0000)+\s*|\s*(\u0000\s*)+$/g, '').trim()).filter((s) => s && !/^[\u0000\s]*$/.test(s));
+    return out.map((s) => s.replace(/&(lt|gt|amp|quot|nbsp);/g, (_, e) => ({ lt: '<', gt: '>', amp: '&', quot: '"', nbsp: ' ' })[e]).replace(/&[a-z]+;/g, ' ').replace(/\$\{[^}]*\}/g, '\u0000').replace(/^(\s*\u0000)+\s*|\s*(\u0000\s*)+$/g, '').trim()).filter((s) => s && !/^[\u0000\s]*$/.test(s));
 }
 
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));

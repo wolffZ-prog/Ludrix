@@ -42,26 +42,26 @@ function writable(dir: string): boolean {
     try { fs.accessSync(dir, fs.constants.W_OK); return true; } catch { return false; }
 }
 const ROOT = appRoot()
-const DATA = path.join(exports.ROOT, 'data')
-const CACHE = path.join(exports.DATA, 'cache')
-const CACHE_WEB = path.join(exports.CACHE, 'web')
-const CACHE_THUMBS = path.join(exports.CACHE, 'thumbs')
-const CACHE_COVERS = path.join(exports.CACHE, 'covers')
-const CACHE_META = path.join(exports.CACHE, 'meta')
-const CACHE_SHOTS = path.join(exports.CACHE, 'shots')
-const DOWNLOADS = path.join(exports.ROOT, 'downloads')
-const GAMES = path.join(exports.ROOT, 'games')
-const EMU = path.join(exports.ROOT, 'emulation')
-const EMU_EMULATORS = path.join(exports.EMU, 'emulators')
-const EMU_GAMES = path.join(exports.EMU, 'games')
-const EMU_BIOS = path.join(exports.EMU, 'bios')
-const TOOLS = path.join(exports.DATA, 'tools')
-const THEMES = path.join(exports.ROOT, 'themes')
-const FLASH = path.join(exports.GAMES, 'rapidos')
-const REDISTS = path.join(exports.DOWNLOADS, 'redists')
-const UPDATES = path.join(exports.DATA, 'updates')
-const BIN = path.join(exports.DATA, 'bin')
-const BACKUPS = path.join(exports.DATA, 'backups')
+const DATA = path.join(ROOT, 'data')
+const CACHE = path.join(DATA, 'cache')
+const CACHE_WEB = path.join(CACHE, 'web')
+const CACHE_THUMBS = path.join(CACHE, 'thumbs')
+const CACHE_COVERS = path.join(CACHE, 'covers')
+const CACHE_META = path.join(CACHE, 'meta')
+const CACHE_SHOTS = path.join(CACHE, 'shots')
+const DOWNLOADS = path.join(ROOT, 'downloads')
+const GAMES = path.join(ROOT, 'games')
+const EMU = path.join(ROOT, 'emulation')
+const EMU_EMULATORS = path.join(EMU, 'emulators')
+const EMU_GAMES = path.join(EMU, 'games')
+const EMU_BIOS = path.join(EMU, 'bios')
+const TOOLS = path.join(DATA, 'tools')
+const THEMES = path.join(ROOT, 'themes')
+const FLASH = path.join(GAMES, 'rapidos')
+const REDISTS = path.join(DOWNLOADS, 'redists')
+const UPDATES = path.join(DATA, 'updates')
+const BIN = path.join(DATA, 'bin')
+const BACKUPS = path.join(DATA, 'backups')
 const APP_DIR = appDir();
 const UI = fs.existsSync(path.join(APP_DIR, 'ui', 'index.html'))
     ? path.join(APP_DIR, 'ui')
@@ -73,15 +73,15 @@ const ASSETS = fs.existsSync(path.join(APP_DIR, 'assets'))
     : FROZEN && fs.existsSync(path.join(process.resourcesPath, 'assets'))
         ? path.join(process.resourcesPath, 'assets')
         : path.join(APP_DIR, 'src', 'main', 'assets');
-const CONFIG_FILE = path.join(exports.DATA, 'config.json')
-const LIBRARY_FILE = path.join(exports.DATA, 'library.json')
-const LOG_FILE = path.join(exports.DATA, 'ludrix.log')
-const INSTANCE_FILE = path.join(exports.DATA, 'instance.json')
-const BOOT_FILE = path.join(exports.DATA, 'boot.json')
-const PENDING_VERIFY = path.join(exports.UPDATES, 'pending_verify.json')
+const CONFIG_FILE = path.join(DATA, 'config.json')
+const LIBRARY_FILE = path.join(DATA, 'library.json')
+const LOG_FILE = path.join(DATA, 'ludrix.log')
+const INSTANCE_FILE = path.join(DATA, 'instance.json')
+const BOOT_FILE = path.join(DATA, 'boot.json')
+const PENDING_VERIFY = path.join(UPDATES, 'pending_verify.json')
 function bootRead() {
     try {
-        const raw = JSON.parse(fs.readFileSync(exports.BOOT_FILE, 'utf8'));
+        const raw = JSON.parse(fs.readFileSync(BOOT_FILE, 'utf8'));
         return raw && typeof raw === 'object' ? raw : {};
     }
     catch {
@@ -90,8 +90,8 @@ function bootRead() {
 }
 function bootWrite(d) {
     try {
-        fs.mkdirSync(path.dirname(exports.BOOT_FILE), { recursive: true });
-        fs.writeFileSync(exports.BOOT_FILE, JSON.stringify(d), 'utf8');
+        fs.mkdirSync(path.dirname(BOOT_FILE), { recursive: true });
+        fs.writeFileSync(BOOT_FILE, JSON.stringify(d), 'utf8');
     }
     catch {
     }
@@ -114,15 +114,15 @@ function bootOk() {
         bootWrite(d);
     }
     try {
-        fs.rmSync(exports.PENDING_VERIFY, { force: true });
+        fs.rmSync(PENDING_VERIFY, { force: true });
     }
     catch {
     }
 }
 function ensureDirs() {
     for (const d of [
-        exports.DATA, exports.CACHE_WEB, exports.CACHE_THUMBS, exports.CACHE_COVERS, exports.CACHE_META, exports.CACHE_SHOTS,
-        exports.DOWNLOADS, exports.GAMES, exports.EMU_EMULATORS, exports.EMU_GAMES, exports.EMU_BIOS, exports.UPDATES, exports.BACKUPS,
+        DATA, CACHE_WEB, CACHE_THUMBS, CACHE_COVERS, CACHE_META, CACHE_SHOTS,
+        DOWNLOADS, GAMES, EMU_EMULATORS, EMU_GAMES, EMU_BIOS, UPDATES, BACKUPS,
     ]) {
         try {
             fs.mkdirSync(d, { recursive: true });

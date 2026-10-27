@@ -376,11 +376,6 @@ export class Apply {
                 if (!z.names.has(this.prefix + f))
                     throw new Error(`pacote incompleto: falta ${f}`);
             tick('Pacote integro');
-            let prev = '';
-            try {
-                prev = JSON.parse(fs.readFileSync(path.join(this.root, 'app', 'version.json'), 'utf8')).version || '';
-            }
-            catch { }
             this.backup = path.join(updatesDir(this.root), 'backup', `antes-de-${ver}`);
             rmtreeRetry(this.backup);
             fs.mkdirSync(this.backup, { recursive: true });

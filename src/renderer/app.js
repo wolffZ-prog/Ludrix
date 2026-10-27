@@ -55,7 +55,6 @@ const api = (() => {
 })();
 const fmt = n => { if (!n) return ''; const u = ['B', 'KB', 'MB', 'GB', 'TB']; let i = 0; while (n >= 1024 && i < 4) { n /= 1024; i++; } return (i ? n.toFixed(1) : n) + ' ' + u[i]; };
 const jsq = s => esc(JSON.stringify(String(s ?? '')));
-const jso = o => esc(JSON.stringify(o ?? {}));
 const SEP = () => S.config.os === 'windows' ? '\\' : '/';
 const STATUS = [['plan', 'Planejo jogar'], ['playing', 'Jogando'], ['played', 'Jogado'], ['beaten', 'Zerado'], ['completed', 'Completado 100%'], ['on_hold', 'Em espera'], ['abandoned', 'Abandonado']];
 const statusName = id => (STATUS.find(x => x[0] === id) || [])[1] || '';
@@ -163,21 +162,6 @@ const I = {
 const mq = window.matchMedia('(prefers-color-scheme: light)');
 let currentTheme = 'dark';
 const DEFAULT_FACE = 'padrao';
-const LIGHTS_DEFAULT = ['#9ec5ff', '#b48cff', '#7c4dff'];
-const LIGHT_PRESETS = [['Padrão (azul pastel, lavanda, roxo)', LIGHTS_DEFAULT], ['Oceano', ['#38bdf8', '#2dd4bf', '#818cf8']], ['Fogo', ['#f97316', '#ef4444', '#f59e0b']], ['Aurora', ['#22d3ee', '#a78bfa', '#f472b6']], ['Gelo', ['#e2e8f0', '#94a3b8', '#ffffff']], ['Azul puro', ['#9ec5ff', '#9ec5ff', '#9ec5ff']]];
-function applyLights() { const st = document.documentElement.style, l = Array.isArray(S.config.lights) && S.config.lights.length === 3 && S.config.lights.every(c => /^#[0-9a-fA-F]{6}$/.test(c)) ? S.config.lights : LIGHTS_DEFAULT; st.setProperty('--t-c', l[0]); st.setProperty('--t-g', l[1]); st.setProperty('--t-o', l[2]); }
-function lightsRow(c) {
-  const cur = Array.isArray(c.lights) && c.lights.length === 3 ? c.lights : LIGHTS_DEFAULT;
-  const same = a => a.every((x, i) => x.toLowerCase() === cur[i].toLowerCase());
-  const presetIdx = LIGHT_PRESETS.findIndex(p => same(p[1]));
-  const sw = (i, lbl) => `<label class="lsw" title="${lbl}"><input type="color" value="${esc(cur[i])}" oninput="setLightLive(${i},this.value)" onchange="setLight(${i},this.value)"><span style="background:${esc(cur[i])}"></span></label>`;
-  return `<div class="frow" style="margin-top:14px"><div class="l"><b>Fita de luz</b><span>As três cores da fita que desce pela barra, dos contornos acesos e do botão Jogar. Escolha um conjunto pronto ou toque em cada cor</span></div><div class="ta lights" style="gap:8px;align-items:center">
-    <span class="lstrip" style="background:linear-gradient(90deg,${esc(cur[0])},${esc(cur[1])} 50%,${esc(cur[2])})"></span>${sw(0, 'Primeira cor (começo da fita)')}${sw(1, 'Cor do meio (contornos, foco)')}${sw(2, 'Última cor (fim da fita)')}
-    ${selHtml([...LIGHT_PRESETS.map((p, i) => [i, p[0]]), [-1, 'Personalizado']], presetIdx, 'const i=JSON.parse(this.value);if(i>=0)setCfg({lights:LIGHT_PRESETS[i][1]})')}
-    ${presetIdx === 0 ? '' : `<button class="btn s xs" title="Voltar às cores originais" onclick="setCfg({lights:LIGHTS_DEFAULT})">Padrão</button>`}</div></div>`;
-}
-function setLightLive(i, v) { const l = [...(Array.isArray(S.config.lights) && S.config.lights.length === 3 ? S.config.lights : LIGHTS_DEFAULT)]; l[i] = v; S.config.lights = l; applyLights(); const st = $('.lstrip'); if (st) st.style.background = `linear-gradient(90deg,${l[0]},${l[1]} 50%,${l[2]})`; }
-function setLight(i, v) { const l = [...(Array.isArray(S.config.lights) && S.config.lights.length === 3 ? S.config.lights : LIGHTS_DEFAULT)]; l[i] = v; setCfg({ lights: l }); }
 function faceInfo(id) { return (S.faces || []).find(f => f.id === id) || { id: id || DEFAULT_FACE, name: 'Ludrix', accent: '', layout: '' }; }
 function fileScheme() { const m = S.config.theme_mode || ''; return m === 'system' ? ((S.config.theme_schedule ? inLightWindow() : mq.matches) ? 'light' : 'dark') : m; }
 function applyTheme() {
@@ -185,7 +169,7 @@ function applyTheme() {
   if (t === 'system') { t = (S.config.theme_schedule ? inLightWindow() : mq.matches) ? 'light' : 'dark'; S._schedLast = t; }
   const isFile = t.startsWith('file:'), face = isFile ? '' : ((S.faces || []).some(f => f.id === S.config.face) || !(S.faces || []).length ? S.config.face || DEFAULT_FACE : DEFAULT_FACE), fm = isFile ? fileScheme() : '', tid = (face ? face + '-' + t : t) + (fm ? '|' + fm : '');
   if (face) { const f = faceInfo(face); themeAccent = f.accent || ''; }
-  applyAccent(); applyLights();
+  applyAccent();
   document.body.classList.add('face');
   document.body.dataset.face = face || DEFAULT_FACE;
   if (!isFile || fm) document.documentElement.dataset.light = (isFile ? fm : t) === 'light' ? '1' : '0';
@@ -292,12 +276,6 @@ function splashOff() {
 splashStep('carregando interface', 18);
 setTimeout(splashOff, 6000);
 async function winCmd(cmd) { const r = await api.post('/api/window', { cmd }); winState(r); }
-const TOOLBAR_ITEMS = [['search', 'Campo de busca', 'pesquisa em tudo (atalho: /)'], ['cats', 'Categoria', 'lista suspensa com as categorias'], ['sort', 'Ordenação', 'A–Z, ano, tamanho, recentes'], ['bell', 'Notificações', 'histórico de avisos']];
-function applyToolbar() {
-  const items = new Set(S.config.toolbar_items || ['search', 'cats', 'sort', 'bell']);
-  document.body.classList.remove('no-toolbar');
-  for (const [id] of TOOLBAR_ITEMS) document.body.classList.toggle('tb-no-' + id, !items.has(id));
-}
 const NAV_ITEMS = [['home', 'Biblioteca', 'main'], ['store', 'Store', 'main'], ['emulation', 'Emuladores', 'main'], ['mods', 'Mods', 'tools'], ['central', 'Central', 'tools'], ['flash', 'Rápidos', 'tools']];
 function navOrder() { const def = NAV_ITEMS.map(x => x[0]), o = (S.config.nav_order || []).filter(v => def.includes(v)); return o.concat(def.filter(v => !o.includes(v))); }
 let navDragV = '';
@@ -308,13 +286,6 @@ function navDrop(e) {
   const from = navDragV || e.dataTransfer.getData('text/plain'), to = tgt.dataset.v; navDragV = ''; if (!from || from === to) return;
   const o = navOrder().filter(v => v !== from); const k = o.indexOf(to); o.splice(before ? k : k + 1, 0, from);
   setCfg({ nav_order: o });
-}
-function rowToggle(id) { const r = (S.config.home_rows || []).filter(x => x !== id); if (!(S.config.home_rows || []).includes(id)) r.push(id); setCfg({ home_rows: r }); }
-function rowDrop(e) {
-  e.preventDefault(); const tgt = e.currentTarget, before = tgt.classList.contains('dt'); tgt.classList.remove('dt', 'db');
-  const from = navDragV || e.dataTransfer.getData('text/plain'), to = tgt.dataset.v; navDragV = ''; if (!from || from === to) return;
-  const all = [...tgt.parentElement.querySelectorAll('.nrow')].map(x => x.dataset.v).filter(v => v !== from); const k = all.indexOf(to); all.splice(before ? k : k + 1, 0, from);
-  const on = new Set(S.config.home_rows || []); setCfg({ home_rows: all.filter(v => on.has(v)) });
 }
 function navToggle(v) { const h = new Set(S.config.nav_hidden || []); if (h.has(v)) h.delete(v); else h.add(v); h.delete('home'); setCfg({ nav_hidden: [...h] }); }
 function applyNavItems() {
@@ -393,7 +364,7 @@ function bandMix(c, pct, base) {
 function applyChrome() {
   document.body.classList.toggle('frameless', !!S.config.frameless);
   applyGlass();
-  applyToolbar(); applyRailIcons(); applyNavItems(); applyMotion(); applyClock();
+  applyRailIcons(); applyNavItems(); applyMotion(); applyClock();
   document.body.dataset.status = S.config.status_position === 'top' ? 'top' : 'bottom';
   const lay = themeLay(); delete document.body.dataset.layout; document.body.dataset.nav = lay === 'bottom' ? 'bottom' : 'side';
   if (lay === 'top' || lay === 'rail') document.body.dataset.layout = lay;
@@ -1753,7 +1724,6 @@ async function edReset() {
   if (r.error) return toast('err', 'Não foi possível concluir', r.error);
   toast('ok', 'Voltou ao automático', 'Buscando capa e informações de novo…'); $('#modal').classList.remove('on'); await loadCatalog(false);
 }
-async function editShortcut(key) { return editGame(key, 'acoes'); }
 async function chooseExe(key) {
   const exes = await api.get('/api/exes/' + enc(key)); let chosen = null;
   modal({ title: 'Qual executável abre o jogo?', text: exes.length ? 'Ordenei do mais provável ao menos provável.' : 'Nenhum .exe encontrado na pasta.', list: exes, onPick: v => chosen = v, ok: 'Usar este', extra: 'Procurar…',
@@ -2135,16 +2105,6 @@ async function qAct(action, key) {
   setTimeout(renderDownloads, action === 'retry' ? 500 : 150);
 }
 
-const HUE_ORDER = ['Vermelho', 'Laranja', 'Amarelo', 'Verde', 'Ciano', 'Azul', 'Roxo', 'Rosa', 'Neutro'];
-function themeHue(t) {
-  const m = /^#?([0-9a-f]{6})$/i.exec(t.accent || ''); if (!m) return 'Neutro';
-  const n = parseInt(m[1], 16), r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
-  if (d < 0.12 || mx < 0.2) return 'Neutro';
-  let h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (h * 60 + 360) % 360;
-  return h < 15 || h >= 335 ? 'Vermelho' : h < 42 ? 'Laranja' : h < 70 ? 'Amarelo' : h < 160 ? 'Verde' : h < 200 ? 'Ciano' : h < 255 ? 'Azul' : h < 290 ? 'Roxo' : 'Rosa';
-}
-const CAT_WORDS = [['Consoles', /console|xbox|playstation|ps5|ps6|nintendo|portatil|handheld/], ['Sistemas', /distro|linux|windows|macos|kde|gnome|sistema/], ['Vidro e brilho', /aero|vidro|glass|brilho|fluent|acrilico/], ['Neon', /neon|cyber|synth|arcade/], ['Retrô', /retro|classico|terminal|pixel|vintage/], ['Natureza', /natureza|floresta|mar|oceano|ceu|montanha|flor|verde|terroso/], ['Minimalistas', /minimal|grade|limpo|flat|mono/]];
-function themeCat(t) { if (t.category) return t.category; const txt = ((t.tags || []).join(' ') + ' ' + (t.description || '')).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); for (const [c, re] of CAT_WORDS) if (re.test(txt)) return c; return 'Outros'; }
 function themesHtml(c) {
   return `
   <div class="sec"><h3>Tema</h3>
@@ -2261,7 +2221,7 @@ function rgbToHex(v) { const m = v.match(/rgba?\((\d+)[ ,]+(\d+)[ ,]+(\d+)/); re
 function autoScale() { const r = Math.min(window.innerWidth / 1500, window.innerHeight / 860); const s = 1 + (r - 1) * 0.6; return Math.round(Math.min(1.35, Math.max(0.8, s)) * 20) / 20; }
 function applyScale() { const s = (S.config.ui_scale || autoScale()) * (document.body.classList.contains('sofa') ? (S.config.sofa_zoom || 1.15) : 1); document.documentElement.style.setProperty('--scale', s); document.documentElement.style.fontSize = ((13 + (S.config.text_size || 0)) * s) + 'px'; document.body.classList.toggle('compact', (S.config.density || 'normal') === 'compact'); document.body.classList.toggle('noglass', S.config.glass === false); }
 let rzT = 0; window.addEventListener('resize', () => { if (S.config.ui_scale) return; cancelAnimationFrame(rzT); rzT = requestAnimationFrame(() => { const s = autoScale(); if (String(s) !== document.documentElement.style.getPropertyValue('--scale')) applyScale(); }); });
-async function setCfg(patch) { const r = await api.post('/api/config', patch); if (r && !r.error) { S.config = r; api.emit('config', patch); if ('language' in patch) { location.reload(); return r; } applyTheme(); applyAnim(); applyScale(); if ('rail_icons' in patch) applyRailIcons(); if ('cursor' in patch) if ('game_backdrop' in patch || 'accent_from_cover' in patch || 'cover_slideshow' in patch || 'cover_slideshow_secs' in patch) gameFocus(S._focusKey || S.stageKey || null); if ('frame_mode' in patch || 'frame_corners' in patch) { frameLast = ''; applyFrame(); } if ('nav_hide_playing' in patch) applyPlaying(); if ('nav_hidden' in patch || 'nav_order' in patch) applyNavItems(); if ('nav_layout' in patch) { applyChrome(); renderView(); } if ('watch_dirs' in patch) api.post('/api/dirs/watch', {}); if ('card_hover' in patch || 'reduce_motion' in patch || 'detail_art' in patch || 'high_contrast' in patch || 'settings_adv' in patch) applyMotion(); if ('clock' in patch) applyClock(); if ('group_by' in patch && ['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'settings') renderSettings(); if (['home', 'store'].includes(S.view) && ('card_size' in patch || 'face' in patch || 'theme' in patch || 'home_spot' in patch || 'home_rows' in patch || 'view_mode' in patch)) renderLibrary(); if ('toolbar' in patch || patch.toolbar_items) { applyToolbar(); if (['home', 'store'].includes(S.view)) renderLibrary(); } } }
+async function setCfg(patch) { const r = await api.post('/api/config', patch); if (r && !r.error) { S.config = r; api.emit('config', patch); if ('language' in patch) { location.reload(); return r; } applyTheme(); applyAnim(); applyScale(); if ('rail_icons' in patch) applyRailIcons(); if ('game_backdrop' in patch || 'accent_from_cover' in patch || 'cover_slideshow' in patch || 'cover_slideshow_secs' in patch) gameFocus(S._focusKey || S.stageKey || null); if ('frame_mode' in patch || 'frame_corners' in patch) { frameLast = ''; applyFrame(); } if ('nav_hide_playing' in patch) applyPlaying(); if ('nav_hidden' in patch || 'nav_order' in patch) applyNavItems(); if ('nav_layout' in patch) { applyChrome(); renderView(); } if ('watch_dirs' in patch) api.post('/api/dirs/watch', {}); if ('card_hover' in patch || 'reduce_motion' in patch || 'detail_art' in patch || 'high_contrast' in patch || 'settings_adv' in patch) applyMotion(); if ('clock' in patch) applyClock(); if ('group_by' in patch && ['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'settings') renderSettings(); if (['home', 'store'].includes(S.view) && ('card_size' in patch || 'face' in patch || 'theme' in patch || 'home_spot' in patch || 'view_mode' in patch)) renderLibrary(); } }
 async function setStartMenu(on) { const r = await api.post('/api/start_menu', { on }); if (r.error) { if (/versão instalada/.test(r.error)) { await setCfg({ start_menu: on }); return; } return toast('err', 'Menu Iniciar', r.error); } S.config.start_menu = on; renderSettings(true); toast('ok', on ? 'LudrixHub aparece no Menu Iniciar e na barra de tarefas com nome e ícone próprios' : 'Atalho do Menu Iniciar removido'); }
 async function setFileAssoc(on) { const r = await api.post('/api/file_assoc', { on }); if (r.error) { if (/versão instalada/.test(r.error)) { await setCfg({ file_assoc: on }); return; } return toast('err', 'Associação de arquivos', r.error); } S.config.file_assoc = on; renderSettings(true); toast('ok', on ? 'Arquivos .lxtheme e .lxup abrem no Ludrix' : 'Associação removida'); }
 async function setAutostart(on) { const r = await api.post('/api/autostart', { on }); if (r.error) return toast('err', r.error); S.config.autostart = !!r.enabled; renderSettings(); toast('ok', r.enabled ? 'O Ludrix vai abrir com o Windows' : 'Não abre mais com o Windows'); }
@@ -2415,7 +2375,6 @@ async function exportLibrary(fmt, keys) {
 }
 async function handleEvent(ev) {
   if (ev.type === 'flash_cover') { if (S.view === 'flash') { const c = document.querySelector(`.fcard[data-fid="${CSS.escape(ev.id)}"] .fart`); if (c && !c.querySelector('img')) c.insertAdjacentHTML('afterbegin', `<img src="/flash/cover/${esc(ev.id)}?t=${Date.now()}" onload="this.classList.add('ld')" onerror="this.remove()">`); } return; }
-  if (ev.type === 'theme_reload') { if (ev.theme) S.config.theme = ev.theme; reloadTheme(true); if (S.view === 'settings') renderSettings(true); return; }
   if (ev.type === 'update_available') { toast('info', 'Tem atualização nova', 'Versão ' + ev.version + (ev.rev ? ' (correção ' + ev.rev + ')' : '') + ' — veja em Ajustes › Sistema › Atualizações', [{ label: 'Abrir', fn: () => { setView('settings'); S.tab.settings = 'system'; S._settingsJump = 'Atualizações'; renderSettings(true); } }]); return; }
   if (ev.type === 'after_queue') { afterQueueSync({ action: ev.action, at: ev.at }); return; }
   if (ev.type === 'done') {
@@ -2740,7 +2699,6 @@ function applyAnim() {
   }
   fx.innerHTML = h;
 }
-const ICON_SETS = [['solid', 'Cheio'], ['line', 'Linha'], ['duo', 'Duotom'], ['arcade', 'Arcade'], ['pixel', 'Pixel'], ['color', 'Colorido'], ['neon', 'Neon']];
 const ICON_COLORS = {
   color: { home: '#5c6b82', store: '#3b82f6', emulation: '#a855f7', mods: '#f59e0b', redists: '#14b8a6', flash: '#ec4899', downloads: '#22c55e', settings: '#94a3b8' },
   neon: { home: '#ff5e00', store: '#00c8ff', emulation: '#c000ff', mods: '#ffe600', redists: '#00ffc3', flash: '#ff00d4', downloads: '#39ff14', settings: '#9be2ff' }
@@ -2765,10 +2723,6 @@ function applyRailIcons() {
     b.classList.toggle('colored', !!col); b.classList.toggle('glow', !!(col && p.glow));
   });
 }
-function iconSetSample(id) {
-  const p = iconSet(id); const views = ['home', 'store', 'emulation', 'settings'];
-  return views.map(v => { const d = p && p.icons[v]; const orig = document.querySelector(`.rb[data-view=${v}] svg`); const inner = d || (orig && (orig.dataset.orig || orig.innerHTML)) || ''; const col = p && p.colors && p.colors[v]; return `<svg viewBox="${d ? p.vb : '0 0 24 24'}" class="${d && p.fill ? 'fill' : ''}" style="${d && !p.fill ? `stroke-width:${p.sw};` : ''}${col ? `color:${col};${p.glow ? `filter:drop-shadow(0 0 4px ${col})` : ''}` : ''}">${inner}</svg>`; }).join('');
-}
 let awayT = 0;
 function idleState() { const hidden = document.hidden, idle = hidden || !document.hasFocus(); document.body.classList.toggle('idle', idle); const fx = $('#fx'); if (fx) fx.style.display = hidden ? 'none' : ''; clearTimeout(awayT); if (idle) awayT = setTimeout(() => document.body.classList.add('away'), 60000); else document.body.classList.remove('away'); }
 document.addEventListener('visibilitychange', idleState); window.addEventListener('blur', () => setTimeout(idleState, 250)); window.addEventListener('focus', idleState);
@@ -2788,7 +2742,6 @@ const FLAG_TEST = {
 };
 const FLAGS = [['fresh', 'Novos nas fontes'], ['upd', 'Versão nova na fonte'], ['direct', 'Download direto'], ['torrent', 'Torrent'], ['fav', 'Favoritos'], ['recent', 'Jogados esta semana'], ['added', 'Adicionados esta semana'], ['never', 'Nunca joguei'], ['played', 'Já joguei'],
                ['installed', 'Instalados'], ['notinst', 'Não instalados'], ['old', 'Clássicos (antes de 2005)'], ['big', 'Grandes (> 10 GB)'], ['nometa', 'Sem capa / metadados'], ['broken', 'Arquivo não encontrado'], ['playnite', 'Vindos do Playnite'], ['withargs', 'Com argumentos'], ['hidden', 'Ocultos']];
-const repoFltN = () => (S.view === 'store' ? S.flt.repos.size : 0) + S.flt.src.size;
 const repoName = id => (S.repos.find(r => r.id === id) || {}).name || id || '';
 const FLT_KINDS = ['colls', 'cats', 'sys', 'flags', 'repos', 'src', 'genres', 'tags', 'devs', 'years', 'lastp', 'added', 'ptime', 'size', 'status', 'score'];
 const BUCKET_KINDS = ['lastp', 'added', 'ptime', 'size', 'status', 'score'];
@@ -2898,7 +2851,7 @@ function viewTweaks() {
 }
 function filterBtn() {
   const n = fltCount() + viewTweaks();
-  return `<button class="btn s xs ${n || fpOn() ? 'p' : ''}" onclick="fpOpen()" title="Ordem, grupos, modo de exibição e filtros — o painel fica aberto até você fechar">${I.sliders}<span class="lb">Exibição${n ? ` (${n})` : ''}</span></button>`;
+  return `<button class="btn xs ${n || fpOn() ? 'p' : 's'}" onclick="fpOpen()" title="Ordem, grupos, modo de exibição e filtros — o painel fica aberto até você fechar">${I.sliders}<span class="lb">Exibição${n ? ` (${n})` : ''}</span></button>`;
 }
 function fpViewHtml() {
   if (!['home', 'store'].includes(S.view)) return '';
@@ -2942,39 +2895,12 @@ function activeChips() {
   const L = fltLabels(); if (!L.length && S.cat === 'all') return smartChips();
   return smartChips() + `<div class="fchips">${S.cat !== 'all' ? `<button class="fchip" onclick="S.cat='all';S.page=1;renderLibrary()" title="Remover">${esc((S.cats.find(c => c.id === S.cat) || {}).name || S.cat)}${I.x}</button>` : ''}${L.map(([k, id, nm]) => `<button class="fchip" onclick="toggleFlt('${k}',${jsq(id)})" title="Remover">${esc(nm)}${I.x}</button>`).join('')}${L.length + (S.cat !== 'all' ? 1 : 0) > 1 ? `<button class="lnk" onclick="clearFlt()">Limpar tudo</button>` : ''}</div>`;
 }
-function toggleFilt(force, id) {
-  if (!id) return fpOpen(force);
-  const f = $('#' + id); if (!f) return; const on = force !== undefined ? force : !f.classList.contains('on');
-  if (on) document.querySelectorAll('.filt.on').forEach(x => { if (x !== f) x.classList.remove('on'); });
-  f.classList.toggle('on', on); if (!on) return;
-  const pop = f.querySelector('.pop'), b = f.querySelector('button').getBoundingClientRect();
-  pop.style.maxHeight = ''; const r = pop.getBoundingClientRect(), pad = 8;
-  let left = Math.max(pad, Math.min(b.right - r.width, innerWidth - r.width - pad)), top = b.bottom + 6;
-  const room = innerHeight - top - pad;
-  if (r.height > room) { if (b.top - 6 - pad > room && b.top - 6 - pad >= r.height) top = b.top - 6 - r.height; else pop.style.maxHeight = Math.max(200, room) + 'px'; }
-  pop.style.left = left + 'px'; pop.style.top = top + 'px';
-}
 function toggleFlt(kind, id) { const set = S.flt[kind]; set.has(id) ? set.delete(id) : set.add(id); S._fpreset = undefined; S.page = 1; renderLibrary(); renderRailX(); }
 function flagOnly(id) { clearFlt(); S.flt.flags.add(id); S.page = 1; const want = id === 'fresh' ? 'store' : 'home'; if (S.view !== want) setView(want); else renderLibrary(); }
 function clearFlt() { for (const k of FLT_KINDS) S.flt[k].clear(); S._fpreset = undefined; S.cat = 'all'; S.sort = 'az'; S.sortRev = false; S.page = 1; renderLibrary(); }
 function sortKey() { return S.view === 'store' ? 'sort_store' : 'sort_by'; }
 function setSort(id) { S.sort = id; S.page = 1; renderSortBtn(); renderLibrary(); const k = sortKey(); if (S.config[k] !== id) { S.config[k] = id; api.post('/api/config', { [k]: id }, { quiet: true }); } }
 function sortForView(v) { const k = v === 'store' ? 'sort_store' : 'sort_by', def = v === 'store' ? 'fresh' : 'az'; const c = S.config[k]; return c && SORTS.some(x => x[0] === c) ? c : def; }
-const HOME_ROWS = [['recent', 'Continuar jogando'], ['favorites', 'Favoritos'], ['added', 'Adicionados há pouco'], ['most', 'Mais jogados']];
-function homeRows() {
-  const hm = S.home, rows = S.config.home_rows || []; if (!hm || !rows.length || listMode()) return '';
-  return rows.map(id => {
-    const lab = (HOME_ROWS.find(r => r[0] === id) || [])[1]; if (!lab) return '';
-    const keys = (hm.sections[id] || []).filter(k => hm.games[k]).slice(0, 14); if (!keys.length) return '';
-    if (id === 'recent' && stageStyle() === 'estante') return `<div class="hrow wide" data-row="${id}"><div class="hrh"><h3>${lab}</h3><span>${keys.length}</span></div><div class="wrow">${keys.slice(0, 4).map(k => wideCard(hm.games[k])).join('')}</div></div>`;
-    return `<div class="hrow" data-row="${id}"><div class="hrh"><h3>${lab}</h3><span>${keys.length}</span></div><div class="grid hrs">${keys.map((k, i) => cardHtml(hm.games[k], i)).join('')}</div></div>`;
-  }).join('');
-}
-function wideCard(g) {
-  const live = S.sessions && S.sessions[g.key], sub = [g.last_played ? cap(lastPlayedText(g.last_played)) : '', g.playtime >= 60 ? fmtTime(g.playtime) : '', g.status ? statusName(g.status) : ''].filter(Boolean).join(' · ');
-  return `<div class="card wc${S.panelKey === g.key ? ' sel' : ''}" data-key="${esc(g.key)}"><div class="cov"><div class="ph">${esc(g.title)}</div><img src="/thumb/${enc(g.key)}?v=${g.cv || 0}" alt="" loading="lazy" decoding="async" class="${TH.ok.has(g.key) ? 'ld' : ''}" onload="this.classList.add('ld')" onerror="this.remove()"></div>
-    <div class="wt"><b>${esc(g.title)}</b><small>${esc(sub) || '&nbsp;'}</small></div>${g.installed ? `<button class="qp ${live ? 'live' : ''}" data-qp="${esc(g.key)}" title="${live ? 'Em execução — clique para encerrar' : 'Jogar'}">${live ? I.x : I.play}</button>` : ''}</div>`;
-}
 function homeTop() {
   const hm = S.home;
   let h = `<div id="homeTop">`;
@@ -2983,12 +2909,10 @@ function homeTop() {
     const playing = hm.sections.playing || [];
     h += playing.map(k => { const g = hm.games[k], sess = S.sessions[k] || {}; if (!g) return ''; return `<div class="now"><img src="/thumb/${enc(k)}?v=${g.cv || 0}" onerror="this.remove()"><div style="flex:1"><b>${esc(g.title)}</b><span>Jogando agora · sessão de ${fmtTime(Date.now() / 1000 - (sess.since || Date.now() / 1000))} · total ${fmtTime(g.playtime)}</span></div><button class="btn s sm" onclick="openGame(${jsq(k)})">Detalhes</button><button class="btn d sm" onclick="stopGame(${jsq(k)})">Fechar jogo</button></div>`; }).join('');
   }
-  return h + homeRows() + `</div>`;
+  return h + `</div>`;
 }
-const DESC = {};
 const stageOn = () => S.config.home_spot !== false;
 const short = (t, n = 220) => { t = (t || '').replace(/\s+/g, ' ').trim(); if (t.length <= n) return t; const cut = t.slice(0, n), i = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? ')); return i > 80 ? cut.slice(0, i + 1) : cut.replace(/\s\S*$/, '') + '…'; };
-const coverImg = (key, g) => `<div class="ph">${esc(g.title)}</div><img src="/thumb/${enc(key)}?v=${g.cv || 0}" alt="" loading="lazy" decoding="async" class="${TH.ok.has(key) ? 'ld' : ''}" onload="this.classList.add('ld')" onerror="this.remove()">`;
 function gotoGrid() { if (S.view !== 'home') { setView('home'); setTimeout(gotoGrid, 350); return; } const g = $('#grid'); if (g) g.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
 function playLbl(key) { const g = S.byKey[key]; return g && g.missing ? `${I.search} Localizar arquivo` : `${I.play} Jogar`; }
 function stageHtml(hm) { return stageOn() ? stageBase(hm) : ''; }
@@ -3119,8 +3043,6 @@ async function welcomeScheme(v) { await setCfg({ theme: v }); if ($('#welcome .w
 function welcomeGo(d) { const n = W_I + d; if (n >= W_STEPS.length) return welcomeDone(); if (n < 0) return; W_I = n; welcomeRender(); }
 function welcomeDone() { const el = $('#welcome'); if (el) { el.classList.remove('on'); setTimeout(() => el.remove(), 300); } if (!S.config.welcome_done) { S.config.welcome_done = true; api.post('/api/config', { welcome_done: true }); } if (S._tourDir) { const d = S._tourDir; S._tourDir = ''; setTimeout(() => scanRun('windows', d), 400); } }
 document.addEventListener('keydown', e => { const w = $('#welcome'); if (!w || !w.classList.contains('on') || $('#swBody')) return; if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); welcomeGo(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); welcomeGo(-1); } else if (e.key === 'Escape') { e.preventDefault(); welcomeDone(); } });
-function toggleToolbarItem(id, on) { const cur = new Set(S.config.toolbar_items || ['search', 'cats', 'sort', 'bell']); on ? cur.add(id) : cur.delete(id); setCfg({ toolbar_items: TOOLBAR_ITEMS.map(x => x[0]).filter(x => cur.has(x)) }); }
-document.addEventListener('click', e => { if (!e.target.closest('#filt')) $('#filt')?.classList.remove('on'); });
 async function toggleHidden(key) { const r = await api.post('/api/hide', { key }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); const g = S.byKey[key]; if (g) { g.hidden = r.hidden; S._poolKey = ''; } if (S.home && S.home.games[key]) S.home.games[key].hidden = r.hidden; toast('ok', r.hidden ? 'Jogo oculto' : 'Jogo visível de novo', r.hidden ? 'Aparece de novo pelo filtro Situação › Ocultos ou pela busca.' : '', r.hidden ? [{ label: 'Desfazer', fn: () => toggleHidden(key) }] : undefined); if (S.view === 'home') { refreshHome(); renderLibrary(); } }
 async function toggleFav(key) { const r = await api.post('/api/fav', { key }); const g = S.byKey[key]; if (g) { g.fav = r.fav; S._poolKey = ''; } document.querySelectorAll(`[data-fav="${CSS.escape(key)}"]`).forEach(b => b.classList.toggle('on', r.fav)); if (S.home && S.home.games[key]) S.home.games[key].fav = r.fav; if (S.view === 'home') refreshHome(); }
 async function stopGame(key, force) {
@@ -3762,8 +3684,8 @@ function showCtxLocal(items, x, y, title, head) {
   const row = (it, i, pre) => it.sep ? '<hr>' : `<button class="${it.danger ? 'danger' : ''} ${it.primary ? 'primary' : ''} ${it.sub ? 'has-sub' : ''}" data-i="${pre}${i}">${I[it.icon] || ''}<span>${esc(it.label)}</span>${it.hint ? `<em>${esc(it.hint)}</em>` : ''}${it.sub ? '<svg class="car" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>' : ''}</button>`;
   c.innerHTML = (head || '') + (title ? `<h5>${esc(title)}</h5>` : '') + items.map((it, i) => it.sub ? `<div class="subw">${row(it, i, '')}<div class="sub">${it.sub.map((x, k) => row(x, k, i + '.')).join('')}</div></div>` : row(it, i, '')).join('');
   const find = id => { const [a, b] = id.split('.'); return b === undefined ? items[+a] : items[+a].sub[+b]; };
-  c.querySelectorAll('button').forEach(b => b.onclick = e => { const it = find(b.dataset.i); if (it.sub) { e.stopPropagation(); if (c.classList.contains('tall')) b.parentElement.classList.toggle('open'); return; } c.classList.remove('on'); it.fn && it.fn(); });
-  c.querySelectorAll('.subw').forEach(w => w.addEventListener('mouseenter', () => { if (c.classList.contains('tall')) return; const sub = w.querySelector('.sub'); sub.classList.remove('left'); sub.style.top = ''; sub.style.maxHeight = ''; const wr = w.getBoundingClientRect(); let r = sub.getBoundingClientRect(); if (r.right > innerWidth - 8) sub.classList.add('left'); if (r.height > innerHeight - 16) { sub.style.maxHeight = (innerHeight - 16) + 'px'; sub.style.overflowY = 'auto'; r = sub.getBoundingClientRect(); } const want = Math.max(8, Math.min(wr.top - 6, innerHeight - 8 - r.height)); sub.style.top = (want - wr.top) + 'px'; }));
+  c.querySelectorAll('button').forEach(b => b.onclick = e => { const it = find(b.dataset.i); if (it.sub) { e.stopPropagation(); if (c.classList.contains('tall')) { b.parentElement.classList.toggle('open'); b.parentElement.scrollIntoView({ block: 'nearest' }); } return; } c.classList.remove('on'); it.fn && it.fn(); });
+  c.querySelectorAll('.subw').forEach(w => w.addEventListener('mouseenter', () => { if (c.classList.contains('tall')) { c.querySelectorAll('.subw.open').forEach(o => { if (o !== w) o.classList.remove('open'); }); w.classList.add('open'); w.scrollIntoView({ block: 'nearest' }); return; } const sub = w.querySelector('.sub'); sub.classList.remove('left'); sub.style.top = ''; sub.style.maxHeight = ''; const wr = w.getBoundingClientRect(); let r = sub.getBoundingClientRect(); if (r.right > innerWidth - 8) sub.classList.add('left'); if (r.height > innerHeight - 16) { sub.style.maxHeight = (innerHeight - 16) + 'px'; sub.style.overflowY = 'auto'; r = sub.getBoundingClientRect(); } const want = Math.max(8, Math.min(wr.top - 6, innerHeight - 8 - r.height)); sub.style.top = (want - wr.top) + 'px'; }));
   c.classList.add('on'); placeCtx(x, y);
   setTimeout(() => document.addEventListener('click', () => c.classList.remove('on'), { once: true }), 0);
 }

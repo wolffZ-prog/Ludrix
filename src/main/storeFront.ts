@@ -4,7 +4,6 @@ import * as P from './paths';
 import * as log from './log';
 import * as hosts from './hosts';
 import * as emulation from './emulation';
-import * as importers from './importers';
 import * as updates from './updates';
 import * as integrity from './integrity';
 import * as torrent from './torrent';

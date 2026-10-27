@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import * as P from './paths';
 import * as crypto from './crypto';
 
 export const MANIFEST = 'integrity.json';
@@ -298,6 +297,3 @@ export function repairNow(app: string, root: string) {
     return out;
 }
 
-export function appDirForIntegrity() {
-    return P.APP_DIR;
-}

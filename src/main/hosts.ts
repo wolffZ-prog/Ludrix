@@ -172,7 +172,7 @@ async function gdrive(url, s) {
     const r = await s.request(`https://drive.google.com/uc?export=download&id=${fid}`, { timeout: 60_000 });
     const ct = (r.headers.get('content-type') || '').toLowerCase();
     if (!ct.includes('text/html')) {
-        const name = (0, http.fileNameFromHeaders)(r.headers.get('content-disposition'), r.url, fid);
+        const name = http.fileNameFromHeaders(r.headers.get('content-disposition'), r.url, fid);
         return { url: r.url, name, size: Number(r.headers.get('content-length') || 0), host: 'Google Drive' };
     }
     const page = await r.text();
@@ -185,13 +185,13 @@ async function gdrive(url, s) {
             params[mm[1]] = mm[2];
         const nm = /<span class="uc-name-size"><a[^>]*>([^<]+)<\/a>\s*\(([^)]+)\)/.exec(page);
         const qs = new URLSearchParams(params).toString();
-        const target = `${(0, http.decodeHtmlEntities)(form[1])}${qs ? '?' + qs : ''}`;
+        const target = `${http.decodeHtmlEntities(form[1])}${qs ? '?' + qs : ''}`;
         const r2 = await s.request(target, { timeout: 60_000 });
         if ((r2.headers.get('content-type') || '').includes('text/html')) {
             throw new HostError('O Google Drive nao liberou o arquivo (cota excedida ou pede login)');
         }
-        const name = (0, http.fileNameFromHeaders)(r2.headers.get('content-disposition'), r2.url, nm?.[1] || fid);
-        const size = Number(r2.headers.get('content-length') || 0) || (nm ? (0, http.numSize)(nm[2]) : 0);
+        const name = http.fileNameFromHeaders(r2.headers.get('content-disposition'), r2.url, nm?.[1] || fid);
+        const size = Number(r2.headers.get('content-length') || 0) || (nm ? http.numSize(nm[2]) : 0);
         return { url: r2.url, name, size, host: 'Google Drive' };
     }
     if (/quota/i.test(page))
@@ -303,9 +303,9 @@ async function mediafire(url, s) {
     const name = (/<div class="filename">([^<]+)/.exec(t) || [])[1];
     const size = (/\(([\d.,]+\s*[KMGT]?B)\)/.exec(t) || [])[1];
     return {
-        url: (0, http.decodeHtmlEntities)(link),
-        name: name ? (0, http.decodeHtmlEntities)(name).trim() : 'arquivo',
-        size: size ? (0, http.numSize)(size) : 0,
+        url: http.decodeHtmlEntities(link),
+        name: name ? http.decodeHtmlEntities(name).trim() : 'arquivo',
+        size: size ? http.numSize(size) : 0,
         host: 'MediaFire',
     };
 }
@@ -359,8 +359,8 @@ async function fichier(url, s) {
     const size = (/<td class="normal">([\d.,]+\s*[KMG]B)<\/td>/.exec(t) || [])[1];
     return {
         url: link,
-        name: name ? (0, http.decodeHtmlEntities)(name).trim() : 'arquivo',
-        size: size ? (0, http.numSize)(size) : 0,
+        name: name ? http.decodeHtmlEntities(name).trim() : 'arquivo',
+        size: size ? http.numSize(size) : 0,
         host: '1fichier',
     };
 }
@@ -434,8 +434,8 @@ async function itchList(url, s = http.shared) {
         const oses = icons.map((i) => ITCH_OS[i]).filter(Boolean);
         out.push({
             url: `${base}/file/${uid}?source=game_download`,
-            name: name ? (0, http.decodeHtmlEntities)(name).trim() : `upload ${uid}`,
-            size: size ? (0, http.numSize)(size) : 0,
+            name: name ? http.decodeHtmlEntities(name).trim() : `upload ${uid}`,
+            size: size ? http.numSize(size) : 0,
             headers: { 'X-Itch-Csrf': csrf },
             host: 'itch.io',
             lazy: true,
@@ -481,9 +481,9 @@ async function direct(url, s = http.shared, host = '', name = '') {
     }
     return {
         url: r.url || url,
-        name: (0, http.fileNameFromHeaders)(r.headers.get('content-disposition'), r.url || url, name || 'arquivo'),
+        name: http.fileNameFromHeaders(r.headers.get('content-disposition'), r.url || url, name || 'arquivo'),
         size: Number(r.headers.get('content-length') || 0),
-        host: host || (0, http.hostOf)(url),
+        host: host || http.hostOf(url),
     };
 }
 const KNOWN = [
@@ -494,7 +494,7 @@ const KNOWN = [
     ['files.catbox.moe', 'catbox'], ['itch.io', 'itch.io'],
 ];
 function knownHost(url) {
-    const h = (0, http.hostOf)(url);
+    const h = http.hostOf(url);
     for (const [dom, name] of KNOWN)
         if (h === dom || h.endsWith('.' + dom))
             return name;
@@ -507,7 +507,7 @@ async function resolve(url, s = http.shared, depth = 0) {
     const u = String(url || '').trim();
     if (!/^https?:\/\//i.test(u))
         throw new HostError('Isso nao e um link http(s)');
-    const h = (0, http.hostOf)(u);
+    const h = http.hostOf(u);
     await http.assertPublicHost(h).catch(() => {
         throw new HostError(`Host bloqueado por segurança: ${h}`);
     });
