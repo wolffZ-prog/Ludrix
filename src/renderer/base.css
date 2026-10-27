@@ -178,7 +178,8 @@ html body.bs[data-face] .btn{border-radius:var(--r);box-shadow:none}
 html body.bs[data-face] .btn.s{background:var(--bg2);border:1px solid var(--line);color:var(--text)}
 html body.bs[data-face] .btn.s:hover{border-color:var(--line2);background:var(--card2)}
 html body.bs[data-face] .btn.p,html body.bs[data-face] .btn.g{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-html body.bs[data-face] .pop,html body.bs[data-face] .ctx,html body.bs[data-face] .ctx .sub,html body.bs[data-face] .modal .box{border-radius:10px;background:var(--bg2);border:1px solid var(--line);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 16px 40px -20px rgba(0,0,0,.6)}
+html body.bs[data-face] .pop,html body.bs[data-face] .ctx,html body.bs[data-face] .modal .box{border-radius:10px;background:var(--bg2);border:1px solid var(--line);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 16px 40px -20px rgba(0,0,0,.6)}
+html body.bs[data-face] .ctx .sub{border-radius:10px;background:var(--bg2-solid,var(--bg2));border:1px solid var(--line);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 16px 40px -20px rgba(0,0,0,.6)}
 html body.bs[data-face] .ctx button:hover{background:var(--card2);color:var(--text)}
 html body.bs[data-face] .ctx button:hover svg{color:var(--text)}
 html body.bs[data-face] .toast{border-radius:10px;background:var(--bg2);border:1px solid var(--line);backdrop-filter:none;box-shadow:0 16px 40px -20px rgba(0,0,0,.6)}

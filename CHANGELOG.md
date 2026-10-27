@@ -1,5 +1,8 @@
 # Changelog
 
+## 4.0.16-hf4 — 2026-10-27
+- Submenus do menu de contexto (Editar, Copiar, Status, Coleções) com fundo sólido: com o Glass ligado ficavam transparentes e ilegíveis.
+
 ## 4.0.16-hf3 — 2026-10-27
 - Ajustes › Sistema mostrava "WebView2" no motor da janela: nome herdado, sem relação com o que roda. Agora mostra Electron e a versão do Chromium.
 - Botão "Exibição" ativo com texto e ícone apagados: corrigido.
