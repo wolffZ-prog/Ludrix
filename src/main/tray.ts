@@ -4,7 +4,6 @@ import * as cp from 'node:child_process';
 import * as electron from 'electron';
 import * as P from './paths';
 import * as log from './log';
-import * as menu from './menu';
 
 type Spec = { label?: string; fn?: () => any; sep?: boolean; sub?: Spec[]; danger?: boolean; primary?: boolean; disabled?: boolean; title?: boolean; icon_key?: string };
 type Host = {
@@ -17,7 +16,6 @@ type Host = {
 
 let tray: electron.Tray | null = null;
 let host: Host | null = null;
-let busy = false;
 
 function trayPlay(key: string) {
     return async () => {
@@ -82,7 +80,7 @@ function trayClientsScan(): Spec[] {
         if (m)
             cands[0][1].unshift(m[1].trim().replace(/\//g, '\\'));
     }
-    catch { /* sem registro */ }
+    catch { }
     const out: Spec[] = [];
     for (const [name, exes] of cands) {
         const exe = exes.find((e) => e && fs.existsSync(e));
@@ -140,70 +138,9 @@ export function traySpecs(rich: boolean): Spec[] {
     return specs;
 }
 
-async function thumbData(key: string): Promise<string | null> {
-    try {
-        const p = await host!.be.hub.thumbPath(key, false);
-        if (!p || !fs.existsSync(p))
-            return null;
-        const ext = path.extname(p).toLowerCase();
-        const mime = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : 'image/jpeg';
-        return `data:${mime};base64,${fs.readFileSync(p).toString('base64')}`;
-    }
-    catch {
-        return null;
-    }
-}
-
-async function toMenuItems(specs: Spec[]): Promise<menu.MenuItem[]> {
-    const out: menu.MenuItem[] = [];
-    for (const s of specs) {
-        if (s.sep) {
-            out.push({ sep: true });
-            continue;
-        }
-        out.push({ label: s.label, danger: s.danger, primary: s.primary, disabled: s.disabled, title: s.title, icon: s.icon_key ? await thumbData(s.icon_key) : null, sub: s.sub ? await toMenuItems(s.sub) : null });
-    }
-    return out;
-}
-
-function pickFn(specs: Spec[], pick: string): (() => any) | undefined {
-    let node: Spec | undefined;
-    let lst = specs;
-    for (const part of String(pick).split('.')) {
-        node = lst[Number(part)];
-        lst = node?.sub || [];
-    }
-    return node?.fn;
-}
-
-async function popup() {
-    if (busy || !host)
-        return;
-    busy = true;
-    try {
-        const specs = traySpecs(true);
-        const fl = host.frameLast() || {};
-        const r = await menu.show({ items: await toMenuItems(specs), colors: fl.colors || {}, light: fl.dark === false, x: 0, y: 0, atCursor: true });
-        if (r?.ok && r.pick != null) {
-            const fn = pickFn(specs, r.pick);
-            if (fn) {
-                try {
-                    await fn();
-                }
-                catch (e: any) {
-                    log.warn('bandeja: %s', e?.message || e);
-                }
-            }
-        }
-    }
-    finally {
-        busy = false;
-    }
-}
-
 function nativeMenu() {
     const specs = traySpecs(false);
-    const conv = (list: Spec[]): electron.MenuItemConstructorOptions[] => list.filter((s) => !s.title).map((s) => s.sep ? { type: 'separator' } : {
+    const conv = (list: Spec[]): electron.MenuItemConstructorOptions[] => list.map((s) => s.sep ? { type: 'separator' } : s.title ? { label: String(s.label || ''), enabled: false } : {
         label: String(s.label || ''), enabled: !s.disabled, submenu: s.sub ? conv(s.sub) : undefined, click: s.fn ? () => { void Promise.resolve().then(s.fn!).catch((e) => log.warn('bandeja: %s', e?.message || e)); } : undefined,
     });
     return electron.Menu.buildFromTemplate([
@@ -230,13 +167,8 @@ export function build(h: Host) {
         tray.setToolTip('LudrixHub');
         tray.on('click', () => h.show());
         tray.on('double-click', () => h.show());
-        if (menu.available()) {
-            tray.on('right-click', () => void popup());
-        }
-        else {
-            tray.setContextMenu(nativeMenu());
-            tray.on('right-click', () => { try { tray?.setContextMenu(nativeMenu()); } catch { /* */ } });
-        }
+        tray.setContextMenu(nativeMenu());
+        tray.on('right-click', () => { try { tray?.setContextMenu(nativeMenu()); } catch { } });
     }
     catch (e: any) {
         log.warn('bandeja indisponível: %s', e?.message || e);
@@ -245,11 +177,11 @@ export function build(h: Host) {
     return tray;
 }
 export function refresh() {
-    if (tray && !menu.available()) {
+    if (tray) {
         try {
             tray.setContextMenu(nativeMenu());
         }
-        catch { /* */ }
+        catch { }
     }
 }
 export function notify(msg: string) {
@@ -259,13 +191,13 @@ export function notify(msg: string) {
         else if (electron.Notification.isSupported())
             new electron.Notification({ title: 'LudrixHub', body: msg, silent: true }).show();
     }
-    catch { /* */ }
+    catch { }
 }
 export function destroy() {
     try {
         tray?.destroy();
     }
-    catch { /* */ }
+    catch { }
     tray = null;
 }
 export const present = () => Boolean(tray);

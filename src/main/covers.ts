@@ -193,13 +193,13 @@ export class CoverService {
                     if (this.srcOn('steam'))
                         await this.steam(meta, q, year, 0.9, false);
                 }
-                catch { /* nada */ }
+                catch { }
                 if (!meta.cover_url) {
                     try {
                         if (this.srcOn('gog'))
                             await this.gog(meta, q, year, 0.9, false);
                     }
-                    catch { /* nada */ }
+                    catch { }
                 }
             }
             if (!meta.hero_url)
@@ -227,7 +227,7 @@ export class CoverService {
             try {
                 await fn.call(this, meta, q, year, 0.93, false);
             }
-            catch { /* nada */ }
+            catch { }
             restore();
             if (meta.hero_url)
                 meta.hero_src = name;
@@ -320,7 +320,7 @@ export class CoverService {
                 }
             }
         }
-        catch { /* nada */ }
+        catch { }
         (meta.source = meta.source || []).push('steam');
     }
 
@@ -460,7 +460,7 @@ export class CoverService {
                 const d = await this.s.getJson(STEAM_DETAILS, { params: { appids: id, l: this.lang(), cc: 'br', filters: 'basic' }, timeout: 15_000 });
                 meta.steam_name = String((((d || {})[String(id)] || {}).data || {}).name || '').replace(/[\u2122\u00ae]/g, '').trim();
             }
-            catch { /* nada */ }
+            catch { }
         }
     }
 

@@ -110,7 +110,7 @@ export function setProtocol(on: boolean): { ok?: boolean; error?: string } {
             reg(['add', `${base}\\shell\\open\\command`, '/ve', '/t', 'REG_SZ', '/d', c, '/f']);
         }
         else {
-            try { reg(['delete', base, '/f']); } catch { /* já não existia */ }
+            try { reg(['delete', base, '/f']); } catch { }
         }
         readyCache = null;
         return { ok: true };

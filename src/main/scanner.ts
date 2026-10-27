@@ -293,7 +293,6 @@ export function scanRoms(root: string, systems: Record<string, any>, progress: P
     return out;
 }
 
-/* -------- fora do processo principal: a leitura de disco (lenta em HDD) roda num worker -------- */
 export function scanAsync(mode: 'windows' | 'roms' | 'walk', root: string, opts: { progress?: Progress; limit?: number; skip?: Set<string> | null; systems?: Record<string, any>; dirs?: string[]; maxDepth?: number; exts?: string[] } = {}): Promise<any[]> {
     return new Promise((resolve, reject) => {
         let Worker: any;
@@ -327,7 +326,7 @@ export function scanAsync(mode: 'windows' | 'roms' | 'walk', root: string, opts:
                 try {
                     opts.progress?.(String(m.msg || ''));
                 }
-                catch { /* ignore */ }
+                catch { }
             }
             else if (m.type === 'done')
                 finish(() => resolve(Array.isArray(m.items) ? m.items : []));

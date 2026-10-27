@@ -19,7 +19,6 @@ function run(cmd: string, args: string[], timeout = 4000): Promise<string> {
     });
 }
 
-/** `reg query` em um bloco: devolve [{key, values:{name:[type,data]}}]. */
 async function regQuery(key: string, recursive = false, valueName?: string): Promise<Array<{ key: string; values: Record<string, [string, string]> }>> {
     if (!WIN)
         return [];
@@ -79,7 +78,7 @@ async function cpu() {
                 }
             }
         }
-        catch { /* ignore */ }
+        catch { }
     }
     const cpus = os.cpus();
     name = (name || cpus[0]?.model || 'CPU').replace(/\(R\)|\(TM\)/g, '').replace(/\s+/g, ' ').trim();
@@ -102,7 +101,7 @@ async function cpu() {
             }
             physical = ids.size;
         }
-        catch { /* ignore */ }
+        catch { }
     }
     else {
         const out = await run('powershell', ['-NoProfile', '-NonInteractive', '-Command', '(Get-CimInstance Win32_Processor | Measure-Object -Property NumberOfCores -Sum).Sum'], 6000);
@@ -165,10 +164,10 @@ async function gpus() {
                     drv = path.basename(fs.realpathSync(lnk));
                 cards.push({ name: `GPU ${vendor}:${dev}`, vram, driver: drv });
             }
-            catch { /* ignore */ }
+            catch { }
         }
     }
-    catch { /* ignore */ }
+    catch { }
     if (!out.length)
         return cards;
     cards.forEach((c, i) => {
@@ -199,7 +198,7 @@ async function osInfo() {
                 if (line.startsWith('PRETTY_NAME='))
                     name = line.split('=').slice(1).join('=').trim().replace(/^"|"$/g, '');
         }
-        catch { /* ignore */ }
+        catch { }
     }
     return { name, version: ver, build, arch: os.arch() === 'x64' ? 'AMD64' : os.arch(), python: '', node: process.versions.node, electron: process.versions.electron || '' };
 }
@@ -221,7 +220,7 @@ export function disks() {
                     continue;
                 out.push({ mount: d, total: u.total, free: u.free, launcher: P.ROOT.toUpperCase().startsWith(d.toUpperCase()) });
             }
-            catch { /* unidade sem mídia */ }
+            catch { }
         }
         return out;
     }
@@ -235,7 +234,7 @@ export function disks() {
             const u = usage(m);
             out.push({ mount: m, total: u.total, free: u.free, launcher: m === P.ROOT });
         }
-        catch { /* ignore */ }
+        catch { }
     }
     return out;
 }
@@ -299,7 +298,6 @@ export function detect(force = false): Promise<any> {
     return inflight;
 }
 
-/** Última leitura, sem esperar (null se ainda não houve). */
 export function last() {
     return cache.v;
 }

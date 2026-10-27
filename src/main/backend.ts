@@ -1,10 +1,3 @@
-/**
- * backend.ts — o coracao do launcher. Substitui app/core/ludrix.py.
- *
- * Toda a logica de biblioteca (catalogo, sessoes de jogo, edicao, capas,
- * metadados, temas, cache, backup) vive aqui. O servidor HTTP local apenas
- * traduz as rotas /api/* em chamadas para esta classe.
- */
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -47,9 +40,7 @@ import * as http from './http';
 import { Catalog } from './catalog';
 import { DiscordPresence } from './discord';
 import { normalizeTitle, titleFromPath } from './titles';
-/** Extensoes reconhecidas como jogo de PC. */
 const EXE_EXT = ['.exe', '.bat', '.cmd', '.lnk', '.sh', '.x86_64', '.AppImage', '.bin', '.jar'];
-/** Pastas/arquivos que nunca devem ser tratados como jogo. */
 const JUNK = /^(_commonredist|redist|directx|vcredist|dotnet|physx|_redist|support|prerequisites|commonfiles|installer|dxsetup|vcredist_x|oalinst|dotnetfx|ue4prereq|directx_|dxwebsetup)/i;
 function isWindowsCmd(cmd: string[]) {
     return /\.(exe|bat|cmd)$/i.test(String(cmd[0] || ''));
@@ -65,9 +56,7 @@ function uriName(uri: string) {
             return v;
     return scheme || 'launcher';
 }
-/* ------------------------------ o backend ------------------------------ */
 class Backend {
-    /** Fachada de persistencia (config.json + library.json). */
     store: store.Store;
     sessions!: SessionManager;
     emu!: EmulationManager;
@@ -77,11 +66,9 @@ class Backend {
     categories: any[] = [];
     lastRemoved: any = null;
     boot: any = { done: false, i: 0, n: 0, step: '', errors: [], started: false };
-    /** Gatilhos de UI que o processo principal registra (minimizar, sair...). */
     windowHooks: Record<string, (...a: any[]) => any>;
     discord: DiscordPresence;
     gamepad: gamepadMod.GamepadWatcher | null = null;
-    /** Fila de eventos para a UI; /api/status drena a cada poll. */
     events: any[] = [];
     jobs: Jobs = new Jobs(this);
     customUX!: CustomUX;
@@ -136,7 +123,7 @@ class Backend {
         this.autoUpdateLoop();
         this.sourcesLoop();
         require('./installer').setDownloadPolicy(() => Math.max(0, Number(this.store.config.dl_max_down || 0)) * 1024, () => this.dlHold());
-        setInterval(() => { try { require('./torrent').setHold?.(Boolean(this.dlHold())); } catch { /* sem torrent */ } }, 30_000);
+        setInterval(() => { try { require('./torrent').setHold?.(Boolean(this.dlHold())); } catch { } }, 30_000);
         setTimeout(() => this.watchDirs(), 20_000);
         setTimeout(() => this.fileAssocSync(), 45_000);
         setTimeout(() => require('./notify').protocolSync(this.store.config.win_notify !== false), 50_000);
@@ -161,7 +148,7 @@ class Backend {
                 try {
                     w.w.close();
                 }
-                catch { /* já fechado */ }
+                catch { }
                 for (const t of w.timers.values())
                     clearTimeout(t);
                 this.watchers.delete(d);
@@ -181,7 +168,7 @@ class Backend {
                         clearTimeout(old);
                     entry.timers.set(n, setTimeout(() => { entry.timers.delete(n); this.watchHit(d, n, entry.seen); }, 15_000));
                 });
-                entry.w.on('error', () => { try { entry.w.close(); } catch { /* nada */ } this.watchers.delete(d); });
+                entry.w.on('error', () => { try { entry.w.close(); } catch { } this.watchers.delete(d); });
                 this.watchers.set(d, entry);
             }
             catch (e) {
@@ -265,7 +252,6 @@ class Backend {
     persistHidden() {
         this.store.setConfig({ hidden_games: [...this.hiddenSet].sort() });
     }
-    /* ----------------------------- catalogo ----------------------------- */
     cv(key) {
         return this.hub.cv(key, this.hub.meta.get(key));
     }
@@ -279,7 +265,6 @@ class Backend {
                     return [c.id];
             }
             catch {
-                /* regex invalida no preset: ignora */
             }
         }
         return ['other'];
@@ -316,7 +301,6 @@ class Backend {
     get catalogErrors() {
         return this.cat.state.errors;
     }
-    /** Estante/Inicio: secoes montadas a partir do catalogo. */
     async homePayload() {
         const cat = await this.catalog();
         const live = new Set(this.sessions.keys());
@@ -356,7 +340,6 @@ class Backend {
     editInfo(key: string) {
         return this.hub.editInfo(key);
     }
-    /** Outros executaveis encontrados na pasta do jogo (para trocar o alvo). */
     exesOf(key) {
         const info = this.store.lib(key) || {};
         const dir = info.dir || (info.exe ? path.dirname(String(info.exe)) : '');
@@ -387,7 +370,6 @@ class Backend {
         walk(dir, 0);
         return out.slice(0, 200).sort();
     }
-    /** Menu de contexto do botao direito. */
     contextActions(key: string) {
         const isRom = key.startsWith('rom:'), isLocal = key.startsWith('local:');
         const info: any = this.store.lib(key) || {};
@@ -531,11 +513,6 @@ class Backend {
             after_queue: this.jobs.afterState(),
         };
     }
-    /**
-     * Enfileira um evento para a UI (tema recarregado, capa nova,
-     * atualizacao disponivel, download concluido...). O renderer drena
-     * a fila em /api/status -- mesmo contrato do `_push` do Python.
-     */
     push(ev: any) {
         this.events.push(ev);
         if (this.events.length > 100)
@@ -622,7 +599,6 @@ class Backend {
         const use = pool.length ? pool : games;
         if (!use.length)
             return { error: 'Nenhum jogo instalado bate com esse filtro.' };
-        // joga menos recentes pesam mais
         const weights = use.map((g) => 1 / (1 + (g.playtime || 0) / 3600));
         const total = weights.reduce((a, b) => a + b, 0);
         let r = Math.random() * total;
@@ -636,7 +612,6 @@ class Backend {
         }
         return { game: pick };
     }
-    /* ------------------------------ config ------------------------------ */
     RESTART_KEYS: Record<string, string> = { frameless: 'Janela sem moldura', acrylic: 'Vidro fosco', tray_enabled: 'Ícone na bandeja', torrent_enabled: 'Suporte a torrent' };
     safeMode = false;
     safeSaved: any = null;
@@ -692,7 +667,7 @@ class Backend {
             try {
                 require('./torrent').setQuiet(this.quiet);
             }
-            catch { /* ignore */ }
+            catch { }
         }
         if ('hotkey' in patch || 'hotkey_enabled' in patch)
             this.windowHooks?.hotkey?.();
@@ -755,8 +730,8 @@ class Backend {
                     reg(['add', `${base}\\shell\\open\\command`, '/ve', '/t', 'REG_SZ', '/d', cmd, '/f']);
                 }
                 else {
-                    try { reg(['delete', `HKCU\\Software\\Classes\\${ext}`, '/f']); } catch { /* já não existia */ }
-                    try { reg(['delete', base, '/f']); } catch { /* idem */ }
+                    try { reg(['delete', `HKCU\\Software\\Classes\\${ext}`, '/f']); } catch { }
+                    try { reg(['delete', base, '/f']); } catch { }
                 }
             }
             this.store.setConfig({ file_assoc: on, file_assoc_cmd: on ? cmd : '' });
@@ -854,7 +829,7 @@ class Backend {
                 enabled = fs.existsSync(p);
             }
         }
-        catch { /* */ }
+        catch { }
         return { supported: process.platform === 'win32' || process.platform === 'linux', enabled, path: p };
     }
     autostartSync() {
@@ -876,7 +851,7 @@ class Backend {
                 if (enable)
                     cp.execFileSync('reg', ['add', Backend.RUN_KEY, '/v', 'Ludrix', '/t', 'REG_SZ', '/d', this.autostartCmd(), '/f'], { windowsHide: true, timeout: 8000, stdio: 'ignore' });
                 else {
-                    try { cp.execFileSync('reg', ['delete', Backend.RUN_KEY, '/v', 'Ludrix', '/f'], { windowsHide: true, timeout: 8000, stdio: 'ignore' }); } catch { /* */ }
+                    try { cp.execFileSync('reg', ['delete', Backend.RUN_KEY, '/v', 'Ludrix', '/f'], { windowsHide: true, timeout: 8000, stdio: 'ignore' }); } catch { }
                 }
             }
             else if (process.platform === 'linux') {
@@ -897,7 +872,6 @@ class Backend {
         this.store.setConfig({ autostart: enable });
         return { ok: true, ...this.autostart() };
     }
-    /* ------------------------------- jogar ------------------------------- */
     async play(key: string, after: string | null = null, emulator: string | null = null, _optimize: boolean | null = null, force = false): Promise<any> {
         if (this.sessions.has(key))
             return { error: 'Este jogo já está aberto', running: true, key };
@@ -1189,7 +1163,7 @@ class Backend {
                 if (fs.statSync(exe).size < 1024)
                     return 'A ROM tem menos de 1 KB — arquivo corrompido ou download incompleto. Apague e baixe de novo.';
             }
-            catch { /* ignore */ }
+            catch { }
             return 'O emulador fechou na hora. Causas comuns: ROM corrompida, BIOS/keys faltando ou emulador desatualizado. Teste abrir a ROM direto no emulador; se também falhar, apague o jogo e adicione de novo.';
         }
         if (!fs.existsSync(exe))
@@ -1198,7 +1172,7 @@ class Backend {
             if (fs.statSync(exe).size < 4096)
                 return 'O executável tem menos de 4 KB: arquivo corrompido. Desinstale e baixe/instale de novo.';
         }
-        catch { /* ignore */ }
+        catch { }
         const code = rc !== null && rc !== undefined && rc !== 0 ? ` (código ${rc})` : '';
         if ([0xC0000135, 3221225781, -1073741515].includes(rc))
             return `Falta uma DLL${code}: instale os pacotes da aba Redists (Visual C++, DirectX) e tente de novo.`;
@@ -1245,7 +1219,6 @@ class Backend {
             log.warn('update check: %s', e?.message || e);
         }
     }
-    /** Releitura periódica das fontes da Store (store_auto_refresh em horas; 0 desliga). Só roda sem jogo aberto e sem download ativo. */
     sourcesLoop() {
         const tick = async () => {
             if (this.closing)
@@ -1324,7 +1297,7 @@ class Backend {
         if (flags.length)
             run(['add', sub, '/v', exe, '/t', 'REG_SZ', '/d', '~ ' + flags.join(' '), '/f']);
         else {
-            try { run(['delete', sub, '/v', exe, '/f']); } catch { /* */ }
+            try { run(['delete', sub, '/v', exe, '/f']); } catch { }
         }
         this.store.patchLib(key, { compat: layer });
         return { ok: true, layer };
@@ -1424,7 +1397,7 @@ class Backend {
             return { error: 'A pasta atual do jogo não existe' };
         const parent = String(destParent || '').trim().replace(/^"+|"+$/g, '');
         if (parent && !fs.existsSync(parent) && isDir(path.parse(path.resolve(parent)).root) && isDir(path.dirname(path.resolve(parent)))) {
-            try { fs.mkdirSync(parent, { recursive: true }); } catch { /* cai no erro abaixo */ }
+            try { fs.mkdirSync(parent, { recursive: true }); } catch { }
         }
         if (!parent || !isDir(parent))
             return { error: 'A pasta de destino não existe' };
@@ -1461,7 +1434,7 @@ class Backend {
                     const rel = path.relative(src, f);
                     fs.mkdirSync(path.dirname(path.join(dst, rel)), { recursive: true });
                     await fs.promises.copyFile(f, path.join(dst, rel));
-                    try { const st = fs.statSync(f); fs.utimesSync(path.join(dst, rel), st.atime, st.mtime); } catch { /* */ }
+                    try { const st = fs.statSync(f); fs.utimesSync(path.join(dst, rel), st.atime, st.mtime); } catch { }
                     done += sizes.get(f) || 0;
                     cb(prog('move', done / total, `Movendo ${path.basename(rel)}`));
                 }
@@ -1498,7 +1471,6 @@ class Backend {
         this.act('');
         return { ok: true };
     }
-    /* ------------------------- favoritos / ocultos ------------------------- */
     toggleFavorite(key) {
         if (this.favorites.has(key))
             this.favorites.delete(key);
@@ -1557,7 +1529,6 @@ class Backend {
         this.persistHidden();
         return { ok: true, hidden: this.hiddenSet.has(key) };
     }
-    /* ---------------------------- adicionar ---------------------------- */
     localGuess(fileOrDir) {
         const p = String(fileOrDir || '');
         if (!path.basename(p))
@@ -1584,7 +1555,7 @@ class Backend {
                     if (line.toLowerCase().startsWith('url='))
                         return line.slice(4).trim();
             }
-            catch { /* nada */ }
+            catch { }
         }
         return null;
     }
@@ -1596,7 +1567,7 @@ class Backend {
                 if (target)
                     t = titleFromPath(target) || t;
             }
-            catch { /* nada */ }
+            catch { }
         }
         return t || path.basename(exe, path.extname(exe));
     }
@@ -1628,7 +1599,7 @@ class Backend {
                             roms++;
                     }
                 }
-                catch { /* nada */ }
+                catch { }
                 out.push({ path: p, kind: 'dir', name, mode: roms > exes ? 'roms' : 'windows', roms, exes });
                 continue;
             }
@@ -1687,7 +1658,6 @@ class Backend {
             this.queueMeta(key);
         return { ok: true, key, title };
     }
-    /** Varre as pastas configuradas procurando executaveis de jogos. */
     scanDirs() {
         const dirs = [...(this.store.config.game_dirs || [])];
         if (this.store.config.games_dir)
@@ -1709,7 +1679,6 @@ class Backend {
             for (const e of entries) {
                 const full = path.join(d, e.name);
                 if (e.isDirectory()) {
-                    // uma pasta com executavel dentro conta como um jogo
                     const found = this.findMainExe(full);
                     if (found && !ignored.has(found)) {
                         this.addLocalGame(found, e.name);
@@ -1726,7 +1695,6 @@ class Backend {
         this.store.setConfig({ last_lib_check: util.now() });
         return { ok: true, added };
     }
-    /** Procura o executavel principal dentro de uma pasta de jogo. */
     findMainExe(dir) {
         try {
             const files = fs.readdirSync(dir, { withFileTypes: true })
@@ -1743,7 +1711,6 @@ class Backend {
             return null;
         }
     }
-    /* ------------------------------ editar ------------------------------ */
     renameGame(key: string, title: string) {
         return this.hub.renameGame(key, title);
     }
@@ -1770,14 +1737,13 @@ class Backend {
             this.store.patchLib(key, { exe: path.join(String(info.dir || ''), String(rel)) });
         return { ok: true, exe: this.store.lib(key)?.exe };
     }
-    /* ------------------------------ remover ------------------------------ */
     rmtreeForce(d: string) {
         for (let i = 0; i < 3; i++) {
-            try { fs.rmSync(d, { recursive: true, force: true, maxRetries: 2, retryDelay: 200 }); } catch { /* */ }
+            try { fs.rmSync(d, { recursive: true, force: true, maxRetries: 2, retryDelay: 200 }); } catch { }
             if (!fs.existsSync(d))
                 return true;
             const t = Date.now();
-            while (Date.now() - t < 700) { /* espera */ }
+            while (Date.now() - t < 700) { }
         }
         return !fs.existsSync(d);
     }
@@ -1795,7 +1761,7 @@ class Backend {
             if (hit.length)
                 await procsMod.killTree(hit);
         }
-        catch { /* */ }
+        catch { }
     }
     flushPendingDelete() {
         const pend = [...(this.store.config.pending_delete || [])];
@@ -1811,7 +1777,7 @@ class Backend {
                 this.sessions.terminate(key);
                 await new Promise((r) => setTimeout(r, 1000));
             }
-            catch { /* */ }
+            catch { }
         }
         const info = this.store.removeLib(key);
         if (info && (key.startsWith('rom:') || key.startsWith('local:')))
@@ -1837,7 +1803,7 @@ class Backend {
                     if (fp.startsWith(eg + path.sep))
                         fs.rmSync(fp, { force: true });
                 }
-                catch { /* */ }
+                catch { }
             }
             this.emu.invalidateScan();
         }
@@ -1866,27 +1832,24 @@ class Backend {
             this.store.setConfig({ game_args: ga });
         }
         if (info.kind === 'rom' && info.exe && info.system) {
-            try { this.emu.addRomFile(info.exe, info.system); } catch { /* */ }
+            try { this.emu.addRomFile(info.exe, info.system); } catch { }
         }
         this.lastRemoved = null;
         this.act('');
         return { ok: true, key, title: info.title || '' };
     }
-    /* ------------------------------- capas ------------------------------- */
     coverPick(key: string, src: string | null = null) {
         return this.hub.setCover(key, src);
     }
     coverReset(key: string) {
         return this.hub.resetCover(key);
     }
-    /* ----------------------------- metadados ----------------------------- */
     fetchMetadata(key: string, force = false) {
         return this.hub.fetchMetadata(key, force);
     }
     refetchAllMetadata() {
         return this.hub.refetchAllMetadata();
     }
-    /* ------------------------------- temas ------------------------------- */
     themes() {
         return themes.themes();
     }
@@ -1961,7 +1924,6 @@ class Backend {
     fonts() {
         return this.customUX.fonts();
     }
-    /* ------------------------------- cache ------------------------------- */
     async cacheInfo() {
         const [web, thumbs, covers, shots, meta, downloads] = await Promise.all([P.CACHE_WEB, P.CACHE_THUMBS, P.CACHE_COVERS, P.CACHE_SHOTS, P.CACHE_META, P.DOWNLOADS].map((d) => P.dirSizeAsync(d)));
         return {
@@ -1980,7 +1942,7 @@ class Backend {
                 if (r?.key)
                     keys.add(r.key);
         }
-        catch { /* sem roms */ }
+        catch { }
         return keys;
     }
     imageGc(apply: boolean) {
@@ -2021,7 +1983,7 @@ class Backend {
                         fs.rmSync(full, { force: true });
                         gone.push(f);
                     }
-                    catch { /* em uso */ }
+                    catch { }
                 }
             }
         }
@@ -2042,18 +2004,17 @@ class Backend {
                 for (const child of fs.readdirSync(d)) {
                     if (busy.has(child))
                         continue;
-                    try { fs.rmSync(path.join(d, child), { recursive: true, force: true }); } catch { /* */ }
+                    try { fs.rmSync(path.join(d, child), { recursive: true, force: true }); } catch { }
                 }
             }
             if (w === 'log' && fs.existsSync(P.LOG_FILE)) {
-                try { fs.writeFileSync(P.LOG_FILE, ''); } catch { /* */ }
+                try { fs.writeFileSync(P.LOG_FILE, ''); } catch { }
             }
         }
         if (what.includes('web') || what.includes('meta'))
             this.cat.reload(what.includes('web'));
         return this.cacheInfo();
     }
-    /* ----------------------------- biblioteca ----------------------------- */
     libraryCheck() {
         const items: any[] = [];
         const ex = (q: string) => { try { fs.statSync(q); return true; } catch { return false; } };
@@ -2132,7 +2093,6 @@ class Backend {
         }
         return groups;
     }
-    /** Junta chaves duplicadas mantendo uma delas. */
     libraryMerge(keep: string, drop: string[]) {
         const lib = this.store.library as Record<string, any>;
         if (!(keep in lib))
@@ -2368,8 +2328,6 @@ class Backend {
         this.act('');
         return { ok: true, added, fixed, total: Object.keys(data).length };
     }
-    /* -------------------------- backup completo -------------------------- */
-    /** Empacota tudo (config, biblioteca, metadados, capas, temas) em um zip. */
     autoBackupDir(): string {
         return String(this.store.config.auto_backup_dir || '') || path.join(P.BACKUPS, 'auto');
     }
@@ -2720,7 +2678,7 @@ class Backend {
                 try {
                     this.jobs.cancel(j);
                 }
-                catch { /* ignore */ }
+                catch { }
             }
             let child: cp.ChildProcess;
             if (process.platform === 'win32') {
@@ -2742,12 +2700,6 @@ class Backend {
         setTimeout(() => process.exit(0), 6000);
         return { ok: true, quit: true };
     }
-    /* --------------------------- sistema/arquivos --------------------------- */
-    /**
-     * Pastas que o Ludrix tem permissao de abrir no explorador.
-     * Especelho de `_path_allowed` (ludrix.py:2364). Sem isso o /api/open
-     * abria qualquer caminho do PC — inclusive /etc e /root.
-     */
     pathRoots() {
         const out = [P.ROOT, this.store.gamesDir() || P.GAMES];
         const home = electron.app.getPath('home');
@@ -2776,7 +2728,6 @@ class Backend {
                 out.push(path.dirname(String(v.exe)));
         return out.filter(Boolean);
     }
-    /** Um caminho so pode ser aberto se cair dentro de `pathRoots()`. */
     pathAllowed(target) {
         let r;
         try {
@@ -2830,7 +2781,7 @@ class Backend {
             if (fs.statSync(p).isFile() && !Backend.OPEN_DOC_EXTS.has(path.extname(p).toLowerCase()))
                 p = path.dirname(p);
         }
-        catch { /* */ }
+        catch { }
         if (process.platform === 'win32') {
             electron.shell.openPath(p).then((err) => {
                 if (err) {
@@ -2861,15 +2812,6 @@ class Backend {
         electron.shell.openExternal(u);
         return { ok: true };
     }
-    /**
-     * Seletor nativo de executavel / ROM / lista JSON.
-     * Espelha `pick_exe` do Python (ludrix.py:3223).
-     *
-     * `native` e o sinal que a UI usa para decidir entre abrir o seletor ou
-     * cair num campo de texto ("Modo navegador"). No Electron o dialogo
-     * nativo sempre existe. `file` e a chave que `addLocal()` le -- sem ela
-     * a funcao aborta em silencio, e era esse o sintoma de "nao le EXE".
-     */
     async pickExe(initial = '', kind = 'exe') {
         const f = await dialogs.pickFile(kind, initial);
         const out: any = { native: true, file: f || null };
@@ -2877,12 +2819,6 @@ class Backend {
             Object.assign(out, this.localGuess(f));
         return out;
     }
-    /**
-     * Seletor de pasta (kind='folder') ou de arquivo.
-     * Espelha `pick_path` do Python (ludrix.py:2281), que abria o seletor de
-     * PASTA quando kind era 'folder'. A versao anterior chamava pickFile()
-     * ate para pastas -- era isso que fazia o Ludrix "nao ler pasta".
-     */
     async pickPath(kind = 'exe', initial = '') {
         const f = kind === 'folder'
             ? await dialogs.pickFolder(initial || P.ROOT)
@@ -2969,7 +2905,7 @@ class Backend {
         try {
             require('./torrent').setQuiet?.(on);
         }
-        catch { /* ignore */ }        if (!on)
+        catch { }        if (!on)
             this.hub.resumeQueue();
     }
     private async presenceFor(sess: any) {
@@ -3143,7 +3079,6 @@ class Backend {
     hardware(force = false) {
         return sys.hardware(force);
     }
-    /* ---------------------------- bootstrap ---------------------------- */
     bootstrapStatus() {
         return { ...this.boot };
     }
@@ -3163,7 +3098,7 @@ class Backend {
                 try {
                     await Promise.all([this.central.redistsStatus(), this.central.minecraftStatus()]);
                 }
-                catch { /* ignore */ }
+                catch { }
             }]);
         }
         steps.push(['Lendo a biblioteca', async () => {
@@ -3200,7 +3135,6 @@ class Backend {
         this.safeSaved = null;
         return { ok, config: this.publicConfig() };
     }
-    /** Preparacao final: garante flush antes de sair. */
     closing = false;
     standby() {
         const mb = (n: number) => Math.round(n / 1048576);
@@ -3214,12 +3148,12 @@ class Backend {
         try {
             void electron.session.defaultSession.clearCache();
         }
-        catch { /* sem sessao */ }
+        catch { }
         try {
             v8.setFlagsFromString('--expose_gc');
             vm.runInNewContext('gc')();
         }
-        catch { /* gc indisponivel */ }
+        catch { }
         const t = setTimeout(() => log.info('em espera: memória do servidor %d MB → %d MB', mb(before), mb(process.memoryUsage().rss)), 1500);
         t.unref?.();
     }

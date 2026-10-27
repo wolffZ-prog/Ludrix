@@ -254,7 +254,7 @@ export function autorunTarget(root: string): string | null {
                 }
             }
         }
-        catch { /* ignore */ }
+        catch { }
     }
     for (const n of SETUP_NAMES) {
         const p = path.join(root, n);
@@ -267,7 +267,7 @@ export function autorunTarget(root: string): string | null {
         try {
             isDir = fs.statSync(d).isDirectory();
         }
-        catch { /* ignore */ }
+        catch { }
         if (isDir) {
             for (const n of SETUP_NAMES) {
                 const p = path.join(d, n);
@@ -280,7 +280,7 @@ export function autorunTarget(root: string): string | null {
     try {
         exes = fs.readdirSync(root).filter((n) => n.toLowerCase().endsWith('.exe')).map((n) => path.join(root, n));
     }
-    catch { /* ignore */ }
+    catch { }
     exes.sort((a, b) => {
         const sa = fs.statSync(a).size, sb = fs.statSync(b).size;
         return sa - sb;
@@ -331,7 +331,7 @@ export async function unmount(iso: string): Promise<void> {
     try {
         await ps(`Dismount-DiskImage -ImagePath ${q} -ErrorAction SilentlyContinue`, 40);
     }
-    catch { /* ignore */ }
+    catch { }
 }
 
 async function procs(): Promise<any[]> {

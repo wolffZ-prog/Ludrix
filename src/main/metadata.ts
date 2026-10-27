@@ -192,10 +192,10 @@ export class MetadataService {
                     try {
                         d[de.name] = fs.statSync(path.join(P.CACHE_META, de.name)).mtimeMs / 1000;
                     }
-                    catch { /* segue */ }
+                    catch { }
                 }
             }
-            catch { /* vazio */ }
+            catch { }
             this.names = d;
             this.namesT = now;
         }
@@ -281,7 +281,7 @@ export class MetadataService {
             try {
                 await this.wikiPtSummary(meta);
             }
-            catch { /* nada */ }
+            catch { }
         }
         mark('wiki_pt');
         if (!meta.cover_url && this.web && (this.store.config.web_covers ?? true) && this.srcOn('web')) {
@@ -461,7 +461,7 @@ export class MetadataService {
                 try {
                     await this.wikiPtSummary(meta);
                 }
-                catch { /* nada */ }
+                catch { }
             }
             if (meta.wiki_image) {
                 meta.cover_url = meta.wiki_image;
@@ -605,7 +605,7 @@ export class MetadataService {
                 if (tmp.hero_url)
                     meta.hero_url = tmp.hero_url;
             }
-            catch { /* nada */ }
+            catch { }
         }
         const gog = strs('P2725')[0];
         if (gog)
@@ -646,7 +646,7 @@ export class MetadataService {
                 try {
                     box = this.wikiPage(tmp, h, base(h.title)) || {};
                 }
-                catch { /* nada */ }
+                catch { }
                 const sub = [tmp.year || '', (box.platforms || []).slice(0, 4).join(', '), tmp.developer || ''].filter(Boolean).join(' · ');
                 return { id: h.title, title: base(h.title), year: tmp.year || '', sub: sub || String(h.snippet || '').replace(/<[^>]+>/g, '').slice(0, 90), thumb: (h.original || {}).source || '', score: similarity(qc, cmp(base(h.title))) };
             });
@@ -683,7 +683,7 @@ export class MetadataService {
                 try {
                     await this.wikiPtSummary(meta);
                 }
-                catch { /* nada */ }
+                catch { }
             }
             if (meta.wiki_image) {
                 meta.cover_url = meta.wiki_image;
@@ -981,7 +981,7 @@ export class MetadataService {
             const ll = pages.length ? (pages[0].langlinks || []) : [];
             ptTitle = ll.length ? (ll[0].title || '') : '';
         }
-        catch { /* nada */ }
+        catch { }
         const params: any = { action: 'query', prop: 'extracts', exintro: 1, explaintext: 1, format: 'json', formatversion: 2 };
         if (ptTitle)
             params.titles = ptTitle;
@@ -1024,7 +1024,7 @@ export class MetadataService {
             if (box.year)
                 meta.year = box.year;
         }
-        catch { /* sem infobox */ }
+        catch { }
         return box;
     }
 }

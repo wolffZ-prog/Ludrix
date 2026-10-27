@@ -1,4 +1,3 @@
-/** log.ts — log rotativo em data/ludrix.log (equivalente ao RotatingFileHandler do Python). */
 import fs from 'node:fs';
 import path from 'node:path';
 import * as P from './paths';
@@ -13,7 +12,6 @@ function rotate() {
         }
     }
     catch {
-        /* arquivo ainda nao existe */
     }
 }
 function emit(level, msg, ...rest) {
@@ -22,7 +20,6 @@ function emit(level, msg, ...rest) {
     try {
         let text = String(msg);
         let i = 0;
-        // aceita o estilo printf: info("em %s", valor)
         text = text.replace(/%[sdjo]/g, () => {
             const v = rest[i++];
             return v === undefined ? '?' : typeof v === 'string' ? v : JSON.stringify(v);
@@ -33,7 +30,6 @@ function emit(level, msg, ...rest) {
         rotate();
     }
     catch {
-        /* nunca quebra por causa do log */
     }
 }
 function initLog() {

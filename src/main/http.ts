@@ -1,10 +1,3 @@
-/**
- * http.ts — camada de rede. Substitui `requests.Session` do hosts.py.
- *
- * Traz: user-agent de navegador, cookie jar por origem, timeouts separados de
- * conexao e leitura, redirecoes controladas. O bloqueio de hosts privados fica
- * em hosts.resolve (links colados pelo usuário), como no original.
- */
 import net from 'node:net';
 import dns from 'node:dns';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36'
@@ -63,7 +56,6 @@ function isPrivateIp(ip) {
     }
     return false;
 }
-/** Exige que o host resolva para um endereco publico (defesa contra SSRF). */
 const DNS_CACHE = new Map<string, { at: number; ok: boolean }>();
 async function assertPublicHost(host) {
     if (blockedByText(host))
@@ -92,7 +84,6 @@ async function assertPublicHost(host) {
             throw new HttpError(`Host bloqueado por seguranca: ${host}`);
     }
 }
-/** Cookie jar simples: um Map por origem, como o requests.Session. */
 class Session {
     cookies = new Map();
     jarFor(url) {
@@ -179,10 +170,7 @@ class Session {
                 this.setCookies(url, res.headers.getSetCookie?.() ?? res.headers.get('set-cookie'));
             }
             catch {
-                /* ignorado: some runtimes nao expoem set-cookie */
             }
-            // Depois dos cabecalhos, o tempo limite vale por "silencio" (como o
-            // requests): reinicia a cada pedaco recebido, nunca pelo total.
             const idleMs = opts.timeout ?? READ_TIMEOUT;
             let idle: any = null;
             const arm = () => {
@@ -286,13 +274,11 @@ class Session {
         return r.json();
     }
 }
-/** Sessao compartilhada (equivalente ao `Session()` global do hosts.py). */
 const shared = new Session()
 function hostOf(url) {
     const m = /^https?:\/\/([^/:?#]+)/i.exec(url || '');
     return (m?.[1] || '').toLowerCase().replace(/^www\./, '');
 }
-/** Converte "1.4 MiB"/"350 KB" em bytes — usado pelos resolvedores. */
 function numSize(text) {
     const m = /([\d.,]+)\s*([KMGT]?)i?B/i.exec(text || '');
     if (!m)

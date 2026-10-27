@@ -26,7 +26,7 @@ export function alive(pid: number): boolean {
             if (state === 'Z' || state === 'X')
                 return false;
         }
-        catch { /* sem procfs */ }
+        catch { }
     }
     return true;
 }
@@ -120,7 +120,7 @@ function linuxBoot() {
     try {
         hz = Number(cp.execFileSync('getconf', ['CLK_TCK'], { encoding: 'utf8' }).trim()) || 100;
     }
-    catch { /* padrão */ }
+    catch { }
     return bootAt;
 }
 
@@ -147,17 +147,17 @@ function listLinux(mem = false): Proc[] {
             try {
                 exe = fs.readlinkSync(`/proc/${n}/exe`).replace(/ \(deleted\)$/, '');
             }
-            catch { /* sem permissão */ }
+            catch { }
             let rss = 0;
             if (mem) {
                 try {
                     rss = Number(fs.readFileSync(`/proc/${n}/statm`, 'utf8').split(' ')[1] || 0) * 4096;
                 }
-                catch { /* ignore */ }
+                catch { }
             }
             out.push({ pid, ppid, exe, created: start, mem: rss });
         }
-        catch { /* processo sumiu */ }
+        catch { }
     }
     return out;
 }
@@ -218,7 +218,7 @@ export async function killTree(pids: number[], onDone?: () => void): Promise<voi
     try {
         procs = await list();
     }
-    catch { /* ignore */ }
+    catch { }
     for (const p of [...all])
         for (const c of children(p, procs))
             all.add(c);
@@ -226,7 +226,7 @@ export async function killTree(pids: number[], onDone?: () => void): Promise<voi
         try {
             process.kill(pid, 'SIGTERM');
         }
-        catch { /* ignore */ }
+        catch { }
     }
     const t = setTimeout(() => {
         for (const pid of all) {
@@ -234,7 +234,7 @@ export async function killTree(pids: number[], onDone?: () => void): Promise<voi
                 try {
                     process.kill(pid, 'SIGKILL');
                 }
-                catch { /* ignore */ }
+                catch { }
             }
         }
         onDone?.();

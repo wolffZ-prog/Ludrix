@@ -120,7 +120,7 @@ function installedFonts(): string[] {
             }
         }
     }
-    catch { /* sem fontes */ }
+    catch { }
     return [...names];
 }
 
@@ -128,7 +128,7 @@ function unlink(p: string) {
     try {
         fs.rmSync(p, { force: true });
     }
-    catch { /* ignore */ }
+    catch { }
 }
 
 export class CustomUX {
@@ -475,6 +475,6 @@ export class CustomUX {
         try {
             fs.rmSync(DIR, { recursive: true, force: true });
         }
-        catch { /* ignore */ }
+        catch { }
     }
 }

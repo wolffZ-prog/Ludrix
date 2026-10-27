@@ -219,10 +219,10 @@ export class Repack {
                     try {
                         out[d] = fs.statSync(d).mtimeMs / 1000;
                     }
-                    catch { /* ignore */ }
+                    catch { }
                 }
             }
-            catch { /* ignore */ }
+            catch { }
         }
         return out;
     }
@@ -283,7 +283,7 @@ export class Repack {
                 try {
                     rd = fs.realpathSync(d);
                 }
-                catch { /* ignore */ }
+                catch { }
                 if (own && rd === own)
                     continue;
                 const n = path.basename(d).toLowerCase();

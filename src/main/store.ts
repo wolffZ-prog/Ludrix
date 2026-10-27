@@ -1,10 +1,3 @@
-/**
- * store.ts — espelha app/core/store.py: DEFAULT_CONFIG, coercao de tipos,
- * leitura/escrita de data/config.json e data/library.json.
- *
- * As chaves e os valores-padrao sao os mesmos do original, entao um data/
- * gerado pelo Ludrix em Python abre aqui sem migracao.
- */
 import fs from 'node:fs';
 import path from 'node:path';
 import * as P from './paths';
@@ -12,7 +5,6 @@ import * as util from './util';
 const RUNTIME: { frameless: boolean | null; acrylic: boolean } = { frameless: null, acrylic: false };
 function setRuntimeFrameless(v: boolean) { RUNTIME.frameless = Boolean(v); }
 function setRuntimeAcrylic(v: boolean) { RUNTIME.acrylic = Boolean(v); }
-/** Os padroes de fabrica, na mesma ordem do dicionario Python. */
 const DEFAULT_CONFIG = {
     native: true,
     theme: 'dark',
@@ -241,11 +233,8 @@ function coerce(key, value, def) {
     return value;
 }
 class Store {
-    /** Configuracao completa (150 chaves de DEFAULT_CONFIG). */
     config: Record<string, any>;
-    /** Biblioteca: chave `local:<slug>` -> dados do jogo. */
     library: Record<string, any>;
-    /** Chaves que vieram com tipo errado e foram corrigidas na carga. */
     configFixed: string[] = [];
     dirty: Set<string> = new Set();
     timer: any = null;
@@ -272,7 +261,7 @@ class Store {
         const cur = (0, util.readJson)(Store.SCHEMA_FILE(), null) as any;
         const had = cur && Number.isFinite(Number(cur.version)) ? Number(cur.version) : (fs.existsSync(P.CONFIG_FILE) ? 0 : Store.SCHEMA);
         let app = '';
-        try { app = String(require('./updates').currentVersion().version || ''); } catch { /* sem version.json em dev */ }
+        try { app = String(require('./updates').currentVersion().version || ''); } catch { }
         if (had > Store.SCHEMA) {
             this.schemaInfo = { version: had, app: String(cur.app || ''), at: Number(cur.at || 0), newer: true };
             return;
@@ -296,7 +285,6 @@ class Store {
                 this.markDirty('library');
         }
     }
-    /** Aplica as migracoes de "look" (versao de aparencia) do original. */
     migrateLook() {
         if (this.config.layout === 'console')
             this.config.layout = '';
@@ -363,7 +351,6 @@ class Store {
     get(key) {
         return this.config[key];
     }
-    /** Aplica um patch no config validando contra DEFAULT_CONFIG. */
     setConfig(patch) {
         const changed = [];
         for (const [k, v] of Object.entries(patch || {})) {
@@ -403,7 +390,6 @@ class Store {
         this.markDirty('library');
         return info;
     }
-    /** Um jogo conta como instalado quando o executavel/pasta existe. */
     isInstalled(key) {
         const i = this.library[key];
         if (!i)
@@ -415,11 +401,9 @@ class Store {
                 return true;
         }
         catch {
-            /* ignore */
         }
         return false;
     }
-    /** Pasta de jogos efetiva (configurada ou games/). */
     gamesDir() {
         const g = String(this.config.games_dir || '').trim();
         return g || P.GAMES;
@@ -433,7 +417,6 @@ class Store {
             this.flush();
         }, 400);
     }
-    /** Escreve agora (usado antes de fechar/exportar). */
     frozen = false;
     freeze() {
         this.frozen = true;
@@ -464,7 +447,6 @@ class Store {
         else
             (0, util.writeJson)(P.LIBRARY_FILE, this.library);
     }
-    /** Config publicado para a interface (sem segredos). */
     publicConfig(extra: any = {}) {
         const c = { ...this.config };
         c.games_dir_effective = this.gamesDir();

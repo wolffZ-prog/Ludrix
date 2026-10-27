@@ -1,11 +1,3 @@
-/**
- * hosts.ts — porte de app/core/hosts.py.
- *
- * Transforma um link de hospedeiro (MEGA, Google Drive, MediaFire, Pixeldrain,
- * Gofile, 1fichier, Dropbox, buzzheavier, qiwi, itch.io) em um link direto de
- * download. A criptografia do MEGA (AES-128-CTR com contador de 8 bytes)
- * usa o `node:crypto` nativo, no lugar do pycryptodomex.
- */
 import crypto from 'node:crypto';
 import * as http from './http';
 import * as log from './log';
@@ -15,7 +7,6 @@ class HostError extends Error {
         this.name = 'HostError';
     }
 }
-/* ------------------------------ utilidades ------------------------------ */
 function b64urlDecode(s) {
     const t = String(s).replace(/-/g, '+').replace(/_/g, '/');
     return Buffer.from(t + '='.repeat((4 - (t.length % 4)) % 4), 'base64');
@@ -26,7 +17,6 @@ function a32(b) {
         out.push(b.readUInt32BE(i));
     return out;
 }
-/* -------------------------------- MEGA -------------------------------- */
 const MEGA_API = 'https://g.api.mega.co.nz/cs';
 function megaKeys(key) {
     if (key.length >= 8) {
@@ -58,11 +48,6 @@ function megaAttr(attrB64, aesKey) {
         return {};
     }
 }
-/**
- * Descriptador AES-128-CTR do MEGA. O vetor de contador e
- * `iv8 || contador de bloco (64 bits, big-endian)` — exatamente como o
- * `Counter.new(64, prefix=iv8, initial_value=offset // 16)` do Python.
- */
 function megaDecryptor(aesKey, iv8) {
     return (chunk, offset) => {
         if (!chunk.length)
@@ -171,7 +156,6 @@ async function megaList(url, s = http.shared) {
         throw new HostError('MEGA: nenhum arquivo nessa pasta');
     return out;
 }
-/** Pastas do MEGA nao dao link direto: e preciso pedir um por arquivo. */
 async function megaFolderLink(res, s = http.shared) {
     const info = JSON.parse(res.note || '{}');
     const g = await megaApi(s, { a: 'g', g: 1, n: info.h }, { n: info.n });
@@ -179,7 +163,6 @@ async function megaFolderLink(res, s = http.shared) {
         throw new HostError('MEGA nao liberou o link desse arquivo (cota de transferencia?)');
     return String(g.g);
 }
-/* ----------------------------- Google Drive ----------------------------- */
 const GD_ID_RE = /(?:\/file\/d\/|\/uc\?[^#]*id=|\/open\?[^#]*id=|\/d\/|[?&]id=)([A-Za-z0-9_-]{20,})/;
 async function gdrive(url, s) {
     const m = GD_ID_RE.exec(url);
@@ -217,7 +200,6 @@ async function gdrive(url, s) {
         throw new HostError('Google Drive: o arquivo nao e publico (pede login)');
     throw new HostError('Google Drive: nao achei o link de download nessa pagina');
 }
-/* -------------------------------- Gofile -------------------------------- */
 const GOFILE_SALT = '12af056dacea0b';
 let gofileTok = null;
 async function gofileToken(s) {
@@ -298,7 +280,6 @@ async function gofileList(url, s = http.shared) {
         throw new HostError('Gofile: a pasta esta vazia (ou so tem subpastas)');
     return out;
 }
-/* ------------------------------- MediaFire ------------------------------- */
 async function mediafire(url, s) {
     const r = await s.request(url, { timeout: 60_000 });
     const t = await r.text();
@@ -328,7 +309,6 @@ async function mediafire(url, s) {
         host: 'MediaFire',
     };
 }
-/* ------------------------------ Pixeldrain ------------------------------ */
 async function pixeldrain(url, s) {
     const m = /pixeldrain\.com\/(u|l|api\/file)\/([A-Za-z0-9]+)/.exec(url);
     if (!m)
@@ -356,7 +336,6 @@ async function pixeldrain(url, s) {
             host: 'Pixeldrain',
         }];
 }
-/* ------------------------------- 1fichier ------------------------------- */
 async function fichier(url, s) {
     const r = await s.request(url, { timeout: 60_000 });
     const t = await r.text();
@@ -385,7 +364,6 @@ async function fichier(url, s) {
         host: '1fichier',
     };
 }
-/* ------------------------- Dropbox / buzzheavier ------------------------- */
 function dropbox(url, s) {
     const u = url.replace(/[?&]dl=\d/, '');
     return direct(u + (u.includes('?') ? '&' : '?') + 'dl=1', s, 'Dropbox');
@@ -415,7 +393,6 @@ async function qiwi(url, s) {
     const fn = title ? title.split(' - ')[0].trim() : m[1];
     return direct(`https://spyderrock.com/${m[1]}.${ext || 'zip'}`, s, 'qiwi', fn);
 }
-/* -------------------------------- itch.io -------------------------------- */
 const ITCH_RE = /^https?:\/\/([a-z0-9-]+)\.itch\.io\/([a-z0-9-]+)/i;
 const ITCH_OS = { windows8: 'windows', apple: 'mac', tux: 'linux', android: 'android' };
 async function itchList(url, s = http.shared) {
@@ -484,7 +461,6 @@ async function itchList(url, s = http.shared) {
     }
     return out;
 }
-/** O link do itch.io e temporario: e preciso troca-lo por um definitivo. */
 async function itchFinal(res, s = http.shared) {
     const csrf = (res.headers || {})['X-Itch-Csrf'] || '';
     const r = await s.post(res.url, new URLSearchParams({ csrf_token: csrf }), { timeout: 60_000 });
@@ -495,7 +471,6 @@ async function itchFinal(res, s = http.shared) {
     fin.note = res.note;
     return fin;
 }
-/* ------------------------------- diretos ------------------------------- */
 async function direct(url, s = http.shared, host = '', name = '') {
     const r = await s.request(url, { timeout: 60_000 });
     const ct = (r.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
@@ -511,7 +486,6 @@ async function direct(url, s = http.shared, host = '', name = '') {
         host: host || (0, http.hostOf)(url),
     };
 }
-/* ------------------------------- fachada ------------------------------- */
 const KNOWN = [
     ['drive.google.com', 'Google Drive'], ['docs.google.com', 'Google Drive'],
     ['gofile.io', 'Gofile'], ['mega.nz', 'MEGA'], ['mega.co.nz', 'MEGA'],
@@ -529,7 +503,6 @@ function knownHost(url) {
 function isTorrentUrl(url) {
     return url.startsWith('magnet:') || /\.torrent(\?|$)/i.test(url);
 }
-/** Resolve um link (ou lista de links) em downloads diretos. */
 async function resolve(url, s = http.shared, depth = 0) {
     const u = String(url || '').trim();
     if (!/^https?:\/\//i.test(u))
@@ -572,7 +545,6 @@ async function resolve(url, s = http.shared, depth = 0) {
         throw new HostError(`${knownHost(u) || h}: o site mudou e nao consegui achar o arquivo`);
     }
 }
-/** Transforma um link adiado (itch.io, pasta MEGA) no link final. */
 async function finalize(res, s = http.shared) {
     if (res.host === 'itch.io' && res.lazy)
         return itchFinal(res, s);

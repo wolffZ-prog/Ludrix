@@ -164,7 +164,7 @@ export class ImageCache {
                         try {
                             this.onThumb(key.slice(2));
                         }
-                        catch { /* nada */ }
+                        catch { }
                     }
                 }
                 return p;

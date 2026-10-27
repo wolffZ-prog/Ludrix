@@ -57,7 +57,7 @@ export class MetaHub {
             try {
                 keys = keys.concat(this.be.emu.scanAll().map((r: any) => r.key));
             }
-            catch { /* nada */ }
+            catch { }
             let n = 0;
             for (const key of new Set(keys)) {
                 const m = this.meta.get(key);
@@ -72,7 +72,7 @@ export class MetaHub {
                 try {
                     await this.covers.consoleHero(probe, title.replace(/\(.*?\)|\[.*?\]/g, '').trim(), m.system, String(m.year || ''));
                 }
-                catch { /* nada */ }
+                catch { }
                 const fields: any = { hero_checked: Math.trunc(Date.now() / 1000) };
                 if (probe.hero_url) {
                     fields.hero_url = probe.hero_url;
@@ -157,7 +157,7 @@ export class MetaHub {
             try {
                 await this.be.cat.filesFor(e);
             }
-            catch { /* nada */ }
+            catch { }
             const url = this.metaCoverUrl(m, false) || e.cover;
             c = await this.images.cover(key, url);
             if (c && !this.images.cachedThumb(key))
@@ -186,7 +186,7 @@ export class MetaHub {
             try {
                 await this.shotPath(key, i);
             }
-            catch { /* nada */ }
+            catch { }
         }
     }
 
@@ -428,7 +428,7 @@ export class MetaHub {
             try {
                 await this.thumbPath(key);
             }
-            catch { /* nada */ }
+            catch { }
             this.be.push({ type: 'meta_ready', key, has_cover: Boolean(m.cover_url || m.grid || m.wiki_image), cv: this.cv(key, m),
                 genres: (m.genres || []).slice(0, 3), year: m.year || '', creator: m.developer || '',
                 found: (m.source || []).some((x: string) => x !== 'web'), title, mine: this.mine(key) });
@@ -836,7 +836,7 @@ export class MetaHub {
             try {
                 keys = keys.concat(this.be.emu.scanAll().map((r: any) => r.key));
             }
-            catch { /* nada */ }
+            catch { }
             keys = [...new Set(keys)];
             let n = 0;
             try {

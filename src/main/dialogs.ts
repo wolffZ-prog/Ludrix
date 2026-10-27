@@ -1,9 +1,3 @@
-/**
- * dialogs.ts — seletores nativos de arquivo/pasta.
- *
- * No Python isso era tkinter (escondido atras de uma janela). Aqui usamos os
- * dialogos nativos do Electron, que nao precisam de nenhuma janela auxiliar.
- */
 import * as electron from 'electron';
 let getWindow = () => null;
 function bindWindow(fn) {
@@ -66,7 +60,6 @@ async function pickSave(defaultName, kind = 'any') {
     const res = win ? await electron.dialog.showSaveDialog(win, opts) : await electron.dialog.showSaveDialog(opts);
     return res.canceled || !res.filePath ? null : res.filePath;
 }
-/** Abre um caminho no gerenciador de arquivos (e seleciona, se possivel). */
 function openInShell(target) {
     try {
         if (target.startsWith('http://') || target.startsWith('https://'))
@@ -75,7 +68,6 @@ function openInShell(target) {
             electron.shell.openPath(target);
     }
     catch {
-        /* ignore */
     }
 }
 

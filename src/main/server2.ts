@@ -13,28 +13,21 @@ import * as sourceGen from './sourceGen';
 import * as util from './util';
 Object.defineProperty(exports, "slug", { enumerable: true, get: function () { return util.slug; } });
 let frontRef = null;
-/** Uma unica fachada por backend. */
 function frontFor(be) {
     if (!frontRef || frontRef.be !== be)
         frontRef = { be, front: new storeFront.StoreFront(be) };
     return frontRef.front;
 }
-/* =========================== varredura de pasta =========================== */
-/* ================================== GET ================================== */
 async function routeGet2(res, p, q, be, port) {
     const front = frontFor(be);
-    // ---- Store por fontes ----
     if (p === '/api/repos')
         return (0, server.sendJson)(res, front.repoList()), true;
-    // ---- emulacao / ROMs ----
     if (p === '/api/emulation')
         return (0, server.sendJson)(res, front.emulationStatus()), true;
     if (p === '/api/emulator/guide')
         return (0, server.sendJson)(res, front.emulatorGuide(String(q.get('system') || 'nes'))), true;
-    // ---- downloads ----
     if (p === '/api/queue')
         return (0, server.sendJson)(res, front.queuePayload()), true;
-    // ---- mods / saves / dependencias ----
     if (p === '/api/mods')
         return (0, server.sendJson)(res, { ...be.mods.status(), games: be.gmods.summary() }), true;
     if (p.startsWith('/api/mods/game/'))
@@ -51,7 +44,6 @@ async function routeGet2(res, p, q, be, port) {
         return (0, server.sendJson)(res, await be.savesInfo(decodeURIComponent(p.slice(11)), Boolean(q.get('deep')))), true;
     if (p === '/api/minecraft')
         return (0, server.sendJson)(res, await be.central.minecraftStatus(q.get('refresh') === '1')), true;
-    // ---- importacao ----
     if (p === '/api/import/launchers')
         return (0, server.sendJson)(res, be.imp.importLaunchers()), true;
     if (p === '/api/import/poll')
@@ -60,7 +52,6 @@ async function routeGet2(res, p, q, be, port) {
         return (0, server.sendFile)(res, be.imp.importCoverPath(String(q.get('p') || '')), true), true;
     if (p === '/api/site_search')
         return (0, server.sendJson)(res, await front.siteSearch(String(q.get('q') || ''))), true;
-    // ---- sistema ----
     if (p === '/api/integrity')
         return (0, server.sendJson)(res, front.integrityStatus()), true;
     if (p === '/api/updates')
@@ -78,10 +69,8 @@ async function routeGet2(res, p, q, be, port) {
     void port;
     return false;
 }
-/* ================================== POST ================================== */
 async function routePost2(res, p, b, be, getWindow, port) {
     const front = frontFor(be);
-    /* ------------------------- Store por fontes ------------------------- */
     if (p === '/api/repos/links')
         return (0, server.sendJson)(res, await front.repoLinks(String(b?.id || ''))), true;
     if (p === '/api/repos/add')
@@ -92,7 +81,6 @@ async function routePost2(res, p, b, be, getWindow, port) {
         return (0, server.sendJson)(res, front.repoRemove(b?.id)), true;
     if (p === '/api/repos/toggle')
         return (0, server.sendJson)(res, front.repoToggle(b?.id, Boolean(b?.enabled))), true;
-    /* ----------------------------- downloads ----------------------------- */
     if (p === '/api/link/preview')
         return (0, server.sendJson)(res, await front.linkPreview(String(b?.url || ''))), true;
     if (p === '/api/link/download') {
@@ -112,7 +100,6 @@ async function routePost2(res, p, b, be, getWindow, port) {
         return (0, server.sendJson)(res, await front.queueAction(String(b?.action || ''), b?.key)), true;
     if (p === '/api/cancel')
         return (0, server.sendJson)(res, be.jobs.cancel(String(b?.key || ''), Boolean(b?.pause))), true;
-    /* ---------------------------- emuladores ---------------------------- */
     if (p === '/api/emulator/install')
         return (0, server.sendJson)(res, front.installEmulator(String(b?.id || ''))), true;
     if (p === '/api/emulator/update')
@@ -139,7 +126,6 @@ async function routePost2(res, p, b, be, getWindow, port) {
         return (0, server.sendJson)(res, await front.checkEmulatorUpdates()), true;
     if (p === '/api/game/emulator')
         return (0, server.sendJson)(res, be.setGameEmulator(String(b?.key || ''), b?.emulator || null)), true;
-    /* -------------------------------- ROMs -------------------------------- */
     if (p === '/api/rom/add')
         return (0, server.sendJson)(res, await front.addRomFile(b?.path || null, b?.system || null, b?.title || null, b?.emulator || null, Boolean(b?.add_folder))), true;
     if (p === '/api/rom/preview')
@@ -154,7 +140,6 @@ async function routePost2(res, p, b, be, getWindow, port) {
         return (0, server.sendJson)(res, front.removeRomDir(String(b?.system || ''), String(b?.folder || ''))), true;
     if (p === '/api/rom_dest')
         return (0, server.sendJson)(res, front.setRomDest(String(b?.system || ''), b?.folder || null)), true;
-    /* ---------------------------- jogos rapidos ---------------------------- */
     if (p === '/api/flash/install')
         return (0, server.sendJson)(res, be.flashInstall(b?.id ?? null)), true;
     if (p === '/api/flash/remove') {
@@ -177,7 +162,6 @@ async function routePost2(res, p, b, be, getWindow, port) {
         return (0, server.sendJson)(res, be.flash.toggleFav(String(b?.id || ''))), true;
     if (p === '/api/flash/cover')
         return (0, server.sendJson)(res, await be.flashCover(String(b?.id || ''), b?.path || null)), true;
-    /* -------------------------------- mods -------------------------------- */
     if (p === '/api/mods/game/install')
         return (0, server.sendJson)(res, await be.modInstall(String(b?.key || ''), b?.path || null, String(b?.title || ''), String(b?.target || ''), String(b?.kind || ''))), true;
     if (p === '/api/mods/loader')
@@ -196,7 +180,6 @@ async function routePost2(res, p, b, be, getWindow, port) {
     }
     if (p === '/api/tools/launch')
         return (0, server.sendJson)(res, be.mods.launch(String(b?.id || ''))), true;
-    /* ------------------------------- saves ------------------------------- */
     if (p === '/api/saves/import')
         return (0, server.sendJson)(res, await be.savesImport(String(b?.key || ''), b?.source || null, b?.dest || null)), true;
     if (p === '/api/saves/import_folder')
@@ -207,14 +190,12 @@ async function routePost2(res, p, b, be, getWindow, port) {
         return (0, server.sendJson)(res, await be.savesExport(String(b?.key || ''), String(b?.dir || ''))), true;
     if (p === '/api/saves/restore')
         return (0, server.sendJson)(res, await be.saves.restoreBackup(String(b?.key || ''), String(b?.backup || ''), String(b?.dir || ''))), true;
-    /* --------------------------- dependencias --------------------------- */
     if (p === '/api/redist/install')
         return (0, server.sendJson)(res, await be.central.redistInstall(String(b?.id || ''))), true;
     if (p === '/api/redist/bundle')
         return (0, server.sendJson)(res, await be.central.redistBundle(String(b?.id || ''))), true;
     if (p === '/api/redist/open')
         return (0, server.sendJson)(res, be.openPath(P.REDISTS)), true;
-    /* ----------------------------- importacao ----------------------------- */
     if (p === '/api/import/launchers')
         return (0, server.sendJson)(res, be.imp.importLaunchers()), true;
     if (p === '/api/import/scan')
@@ -229,7 +210,6 @@ async function routePost2(res, p, b, be, getWindow, port) {
         return (0, server.sendJson)(res, await be.imp.exportSteam(b?.user || null, Array.isArray(b?.keys) ? b.keys : null)), true;
     if (p === '/api/shortcut/desktop')
         return (0, server.sendJson)(res, desktopShortcut(be, String(b?.key || ''))), true;
-    /* ------------------------------- pastas ------------------------------- */
     if (p === '/api/folder/scan')
         return (0, server.sendJson)(res, await be.imp.folderScan(b?.path ?? null, String(b?.mode || 'windows'))), true;
     if (p === '/api/folder/apply')
@@ -250,7 +230,6 @@ async function routePost2(res, p, b, be, getWindow, port) {
     }
     if (p === '/api/dirs/ignore')
         return (0, server.sendJson)(res, be.imp.scanIgnore(Array.isArray(b?.exes) ? b.exes : [])), true;
-    /* ----------------------------- atualizacoes ----------------------------- */
     if (p === '/api/updates/check')
         return (0, server.sendJson)(res, await front.updateCheck()), true;
     if (p === '/api/updates/download')
@@ -263,34 +242,26 @@ async function routePost2(res, p, b, be, getWindow, port) {
         return (0, server.sendJson)(res, await front.updatePickRestore(Boolean(b?.allow_same))), true;
     if (p === '/api/updates/ack')
         return (0, server.sendJson)(res, front.updateAck()), true;
-    /* ---------------------------- autorreparo ---------------------------- */
     if (p === '/api/integrity')
         return (0, server.sendJson)(res, front.integrityStatus()), true;
     if (p === '/api/integrity/repair')
         return (0, server.sendJson)(res, front.integrityRepair()), true;
-    /* ---------------------------- Modo Console ---------------------------- */
     if (p === '/api/console/swap')
         return (0, server.sendJson)(res, be.consoleSwap(String(b?.to || 'console'), Boolean(b?.force))), true;
-    /* ------------------------- Proton / Linux ------------------------- */
     if (p === '/api/linux')
         return (0, server.sendJson)(res, be.linuxStatus()), true;
     if (p === '/api/linux/prepare')
         return (0, server.sendJson)(res, be.linuxPrepare()), true;
     if (p === '/api/linux/prefix/remove')
         return (0, server.sendJson)(res, be.linuxPrefixRemove(b?.key || null)), true;
-    /* --------------------------- terminal embutido --------------------------- */
     if (p === '/api/terminal')
         return (0, server.sendJson)(res, await be.terminal.run(String(b?.line || ''), String(b?.source || 'terminal'))), true;
-    /* ------------------------------ opcionais ------------------------------ */
-    /* ------------------------------- repacks ------------------------------- */
     if (p === '/api/repack/run')
         return (0, server.sendJson)(res, be.repack.run(String(b?.key || ''), Boolean(b?.force))), true;
     if (p === '/api/finish_repack')
         return (0, server.sendJson)(res, be.repack.finish(String(b?.key || ''))), true;
-    /* --------------------------- compatibilidade --------------------------- */
     if (p === '/api/compat/layer')
         return (0, server.sendJson)(res, be.compatLayer(String(b?.key || ''), String(b?.layer || ''))), true;
-    /* ------------------------------- detectar ------------------------------- */
     if (p === '/api/repos/gen/scan') {
         const dir = String(b?.dir || '').trim() || (await dialogs.pickFolder(String(b?.initial || '') || P.ROOT)) || '';
         if (!dir)
@@ -318,7 +289,6 @@ async function routePost2(res, p, b, be, getWindow, port) {
     }
     if (p === '/api/detect')
         return (0, server.sendJson)(res, await front.detect(String(b?.q || ''))), true;
-    /* ------------------------------ minecraft ------------------------------ */
     if (p === '/api/minecraft/add')
         return (0, server.sendJson)(res, be.central.minecraftAdd(String(b?.id || ''), b?.path || null)), true;
     if (p === '/api/minecraft/locate')
@@ -327,12 +297,10 @@ async function routePost2(res, p, b, be, getWindow, port) {
         return (0, server.sendJson)(res, be.central.minecraftSetLauncher(String(b?.id || ''), b?.path || null)), true;
     if (p === '/api/minecraft/open')
         return (0, server.sendJson)(res, be.central.minecraftOpen(String(b?.id || ''), String(b?.where || 'site'))), true;
-    /* ---------------------------- limpeza / jobs ---------------------------- */
     if (p === '/api/downloads/clean')
         return (0, server.sendJson)(res, front.cleanDownloads()), true;
     return false;
 }
-/** Reinicia o processo, aplicando uma atualizacao pendente se houver. */
 function relaunch(getWindow, port) {
     void port;
     try {
@@ -352,12 +320,6 @@ function relaunch(getWindow, port) {
 
 export { frontFor, routeGet2, routePost2, relaunch, emulation };
 
-/* --------------------- atalho na area de trabalho --------------------- */
-/**
- * Cria um .lnk na area de trabalho apontando para o jogo.
- * O Python abria um PowerShell para falar com o WScript.Shell; aqui o
- * proprio Electron grava o atalho -- mesmo resultado, sem processo externo.
- */
 function desktopShortcut(be, key) {
     const info = be.store.lib(key) || {};
     const exe = String(info.exe || '');

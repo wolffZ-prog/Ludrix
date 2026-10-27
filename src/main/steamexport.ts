@@ -129,7 +129,7 @@ export function steamRoot(): string | null {
             if (m && exists(m[1].trim()))
                 return path.normalize(m[1].trim());
         }
-        catch { /* nada */ }
+        catch { }
         for (const c of [path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'Steam'), path.join(process.env.ProgramFiles || 'C:\\Program Files', 'Steam')])
             if (exists(path.join(c, 'userdata')))
                 return c;
@@ -178,7 +178,7 @@ export function users(root: string): any[] {
                 const m = /"PersonaName"\s+"([^"]*)"/.exec(fs.readFileSync(lc, 'utf8'));
                 name = m ? m[1] : '';
             }
-            catch { /* nada */ }
+            catch { }
         }
         const mts = [lc, path.join(cfg, 'shortcuts.vdf'), cfg].filter(exists).map((p) => fs.statSync(p).mtimeMs / 1000);
         out.push({ id: n, name: name || n, dir: d, mtime: mts.length ? Math.max(...mts) : 0, shortcuts: exists(path.join(cfg, 'shortcuts.vdf')) ? 1 : 0 });
@@ -240,7 +240,7 @@ export function exportShortcuts(userDir: string, games: any[]): any {
             try {
                 fs.unlinkSync(path.join(cfg, old));
             }
-            catch { /* nada */ }
+            catch { }
         }
     }
     const isOurs = (e: any) => {

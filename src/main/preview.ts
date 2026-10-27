@@ -79,7 +79,6 @@ function half(x0: number, W: number, H: number, scheme: 'dark' | 'light', vars: 
     return parts.join('');
 }
 
-/** Prévia desenhada do tema (SVG), igual à montagem do Python com PIL. */
 export function themePreviewSvg(themeId: string, accentCfg: string, cfg: Record<string, any>): string | null {
     let scheme: 'dark' | 'light' | 'split' = 'dark';
     let accent = String(accentCfg || '');

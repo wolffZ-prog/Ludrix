@@ -304,14 +304,14 @@ export async function zip(be: any): Promise<any> {
             z.addFile('ludrix.log', buf);
         }
     }
-    catch { /* sem log */ }
+    catch { }
     z.addFile('config.json', Buffer.from(JSON.stringify(sanitizeConfig(be.store.config), null, 1), 'utf8'));
     for (const f of ['schema.json', 'boot.json', 'instance.json']) {
         try {
             if (fs.existsSync(path.join(P.DATA, f)))
                 z.addLocalFile(path.join(P.DATA, f));
         }
-        catch { /* pula */ }
+        catch { }
     }
     const repos = (be.repos?.list?.() || []).map((r: any) => ({ id: r.id, type: r.type, name: r.name, enabled: r.enabled, url: String(r.url || '').replace(/[?#].*$/, ''), count: r.count, error: r.error }));
     z.addFile('fontes.json', Buffer.from(JSON.stringify(repos, null, 1), 'utf8'));
@@ -328,6 +328,6 @@ export async function zip(be: any): Promise<any> {
     try {
         electron.shell.showItemInFolder(out);
     }
-    catch { /* sem shell */ }
+    catch { }
     return { ok: true, path: out, size: fs.statSync(out).size };
 }

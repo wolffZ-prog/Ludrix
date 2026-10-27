@@ -477,7 +477,7 @@ class Source {
         try {
             fs.rmSync(this.tmp, { recursive: true, force: true });
         }
-        catch { /* nada */ }
+        catch { }
     }
     db(name: string): Buffer | null {
         if (this.zip) {

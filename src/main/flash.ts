@@ -148,7 +148,7 @@ export class FlashManager {
                     if (await this.coverPath(gid) && this.onCover)
                         this.onCover(gid);
                 }
-                catch { /* ignore */ }
+                catch { }
                 this.coverSeen.delete(gid);
             }
         }
@@ -356,7 +356,7 @@ export class FlashManager {
         try {
             NI = require('electron').nativeImage;
         }
-        catch { /* ignore */ }
+        catch { }
         for (const u of urls) {
             try {
                 const r = await this.s.get(u, { timeout: 20000 });
@@ -414,12 +414,12 @@ export class FlashManager {
         try {
             have = new Set(fs.readdirSync(GAMES));
         }
-        catch { /* ignore */ }
+        catch { }
         let covers = new Set<string>();
         try {
             covers = new Set(fs.readdirSync(COVERS).map((x) => path.parse(x).name));
         }
-        catch { /* ignore */ }
+        catch { }
         for (const g of this.presets.games) {
             const st = scores[g.id] || {};
             games.push({ ...g, installed: this.isInstalled(g, have), plays: st.plays || 0, last: st.last || 0, fav: Boolean(st.fav),
@@ -453,7 +453,7 @@ export class FlashManager {
                 try {
                     await this.coverPath(g.id);
                 }
-                catch { /* ignore */ }
+                catch { }
             }
         }
     }

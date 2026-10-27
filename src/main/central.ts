@@ -214,7 +214,7 @@ export class WinePrefix {
                     }
                 }
             }
-            catch { /* nada */ }
+            catch { }
             this.reg = reg;
         }
         return this.reg;
@@ -268,7 +268,7 @@ export class WinePrefix {
                     if (hit)
                         nxt = path.join(cur, hit);
                 }
-                catch { /* nada */ }
+                catch { }
             }
             cur = nxt;
         }
@@ -587,7 +587,7 @@ export function glob(pattern: string, recursive = false): string[] {
                             if (e.isDirectory())
                                 stack.push(path.join(d, e.name));
                     }
-                    catch { /* nada */ }
+                    catch { }
                 }
             }
             else if (/[*?[]/.test(seg)) {
@@ -597,7 +597,7 @@ export function glob(pattern: string, recursive = false): string[] {
                         if (re.test(e))
                             next.push(path.join(b, e));
                 }
-                catch { /* nada */ }
+                catch { }
             }
             else {
                 const p = path.join(b, seg);
@@ -818,11 +818,11 @@ export function javaInfo(d: string): any {
     try {
         vers = fs.readdirSync(path.join(d, 'versions'), { withFileTypes: true }).filter((x) => x.isDirectory()).length;
     }
-    catch { /* nada */ }
+    catch { }
     try {
         mods = fs.readdirSync(path.join(d, 'mods'), { withFileTypes: true }).filter((x) => x.isFile() && x.name.toLowerCase().endsWith('.jar')).length;
     }
-    catch { /* nada */ }
+    catch { }
     return { dir: d, versions: vers, mods };
 }
 

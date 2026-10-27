@@ -9,7 +9,6 @@ const PUBLIC_KEY = '0271846c4fa9e6b47bd2b2fc89dd282e30531abe9ce1b8d522b44836761a
 const SIG_NAME = 'signature.sig';
 const WIN = process.platform === 'win32';
 
-/* ------------------------------ zip mínimo ------------------------------ */
 type ZEntry = { name: string; method: number; csize: number; usize: number; offset: number; crc: number; mode: number };
 
 export class Zip {
@@ -114,7 +113,7 @@ export class Zip {
         if (!WIN) {
             const e = this.entries.find((x) => x.name === name);
             if (e && e.mode & 0o111)
-                try { fs.chmodSync(target, e.mode | 0o100); } catch { /* ignore */ }
+                try { fs.chmodSync(target, e.mode | 0o100); } catch { }
         }
         return data;
     }
@@ -137,7 +136,7 @@ export class Zip {
         try {
             fs.closeSync(this.fd);
         }
-        catch { /* ignore */ }
+        catch { }
     }
 }
 
@@ -158,7 +157,6 @@ function crc32(buf: Buffer) {
     return (crc ^ 0xffffffff) >>> 0;
 }
 
-/* ------------------------------ assinatura ------------------------------ */
 export function sha256Hex(b: Buffer) {
     return nodeCrypto.createHash('sha256').update(b).digest('hex');
 }
@@ -200,7 +198,6 @@ export function zipSignatureStatus(z: Zip): 'ok' | 'none' | 'bad' {
     }
 }
 
-/* ------------------------------ utilidades ------------------------------ */
 export function updatesDir(root: string) {
     return path.join(root, 'data', 'updates');
 }
@@ -222,7 +219,7 @@ function killPid(pid: number) {
         else
             process.kill(pid, 'SIGKILL');
     }
-    catch { /* ignore */ }
+    catch { }
 }
 function killStrayLaunchers(root: string) {
     if (!WIN)
@@ -240,7 +237,7 @@ function killStrayLaunchers(root: string) {
                 killPid(Number(pid));
         }
     }
-    catch { /* ignore */ }
+    catch { }
 }
 function sleep(ms: number) {
     const sab = new SharedArrayBuffer(4);
@@ -253,7 +250,7 @@ function rmtreeRetry(p: string, tries = 8) {
             if (!fs.existsSync(p))
                 return;
         }
-        catch { /* tenta de novo */ }
+        catch { }
         sleep(400 * (i + 1));
     }
     fs.rmSync(p, { recursive: true, force: true });
@@ -266,7 +263,7 @@ export function writeResult(root: string, data: any) {
         fs.mkdirSync(updatesDir(root), { recursive: true });
         fs.writeFileSync(path.join(updatesDir(root), 'last_result.json'), JSON.stringify(data), 'utf8');
     }
-    catch { /* ignore */ }
+    catch { }
 }
 export function vtuple(v: any): number[] {
     const nums = (String(v || '0').match(/\d+/g) || []).slice(0, 3).map(Number);
@@ -298,7 +295,6 @@ export function notesFor(m: any, fromVer: string) {
     return parts.length ? parts.join('\n\n') : String(m.changelog || '').trim();
 }
 
-/* -------------------------------- Apply -------------------------------- */
 export class Apply {
     consume = true;
     manifest: any = {};
@@ -384,7 +380,7 @@ export class Apply {
             try {
                 prev = JSON.parse(fs.readFileSync(path.join(this.root, 'app', 'version.json'), 'utf8')).version || '';
             }
-            catch { /* sem versão anterior */ }
+            catch { }
             this.backup = path.join(updatesDir(this.root), 'backup', `antes-de-${ver}`);
             rmtreeRetry(this.backup);
             fs.mkdirSync(this.backup, { recursive: true });
@@ -480,7 +476,7 @@ export class Apply {
             fs.mkdirSync(path.join(this.root, 'data'), { recursive: true });
             fs.writeFileSync(path.join(this.root, 'data', 'boot.json'), JSON.stringify({ tries: 0 }), 'utf8');
         }
-        catch { /* ignore */ }
+        catch { }
         this.keepSeed(ver);
         const bdir = path.join(updatesDir(this.root), 'backup');
         if (fs.existsSync(bdir)) {
@@ -537,7 +533,7 @@ export class Apply {
                 try {
                     fs.copyFileSync(b, path.join(this.root, f));
                 }
-                catch { /* ignore */ }
+                catch { }
             }
         }
     }
@@ -602,7 +598,6 @@ export class Restore extends Apply {
     }
 }
 
-/* --------------------------------- CLI --------------------------------- */
 function argvOpt(name: string, dflt: string | null = null) {
     const i = process.argv.indexOf(name);
     if (i >= 0 && i + 1 < process.argv.length)
@@ -659,11 +654,11 @@ export function main() {
             fs.mkdirSync(updatesDir(root), { recursive: true });
             fs.appendFileSync(logFile, `${new Date().toISOString()} ${s}\n`);
         }
-        catch { /* ignore */ }
+        catch { }
         try {
             process.stdout.write(s + '\n');
         }
-        catch { /* ignore */ }
+        catch { }
     };
     if (!pkg) {
         log('uso: updater --apply <pacote.lxup> | --restore <zip> [--root R] [--wait-pid N] [--relaunch JSON]');
@@ -725,7 +720,7 @@ export function main() {
             else
                 cp.spawn('sh', ['-c', `sleep 3; rm -rf "${tmp}"`], { detached: true, stdio: 'ignore' }).unref();
         }
-        catch { /* ignore */ }
+        catch { }
     }
     process.exit(ok ? 0 : 1);
 }

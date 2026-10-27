@@ -1,9 +1,3 @@
-/**
- * paths.ts — espelha app/core/paths.py do Ludrix original.
- *
- * O Ludrix e portatil de verdade: tudo vive dentro de ROOT (a pasta do executavel,
- * ou $LUDRIX_HOME quando definido). Nada e gravado fora dela.
- */
 import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -23,7 +17,7 @@ function appDir() {
         if (eapp)
             return path.resolve(eapp.getAppPath());
     }
-    catch { /* abaixo */ }
+    catch { }
     return path.resolve(__dirname, '..', '..');
 }
 function appRoot() {
@@ -47,7 +41,6 @@ function appRoot() {
 function writable(dir: string): boolean {
     try { fs.accessSync(dir, fs.constants.W_OK); return true; } catch { return false; }
 }
-/** Raiz portatil da instalacao. */
 const ROOT = appRoot()
 const DATA = path.join(exports.ROOT, 'data')
 const CACHE = path.join(exports.DATA, 'cache')
@@ -69,11 +62,6 @@ const REDISTS = path.join(exports.DOWNLOADS, 'redists')
 const UPDATES = path.join(exports.DATA, 'updates')
 const BIN = path.join(exports.DATA, 'bin')
 const BACKUPS = path.join(exports.DATA, 'backups')
-/**
- * UI: a pasta do front-end (o HTML/CSS/JS que o servidor local entrega).
- * Em desenvolvimento fica em src/renderer; empacotado, o electron-builder
- * copia src/renderer para resources/renderer via extraResources.
- */
 const APP_DIR = appDir();
 const UI = fs.existsSync(path.join(APP_DIR, 'ui', 'index.html'))
     ? path.join(APP_DIR, 'ui')
@@ -106,13 +94,11 @@ function bootWrite(d) {
         fs.writeFileSync(exports.BOOT_FILE, JSON.stringify(d), 'utf8');
     }
     catch {
-        /* porta sem permissao de escrita: nao e fatal */
     }
 }
 function bootTries() {
     return Number(bootRead().tries || 0);
 }
-/** Conta uma abertura; devolve true quando a interface ja confirmou que subiu. */
 function bootBegin() {
     const d = bootRead();
     const tries = Number(d.tries || 0);
@@ -121,7 +107,6 @@ function bootBegin() {
     bootWrite(d);
     return tries >= 2;
 }
-/** A interface abriu: zera o contador de falhas de boot. */
 function bootOk() {
     const d = bootRead();
     if (d.tries) {
@@ -132,10 +117,8 @@ function bootOk() {
         fs.rmSync(exports.PENDING_VERIFY, { force: true });
     }
     catch {
-        /* ignore */
     }
 }
-/** Cria toda a arvore de pastas portateis na primeira abertura. */
 function ensureDirs() {
     for (const d of [
         exports.DATA, exports.CACHE_WEB, exports.CACHE_THUMBS, exports.CACHE_COVERS, exports.CACHE_META, exports.CACHE_SHOTS,
@@ -145,11 +128,9 @@ function ensureDirs() {
             fs.mkdirSync(d, { recursive: true });
         }
         catch {
-            /* ignore */
         }
     }
 }
-/** Tamanho total de uma pasta, em bytes. */
 function dirSize(p) {
     let total = 0;
     if (!fs.existsSync(p))
@@ -171,7 +152,6 @@ function dirSize(p) {
                     total += fs.statSync(full).size;
             }
             catch {
-                /* ignore */
             }
         }
     };
@@ -197,7 +177,6 @@ async function dirSizeAsync(p) {
                     total += (await fs.promises.stat(full)).size;
             }
             catch {
-                /* ignore */
             }
         }
     };

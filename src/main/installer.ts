@@ -74,7 +74,7 @@ function which(name: string): string | null {
                 if (fs.statSync(p).isFile())
                     return p;
             }
-            catch { /* segue */ }
+            catch { }
         }
     }
     return null;
@@ -215,7 +215,7 @@ export class Downloader {
                             try {
                                 await reader.cancel();
                             }
-                            catch { /* nada */ }
+                            catch { }
                             throw new CancelledError();
                         }
                         const { value, done } = await reader.read();
@@ -231,7 +231,7 @@ export class Downloader {
                             try {
                                 await reader.cancel();
                             }
-                            catch { /* nada */ }
+                            catch { }
                             throw new HoldError();
                         }
                         const dt = (Date.now() - t0) / 1000;
@@ -286,7 +286,7 @@ export function unpackedSize(archive: string): number {
             return z.getEntries().reduce((s, e) => s + Number(e.header.size || 0), 0);
         }
     }
-    catch { /* estimativa */ }
+    catch { }
     try {
         return Math.trunc(fs.statSync(archive).size * 1.5);
     }
@@ -340,7 +340,7 @@ function runWatched(cmd: string, args: string[], cb: ProgressCb, cancel: Cancel,
                 try {
                     proc.kill('SIGKILL');
                 }
-                catch { /* nada */ }
+                catch { }
                 reject(new CancelledError());
             }
         }, 200);
@@ -481,7 +481,7 @@ export function peInfo(p: string): { installer: boolean; console: boolean; overl
             chunk = Buffer.concat([chunk, readAt(Math.max(0, size - (256 << 10)), 256 << 10)]);
         out.installer = SFX_MARKS.some((m) => chunk.includes(m));
     }
-    catch { /* nada */ }
+    catch { }
     finally {
         if (fd !== null)
             fs.closeSync(fd);
@@ -501,12 +501,12 @@ function mtimes(folder: string): number {
                 if (st.isFile())
                     ts.push(st.mtimeMs / 1000);
             }
-            catch { /* segue */ }
+            catch { }
             if (ts.length >= 60)
                 break;
         }
     }
-    catch { /* nada */ }
+    catch { }
     ts.sort((a, b) => a - b);
     return ts.length ? ts[Math.floor(ts.length / 2)] : 0;
 }
@@ -656,7 +656,7 @@ export function findSetup(folder: string): string | null {
         try {
             size = fs.statSync(p).size;
         }
-        catch { /* 0 */ }
+        catch { }
         return [-siblings(p), path.relative(folder, p).split(path.sep).length, -size];
     };
     cands.sort((a, b) => {
@@ -675,7 +675,7 @@ export function isRepack(folder: string): boolean {
     try {
         bins = fs.readdirSync(path.dirname(st)).filter((n) => /\.bin$/i.test(n));
     }
-    catch { /* nada */ }
+    catch { }
     return bins.length > 0 || !real.length;
 }
 
@@ -735,7 +735,7 @@ export async function installFromArchives(archives: string[], gameDir: string, c
             try {
                 fs.rmSync(a, { force: true });
             }
-            catch { /* nada */ }
+            catch { }
         }
     }
     return findExecutables(gameDir, title);
@@ -801,7 +801,7 @@ export async function installGame(files: DlRef[], title: string, installRoot: st
                 try {
                     fs.rmSync(dest, { force: true });
                 }
-                catch { /* já era */ }
+                catch { }
                 throw new Error(`${basename(af)}: o arquivo baixado não bate com o sha256 informado pela fonte (chegou ${got.slice(0, 12)}…, esperado ${af.sha256.slice(0, 12)}…). O arquivo foi apagado; tente baixar de novo ou avise quem mantém a fonte.`);
             }
             cb(prog('download', 1, `${prefix}${basename(af)} conferido`));
@@ -846,7 +846,7 @@ export function runInstaller(exe: string, opts: any = {}): Promise<any> {
                 try {
                     proc.kill('SIGKILL');
                 }
-                catch { /* nada */ }
+                catch { }
                 reject(new CancelledError());
             }
         }, 500);

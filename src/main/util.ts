@@ -1,9 +1,7 @@
-/** util.ts — helpers compartilhados (slug, json seguro, formatacao, processos). */
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import * as cp from 'node:child_process';
-/** Slug usado nas chaves `local:<slug>` — identico ao regex do Python. */
 function slug(input) {
     return String(input || '')
         .toLowerCase()
@@ -60,14 +58,14 @@ function restoreFromZip(file) {
         try {
             daily = fs.readdirSync(dir).filter((f) => /^library-\d+\.json$/.test(f)).sort().reverse();
         }
-        catch { /* sem pasta */ }
+        catch { }
         for (const f of daily) {
             try {
                 const data = parseFile(path.join(dir, f));
                 if (good(data) && Object.keys(data).length)
                     return { data, from: `backups/${f}` };
             }
-            catch { /* proximo */ }
+            catch { }
         }
     }
     let zips = [];
@@ -75,7 +73,7 @@ function restoreFromZip(file) {
         try {
             zips.push(...fs.readdirSync(d).filter((f) => /^Ludrix-dados-.*\.zip$/i.test(f)).map((f) => path.join(d, f)));
         }
-        catch { /* sem pasta */ }
+        catch { }
     }
     zips.sort((a, b) => path.basename(b).localeCompare(path.basename(a)));
     for (const z of zips) {
@@ -88,7 +86,7 @@ function restoreFromZip(file) {
             if (good(data))
                 return { data, from: path.basename(z) };
         }
-        catch { /* proximo */ }
+        catch { }
     }
     return null;
 }
@@ -97,14 +95,14 @@ function recover(file, why) {
     try {
         fs.copyFileSync(file, bad);
     }
-    catch { /* sem copia */ }
+    catch { }
     const bak = `${file}.bak`;
     let got = null;
     if (fs.existsSync(bak)) {
         try {
             got = { data: parseFile(bak), from: 'cópia anterior (.bak)' };
         }
-        catch { /* bak tambem ruim */ }
+        catch { }
     }
     if (!got)
         got = restoreFromZip(file);
@@ -112,12 +110,11 @@ function recover(file, why) {
         try {
             fs.writeFileSync(file, JSON.stringify(got.data, null, 1), 'utf8');
         }
-        catch { /* segue so em memoria */ }
+        catch { }
     }
     recoveredList.push({ file: path.basename(file), from: got ? got.from : '', at: Math.floor(Date.now() / 1000), detail: why });
     return got ? got.data : undefined;
 }
-/** Le um JSON tolerando BOM/encoding; devolve `fallback` se nao der. Arquivos de dados corrompidos sao restaurados do .bak ou do ultimo backup. */
 function readJson(file, fallback) {
     let parsed;
     try {
@@ -139,7 +136,7 @@ function writeJson(file, data) {
             try {
                 fs.copyFileSync(file, `${file}.bak`);
             }
-            catch { /* sem .bak desta vez */ }
+            catch { }
         }
         const tmp = `${file}.${process.pid}.tmp`;
         fs.writeFileSync(tmp, JSON.stringify(data, null, 1), 'utf8');
@@ -152,7 +149,6 @@ function writeJson(file, data) {
         }
     }
     catch (e) {
-        // disco cheio / permissao: nunca derruba a interface por causa disso
         void e;
     }
 }
@@ -179,12 +175,10 @@ function humanTime(seconds) {
         return `${m}min`;
     return `${s}s`;
 }
-/** Abre um caminho/URL com o aplicativo padrao do sistema. */
 function openExternal(target) {
     return new Promise<any>((resolve) => {
         try {
             if (process.platform === 'win32') {
-                // `start` precisa de um titulo vazio quando o alvo vai entre aspas
                 const child = (0, cp.spawn)('cmd', ['/c', 'start', '', target], { detached: true, stdio: 'ignore' });
                 child.unref();
             }
@@ -198,7 +192,6 @@ function openExternal(target) {
             }
         }
         catch {
-            /* ignore */
         }
         resolve(undefined);
     });

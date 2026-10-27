@@ -175,7 +175,7 @@ export function importData(file: string, version: string): any {
     try {
         olds = fs.readdirSync(P.UPDATES).filter((n) => /^Ludrix-dados-.*\.zip$/.test(n)).sort();
     }
-    catch { /* ignore */ }
+    catch { }
     for (const old of olds.slice(0, Math.max(0, olds.length - 2)))
         fs.rmSync(path.join(P.UPDATES, old), { force: true });
     const z = new AdmZip(file);

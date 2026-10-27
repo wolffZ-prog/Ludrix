@@ -145,7 +145,7 @@ export class Catalog {
                     try {
                         this.repos.remove(prov.id);
                     }
-                    catch { /* nada */ }
+                    catch { }
                 }
             }
             if (gen !== this.gen)
@@ -155,7 +155,7 @@ export class Catalog {
                 try {
                     this.slim(e);
                 }
-                catch { /* nada */ }
+                catch { }
             }
             this.state = { loading: false, errors };
             if (force)
@@ -398,7 +398,7 @@ export class Catalog {
             try {
                 this.onFirstPayload?.();
             }
-            catch { /* nada */ }
+            catch { }
             log.info('primeira biblioteca servida %ss após abrir (%d itens, roms %s)', (this.firstPayloadAt - this.t0).toFixed(2), all.length, this.be.emu.scanPending() ? 'pendentes' : 'ok');
         }
         const systems: Record<string, string> = {};

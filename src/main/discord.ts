@@ -84,7 +84,7 @@ export class DiscordPresence {
                     try {
                         s.destroy();
                     }
-                    catch { /* nada */ }
+                    catch { }
                     if (this.sock === s)
                         this.sock = null;
                 }
@@ -111,7 +111,7 @@ export class DiscordPresence {
                     try {
                         msg = JSON.parse(body);
                     }
-                    catch { /* nada */ }
+                    catch { }
                     if (op === 1 && msg.evt === 'READY') {
                         this.ready = true;
                         fin(true);
@@ -190,7 +190,7 @@ export class DiscordPresence {
                 s.end();
                 s.destroy();
             }
-            catch { /* nada */ }
+            catch { }
         }
         this.status = { connected: false, error: this.status.error };
     }

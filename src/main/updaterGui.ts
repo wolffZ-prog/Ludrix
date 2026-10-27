@@ -34,7 +34,7 @@ function palette(root: string) {
         if (p.bg2 === p.bg)
             p.bg2 = p.card;
     }
-    catch { /* padrão */ }
+    catch { }
     p.accentFg = lum(p.accent) > 0.45 ? '#1c1d21' : '#ffffff';
     return p;
 }
@@ -133,7 +133,7 @@ export function main() {
             fs.mkdirSync(updatesDir(root), { recursive: true });
             fs.appendFileSync(logFile, `${new Date().toISOString()} ${s}\n`);
         }
-        catch { /* ignore */ }
+        catch { }
     };
     const pal = palette(root);
     let iconData = '';
@@ -146,14 +146,14 @@ export function main() {
                 iconData = 'data:image/png;base64,' + buf.toString('base64');
                 iconImg = electron.nativeImage.createFromBuffer(buf);
             }
-            catch { /* sem ícone */ }
+            catch { }
             break;
         }
     }
     const state: { pkg: string | null; manifest: any; running: boolean; done: boolean } = { pkg, manifest: null, running: false, done: false };
     const workerFile = path.join(__dirname, 'updaterWork.js');
     let win: electron.BrowserWindow | null = null;
-    const send = (m: any) => { try { win?.webContents.send('lxu', m); } catch { /* */ } };
+    const send = (m: any) => { try { win?.webContents.send('lxu', m); } catch { } };
 
     const opener = (p: string) => restore ? new Restore(p, root, () => undefined, () => undefined) : new Apply(p, root, () => undefined, () => undefined);
 
@@ -227,7 +227,7 @@ export function main() {
             else
                 cp.spawn('sh', ['-c', `sleep 3; rm -rf "${tmp}"`], { detached: true, stdio: 'ignore' }).unref();
         }
-        catch { /* ignore */ }
+        catch { }
     };
 
     const finish = (ok: boolean, err: string) => {

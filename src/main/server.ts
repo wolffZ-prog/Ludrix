@@ -1,10 +1,3 @@
-/**
- * server.ts — o servidor HTTP local, porte de app/core/server.py.
- *
- * O front-end nao sabe que o backend mudou de linguagem: ele continua chamando
- * os mesmos /api/* com o mesmo token no cabecalho. Isso e o que permite
- * reaproveitar os 7.600 linhas de interface do Ludrix sem tocar nelas.
- */
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -14,12 +7,10 @@ import * as electron from 'electron';
 import * as P from './paths';
 import * as diagMod from './diag';
 import * as log from './log';
-import * as menuMod from './menu';
 import { themePreviewSvg } from './preview';
 import * as util from './util';
 import * as server2 from './server2';
 const TOKEN = crypto.randomBytes(18).toString('base64url')
-/** Porta escolhida pelo sistema na inicializacao (usada pelo Modo Console). */
 let LOCAL_PORT = 0;
 function localPort() { return LOCAL_PORT; }
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost', '::1', '[::1]']);
@@ -68,7 +59,7 @@ function startSandbox() {
         try {
             p = decodeURIComponent(new URL(req.url || '/', 'http://127.0.0.1').pathname);
         }
-        catch { /* ignore */ }
+        catch { }
         const t = path.resolve(root, p.replace(/^\/+/, ''));
         const ok = p.startsWith('/html/') && t.startsWith(path.resolve(root) + path.sep) && fs.existsSync(t) && fs.statSync(t).isFile();
         const body = ok ? fs.readFileSync(t) : Buffer.alloc(0);
@@ -96,7 +87,6 @@ async function startServer(backend, getWindow) {
     server.headersTimeout = 35_000;
     return new Promise<any>((resolve, reject) => {
         server.on('error', reject);
-        // portal no 127.0.0.1: o launcher nao deve ser alcancavel pela rede
         server.listen(0, '127.0.0.1', () => {
             const addr = server.address();
             const port = typeof addr === 'object' && addr ? addr.port : 0;
@@ -110,14 +100,12 @@ async function startServer(backend, getWindow) {
                         server.close();
                     }
                     catch {
-                        /* ignore */
                     }
                 },
             });
         });
     });
 }
-/* ------------------------------ utilidades ------------------------------ */
 function send(res, code, body, ctype, cache = false) {
     let out = body;
     const headers = {
@@ -183,10 +171,7 @@ function readBody(req) {
         req.on('error', () => resolve({}));
     });
 }
-/** Regra de acesso: paginas e estaticos sao livres; /api exige o token. */
 function allowed(req, p) {
-    // Se o navegador mandou Origin, ele tem de ser o proprio servidor.
-    // Bloqueia qualquer pagina da web que tente chamar a API local.
     const origin = String(req.headers['origin'] || '');
     if (origin) {
         let same = false;
@@ -216,7 +201,6 @@ function allowed(req, p) {
     const given = String(req.headers['x-ludrix-token'] || '');
     return given.length === exports.TOKEN.length && crypto.timingSafeEqual(Buffer.from(given), Buffer.from(exports.TOKEN));
 }
-/* -------------------------------- rotas -------------------------------- */
 export let lastRoute = '';
 async function handle(req, res, be, getWindow) {
     const url = new URL(req.url || '/', `http://${req.headers.host || '127.0.0.1'}`);
@@ -243,12 +227,10 @@ async function handle(req, res, be, getWindow) {
             sendJson(res, { error: String(e) }, 500);
         }
         catch {
-            /* conexao ja caiu */
         }
     }
 }
 async function routeGet(req, res, p, q, be, getWindow) {
-    // ---- paginas ----
     if (p in PAGES) {
         const file = path.join(P.UI, PAGES[p]);
         if (!fs.existsSync(file))
@@ -260,10 +242,9 @@ async function routeGet(req, res, p, q, be, getWindow) {
             if (sp)
                 html = html.replace('<div class="sl">', `<div class="sl img" style="background-image:url(/api/custom/file/${path.basename(sp)})">`);
         }
-        catch { /* sem splash */ }
+        catch { }
         return send(res, 200, Buffer.from(html, 'utf8'), 'text/html; charset=utf-8');
     }
-    // ---- arquivos estaticos da interface ----
     if (p.startsWith('/ui/')) {
         const target = path.resolve(P.UI, '.' + p.slice(3));
         if (!target.startsWith(path.resolve(P.UI)))
@@ -311,7 +292,6 @@ async function routeGet(req, res, p, q, be, getWindow) {
     }
     if (p === '/api/config')
         return sendJson(res, be.publicConfig());
-    // ---- temas ----
     if (p.startsWith('/api/theme/')) {
         const id = decodeURIComponent(p.slice(11));
         if (id.endsWith('/json'))
@@ -335,7 +315,6 @@ async function routeGet(req, res, p, q, be, getWindow) {
         const css = be.themeCss(id, String(q.get('s') || ''));
         return send(res, 200, Buffer.from(css, 'utf8'), 'text/css; charset=utf-8');
     }
-    // ---- imagens ----
     if (p.startsWith('/thumb/'))
         return sendFile(res, await be.hub.thumbPath(decodeURIComponent(p.slice(7)), false), true);
     if (p.startsWith('/cover/'))
@@ -348,7 +327,6 @@ async function routeGet(req, res, p, q, be, getWindow) {
         const n = i >= 0 ? raw.slice(i + 1) : '';
         return sendFile(res, /^\d+$/.test(n) ? await be.hub.shotPath(raw.slice(0, i), Number(n)) : null, true);
     }
-    // ---- jogo / edicao / acoes ----
     if (p.startsWith('/api/game/')) {
         const d = await be.gamePayload(decodeURIComponent(p.slice(10)));
         return d ? sendJson(res, d) : sendJson(res, { error: 'not found' }, 404);
@@ -367,7 +345,6 @@ async function routeGet(req, res, p, q, be, getWindow) {
         return sendJson(res, be.randomPick(String(q.get('f') || 'any'), String(q.get('x') || '').split(',').filter(Boolean)));
     if (p === '/api/favicon.ico')
         return sendFile(res, path.join(P.UI, 'icon.png'), true);
-    // ---- Store, downloads, emulacao, mods, atualizacoes, importacoes... ----
     if (await (0, server2.routeGet2)(res, p, q, be, LOCAL_PORT))
         return;
     void req;
@@ -375,7 +352,6 @@ async function routeGet(req, res, p, q, be, getWindow) {
 }
 async function routePost(req, res, p, _q, be, getWindow) {
     const b = await readBody(req);
-    // ---- janela e interface ----
     if (p === '/api/window')
         return sendJson(res, await windowCmd(b, getWindow, be));
     if (p === '/api/ui_ready') {
@@ -393,7 +369,6 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, be.restartApp());
     if (p === '/api/factory-reset')
         return sendJson(res, b?.confirm === 'APAGAR TUDO' ? be.factoryReset() : { error: 'sem confirmação' });
-    // ---- configuracao ----
     if (p === '/api/config')
         return sendJson(res, be.setConfig(b || {}));
     if (p === '/api/discord/test')
@@ -406,7 +381,6 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, 'on' in b ? be.setStartMenu(Boolean(b.on)) : be.startMenu());
     if (p === '/api/autostart')
         return sendJson(res, be.setAutostart(b?.on));
-    // ---- biblioteca ----
     if (p === '/api/play')
         return sendJson(res, await be.play(b.key, b.after ?? null, b.emulator ?? null, b.optimize ?? null, Boolean(b.force)));
     if (p === '/api/stop')
@@ -489,7 +463,6 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, be.libraryBackup());
     if (p === '/api/library/restore')
         return sendJson(res, be.libraryRestore(b.name));
-    // ---- capas e metadados ----
     if (p === '/api/cover/set')
         return sendJson(res, await be.hub.setCover(b.key, b.path || null));
     if (p === '/api/cover/reset')
@@ -498,7 +471,6 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, await be.hub.fetchMetadata(b.key, Boolean(b.force)));
     if (p === '/api/metadata/refetch_all')
         return sendJson(res, be.hub.refetchAllMetadata());
-    // ---- temas e aparencia ----
     if (p === '/api/theme/import')
         return sendJson(res, await be.themeImport(b.path));
     if (p === '/api/theme/delete')
@@ -521,21 +493,18 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, be.customUX.remove(String(b?.what || 'wallpaper'), String(b?.name || '')));
     if (p === '/api/custom/export')
         return sendJson(res, be.customUX.export(String(b?.name || ''), String(b?.dest || '')));
-    // ---- sistema ----
     if (p === '/api/cache/images_gc')
         return sendJson(res, be.imageGc(Boolean(b.apply)));
     if (p === '/api/cache/clear')
         return sendJson(res, await be.clearCache(b.what || []));
     if (p === '/api/notifications/ack')
         return sendJson(res, be.notifAck(b.id, Boolean(b.clear)));
-    // ---- seletores de arquivo ----
     if (p === '/api/pick_exe')
         return sendJson(res, await be.pickExe(b.initial || '', b.kind || 'exe'));
     if (p === '/api/pick_path')
         return sendJson(res, await be.pickPath(b.kind || 'exe', b.initial || ''));
     if (p === '/api/choose_folder')
         return sendJson(res, await be.chooseFolder(b.what || 'games', b.system || '', b.initial || ''));
-    // ---- backup completo ----
     if (p === '/api/data/auto_backup') {
         if (b.pick) {
             const d = await require('./dialogs').pickFolder(be.autoBackupDir());
@@ -559,12 +528,10 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, be.backupExport(b?.dest || null));
     if (p === '/api/backup/import')
         return sendJson(res, await be.backupImport(b?.path || null));
-    // ---- Store, downloads, emulacao, mods, atualizacoes, importacoes... ----
     if (await (0, server2.routePost2)(res, p, b, be, getWindow, LOCAL_PORT))
         return;
     return sendJson(res, { error: 'not found' }, 404);
 }
-/* ------------------------- comandos de janela ------------------------- */
 let resizeTimer = null;
 export function sysAccent(): string {
     try {
@@ -581,7 +548,7 @@ async function windowCmd(b, getWindow, be) {
     const win = getWindow();
     const cmd = String(b?.cmd || '');
     if (cmd === 'ctx')
-        return ctxMenu(b, win, be);
+        return ctxMenu(b, win);
     if (cmd === 'show') {
         be.windowHooks?.show?.();
         return { ok: true };
@@ -600,7 +567,7 @@ async function windowCmd(b, getWindow, be) {
                 if (nt)
                     nt.themeSource = b.light === true ? 'light' : b.light === false ? 'dark' : 'system';
             }
-            catch { /* ignore */ }
+            catch { }
             return { ok: true };
         }
         case 'minimize':
@@ -655,25 +622,54 @@ async function windowCmd(b, getWindow, be) {
             return { error: 'indisponível', native: true };
     }
 }
-async function ctxMenu(b, win, be) {
-    if (!menuMod.available() || !win)
+function ctxMenu(b, win) {
+    if (!win || win.isDestroyed())
         return { ok: false };
-    let head: any = null;
-    if (b.head && typeof b.head === 'object') {
-        let thumb: string | null = null;
-        if (b.head.key) {
-            try {
-                const p = await be.hub.thumbPath(String(b.head.key), false);
-                if (p && fs.existsSync(p))
-                    thumb = `data:${path.extname(p).toLowerCase() === '.png' ? 'image/png' : 'image/jpeg'};base64,${fs.readFileSync(p).toString('base64')}`;
-            }
-            catch { /* sem miniatura */ }
+    const items = Array.isArray(b.items) ? b.items : [];
+    let picked: string | null = null;
+    const icon = (d: any) => {
+        if (typeof d !== 'string' || !d.startsWith('data:image/'))
+            return undefined;
+        try {
+            const im = electron.nativeImage.createFromDataURL(d);
+            if (im.isEmpty())
+                return undefined;
+            const w = im.getSize().width || 16;
+            return w > 16 ? electron.nativeImage.createFromBuffer(im.toPNG(), { scaleFactor: w / 16 }) : im;
         }
-        head = { title: String(b.head.title || '').slice(0, 60), sub: String(b.head.sub || '').slice(0, 60), thumb };
-    }
-    return menuMod.show({ items: b.items || [], title: String(b.title || ''), head, colors: b.colors || {}, ui: b.ui || {}, light: String(b.light) === '1', x: Number(b.x || 0), y: Number(b.y || 0), atCursor: String(b.at_cursor) === '1', owner: win });
+        catch {
+            return undefined;
+        }
+    };
+    const conv = (list: any[], pre: string): electron.MenuItemConstructorOptions[] => list.slice(0, 80).map((it, i) => it.sep ? { type: 'separator' as const } : {
+        label: String(it.label || '').slice(0, 120), enabled: !it.disabled, icon: icon(it.icon),
+        submenu: Array.isArray(it.sub) && it.sub.length ? conv(it.sub, pre + i + '.') : undefined,
+        click: Array.isArray(it.sub) && it.sub.length ? undefined : () => { picked = pre + i; },
+    });
+    const tpl: electron.MenuItemConstructorOptions[] = [];
+    const head = b.head && typeof b.head === 'object' ? String(b.head.title || '').slice(0, 60) : String(b.title || '').slice(0, 60);
+    if (head)
+        tpl.push({ label: head, enabled: false }, { type: 'separator' });
+    tpl.push(...conv(items, ''));
+    if (!tpl.length)
+        return { ok: false };
+    return new Promise((resolve) => {
+        const m = electron.Menu.buildFromTemplate(tpl);
+        const opts: electron.PopupOptions = { window: win, callback: () => setTimeout(() => resolve(picked != null ? { ok: true, pick: picked } : { ok: false, cancelled: true }), 0) };
+        if (String(b.at_cursor) !== '1') {
+            const wb = win.getContentBounds();
+            opts.x = Math.max(0, Math.round(Number(b.x || 0) - wb.x));
+            opts.y = Math.max(0, Math.round(Number(b.y || 0) - wb.y));
+        }
+        try {
+            m.popup(opts);
+        }
+        catch (e: any) {
+            log.warn('menu nativo: %s', e?.message || e);
+            resolve({ ok: false });
+        }
+    });
 }
-/** Redimensionamento manual da janela sem moldura (arrastando as bordas). */
 function startResize(dir, win) {
     stopResize();
     const start = win.getBounds();
@@ -716,6 +712,5 @@ function stopResize() {
         resizeTimer = null;
     }
 }
-/** Diagnostico basico (Ajustes > Sistema). */
 
 export { localPort, ctypeOf, startServer, send, sendJson, sendFile, util, TOKEN };

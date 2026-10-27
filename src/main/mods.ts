@@ -445,7 +445,7 @@ export class GameMods {
                 added.title = ov[added.key];
             }
         }
-        catch { /* ignore */ }
+        catch { }
         return { ok: true, path: out, kind: res.kind, size: res.out.length, mismatch: res.mismatch, added };
     }
     base(key: string) {
@@ -609,7 +609,7 @@ export class GameMods {
                 if (rel !== '.' && rel !== '' && isDir(d) && !fs.readdirSync(d).length)
                     fs.rmdirSync(d);
             }
-            catch { /* ignore */ }
+            catch { }
         }
     }
     remove(key: string, mid: string) {

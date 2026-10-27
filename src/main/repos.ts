@@ -173,14 +173,14 @@ export class Cache {
             if (fs.existsSync(p) && Date.now() / 1000 - fs.statSync(p).mtimeMs / 1000 < ttl)
                 return JSON.parse(fs.readFileSync(p, 'utf8'));
         }
-        catch { /* refaz */ }
+        catch { }
         const r = await this.s.get(withParams(url, params), { timeout: 30_000 });
         if (r.status >= 400) {
             let body = '';
             try {
                 body = await r.text();
             }
-            catch { /* vazio */ }
+            catch { }
             throw new http.HttpError(`HTTP ${r.status}: ${body.slice(0, 400)}`, r.status);
         }
         const data = await r.json();
@@ -211,7 +211,7 @@ export class Cache {
         try {
             fs.rmSync(this.file(key), { force: true });
         }
-        catch { /* nada */ }
+        catch { }
     }
 }
 
@@ -1201,7 +1201,7 @@ export function packResults(data: any, src: string): any {
         try {
             systems = require('./presets').systems();
         }
-        catch { /* sem presets */ }
+        catch { }
         const rep = validateManifest(data, systems);
         results.unshift({
             title: name, detail: `${rep.usable} de ${n} jogo${n === 1 ? '' : 's'} ok · lista ${fmt}` + (roms > 0 && roms < n ? ` · ${n - roms} PC + ${roms} ROMs` : ''), kind, count_pc: n - roms, count_rom: roms,
@@ -1332,7 +1332,7 @@ export async function detectSource(session: http.Session, q: string, cache?: Cac
             const txt = await session.getText(q, { timeout: 15_000 });
             titleM = /<title[^>]*>([\s\S]*?)<\/title>/i.exec(txt.slice(0, 200000));
         }
-        catch { /* sem título */ }
+        catch { }
         if (titleM)
             name = cleanHtml(titleM[1]).slice(0, 60) || name;
         const kinds = a.games.map((g: any) => guessSystem(g.title));
@@ -1475,7 +1475,6 @@ export class RepoRegistry {
         return this.state[id] || null;
     }
 
-    /** Registra o resultado de uma leitura; devolve as chaves novas em relação à leitura anterior. */
     touch(id: string, keys: string[], titles: Record<string, string>, fromSource: boolean): string[] {
         const now = Math.floor(Date.now() / 1000);
         const prev = this.state[id];
@@ -1538,7 +1537,7 @@ export class RepoRegistry {
             try {
                 util.writeJson(this.file, { repos: keep });
             }
-            catch { /* nada */ }
+            catch { }
         }
         return keep;
     }
@@ -1634,7 +1633,7 @@ export class RepoRegistry {
                 if (status === 405 || status === 403 || status === 501) {
                     const r2 = await this.session.get(url, { timeout: 8000, headers: { Range: 'bytes=0-0' } });
                     status = Number(r2.status || 0);
-                    try { r2.body?.cancel?.(); } catch { /* nada */ }
+                    try { r2.body?.cancel?.(); } catch { }
                 }
             }
             catch (err: any) {
@@ -1718,7 +1717,7 @@ export class RepoRegistry {
                     if (f.includes(repoId))
                         fs.rmSync(path.join(P.CACHE_WEB, f), { force: true, recursive: true });
             }
-            catch { /* nada */ }
+            catch { }
         }
         this.reload();
         return cur;

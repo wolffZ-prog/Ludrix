@@ -96,7 +96,7 @@ export class GamepadWatcher {
             try {
                 this.child.kill();
             }
-            catch { /* */ }
+            catch { }
         }
         this.child = null;
         this.running = false;

@@ -295,7 +295,7 @@ export function which(name: string): string {
                 if (fs.statSync(p).isFile())
                     return p;
             }
-            catch { /* próximo */ }
+            catch { }
         }
     }
     return '';

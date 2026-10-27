@@ -26,7 +26,7 @@ export class WebCache {
             try {
                 return JSON.parse(fs.readFileSync(p, 'utf8'));
             }
-            catch { /* refaz */ }
+            catch { }
         }
         const r = await this.session.request(url, { timeout: 30_000 });
         if (r.status >= 400)

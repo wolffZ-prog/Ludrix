@@ -180,7 +180,7 @@ export function findSeed(root: string, version: string): string | null {
             if (seedOpen(p, version))
                 return p;
         }
-        catch { /* próximo */ }
+        catch { }
     }
     return null;
 }
@@ -209,7 +209,7 @@ export function repair(app: string, root: string, result: any, seed: string) {
                 try {
                     cur = JSON.parse(fs.readFileSync(path.join(app, rel), 'utf8'));
                 }
-                catch { /* vazio */ }
+                catch { }
                 const seedv = JSON.parse(r.zip.readAsText(r.base + rel, 'utf8'));
                 Object.assign(cur, seedv);
                 cur.version = result.version;
@@ -260,7 +260,7 @@ export function bootCheck(app: string, root: string) {
         fs.mkdirSync(path.dirname(sf), { recursive: true });
         fs.writeFileSync(sf, JSON.stringify({ ...out, at: Date.now() / 1000 }), 'utf8');
     }
-    catch { /* ignore */ }
+    catch { }
     cache = out;
     return out;
 }

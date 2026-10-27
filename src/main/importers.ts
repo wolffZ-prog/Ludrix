@@ -296,7 +296,7 @@ function readHeroic(p: string): any[] {
                 for (const g of readJson(files[4]).games || [])
                     titles[String(g.app_name)] = g.title;
             }
-            catch { /* nada */ }
+            catch { }
         }
         for (const g of readJson(f).installed || []) {
             const ip = g.install_path || '';
@@ -313,7 +313,7 @@ function readHeroic(p: string): any[] {
                     out.push(game(path.basename(ip), null, null, 'pc', 0, 0, 'heroic/amazon', { dir: ip }));
             }
         }
-        catch { /* nada */ }
+        catch { }
     }
     return out;
 }
@@ -407,7 +407,7 @@ function readGog(p: string): any[] {
                 try {
                     title = readJson(path.join(d, info)).name || n;
                 }
-                catch { /* nada */ }
+                catch { }
                 seen.add(d.toLowerCase());
                 out.push(game(title, null, null, 'pc', 0, 0, 'gog', { dir: d }));
             }
@@ -430,7 +430,7 @@ function readEsde(p: string): any[] {
             try {
                 names = xmlBlocks(readText(gl), 'game').length;
             }
-            catch { /* nada */ }
+            catch { }
         }
         out.push({ rom_dir: d, system: sysid, source: 'esde', title: `${path.basename(d)} (${listDir(d).length} arquivos)`, names });
     }
@@ -751,12 +751,12 @@ export function lnkTarget(p: string): string | null {
             }
         }
     }
-    catch { /* tenta via shell */ }
+    catch { }
     try {
         if (WIN)
             return require('electron').shell.readShortcutLink(p).target || null;
     }
-    catch { /* nada */ }
+    catch { }
     return null;
 }
 

@@ -488,7 +488,7 @@ export class ImportFront {
             this.hub.covers.invalidateNames();
             this.hub.meta.touch();
         }
-        catch { /* nada */ }
+        catch { }
         return { ok: true, added, skipped, skipped_items: this.skipped.slice(0, 200) };
     }
 
@@ -817,7 +817,7 @@ export class ImportFront {
                 item.cover = (await this.hub.coverPath(key)) || '';
                 item.hero = (await this.hub.heroPath(key)) || '';
             }
-            catch { /* nada */ }
+            catch { }
             games.push(item);
         }
         if (!games.length)

@@ -519,14 +519,20 @@ function repoMenu(id, x, y) {
   ], x, y);
 }
 
-const L = { on: false, dict: {}, rx: [] };
+const L = { on: false, dict: {}, rx: [], cache: new Map() };
 async function initLang(lang) {
   if (!lang || lang === 'pt-BR' || L.on) return;
   try { const d = await (await fetch('/ui/lang/' + lang + '.json')).json(); L.dict = d.strings || {}; L.rx = (d.patterns || []).map(([a, b]) => [new RegExp(a, 'g'), b]); } catch (e) { return; }
   L.on = true; document.documentElement.lang = lang;
   const tr = t => {
     const k = t.trim(); if (!k || !/[a-zA-ZÀ-ú]/.test(k)) return t;
-    let v = L.dict[k]; if (v === undefined) { v = k; for (const [r, b] of L.rx) v = v.replace(r, b); }
+    let v = L.cache.get(k);
+    if (v === undefined) {
+      v = L.dict[k];
+      if (v === undefined) { v = k; for (const [r, b] of L.rx) v = v.replace(r, b); }
+      if (L.cache.size > 20000) L.cache.clear();
+      L.cache.set(k, v);
+    }
     return v === k ? t : t.replace(k, v);
   };
   const ATTRS = ['title', 'placeholder', 'data-help', 'aria-label'];
@@ -717,6 +723,7 @@ function sortedAZ() {
   if (!S._sorted) { S._sorted = [...S.games].sort((a, b) => COLL.compare(a.title, b.title)); S._sorted.forEach((g, i) => g._az = i); }
   return S._sorted;
 }
+const Q_PREFIX = { year: 'ano', sys: 'sis', origin: 'origem', etiqueta: 'tag' };
 function qPrefix(g, k, v) {
   if (k === 'dev') return qnorm(g.creator || '').includes(v);
   if (k === 'ano') return String(g.year || '') === v || (v.endsWith('s') && String(g.year || '').startsWith(v.slice(0, 3)));
@@ -728,7 +735,7 @@ function qPrefix(g, k, v) {
 function visible() {
   const q = qnorm(S.q), qw0 = q ? q.split(' ') : [], f = S.flt, cat = S.cat, flags = [...f.flags].map(k => FLAG_TEST[k]);
   const qp = [], qw = [], qs = [];
-  for (const w of qw0) { const m = w.match(/^(dev|ano|gen|sis|origem|src):(.+)$/); if (m) qp.push([m[1], m[2]]); else { const sm = smartOf(w); if (sm) qs.push([w, sm]); else qw.push(w); } }
+  for (const w of qw0) { const m = w.match(/^(dev|ano|year|gen|sis|sys|origem|origin|src|tag|etiqueta):(.+)$/); if (m) qp.push([Q_PREFIX[m[1]] || m[1], m[2]]); else { const sm = smartOf(w); if (sm) qs.push([w, sm]); else qw.push(w); } }
   S._smart = qs.map(x => x[1]);
   const hasCats = f.cats.size > 0, hasSys = f.sys.size > 0, hasRepos = S.view === 'store' && f.repos.size > 0, hasSrc = f.src.size > 0;
   let list = sortedAZ().filter(g => {
@@ -1241,7 +1248,7 @@ function searchInView() {
   }
   viewFilter();
 }
-function applyQPlaceholder() { const i = $('#q'); if (!i) return; const n = S.view === 'home' ? S.games.filter(g => g.installed).length : 0; i.title = n ? 'Prefixos: dev:, ano:, gen:, sis:, origem:' : ''; i.placeholder = n ? `Buscar em ${n} jogos…  (/)` : (Q_PLACEHOLDER[S.view] || Q_PLACEHOLDER.home); }
+function applyQPlaceholder() { const i = $('#q'); if (!i) return; const n = S.view === 'home' ? S.games.filter(g => g.installed).length : 0; i.title = n ? 'Prefixos: dev:, ano:, gen:, sis:, origem:, tag:' : ''; i.placeholder = n ? `Buscar em ${n} jogos…  (/)` : (Q_PLACEHOLDER[S.view] || Q_PLACEHOLDER.home); }
 const qObs = new MutationObserver(() => { if (S.q && FILTER_VIEWS.includes(S.view) && !S._qfBusy) { S._qfBusy = true; requestAnimationFrame(() => { S._qfBusy = false; viewFilter(); }); } });
 qObs.observe($('#view'), { childList: true, subtree: true });
 function renderSortBtn() { }
@@ -2654,7 +2661,7 @@ function uiSound(kind) {
     else if (kind === 'open') tone(560, 840, .09, 0, 'sine', 1);
     else if (kind === 'back') tone(840, 560, .09, 0, 'sine', 1);
     else if (kind === 'done') { tone(523, 523, .14, 0, 'triangle', .8); tone(659, 659, .14, .11, 'triangle', .8); tone(784, 784, .22, .22, 'triangle', .8); }
-  } catch (_) { /* sem áudio */ }
+  } catch (_) { }
 }
 document.addEventListener('pointerdown', e => {
   if (S.config.ui_sounds === false || e.button !== 0) return;
@@ -2910,7 +2917,7 @@ function fpViewHtml() {
     </div>` : ''}</div>`;
 }
 const SYS_ALIAS = { ps1: ['ps1', 'psx', 'psone', 'playstation1', 'play1'], ps2: ['ps2', 'playstation2', 'play2'], ps3: ['ps3', 'playstation3', 'play3'], psp: ['psp'], snes: ['snes', 'supernintendo'], nes: ['nes', 'nintendinho', 'famicom'], n64: ['n64', 'nintendo64'], gc: ['gc', 'gamecube', 'ngc'], wii: ['wii'], wiiu: ['wiiu'], switch: ['switch', 'nsw'], '3ds': ['3ds'], nds: ['ds', 'nds'], gba: ['gba'], gbc: ['gbc'], gb: ['gb', 'gameboy'], dc: ['dc', 'dreamcast'], saturn: ['saturn'], genesis: ['genesis', 'megadrive', 'md'], sms: ['sms', 'mastersystem'], xbox: ['xbox'], x360: ['x360', 'xbox360'], arcade: ['arcade', 'mame', 'fliperama'], pce: ['pce', 'pcengine', 'turbografx'], dos: ['dos', 'msdos'], atari2600: ['atari', 'atari2600'], pc: ['pc', 'windows', 'computador'] };
-const SMART_WORDS = { instalado: 'installed', instalados: 'installed', instalada: 'installed', instaladas: 'installed', favorito: 'fav', favoritos: 'fav', favorita: 'fav', favoritas: 'fav', nunca: 'never', jogado: 'played', jogados: 'played', recente: 'recent', recentes: 'recent', novo: 'fresh', novos: 'fresh', novidade: 'fresh', novidades: 'fresh', torrent: 'torrent', direto: 'direct', grande: 'big', grandes: 'big', pesado: 'big', pesados: 'big', antigo: 'old', antigos: 'old', leve: 'light', leves: 'light' };
+const SMART_WORDS = { instalado: 'installed', instalados: 'installed', instalada: 'installed', instaladas: 'installed', favorito: 'fav', favoritos: 'fav', favorita: 'fav', favoritas: 'fav', nunca: 'never', jogado: 'played', jogados: 'played', recente: 'recent', recentes: 'recent', novo: 'fresh', novos: 'fresh', novidade: 'fresh', novidades: 'fresh', torrent: 'torrent', direto: 'direct', grande: 'big', grandes: 'big', pesado: 'big', pesados: 'big', antigo: 'old', antigos: 'old', leve: 'light', leves: 'light', installed: 'installed', favorite: 'fav', favorites: 'fav', never: 'never', played: 'played', recent: 'recent', new: 'fresh', direct: 'direct', big: 'big', heavy: 'big', old: 'old', light: 'light' };
 const SMART_FLAG_NAME = { installed: 'instalados', fav: 'favoritos', never: 'nunca jogados', played: 'já jogados', recent: 'jogados recentemente', fresh: 'novos nas fontes', torrent: 'torrent', direct: 'download direto', hidden: 'escondidos', big: 'grandes', old: 'antigos', light: 'leves' };
 function smartOf(w) {
   if (!w || w.length < 2) return null;
@@ -3210,6 +3217,7 @@ function placeCtx(x, y) {
   let top = y, left = x;
   if (left + r.width > W - pad) left = Math.max(pad, x - r.width);
   if (top + r.height > H - pad) top = y - r.height >= pad ? y - r.height : Math.max(pad, H - pad - r.height);
+  m.classList.toggle('tall', r.height > H - 2 * pad);
   if (r.height > H - 2 * pad) { m.style.maxHeight = (H - 2 * pad) + 'px'; top = pad; }
   m.style.left = left + 'px'; m.style.top = top + 'px';
 }
@@ -3668,7 +3676,7 @@ let ctxNative = false, ctxMouse = { x: -99, y: -99 };
 document.addEventListener('mousedown', e => { ctxMouse = { x: e.clientX, y: e.clientY }; }, true);
 ['#qbox', '#wctl'].forEach(sel => { const el = document.querySelector(sel); if (el) el.addEventListener('mousedown', e => e.stopPropagation()); });
 document.addEventListener('contextmenu', e => { ctxMouse = { x: e.clientX, y: e.clientY }; }, true);
-function ctxMode() { return S.config.ctx_menu || S.themeMenu || 'windows'; }
+function ctxMode() { return S.config.ctx_menu || S.themeMenu || 'ludrix'; }
 function ctxNativeOk() { return !!(S.config.native && S.config.frameless && ctxMode() === 'windows' && !GP.active && !ctxNative && window.screenX !== undefined); }
 const ctxIconCache = new Map();
 function ctxWarm() {
@@ -3686,13 +3694,25 @@ function ctxIcon(name, color) {
   const v = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src);
   ctxIconCache.set(k, v); return v;
 }
-async function ctxStrip(list, pre, colors) {
+const ctxPngCache = new Map();
+function ctxIconPng(name, color) {
+  const src = ctxIcon(name, color); if (!src) return Promise.resolve(null);
+  const k = name + '|' + color;
+  if (ctxPngCache.has(k)) return Promise.resolve(ctxPngCache.get(k));
+  return new Promise((res) => {
+    const img = new Image();
+    img.onload = () => { try { const c = document.createElement('canvas'); c.width = 32; c.height = 32; c.getContext('2d').drawImage(img, 0, 0, 32, 32); const v = c.toDataURL('image/png'); ctxPngCache.set(k, v); res(v); } catch (e) { res(null); } };
+    img.onerror = () => res(null);
+    img.src = src;
+  });
+}
+async function ctxStrip(list, pre) {
   const out = [];
+  const color = matchMedia('(prefers-color-scheme: dark)').matches ? '#c9cdd3' : '#4b5059';
   for (let i = 0; i < list.length; i++) {
     const it = list[i];
-    const color = it.danger ? colors.danger : it.primary ? colors.onprimary : colors.muted;
     out.push({ id: pre + i, sep: !!it.sep, label: it.label || '', hint: it.hint || '', primary: !!it.primary, danger: !!it.danger, disabled: !!it.disabled,
-      icon: it.icon && !it.sep ? ctxIcon(it.icon, color) : null, sub: it.sub ? await ctxStrip(it.sub, pre + i + '.', colors) : null });
+      icon: it.icon && !it.sep ? await ctxIconPng(it.icon, color) : null, sub: it.sub ? await ctxStrip(it.sub, pre + i + '.') : null });
   }
   return out;
 }
@@ -3721,7 +3741,7 @@ async function showCtxNative(items, x, y, title, head) {
   let r = null;
   try {
     const colors = ctxColors();
-    const stripped = await ctxStrip(items, '', colors);
+    const stripped = await ctxStrip(items, '');
     r = await api.post('/api/window', { cmd: 'ctx', items: stripped, title: head ? '' : (title || ''), head: head || null, colors, ui: ctxUi(), at_cursor: near ? '1' : '0', x: Math.round(window.screenX + x), y: Math.round(window.screenY + y), light: document.documentElement.dataset.light || '0' });
   } catch (e) { r = null; }
   ctxNative = false;
@@ -3742,8 +3762,8 @@ function showCtxLocal(items, x, y, title, head) {
   const row = (it, i, pre) => it.sep ? '<hr>' : `<button class="${it.danger ? 'danger' : ''} ${it.primary ? 'primary' : ''} ${it.sub ? 'has-sub' : ''}" data-i="${pre}${i}">${I[it.icon] || ''}<span>${esc(it.label)}</span>${it.hint ? `<em>${esc(it.hint)}</em>` : ''}${it.sub ? '<svg class="car" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>' : ''}</button>`;
   c.innerHTML = (head || '') + (title ? `<h5>${esc(title)}</h5>` : '') + items.map((it, i) => it.sub ? `<div class="subw">${row(it, i, '')}<div class="sub">${it.sub.map((x, k) => row(x, k, i + '.')).join('')}</div></div>` : row(it, i, '')).join('');
   const find = id => { const [a, b] = id.split('.'); return b === undefined ? items[+a] : items[+a].sub[+b]; };
-  c.querySelectorAll('button').forEach(b => b.onclick = e => { const it = find(b.dataset.i); if (it.sub) { e.stopPropagation(); return; } c.classList.remove('on'); it.fn && it.fn(); });
-  c.querySelectorAll('.subw').forEach(w => w.addEventListener('mouseenter', () => { const sub = w.querySelector('.sub'); sub.classList.remove('left'); sub.style.top = ''; sub.style.maxHeight = ''; const wr = w.getBoundingClientRect(); let r = sub.getBoundingClientRect(); if (r.right > innerWidth - 8) sub.classList.add('left'); if (r.height > innerHeight - 16) { sub.style.maxHeight = (innerHeight - 16) + 'px'; sub.style.overflowY = 'auto'; r = sub.getBoundingClientRect(); } const want = Math.max(8, Math.min(wr.top - 6, innerHeight - 8 - r.height)); sub.style.top = (want - wr.top) + 'px'; }));
+  c.querySelectorAll('button').forEach(b => b.onclick = e => { const it = find(b.dataset.i); if (it.sub) { e.stopPropagation(); if (c.classList.contains('tall')) b.parentElement.classList.toggle('open'); return; } c.classList.remove('on'); it.fn && it.fn(); });
+  c.querySelectorAll('.subw').forEach(w => w.addEventListener('mouseenter', () => { if (c.classList.contains('tall')) return; const sub = w.querySelector('.sub'); sub.classList.remove('left'); sub.style.top = ''; sub.style.maxHeight = ''; const wr = w.getBoundingClientRect(); let r = sub.getBoundingClientRect(); if (r.right > innerWidth - 8) sub.classList.add('left'); if (r.height > innerHeight - 16) { sub.style.maxHeight = (innerHeight - 16) + 'px'; sub.style.overflowY = 'auto'; r = sub.getBoundingClientRect(); } const want = Math.max(8, Math.min(wr.top - 6, innerHeight - 8 - r.height)); sub.style.top = (want - wr.top) + 'px'; }));
   c.classList.add('on'); placeCtx(x, y);
   setTimeout(() => document.addEventListener('click', () => c.classList.remove('on'), { once: true }), 0);
 }

@@ -73,7 +73,7 @@ export function which(name: string, pathVar?: string): string | null {
                 if (fs.statSync(f).isFile())
                     return f;
             }
-            catch { /* próximo */ }
+            catch { }
         }
     }
     return null;
@@ -214,7 +214,7 @@ export async function ensureUmu(cb: ((text: string, frac: number) => void) | nul
             try {
                 fs.unlinkSync(tmp);
             }
-            catch { /* nada */ }
+            catch { }
             if (!isFile(p))
                 throw new Error('pacote do umu sem umu-run');
             fs.chmodSync(p, 0o755);
@@ -362,7 +362,7 @@ export function wrap(cmd: string[], config: any = null, game: any | null = null)
             }
         }
     }
-    catch { /* nada */ }
+    catch { }
     return [cmd, hostEnv(), ''];
 }
 

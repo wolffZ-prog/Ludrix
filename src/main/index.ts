@@ -1,9 +1,3 @@
-/**
- * index.ts — processo principal do Electron.
- *
- * Faz o papel de app/main.py: cria a janela sem moldura, a bandeja do sistema,
- * garante instancia unica e sobe o servidor local que a interface consome.
- */
 import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs';
@@ -19,7 +13,6 @@ import * as diagMod from './diag';
 import * as server2 from './server2';
 import * as trayMod from './tray';
 import * as notifyMod from './notify';
-import * as menuMod from './menu';
 import * as gamepadMod from './gamepad';
 import * as imgdecode from './imgdecode';
 let win = null;
@@ -74,11 +67,10 @@ async function closeOther(timeout = 6000) {
     try {
         process.kill(pid, 'SIGKILL');
     }
-    catch { /* ignore */ }
+    catch { }
     await new Promise((r) => setTimeout(r, 500));
     return true;
 }
-/* --------------------------- instancia unica --------------------------- */
 const fileArgRe = /\.(lxup|lxtheme)$/i;
 const gotLock = electron.app.requestSingleInstanceLock({ files: process.argv.slice(1).filter((a) => fileArgRe.test(a)).map((a) => path.resolve(a)), urls: process.argv.slice(1).filter((a) => notifyMod.isUrlArg(a)) });
 if (!gotLock)
@@ -95,7 +87,6 @@ else {
             void handleFileArg(f);
     });
 }
-/* ------------------------------- janelas ------------------------------- */
 let mainUrl = '';
 let standby = false;
 let standbyTimer: any = null;
@@ -137,7 +128,6 @@ function createWindow(url, recreate = false) {
     win.setMenuBarVisibility(false);
     if (frameless)
         win.on('system-context-menu', (e) => { e.preventDefault(); });
-    // links externos abrem no navegador, nunca dentro do launcher
     win.webContents.setWindowOpenHandler(({ url: target }) => {
         if (/^https?:/i.test(target))
             void electron.shell.openExternal(target);
@@ -156,7 +146,6 @@ function createWindow(url, recreate = false) {
             if (recreate)
                 win?.focus();
         }
-        setTimeout(() => { if (win && !win.isDestroyed()) menuMod.warm(); }, 1500);
         if (backend)
             win?.setTitle(`Ludrix ${backend.publicConfig().version || ''}`.trim());
     });
@@ -180,13 +169,11 @@ function createWindow(url, recreate = false) {
     win.on('show', () => { clearTimeout(standbyTimer); standbyTimer = null; });
     win.on('hide', () => scheduleStandby());
     void win.loadURL(url);
-    // erros de JS da interface vao para o mesmo log do launcher
     win.webContents.on('console-message', (_e, level, message, line, sourceId) => {
         if (level >= 2)
             log.error('ui: %s (%s:%s)', message, String(sourceId || '').split('/').pop() || '', line);
     });
     win.webContents.on('did-fail-load', (_e, code, desc) => log.error('falha ao carregar a interface: %s %s', code, desc));
-    // a interface sem moldura avisa quando o mouse solta, para parar o resize
     win.webContents.on('did-finish-load', () => {
         if (pendingJs.length) {
             const codes = pendingJs.splice(0);
@@ -201,7 +188,6 @@ function createWindow(url, recreate = false) {
       }, true);
     `).catch(() => undefined);
     });
-    // F11 / F12 e equivalentes continuam uteis para depurar o porte
     win.webContents.on('before-input-event', (e, input) => {
         if (input.key === 'F12') {
             win?.webContents.toggleDevTools();
@@ -263,7 +249,6 @@ function createConsoleWindow(url) {
         }
     });
 }
-/* -------------------------------- bandeja -------------------------------- */
 let trayTold = false;
 export let frameLast: any = {};
 export function setFrameLast(v: any) { frameLast = v; }
@@ -283,7 +268,6 @@ function scheduleStandby() {
         const w = win;
         win = null;
         try {
-            menuMod.dispose();
             w.destroy();
             log.info('em espera na bandeja: janela liberada da memória');
             setTimeout(() => { try { backend?.standby(); } catch (e) { log.warn('em espera: %s', e); } }, 1000).unref?.();
@@ -323,7 +307,7 @@ function applyHotkey() {
     try {
         gs.unregisterAll();
     }
-    catch { /* nada */ }
+    catch { }
     const cfg = backend?.store.config || {};
     const accel = String(cfg.hotkey || '').trim();
     if (cfg.hotkey_enabled === false || !accel || CONSOLE) {
@@ -394,7 +378,6 @@ function onClosing(): boolean {
     win?.webContents.executeJavaScript('window.onCloseAsk ? (onCloseAsk(), 1) : 0', true).then((r) => { if (!r) hideWindow(); }).catch(() => hideWindow());
     return false;
 }
-/* --------------------------------- boot --------------------------------- */
 let emulationStatusCache = null;
 function updateGuard() {
     const pv = P.PENDING_VERIFY;
@@ -441,7 +424,7 @@ function updateGuard() {
     try {
         fs.writeFileSync(path.join(P.UPDATES, 'rolled_back.json'), JSON.stringify({ from: info.version, to: info.from, at: Date.now() / 1000 }), 'utf8');
     }
-    catch { /* ignore */ }
+    catch { }
     electron.app.relaunch();
     electron.app.exit(0);
     return true;
@@ -470,7 +453,7 @@ function migrateLegacy() {
                 n++;
             }
         }
-        catch { /* ignore */ }
+        catch { }
     }
     if (n)
         log.info('restos da versão 3.x removidos (%d)', n);
@@ -517,7 +500,6 @@ async function main() {
         log.warn('modo seguro: duas aberturas seguidas não completaram; aparência voltou ao padrão');
     }
     dialogs.bindWindow(getWindow);
-    // ---- autorreparo: confere os arquivos da interface ----
     try {
         const integrity = await import('./integrity');
         const rep = integrity.bootCheck(P.APP_DIR, P.ROOT);
@@ -532,7 +514,6 @@ async function main() {
     }
     server = await (0, serverMod.startServer)(backend, getWindow);
     setTimeout(legacySweep, 90000).unref();
-    // arquivo de instancia, igual ao Python: permite acordar esta copia
     util.writeJson(P.INSTANCE_FILE, {
         mode: MODE,
         pid: process.pid,
@@ -540,7 +521,6 @@ async function main() {
         token: server.token || serverMod.TOKEN,
         at: util.now(),
     });
-    // hooks que o backend usa para falar com a janela
     backend.windowHooks = {
         refresh_tray: () => trayMod.refresh(),
         reload: () => win?.webContents.reload(),
@@ -563,13 +543,13 @@ async function main() {
         hotkey: () => applyHotkey(),
         notify_hidden: (msg: string) => { if (win && !win.isVisible() && (backend?.store.config || {}).notify_hidden !== false) trayMod.notify(msg); },
         focused: () => Boolean(win && !win.isDestroyed() && win.isVisible() && win.isFocused() && !win.isMinimized()),
-        progress: (v: number) => { try { win?.setProgressBar(v, { mode: v < 0 ? 'none' : v >= 1 ? 'none' : 'normal' }); } catch { /* sem barra */ } },
+        progress: (v: number) => { try { win?.setProgressBar(v, { mode: v < 0 ? 'none' : v >= 1 ? 'none' : 'normal' }); } catch { } },
     };
     if (process.platform === 'win32')
         try {
             electron.systemPreferences.on('accent-color-changed', () => backend?.push({ type: 'sys_accent', hex: server.sysAccent() }));
         }
-        catch { /* sem evento */ }
+        catch { }
     if (CONSOLE)
         createConsoleWindow(`http://127.0.0.1:${server.port}/console`);
     else {
@@ -578,7 +558,6 @@ async function main() {
         trayMod.build({ be: backend, show: () => showWindow(), quit: () => quitApp(), js: (code) => { showWindow(); runJs(code); }, frameLast: () => frameLast });
         notifyMod.attach({ be: backend, show: () => showWindow(), openGame: (k) => { showWindow(); runJs(`openGame(${JSON.stringify(k)})`); }, play: (k) => { showWindow(); runJs(`play(${JSON.stringify(k)})`); } });
     }
-    // prepara as pastas e a biblioteca em segundo plano
     setTimeout(() => backend?.bootstrapRun(), 800);
     let lastTick = Date.now();
     const stall = setInterval(() => {
@@ -611,7 +590,6 @@ async function main() {
             log.warn('gamepad: %s', e?.message || e);
         }
     }
-    // utilitario de desenvolvimento: LUDRIX_SCREENSHOT=/caminho.png fecha depois de salvar
     if (process.env.LUDRIX_SCREENSHOT) {
         setTimeout(async () => {
             try {
@@ -650,7 +628,7 @@ async function main() {
         try {
             electron.globalShortcut.unregisterAll();
         }
-        catch { /* nada */ }
+        catch { }
         imgdecode.shutdown();
         backend?.shutdown();
         server?.close();
@@ -658,7 +636,6 @@ async function main() {
             fs.rmSync(P.INSTANCE_FILE, { force: true });
         }
         catch {
-            /* ignore */
         }
     });
 }
@@ -669,11 +646,6 @@ electron.app.on('window-all-closed', () => {
         return;
     electron.app.quit();
 });
-/* --------------------- arquivos abertos no launcher --------------------- */
-/**
- * Ao abrir um .lxup ou .lxtheme pelo Windows (duplo clique ou arrastar para a
- * janela), o arquivo chega no argv. Aqui ele e entregue ao modulo certo.
- */
 const pendingFiles: string[] = [];
 const pendingUrls: string[] = [];
 function handleUrlArg(u: string) {
@@ -719,8 +691,6 @@ if (process.platform === 'darwin') {
         void handleFileArg(file);
     });
 }
-// Aceleração por GPU ligada (como o WebView2 fazia): a interface fica fluida e
-// o processo principal não gasta CPU desenhando por software.
 if (process.platform === 'linux')
     electron.app.commandLine.appendSwitch('disable-dev-shm-usage');
 if (process.argv.includes('--no-gpu'))
@@ -731,7 +701,6 @@ if (gotLock)
         log.error('falha ao iniciar: %s', e);
     }
     catch {
-        /* ignore */
     }
     electron.dialog.showErrorBox('Ludrix', 'Não foi possível iniciar.\n\n' + String(e));
     electron.app.quit();

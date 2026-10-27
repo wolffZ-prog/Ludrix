@@ -318,7 +318,7 @@ cmd('help', 'Lista os comandos (ou explica um: /help <comando>)', (t, a) => {
 
 cmd('clear', 'Limpa a tela do terminal', () => ({ ui: { clear: true } }), { group: 'ajuda', aliases: ['cls'] });
 
-cmd('version', 'Versão do Ludrix, do Python e do sistema', (t) => {
+cmd('version', 'Versão do Ludrix, do Electron e do sistema', (t) => {
     const sysName = WIN ? 'Windows' : process.platform === 'darwin' ? 'Darwin' : 'Linux';
     return `LudrixHub ${t.version()} (${P.FROZEN ? 'compilado' : 'código-fonte'})\nElectron ${process.versions.electron || '?'} · Node ${process.versions.node} · ${sysName} ${os.release()} (${os.arch()})\nPasta: ${P.ROOT}\nAberto há ${Math.floor((Date.now() / 1000 - t.started) / 60)} min`;
 }, { group: 'ajuda', aliases: ['ver', 'about'] });
@@ -367,7 +367,7 @@ cmd('changelog', 'Mostra as novidades da versão instalada (ou de um pacote .lxu
     try {
         files = fs.readdirSync(P.UPDATES).filter((f) => f.endsWith('.lxup')).sort();
     }
-    catch { /* ignore */ }
+    catch { }
     for (const f of files) {
         try {
             const m = JSON.parse(new AdmZip(path.join(P.UPDATES, f)).readAsText('manifest.json'));
@@ -805,7 +805,7 @@ cmd('listbackups', 'Lista os backups em updates/backup', () => {
     try {
         fsx = fs.readdirSync(d).filter((f) => /^ludrix-backup-.*\.zip$/.test(f)).sort().reverse();
     }
-    catch { /* ignore */ }
+    catch { }
     return fsx.map((f) => `${f.padEnd(40)} ${human(fs.statSync(path.join(d, f)).size)}`).join('\n') || 'Nenhum backup ainda. /forcebackup cria um.';
 }, { group: 'backup' });
 
@@ -861,7 +861,7 @@ cmd('open', 'Abre um programa do Windows, uma pasta do Ludrix ou um site', (t, a
         try {
             inSys = fs.realpathSync(exe).toLowerCase().startsWith(sysRoot);
         }
-        catch { /* ignore */ }
+        catch { }
     }
     if (allowed.has(name) || inSys) {
         const argv = target.endsWith('.msc') || target.endsWith(':') ? ['explorer.exe', target] : [exe || name];

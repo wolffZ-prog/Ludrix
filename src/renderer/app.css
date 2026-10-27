@@ -914,6 +914,7 @@ body[data-nav=side]:not([data-layout]) .brandbtn,body[data-layout=side] .brandbt
 .ctx .subw:hover>.sub,.ctx .subw:focus-within>.sub{display:block}
 .ctx .subw:hover>button{background:color-mix(in srgb,var(--text) 8%,transparent)}
 .ctx{overflow:visible}.ctx:not(:has(.subw)){overflow:auto;scrollbar-width:thin}
+.ctx.tall{overflow:auto;scrollbar-width:thin}.ctx.tall .sub{position:static;display:none;margin:0 0 0 14px;padding:0;border:0;box-shadow:none;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;min-width:0}.ctx.tall .subw:hover>.sub{display:none}.ctx.tall .subw.open>.sub{display:block}.ctx.tall .subw.open>button .car{transform:rotate(90deg)}
 .themes .theme .prev.img{display:block;background-size:cover;background-position:top center;grid-template-columns:none}
 .themes .theme .prev.img i{display:none}
 .impg .impcov{width:34px;height:46px;border-radius:6px;object-fit:cover;background:var(--card2);flex:none;display:grid;place-items:center;color:var(--muted2)}

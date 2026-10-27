@@ -303,7 +303,6 @@ html body.bs[data-face] .h1 .btn.xs,html body.bs[data-face] .h1 .filt>.btn,html 
 html body.bs[data-face] .h1 .btn.xs.p{width:auto;padding:0 10px}
 }
 
-/* ---- nowbar (jogo selecionado) ---- */
 html body.bs[data-face] .nowbar{position:relative;display:flex;gap:16px;align-items:center;height:118px;padding:0 16px 0 0;margin:0 0 20px;border:1px solid var(--line);border-radius:var(--r);background:var(--card);box-sizing:border-box;overflow:hidden}
 html body.bs[data-face] .nowbar.hb{background-image:var(--nbimg);background-size:cover;background-position:center 30%;background-color:var(--card)}
 html body.bs[data-face] .nowbar.hb::before{content:"";position:absolute;inset:0;background:color-mix(in srgb,var(--bg-solid,var(--bg)) 58%,transparent)}
@@ -331,7 +330,6 @@ html body.bs[data-face] .nowbar.nbsw>*{animation:nbIn .28s ease-out both}
 @keyframes nbIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 @container (max-width:560px){html body.bs[data-face] .nowbar .nbacts .btn.xs:not(.p):not(.ic) span{display:none}html body.bs[data-face] .nowbar .nbacts .btn.xs:not(.p){width:28px;padding:0;justify-content:center}}
 
-/* ---- temas instalados ---- */
 html body.bs[data-face] .thlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;width:100%}
 html body.bs[data-face] .thcard{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 10px;border:1px solid var(--line);border-radius:var(--r);background:transparent;cursor:pointer;min-width:0;transition:border-color .15s,background .15s}
 html body.bs[data-face] .thcard:hover{background:var(--card2);border-color:var(--line2)}
@@ -344,7 +342,6 @@ html body.bs[data-face] .thcard .tht small{font-size:11px;color:var(--muted2)}
 html body.bs[data-face] .thcard .ib{flex:none;width:26px;height:26px;opacity:.6}
 html body.bs[data-face] .thcard:hover .ib{opacity:1}
 
-/* ---- movimento leve ---- */
 html body.bs[data-face] #view.vin>*{animation:viewIn .22s ease-out both}
 @keyframes viewIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 html body.bs[data-face] .grid .card{transition:transform .18s ease-out}
@@ -372,7 +369,6 @@ html body.bs[data-face] .dpane.on{animation:nbIn .22s ease-out both}
 html body.bs[data-face] .tile,html body.bs[data-face] .item{transition:transform .15s ease-out,border-color .15s,background .15s}
 html body.bs[data-face] .tile:hover,html body.bs[data-face] .item:hover{transform:translateY(-1px)}
 
-/* ---- posições do menu (temas): topo, embaixo, ícones ---- */
 html body.bs[data-face][data-layout=top]{--side:0px;--toph:50px}
 html body.bs[data-face][data-layout=top] #app{grid-template-columns:1fr;grid-template-rows:var(--tb) var(--toph) 1fr}
 html body.bs[data-face][data-layout=top] .rail{grid-row:2;grid-column:1;position:relative;flex-direction:row;align-items:center;gap:2px;height:var(--toph);padding:0 14px;border-right:0;border-bottom:1px solid var(--line);overflow:visible}
@@ -440,7 +436,6 @@ html body.bs[data-face][data-layout=top] header.top .search input:focus,html bod
 html body.bs[data-face][data-layout=top] header.top .search svg,html body.bs[data-face][data-layout=rail] header.top .search svg,html body.bs[data-face][data-nav=bottom] header.top .search svg{left:11px;width:15px;height:15px;color:var(--muted2)}
 html body.bs[data-face][data-layout=top] header.top .search kbd,html body.bs[data-face][data-layout=rail] header.top .search kbd,html body.bs[data-face][data-nav=bottom] header.top .search kbd{display:block;right:10px;font:500 10.5px/1 var(--font-text);border:1px solid var(--line2);border-radius:4px;padding:2px 5px;color:var(--muted2);background:transparent}
 
-/* ---- vidro fosco (acrílico do Windows 11): as variáveis de superfície viram translúcidas em applyGlass(); aqui só o que precisa de ajuste ---- */
 html:has(body.bs.acr){background:transparent}
 html body.bs.acr:has(.detail.on:not(.bar)) #view{visibility:hidden}
 html body.bs.acr :is(.chip.on,.tabs button.on,.azbar span.on,.sofabar kbd){color:var(--bg-solid)}

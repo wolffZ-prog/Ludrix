@@ -39,7 +39,7 @@ function docsDir(): string {
                     d = v;
             }
         }
-        catch { /* ignore */ }
+        catch { }
     }
     DOCS_CACHE = d;
     return d;
@@ -150,7 +150,7 @@ function copyTree(src: string, dst: string) {
                 const st = fs.statSync(s);
                 fs.utimesSync(d, st.atime, st.mtime);
             }
-            catch { /* ignore */ }
+            catch { }
         }
     }
 }
@@ -242,7 +242,7 @@ export class SaveManager {
                                 gen.push(path.join(c, e.name));
                         }
                     }
-                    catch { /* ignore */ }
+                    catch { }
                 }
             }
         }

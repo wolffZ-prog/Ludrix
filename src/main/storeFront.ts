@@ -1,10 +1,3 @@
-/**
- * storeFront.ts — integra os modulos novos (Store, downloads, torrent,
- * emulacao, importacoes, atualizacoes) com o backend da biblioteca.
- *
- * E a peca que o backend.py do original fazia dentro de ludrix.py: orquestrar
- * fila, provedores e instalacao, avisando a interface a cada etapa.
- */
 import fs from 'node:fs';
 import path from 'node:path';
 import * as P from './paths';
@@ -54,7 +47,6 @@ class StoreFront {
         this.queue = new downloader.DownloadQueue(Number(be.store.config.concurrent_downloads || 2));
         this.updates = new updates.UpdateManager(be.store, this.session);
     }
-    /* ------------------------------- catalogo ------------------------------- */
     repoList() {
         const counts: Record<string, number> = {};
         for (const e of this.be.cat.entries.values())
@@ -127,8 +119,6 @@ class StoreFront {
     siteSearch(q) {
         return this.be.cat.siteSearch(q);
     }
-    /* ------------------------------- downloads ------------------------------- */
-    /** Mostra o que um link oferece, antes de baixar. */
     async linkPreview(url) {
         url = String(url || '').trim();
         this.be.act('Lendo o link…');
@@ -526,7 +516,6 @@ class StoreFront {
     queuePayload() {
         return this.be.jobs.queuePayload();
     }
-    /* --------------------------------- ROMs --------------------------------- */
     get emu() {
         return this.be.emu;
     }
@@ -632,12 +621,12 @@ class StoreFront {
                         siblings++;
                 }
         }
-        catch { /* ignore */ }
+        catch { }
         let size = 0;
         try {
             size = fs.statSync(p).size;
         }
-        catch { /* ignore */ }
+        catch { }
         const known = (this.be.store.config.rom_files || []).some((x: any) => x.path === p);
         const emulators: any = {};
         for (const s of Object.keys(this.emu.presets.systems))
@@ -681,9 +670,6 @@ class StoreFront {
         }
         return this.emu.guideInstall(system, what, p);
     }
-    /* ------------------------------ importacoes ------------------------------ */
-    /** Aplica a importacao: cria as entradas na biblioteca. */
-    /* -------------------------------- extras -------------------------------- */
     async detect(query) {
         this.be.act('Analisando fonte…');
         try {
@@ -693,7 +679,6 @@ class StoreFront {
             this.be.act('');
         }
     }
-    /* ----------------------------- atualizacoes ----------------------------- */
     updates: updates.UpdateManager;
     updateStatus() {
         return this.updates.status();
@@ -718,7 +703,7 @@ class StoreFront {
             fs.mkdirSync(P.UPDATES, { recursive: true });
             fs.writeFileSync(path.join(P.UPDATES, 'theme.json'), JSON.stringify(this.be.themePalette()), 'utf8');
         }
-        catch { /* ignore */ }
+        catch { }
         const r: any = this.updates.apply(relaunch, restore);
         if (r.quit)
             setTimeout(() => (this.be.windowHooks?.quit || (() => process.exit(0)))(), 800);
@@ -737,7 +722,6 @@ class StoreFront {
     updateAck() {
         return this.updates.ackResult();
     }
-    /* ------------------------------ integridade ------------------------------ */
     integrityStatus() {
         return integrity.now(P.APP_DIR, P.ROOT);
     }
@@ -747,7 +731,6 @@ class StoreFront {
             this.be.notify('ok', 'Arquivos do launcher reparados', `${r.fixed.length} arquivo(s) restaurado(s) a partir do pacote da versão ${r.version || ''}.`, 'integrity');
         return r;
     }
-    /* ------------------------------- utilidades ------------------------------- */
     cleanDownloads() {
         const d = P.DOWNLOADS;
         if (!fs.existsSync(d))
@@ -778,7 +761,6 @@ class StoreFront {
         }
         return { ok: true, freed, freed_h: installer.humanSize(freed), skipped };
     }
-    /* --------------------------------- jobs --------------------------------- */
     setJob(key, title, phase = 'download', frac = -1, text = '', speed = 0, eta = 0) {
         this.be.jobs.set(key, prog(phase, frac, text, speed, eta));
     }
@@ -798,4 +780,3 @@ class StoreFront {
 export { StoreFront };
 
 
-/* ---------------------- capas da pre-visualizacao ---------------------- */

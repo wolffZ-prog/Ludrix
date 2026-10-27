@@ -1,10 +1,3 @@
-/**
- * archive.ts — descompactacao de pacotes de jogos.
- *
- * ZIP usa o adm-zip (puro JS). 7z/RAR/ISO e afins usam o 7-Zip, baixado sob
- * demanda para `data/bin/` no Windows — a mesma estrategia do `bootstrap.py`
- * original, que provisionava o 7-Zip na primeira instalacao.
- */
 import fs from 'node:fs';
 import path from 'node:path';
 import * as cp from 'node:child_process';
@@ -19,7 +12,6 @@ const SEVENZ_EXT = new Set([
     '.mdf', '.nrg', '.img', '.wim', '.arj', '.lzma', '.z', '.tgz', '.tbz2', '.txz',
 ]);
 const SEVENZ_URL_WIN = 'https://www.7-zip.org/a/7zr.exe'
-/** Procura um binario 7-Zip utilizavel. */
 function sevenZipPath() {
     const local = path.join(P.BIN, process.platform === 'win32' ? '7zr.exe' : '7zz');
     if (fs.existsSync(local))
@@ -32,7 +24,6 @@ function sevenZipPath() {
                     return found;
             }
             catch {
-                /* nao instalado */
             }
         }
     }
@@ -45,7 +36,6 @@ function sevenZipPath() {
     }
     return null;
 }
-/** Baixa o 7zr.exe autonomo (Windows) na primeira vez que for necessario. */
 async function ensureSevenZip(session = http.shared) {
     const found = sevenZipPath();
     if (found)
@@ -72,7 +62,6 @@ function isArchive(file) {
     const ext = path.extname(file).toLowerCase();
     return ZIP_EXT.has(ext) || SEVENZ_EXT.has(ext);
 }
-/** Lista o conteudo de um ZIP sem extrair (para preview de instalacao). */
 function listZip(file) {
     try {
         const zip = new AdmZip(file);
@@ -86,7 +75,6 @@ function listZip(file) {
         return [];
     }
 }
-/** Extrai um pacote para `dest`. */
 async function extract(file, dest, opts: any = {}) {
     fs.mkdirSync(dest, { recursive: true });
     const ext = path.extname(file).toLowerCase();
@@ -127,7 +115,6 @@ function extractSevenZip(file, dest, opts) {
                     proc.kill('SIGKILL');
                 }
                 catch {
-                    /* ignore */
                 }
             };
             const poll = setInterval(() => {
@@ -168,10 +155,6 @@ function extractSevenZip(file, dest, opts) {
         });
     });
 }
-/**
- * Muitos pacotes trazem tudo dentro de uma unica pasta raiz. Quando e esse o
- * caso, sobe o conteudo um nivel — o jogo passa a morar direto em games/<slug>.
- */
 function normalizeRoot(dir, force = false) {
     try {
         const entries = fs.readdirSync(dir).filter((f) => !f.startsWith('.'));
@@ -199,7 +182,6 @@ function normalizeRoot(dir, force = false) {
         return dir;
     }
 }
-/** Empacota uma pasta em ZIP (usado na exportacao de tema e backup). */
 function zipFolder(srcDir, outFile) {
     const zip = new AdmZip();
     zip.addLocalFolder(srcDir);

@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.0.16-hf2 — 2026-10-27
+- Menu de contexto refeito: a janela flutuante usada para o menu foi removida. O menu do Ludrix (dentro da própria janela, com cabeçalho, ícones e submenus) passa a ser o padrão; a opção "Menu nativo do Windows" usa o menu do próprio sistema. Vale para jogos, listas e demais menus.
+- Menu da bandeja passa a ser o menu nativo do sistema.
+- Menu do Ludrix em janelas baixas: rola e abre submenus em linha, sem cortar itens.
+- Interface em inglês completa: textos que ainda apareciam em português (ajustes, Store, emuladores, mods, console, avisos) foram traduzidos. Busca aceita os prefixos year:, sys:, origin: e tag:.
+- Limpeza do código-fonte: comentários e anotações removidos de todos os arquivos.
+
 ## 4.0.16-hf1 — 2026-10-27
 - Menu de contexto (Windows): voltou a abrir em todo lugar — jogos, barra lateral, bandeja. A janela do menu era redimensionável, o que faz janelas transparentes pararem de funcionar no Windows; agora tem tamanho fixo por abertura. Se o menu não aparecer em 1,2 s, o menu interno entra no lugar.
 - Ordenar, agrupar, modo (mural/grade/lista), tamanho das capas e filtros ficaram num botão só: "Exibição", no topo da Biblioteca e da Store. O menu "Recentes ▾" e o botão separado de exibição saíram.

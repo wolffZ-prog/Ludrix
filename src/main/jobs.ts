@@ -143,7 +143,7 @@ export class Jobs {
             fs.mkdirSync(path.dirname(this.HIST), { recursive: true });
             fs.writeFileSync(this.HIST, JSON.stringify(this.histLoad().slice(-200)), 'utf8');
         }
-        catch { /* ignore */ }
+        catch { }
     }
 
     histPut(key: string, title: string, kind: string, status: string, extra: Record<string, any> = {}) {
@@ -275,7 +275,7 @@ export class Jobs {
                         if (fs.existsSync(tmp))
                             fs.rmSync(tmp, { recursive: true, force: true });
                     }
-                    catch { /* ignore */ }
+                    catch { }
                 }, 2000);
             }
             return { ok: true };

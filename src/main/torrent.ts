@@ -1,13 +1,3 @@
-/**
- * torrent.ts — porte de app/core/torrent.py.
- *
- * O original usava libtorrent (Python) com um binario externo de reserva.
- * Aqui: **webtorrent** (puro JS, roda no processo principal do Electron) como
- * WebTorrent e o unico motor: nada de binario externo baixado em runtime.
- *
- * O motor reporta o mesmo texto de progresso do original:
- *   "350 MB / 4,1 GB  •  ↓ 2,1 MB/s  ↑ 40 KB/s  •  18 peers  •  ETA 12m30s"
- */
 import fs from 'node:fs';
 import path from 'node:path';
 import * as cp from 'node:child_process';
@@ -31,7 +21,6 @@ async function loadWebTorrent() {
     }
     return WtModule;
 }
-/* ------------------------------ cliente ------------------------------ */
 let QUIET = false;
 let HOLD = false;
 export function setHold(on: boolean) {
@@ -44,7 +33,7 @@ export function setHold(on: boolean) {
             try {
                 c.applyLimits(t);
             }
-            catch { /* ignore */ }
+            catch { }
         }
 }
 export function setQuiet(on: boolean) {
@@ -55,7 +44,7 @@ export function setQuiet(on: boolean) {
             try {
                 c.applyLimits(t);
             }
-            catch { /* ignore */ }
+            catch { }
         }
     }
 }
@@ -93,9 +82,6 @@ class TorrentClient {
         if (!WT)
             return null;
         this.client = new WT({
-            // Descoberta de peers desligada: nada de DHT, LSD/LPD, UPnP ou
-            // NAT-PMP. O cliente fala apenas com os trackers do magnet/torrent,
-            // sem abrir portas no roteador nem anunciar-se na rede local.
             dht: false,
             lsd: false,
             natUpnp: false,
@@ -110,10 +96,8 @@ class TorrentClient {
             t?.client?.throttleUpload?.(up);
         }
         catch {
-            /* versoes sem suporte: segue sem limite */
         }
     }
-    /** Desliga o cliente quando nao ha mais torrents ativos. */
     maybeClose() {
         try {
             if (this.client && !this.client.torrents?.length) {
@@ -122,13 +106,8 @@ class TorrentClient {
             }
         }
         catch {
-            /* ignore */
         }
     }
-    /**
-     * Baixa um magnet/.torrent para `destDir`.
-     * @returns o caminho do arquivo ou da pasta resultante.
-     */
     async download(source, destDir, cb, cancel, session) {
         fs.mkdirSync(destDir, { recursive: true });
         const client = await this.ensureClient();
@@ -186,7 +165,6 @@ class TorrentClient {
                 client.remove(torrent, { destroyStore: false }, () => undefined);
             }
             catch {
-                /* ignore */
             }
             this.maybeClose();
         }

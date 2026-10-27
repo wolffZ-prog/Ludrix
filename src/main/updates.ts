@@ -78,7 +78,7 @@ export class UpdateManager {
             r.shown = true;
             fs.writeFileSync(p, JSON.stringify(r), 'utf8');
         }
-        catch { /* ignore */ }
+        catch { }
         return { ok: true };
     }
 
@@ -211,7 +211,7 @@ export class UpdateManager {
             try {
                 fs.rmSync(tmp, { force: true });
             }
-            catch { /* ignore */ }
+            catch { }
             this.state.error = String(e?.message || e);
             return { error: String(e?.message || e) };
         }

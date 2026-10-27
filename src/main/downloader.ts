@@ -1,11 +1,3 @@
-/**
- * downloader.ts — download HTTP com retomada, limite de velocidade,
- * descriptografia em linha (MEGA) e fila com concurrencia.
- *
- * Substitui o par `hosts.Session` + escrita em `downloads/` do installer.py.
- * O arquivo e gravado em `<nome>.part` e renomeado no final, para nunca
- * deixar um arquivo pela metade com aparencia de pronto.
- */
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -22,7 +14,6 @@ function safeName(name, fallback = 'download') {
     const base = clean || fallback;
     return base.length > 180 ? base.slice(0, 180) : base;
 }
-/** Cria um nome unico dentro da pasta (nao sobrescreve). */
 function uniquePath(dir, name) {
     const base = safeName(name);
     let candidate = path.join(dir, base);
@@ -37,12 +28,10 @@ function uniquePath(dir, name) {
     }
     return path.join(dir, `${stem}-${Date.now()}${ext}`);
 }
-/** Baixa um arquivo com retomada e retorna o caminho final. */
 async function downloadFile(req: any, onProgress: (p: any) => any = () => undefined, cancel: any = { aborted: false }, session: any = http.shared) {
     fs.mkdirSync(req.dir, { recursive: true });
     let finalPath = '';
     const partPath = () => finalPath + '.part';
-    // primeira requisicao: descobre nome e tamanho
     const probeHeaders = { 'User-Agent': http.UA, ...(req.headers || {}) };
     if (req.cookies) {
         probeHeaders.Cookie = Object.entries(req.cookies).map(([k, v]) => `${k}=${v}`).join('; ');
@@ -146,19 +135,16 @@ async function downloadFile(req: any, onProgress: (p: any) => any = () => undefi
             fs.closeSync(fd);
         }
         catch {
-            /* ignore */
         }
         try {
             reader.releaseLock?.();
         }
         catch {
-            /* ignore */
         }
     }
     if (cancel.aborted)
         throw new installer_types.CancelledError();
     if (grandTotal && fs.statSync(part).size < grandTotal && !resumed) {
-        // servidor cortou a conexao: mantem o .part para retomar depois
         throw new Error('Download interrompido antes do fim (o .part fica salvo para continuar)');
     }
     fs.renameSync(part, finalPath);
@@ -189,10 +175,6 @@ async function fetchWithGuard(url, init, cancel) {
         void onAbort;
     }
 }
-/**
- * Fila de trabalhos com concurrencia configuravel (`concurrent_downloads`),
- * pausa, cancelamento e historico — o equivalente ao /api/queue do original.
- */
 class DownloadQueue {
     concurrency;
     items = new Map();
@@ -316,7 +298,6 @@ class DownloadQueue {
 function downloadsDir() {
     return P.DOWNLOADS;
 }
-/** Limpa a pasta de downloads (menos o que esta em uso). */
 function cleanDownloads(keep = new Set()) {
     let removed = 0;
     let freed = 0;
@@ -334,7 +315,6 @@ function cleanDownloads(keep = new Set()) {
                 freed += st.size;
         }
         catch {
-            /* arquivo em uso */
         }
     }
     return { removed, freed };

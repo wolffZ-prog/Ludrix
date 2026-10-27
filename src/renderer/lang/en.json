@@ -1832,7 +1832,6 @@
   "Fonte: PCGamingWiki.": "Source: PCGamingWiki.",
   "o tema atual sugere": "the current theme suggests",
   "Menus do botão direito": "Right-click menus",
-  "Menu do Windows": "Windows menu",
   "Padrão do Windows": "Windows default",
   "Clássico": "Classic",
   "Pixel": "Pixel",
@@ -1984,7 +1983,7 @@
   "Letra": "Letter",
   "Última vez jogada": "Last played",
   "Instalado ou não": "Installed or not",
-  "Jogando hoje": "Played today",
+  "Jogando hoje": "Playing today",
   "Esta semana": "This week",
   "Este mês": "This month",
   "Há mais tempo": "Longer ago",
@@ -2126,7 +2125,7 @@
   "instale um emulador ou coloque ROMs e ele sobe para Meus consoles": "install an emulator or add ROMs and it moves up to My consoles",
   "os mais usados primeiro": "most used first",
   "Escolha o console": "Pick the console",
-  "e instale o emulador com um clique — ou aponte o que você já tem em \"Já tenho\".": "and install the emulator in one click — or point to the one you have with \"Já tenho\".",
+  "e instale o emulador com um clique — ou aponte o que você já tem em \"Já tenho\".": "and install the emulator in one click — or point to the one you have with \"I have it\".",
   "Traga as ROMs": "Bring the ROMs",
   "copie para a pasta do console ou use \"+ pasta de ROMs\" para apontar a sua.": "copy them to the console folder or use \"+ pasta de ROMs\" to point to yours.",
   "Jogue pela Biblioteca": "Play from the Library",
@@ -2487,236 +2486,2336 @@
   "Avisar quando aparecer pasta nova": "Notify when a new folder appears",
   "Pausar downloads enquanto um jogo está aberto": "Pause downloads while a game is open",
   "Origem embaixo da capa": "Origin under the cover",
-  "Novos primeiro": "Newest first"
+  "Novos primeiro": "Newest first",
+  "Sem cor do sistema": "No system color",
+  "Não consegui ler a cor de destaque do Windows.": "Could not read the Windows accent color.",
+  "jogo selecionado": "game selected",
+  "jogos selecionados": "games selected",
+  "Removidos dos favoritos": "Removed from favorites",
+  "— abrir Fila": "— open Queue",
+  "1 em andamento": "1 in progress",
+  "Game sem Imagem!": "Game without image!",
+  "NO PC": "NOT ON THIS PC",
+  "Em execução — clique para encerrar": "Running — click to stop",
+  "Falta um launcher de Minecraft — clique em Jogar para escolher um": "No Minecraft launcher found — click Play to choose one",
+  "SEM LAUNCHER": "NO LAUNCHER",
+  "O executável ou a ROM não está mais no lugar — clique em Jogar para apontar o novo caminho": "The executable or ROM is no longer where it was — click Play to point to the new path",
+  "NÃO ENCONTRADO": "NOT FOUND",
+  "O link direto não respondeu no último teste da fonte": "The direct link did not respond in the source's last test",
+  "LINK FORA DO AR": "LINK DOWN",
+  "Guarda o parcial para retomar na Fila": "Keeps the partial file to resume from the Queue",
+  "menos de 1 min": "less than 1 min",
+  "· na fonte": "· at the source",
+  "Os arquivos do jogo são substituídos pelos novos. Saves e configurações que ficam em Documentos/AppData não são tocados.": "The game files are replaced by the new ones. Saves and settings kept in Documents/AppData are not touched.",
+  "depende dos seeds do torrent": "depends on the torrent seeds",
+  "aparece depois do primeiro download": "shows up after the first download",
+  "Usar sempre esta pasta para": "Always use this folder for",
+  "Pasta padrão:": "Default folder:",
+  "Baixar em outra pasta…": "Download to another folder…",
+  "· você escolheu": "· you chose",
+  "como padrão deste console": "as this console's default",
+  "Escolher outra pasta…": "Choose another folder…",
+  "Baixar jogo": "Download game",
+  "Precisa de espaço": "Space needed",
+  "Espaço livre": "Free space",
+  "Quando terminar de baixar: Adicionar → Jogo de Windows (ou arraste o arquivo para Store).": "When the download finishes: Add → Windows game (or drag the file onto the Store).",
+  "Na fila, esperando o horário": "Queued, waiting for the time window",
+  "Encerrar o jogo": "Stop the game",
+  "Ir para Emuladores": "Go to Emulators",
+  "Abrir guia": "Open guide",
+  "Falta um componente do sistema": "A system component is missing",
+  "Wine não encontrado": "Wine not found",
+  "umu baixado; Proton ainda não": "umu downloaded; Proton not yet",
+  "Nada baixado ainda — acontece sozinho no primeiro jogo": "Nothing downloaded yet — happens by itself on the first game",
+  "Prefixos em": "Prefixes in",
+  "Baixando em segundo plano. Acompanhe na Fila.": "Downloading in the background. Follow it in the Queue.",
+  "Executável não encontrado": "Executable not found",
+  "Se o jogo mudou de pasta, aponte o caminho novo. Se foi apagado, remova da biblioteca — os arquivos não são tocados.": "If the game moved to another folder, point to the new path. If it was deleted, remove it from the library — the files are not touched.",
+  "arquivo": "file",
+  "executável": "executable",
+  "Se o jogo fica num HD externo ou pendrive, conecte e tente de novo — não precisa apontar nada.": "If the game lives on an external drive or USB stick, connect it and try again — no need to point to anything.",
+  "Atalho para:": "Shortcut to:",
+  "Nome do jogo (usado para buscar capa e metadados)": "Game name (used to look up cover and metadata)",
+  "Caminho completo do .exe ou atalho (.lnk)": "Full path of the .exe or shortcut (.lnk)",
+  "O nome é usado para buscar capa e metadados de novo.": "The name is used to look up the cover and metadata again.",
+  "Você preencheu este campo; a busca automática não mexe nele. Apague o valor para voltar ao automático.": "You filled in this field; the automatic lookup leaves it alone. Clear the value to go back to automatic.",
+  "seu": "yours",
+  "Resumo do jogo. Vazio = o que a Wikipedia/Steam trouxer.": "Game summary. Empty = whatever Wikipedia/Steam brings.",
+  "Jogos vindos de uma fonte usam o nome da fonte": "Games from a source use the source's name",
+  "deixar as fontes corrigirem o nome de novo": "let the sources correct the name again",
+  "Usado para buscar capa e informações. Ao mudar o nome e salvar, você escolhe se quero buscar tudo de novo.": "Used to look up cover and info. When you change the name and save, you choose whether to fetch everything again.",
+  "Ação, Aventura, RPG… (separe por vírgula)": "Action, Adventure, RPG… (comma-separated)",
+  "Zerar em 2026, Coop com a galera, Leve… (separe por vírgula)": "Finish in 2026, Co-op with friends, Light… (comma-separated)",
+  "Suas marcações livres. Viram filtro e busca (tag:leve)": "Your free-form tags. They become a filter and a search (tag:light)",
+  "Um jogador, Multijogador…": "Single player, Multiplayer…",
+  "Sem metadados ainda — preencha aqui ou use \"Baixar metadados…\".": "No metadata yet — fill it in here or use \"Download metadata…\".",
+  "· copiado de": "· copied from",
+  "Usa nome, descrição, capa e tudo mais de outro jogo da biblioteca — ótimo para mods de conversão total": "Uses the name, description, cover and everything else from another game in the library — great for total conversion mods",
+  "Apaga o que você editou e busca tudo de novo na internet": "Discards what you edited and fetches everything again from the internet",
+  "Procura imagens largas (wallpaper, screenshot) com o nome do jogo e deixa você escolher o fundo": "Searches wide images (wallpaper, screenshot) by the game's name and lets you choose the background",
+  "aparece atrás da página do jogo e no palco": "shows behind the game page and on the stage",
+  "Procurar fundo na web…": "Search background on the web…",
+  "imagem sua": "your image",
+  "link seu": "your link",
+  "sem capa": "no cover",
+  "Links que as fontes já trouxeram (aparecem na página do jogo):": "Links the sources already brought (shown on the game page):",
+  "Só vale para este jogo. O padrão do console muda em Emuladores.": "Only for this game. The console default is changed in Emulators.",
+  "Pasta de destino (ex.: D:\\Jogos)": "Destination folder (e.g. D:\\Games)",
+  "Listar os .exe da pasta do jogo": "List the .exe files in the game folder",
+  "O arquivo que abre o jogo. Atalhos de loja (steam://…) também valem.": "The file that opens the game. Store shortcuts (steam://…) also work.",
+  "O que vai depois do .exe — igual ao campo \"Destino\" de um atalho do Windows.": "What goes after the .exe — same as the \"Target\" field of a Windows shortcut.",
+  "vazio = pasta do executável": "empty = executable's folder",
+  "Alguns jogos antigos só acham seus arquivos se abertos \"de dentro\" de uma pasta específica.": "Some old games only find their files when opened \"from inside\" a specific folder.",
+  "Os argumentos vão para o emulador, depois do caminho da ROM.": "The arguments go to the emulator, after the ROM path.",
+  "Cada jogo aceita coisas diferentes: -dx12 força DirectX 12, -windowed abre em janela, -skipintro pula os logos. Procure \"launch options\" + nome do jogo.": "Every game accepts different things: -dx12 forces DirectX 12, -windowed opens in a window, -skipintro skips the logos. Search for \"launch options\" + game name.",
+  "Os comandos rodam como no Prompt (cmd). Caminhos com espaço vão entre aspas.": "Commands run as in the Command Prompt (cmd). Paths with spaces go in quotes.",
+  "Prefixo do Proton": "Proton prefix",
+  "Usar um prefixo só deste jogo": "Use a prefix just for this game",
+  "Por padrão todos os jogos de Windows dividem o mesmo prefixo (data/pfx/shared). Um prefixo próprio isola instalações e ajustes deste jogo; é criado na próxima abertura.": "By default all Windows games share the same prefix (data/pfx/shared). A dedicated prefix isolates this game's installs and settings; it is created on the next launch.",
+  "Abrir como administrador (o Windows pede permissão a cada abertura)": "Run as administrator (Windows asks for permission on every launch)",
+  "Para jogos antigos que só funcionam com permissão de administrador. O tempo de jogo continua sendo contado.": "For old games that only work with administrator permission. Play time keeps being counted.",
+  "Antes de abrir": "Before opening",
+  "Comando executado antes do jogo, na pasta do jogo. O Ludrix espera até 15 s por ele e abre o jogo em seguida; se o programa ficar aberto, tudo bem.": "Command run before the game, in the game folder. Ludrix waits up to 15 s for it and then opens the game; if the program stays open, that's fine.",
+  "Ao fechar": "On close",
+  "Comando executado quando o jogo fecha. Útil para encerrar o que foi aberto antes ou restaurar algo.": "Command run when the game closes. Useful to stop what was opened before or restore something.",
+  "Anotações suas: senha do zip, onde salvou, mod usado…": "Your notes: zip password, where you saved, mod used…",
+  "Tempo de jogo (horas)": "Play time (hours)",
+  "Edite para corrigir o tempo registrado (ex.: horas jogadas fora do Ludrix)": "Edit to correct the recorded time (e.g. hours played outside Ludrix)",
+  "Como está este jogo para você. Dá para filtrar e ordenar a biblioteca por isso.": "How this game is going for you. The library can be filtered and sorted by it.",
+  "De 1 a 10. Só sua, não vem de nenhum site.": "From 1 to 10. Yours only, not from any site.",
+  "Nenhum .exe": "No .exe",
+  "Buscando capa e informações com o novo nome…": "Looking up cover and info with the new name…",
+  "Imagem baixada e guardada com o jogo.": "Image downloaded and kept with the game.",
+  "Nome para procurar…": "Name to search for…",
+  "Perguntando à fonte…": "Asking the source…",
+  "boxart de console": "console box art",
+  "Padrão (azul pastel, lavanda, roxo)": "Default (pastel blue, lavender, purple)",
+  "Encontrado em": "Found at",
+  "Prévia aplicada": "Preview applied",
+  "Confira e clique em Salvar.": "Check it and click Save.",
+  "O que procurar…": "What to search for…",
+  "Clique na imagem. Ela é baixada ao salvar e fica guardada com o jogo.": "Click the image. It is downloaded on save and kept with the game.",
+  "Nada encontrado. Tente outro nome, em inglês, ou outro buscador.": "Nothing found. Try another name, in English, or another search engine.",
+  "Carregar mais": "Load more",
+  "Fim dos resultados": "End of results",
+  "Busca de imagens": "Image search",
+  "nada com esse nome": "nothing with that name",
+  "Nome, descrição, capa e fundo do jogo escolhido passam a valer para este (bom para mods de conversão total, que não têm ficha própria).": "The chosen game's name, description, cover and background apply to this one (good for total conversion mods, which have no entry of their own).",
+  "Fita de luz": "Light ribbon",
+  "As três cores da fita que desce pela barra, dos contornos acesos e do botão Jogar. Escolha um conjunto pronto ou toque em cada cor": "The three colors of the ribbon running down the bar, of lit outlines and of the Play button. Pick a ready-made set or tap each color",
+  "Ajuste o que quiser e salve.": "Adjust whatever you want and save.",
+  "Voltou ao automático": "Back to automatic",
+  "Buscando capa e informações de novo…": "Looking up cover and info again…",
+  "Primeira cor (começo da fita)": "First color (start of the ribbon)",
+  "Cor do meio (contornos, foco)": "Middle color (outlines, focus)",
+  "Última cor (fim da fita)": "Last color (end of the ribbon)",
+  "Ordenei do mais provável ao menos provável.": "Sorted from most to least likely.",
+  "Nenhum .exe encontrado na pasta.": "No .exe found in the folder.",
+  "Fechou em poucos segundos — normalmente arquivo corrompido ou instalação incompleta.": "Closed within seconds — usually a corrupted file or an incomplete install.",
+  "Abrindo de novo…": "Opening again…",
+  "Abrir como administrador": "Run as administrator",
+  "O código do erro indica exatamente isso": "The error code points exactly to this",
+  "Resolve jogos antigos que gravam na própria pasta": "Fixes old games that write into their own folder",
+  "Modo de compatibilidade Windows 7": "Windows 7 compatibility mode",
+  "Para jogos de antes de 2015 que fecham na hora": "For games from before 2015 that close right away",
+  "Instalar dependências": "Install dependencies",
+  "Visual C++, DirectX e .NET em um clique (Central)": "Visual C++, DirectX and .NET in one click (Hub)",
+  "O que o jogo pede e o que o seu PC tem": "What the game asks for and what your PC has",
+  "Guia do console": "Console guide",
+  "BIOS, keys e firmware que o emulador exige": "BIOS, keys and firmware the emulator requires",
+  "Voltar às cores originais": "Back to the original colors",
+  "Trocar o executável": "Change the executable",
+  "Às vezes o certo é outro .exe da pasta": "Sometimes the right one is another .exe in the folder",
+  "Abrir a pasta": "Open the folder",
+  "Rodar direto pelo Explorer mostra o erro real": "Running it straight from Explorer shows the real error",
+  "Tirar o modo de compatibilidade": "Remove compatibility mode",
+  "Volta ao normal": "Back to normal",
+  "Se o jogo só abre um launcher próprio e fecha, ignore este aviso.": "If the game only opens its own launcher and closes, ignore this warning.",
+  "Apagar e adicionar de novo": "Delete and add again",
+  "Não avisar para este jogo": "Don't warn for this game",
+  "não vai mais gerar este aviso. Dá para voltar em Ajustes › Jogar.": "will no longer trigger this warning. You can undo it in Settings › Playing.",
+  "Os arquivos do jogo NÃO serão apagados — só a entrada no launcher (o tempo jogado se perde).": "The game files will NOT be deleted — only the entry in the launcher (play time is lost).",
+  "A ROM baixada será apagada e o jogo volta a aparecer na Store:": "The downloaded ROM will be deleted and the game goes back to the Store:",
+  "A pasta será apagada e o jogo volta a aparecer na Store:": "The folder will be deleted and the game goes back to the Store:",
+  "Removido da biblioteca": "Removed from the library",
+  "(parcial — pasta muito grande)": "(partial — folder too large)",
+  "Novidades da": "What's new in",
+  "Sem registro de mudanças para esta versão.": "No change log for this version.",
+  "· não encontrado": "· not found",
+  "com entradas repetidas. A primeira de cada grupo é a com arquivo existente e mais tempo jogado.": "with repeated entries. The first of each group is the one with an existing file and the most play time.",
+  "resposta inválida (": "invalid response (",
+  "Nenhuma cópia ainda. A primeira é feita na próxima abertura do Ludrix.": "No copy yet. The first one is made the next time Ludrix opens.",
+  "ilegível": "unreadable",
+  "Restaurar adiciona os jogos que estão na cópia e não estão mais na biblioteca. Nada é removido ou sobrescrito.": "Restore adds the games that are in the copy and no longer in the library. Nothing is removed or overwritten.",
+  "Não foi possível restaurar": "Could not restore",
+  "jogo recuperado": "game recovered",
+  "jogos recuperados": "games recovered",
+  "tempo de jogo recuperado": "play time recovered",
+  "tempos de jogo recuperados": "play times recovered",
+  "Nada faltava — a biblioteca já tinha tudo da cópia": "Nothing was missing — the library already had everything from the copy",
+  "Não foi possível desfazer": "Could not undo",
+  "De volta à biblioteca": "Back in the library",
+  "Ex.: D:\\ROMs\\PS2 — cada arquivo vira um jogo. Você escolhe o console e o emulador (para todos ou um a um).": "E.g. D:\\ROMs\\PS2 — each file becomes a game. You choose the console and the emulator (for all or one by one).",
+  "Outra pasta com jogos": "Another folder with games",
+  "Essa pasta já está na lista": "That folder is already in the list",
+  "Loja Steam: capa, descrição, gêneros, requisitos e capturas": "Steam store: cover, description, genres, requirements and screenshots",
+  "Catálogo GOG: capa, fundo, desenvolvedora e ano": "GOG catalog: cover, background, developer and year",
+  "Artigo do jogo: descrição, ano, desenvolvedora, série e modos": "Game article: description, year, developer, series and modes",
+  "Base estruturada: desenvolvedora, publicadora, ano, gêneros, plataformas e série; lista grande de candidatos": "Structured database: developer, publisher, year, genres, platforms and series; large list of candidates",
+  "Boxart de console": "Console box art",
+  "Capas oficiais por sistema para jogos emulados": "Official covers per system for emulated games",
+  "Imagens da web": "Web images",
+  "nas suas pastas": "in your folders",
+  "jogo novo": "new game",
+  "jogos novos": "new games",
+  "Ainda não estão na biblioteca.": "Not in the library yet.",
+  "Não serão sugeridos de novo.": "They won't be suggested again.",
+  "Nenhum .exe que pareça jogo nessa pasta. Se os jogos estão em subpastas mais fundas, aponte a pasta de cima deles.": "No .exe that looks like a game in that folder. If the games are in deeper subfolders, point to their parent folder.",
+  "Ignorar este .exe: não é jogo, não sugerir de novo": "Ignore this .exe: not a game, don't suggest again",
+  "Qual .exe abre o jogo": "Which .exe opens the game",
+  "Lembrar esta pasta em Emuladores (novas ROMs entram sozinhas)": "Remember this folder in Emulators (new ROMs come in by themselves)",
+  "o nome vem da pasta e é refinado pelos metadados depois; se o .exe escolhido estiver errado, troque no menu da linha ou depois em": "the name comes from the folder and is refined by metadata later; if the chosen .exe is wrong, change it in the row menu or later in",
+  "Não sugerir de novo os que ficarem desmarcados": "Don't suggest the unchecked ones again",
+  "← Outra pasta": "← Another folder",
+  "Escolha o console das ROMs marcadas (ou use \"para todos de uma vez\").": "Choose the console for the checked ROMs (or use \"for all at once\").",
+  "— capas e informações chegam em seguida.": "— covers and info arrive shortly.",
+  "média": "average",
+  "não será sugerido de novo.": "won't be suggested again.",
+  "Escolha a pasta onde ficam suas ROMs: as subpastas de cada console são reconhecidas de uma vez": "Choose the folder where your ROMs are: each console's subfolders are recognized at once",
+  "Abrir a pasta de ROMs do Ludrix": "Open Ludrix's ROM folder",
+  "Varrer pasta de ROMs": "Scan ROM folder",
+  "Para onde vão os downloads de ROM deste console": "Where this console's ROM downloads go",
+  "Baixar em…": "Download to…",
+  "Falta BIOS/keys/firmware — abrir o guia": "BIOS/keys/firmware missing — open the guide",
+  "Guia de configuração deste console": "Setup guide for this console",
+  "ROMs da biblioteca cujo arquivo não foi encontrado": "Library ROMs whose file was not found",
+  "não encontrada": "not found",
+  "não encontradas": "not found",
+  "Abrir o emulador sem jogo, para configurar controles/BIOS": "Open the emulator without a game, to set up controls/BIOS",
+  "Remover este emulador": "Remove this emulator",
+  "Se você já tem esse emulador, só aponte o .exe": "If you already have this emulator, just point to the .exe",
+  "nenhuma fonte de ROMs ligada": "no ROM source enabled",
+  "Fontes de emulação (acervos de ROMs por console) aparecem aqui quando ligadas em": "Emulation sources (ROM collections per console) show up here when enabled in",
+  "Todos os consoles": "All consoles",
+  "Nenhuma ROM com esse nome": "No ROM with that name",
+  "Tente outro termo ou outro console.": "Try another term or another console.",
+  "Carregando as fontes…": "Loading sources…",
+  "As listas do archive.org chegam em alguns segundos.": "The archive.org lists arrive in a few seconds.",
+  "Pasta de download": "Download folder",
+  "Padrão: games": "Default: games",
+  "Baixar ROMs em": "Download ROMs to",
+  "Instalar (pasta)…": "Install (folder)…",
+  "Instale ou aponte o emulador primeiro.": "Install or point to the emulator first.",
+  "· pasta de dados:": "· data folder:",
+  "Abrir emulador": "Open emulator",
+  "Abrir pasta de dados": "Open data folder",
+  "arquivo copiado": "file copied",
+  "Já tenho: apontar o .exe": "I have it: point to the .exe",
+  "Lembrar só para este jogo (é possível trocar no menu do jogo → \"Jogar com…\")": "Remember only for this game (can be changed in the game menu → \"Play with…\")",
+  "Não foi possível atualizar": "Could not update",
+  "Digite a pasta raiz (ex.: D:\\ROMs). Dentro dela, cada subpasta de console é reconhecida pelo nome ou pelas extensões.": "Type the root folder (e.g. D:\\ROMs). Inside it, each console subfolder is recognized by name or by extensions.",
+  "Já está na lista deste console": "Already in this console's list",
+  "já mapeada": "already mapped",
+  "Pastas encontradas em": "Folders found in",
+  "Confira o console de cada pasta. As marcadas entram como pasta de ROMs do console e os jogos aparecem na Biblioteca.": "Check the console for each folder. The checked ones are added as that console's ROM folder and the games appear in the Library.",
+  "pasta de ROMs mapeada": "ROM folder mapped",
+  "pastas de ROMs mapeadas": "ROM folders mapped",
+  "— os jogos entram na Biblioteca em instantes": "— the games enter the Library in a moment",
+  "Argumentos (opcional — use {rom} no lugar do arquivo)": "Arguments (optional — use {rom} in place of the file)",
+  "Jogo rápido": "Quick game",
+  "Para e guarda o parcial para retomar": "Stops and keeps the partial file to resume",
+  "O que fazer quando todos os downloads terminarem": "What to do when all downloads finish",
+  "Abrir a pasta downloads": "Open the downloads folder",
+  "Ao terminar": "When finished",
+  "Pausa tudo guardando o parcial para retomar": "Pauses everything, keeping the partial files to resume",
+  "Jogos, emuladores, ferramentas e dependências que você baixar aparecem nesta lista, com pausa, retomada e histórico. Tem um link do Google Drive, MEGA, Gofile, MediaFire ou Pixeldrain?": "Games, emulators, tools and dependencies you download appear in this list, with pause, resume and history. Got a Google Drive, MEGA, Gofile, MediaFire or Pixeldrain link?",
+  "traz o arquivo, extrai e adiciona à Biblioteca.": "fetches the file, extracts it and adds it to the Library.",
+  "detectado ao ler o link": "detected when reading the link",
+  "Cole o link do arquivo. Sei ler": "Paste the file link. Supported:",
+  "Google Drive, MEGA (arquivo e pasta), Gofile, MediaFire, Pixeldrain, 1fichier, Dropbox, buzzheavier, qiwi": "Google Drive, MEGA (file and folder), Gofile, MediaFire, Pixeldrain, 1fichier, Dropbox, buzzheavier, qiwi",
+  "e qualquer link direto. O arquivo vai para": "and any direct link. The file goes to",
+  ", extraio e adiciono na biblioteca.": ", gets extracted and added to the library.",
+  "Jogo de PC (extrai e procura o .exe)": "PC game (extracts and looks for the .exe)",
+  "ROM / jogo de console": "ROM / console game",
+  "Na fila": "Queued",
+  "— acompanhe em Fila": "— follow it in Queue",
+  "perguntando ao site quais arquivos tem aí": "asking the site which files are there",
+  "Abrir no navegador": "Open in browser",
+  "no total": "in total",
+  "Fechar o Ludrix": "Close Ludrix",
+  "Nada vai acontecer ao terminar": "Nothing will happen when finished",
+  "quando a fila terminar (dá para cancelar no aviso)": "when the queue finishes (can be cancelled from the notice)",
+  "download guardado para retomar": "download kept to resume",
+  "downloads guardados para retomar": "downloads kept to resume",
+  "Nada em andamento": "Nothing in progress",
+  "Os downloads pausados voltam para a fila": "Paused downloads go back to the queue",
+  "Opções": "Options",
+  "Em uso": "In use",
+  "ou .zip de tema trazem cores e desenho próprios. Botão direito num tema: exportar ou apagar.": "or theme .zip bring their own colors and design. Right-click a theme: export or delete.",
+  "Apagar todos": "Delete all",
+  "Nenhum tema importado. Os temas ficam na pasta": "No imported theme. Themes live in Ludrix's",
+  "do Ludrix.": "folder.",
+  "Voltar à cor do tema": "Back to the theme color",
+  "Cada detalhe do visual, por cima de qualquer tema ou aparência. O que você não mexer continua vindo do tema. Dá para exportar o resultado como um tema": "Every detail of the look, on top of any theme or appearance. Whatever you don't touch keeps coming from the theme. The result can be exported as a theme",
+  "e levar para outro PC.": "and taken to another PC.",
+  "A base de tudo": "The base of everything",
+  "Seções e caixas": "Sections and boxes",
+  "Fundo das capas e listas": "Cover and list backgrounds",
+  "Títulos e textos": "Titles and text",
+  "Bordas e divisões": "Borders and dividers",
+  "O Ludrix vai abrir com o Windows": "Ludrix will open with Windows",
+  "Não abre mais com o Windows": "No longer opens with Windows",
+  "Isso apaga": "This deletes",
+  ": configurações, biblioteca, fontes, caches, metadados, temas importados, downloads, a pasta": ": settings, library, sources, caches, metadata, imported themes, downloads, the",
+  "(jogos baixados) e": "folder (downloaded games) and",
+  "(emuladores, ROMs, BIOS). O Ludrix fecha e reabre zerado, como na primeira vez.": "(emulators, ROMs, BIOS). Ludrix closes and reopens from scratch, like the first time.",
+  "Escreva APAGAR TUDO para confirmar": "Type APAGAR TUDO to confirm",
+  "Fechando para apagar tudo…": "Closing to delete everything…",
+  "Não deu para conferir": "Could not check",
+  "Nada para limpar": "Nothing to clean",
+  "Nenhuma imagem órfã com mais de 30 dias.": "No orphan image older than 30 days.",
+  "Limpar imagens órfãs?": "Clean orphan images?",
+  "Backup não feito": "Backup not made",
+  "Token do bot (deixe em branco para manter o atual)": "Bot token (leave blank to keep the current one)",
+  "Canal (link t.me/+…, @usuario ou nome)": "Channel (t.me/+… link, @user or name)",
+  "Profundidade (1 = só a página, 2 = segue links)": "Depth (1 = page only, 2 = follows links)",
+  "Criador (campo creator do archive.org)": "Creator (archive.org creator field)",
+  "Busca avançada do archive.org": "archive.org advanced search",
+  "Identificador do item": "Item identifier",
+  "Título do jogo": "Game title",
+  "Palavra que identifica o arquivo (opcional)": "Word that identifies the file (optional)",
+  "Pasta do PC": "PC folder",
+  "Endereço": "Address",
+  "ex.: canal do fulano, só jogos de PS2": "e.g. someone's channel, PS2 games only",
+  "(não muda — os jogos instalados continuam ligados a ela)": "(doesn't change — installed games stay linked to it)",
+  "Console padrão (quando o título não diz)": "Default console (when the title doesn't say)",
+  "Anotação (só para você)": "Note (just for you)",
+  "Ex.: Coleção do fulano": "E.g. Someone's collection",
+  "Funciona com um": "Works with a",
+  "seu,": "of yours,",
+  "administrador do canal": "channel administrator",
+  ": cada post novo com um": ": every new post with a",
+  "anexado vira um jogo (título = primeira linha da legenda;": "attached becomes a game (title = first line of the caption;",
+  "… definem o console). Crie o bot no": "… set the console). Create the bot at",
+  ") e adicione-o como administrador do canal. Só posts feitos": ") and add it as a channel administrator. Only posts made",
+  "depois": "after",
+  "Token do bot": "Bot token",
+  "Canal (opcional — link t.me/+…, @usuario ou nome)": "Channel (optional — t.me/+… link, @user or name)",
+  "Palavra que identifica o arquivo certo (opcional)": "Word that identifies the right file (optional)",
+  "Cole o token do bot": "Paste the bot token",
+  "Não reconheci": "Not recognized",
+  "Cada post novo com .torrent aparece na Store — use \"Atualizar catálogo\" (menu do logo) para puxar na hora.": "Every new post with a .torrent shows up in the Store — use \"Refresh catalog\" (logo menu) to pull it right away.",
+  "A pasta será copiada para dentro de:": "The folder will be copied into:",
+  "Depois de copiar tudo, a pasta original é apagada e a Biblioteca passa a usar o caminho novo. Se algo falhar no meio, nada muda.": "After everything is copied, the original folder is deleted and the Library switches to the new path. If anything fails midway, nothing changes.",
+  "Não foi possível enviar para a Steam": "Could not send to Steam",
+  "Qual conta da Steam?": "Which Steam account?",
+  "Este PC tem mais de uma conta. Os atalhos entram na conta escolhida.": "This PC has more than one account. The shortcuts go into the chosen account.",
+  "já tem atalhos": "already has shortcuts",
+  "sem atalhos": "no shortcuts",
+  "Atalhos enviados para a Steam": "Shortcuts sent to Steam",
+  "novo": "new",
+  "(correção": "(fix",
+  "Pronta para aplicar": "Ready to apply",
+  ": disco de instalação": ": install disc",
+  "Veio como imagem de disco, mas não achei um instalador dentro. Posso montar mesmo assim para você olhar o conteúdo.": "It came as a disc image, but no installer was found inside. It can still be mounted so you can look at the contents.",
+  "Este disco tem faixas de áudio: o Windows monta só a parte de dados; se o jogo pedir o CD com música, use o WinCDEmu.": "This disc has audio tracks: Windows mounts only the data part; if the game asks for the CD with music, use WinCDEmu.",
+  "É um instalador (setup). Abra por aqui; quando terminar, o jogo entra na biblioteca.": "It's an installer (setup). Open it from here; when it finishes, the game enters the library.",
+  "está pronto": "is ready",
+  ": talvez tenha um instalador/ISO dentro da pasta.": ": there may be an installer/ISO inside the folder.",
+  "Na área de trabalho": "On the desktop",
+  "executáveis encontrados; será usado:": "executables found; this one will be used:",
+  "Escolher outro .exe": "Choose another .exe",
+  "Criar atalho na área de trabalho": "Create desktop shortcut",
+  "aberto fora do Ludrix": "opened outside Ludrix",
+  "O tempo de jogo está sendo contado.": "Play time is being counted.",
+  "Sessão de": "Session of",
+  "Capas e informações atualizadas": "Covers and info updated",
+  "— retome pela Fila quando quiser.": "— resume from the Queue whenever you want.",
+  "— o parcial fica em downloads\\ até a próxima limpeza.": "— the partial file stays in downloads\\ until the next cleanup.",
+  "Falha em": "Failed in",
+  "jogo adicionado": "game added",
+  "jogos adicionados": "games added",
+  "ROM de": "ROM of",
+  "— acompanhe em Downloads.": "— follow it in Downloads.",
+  "arquivos não reconhecidos": "unrecognized files",
+  "arquivos conferidos ao abrir, todos iguais à versão instalada": "files checked on open, all identical to the installed version",
+  "arquivo(s) foram restaurados ao abrir": "file(s) were restored on open",
+  "arquivo(s) faltando ou diferente(s) do esperado": "file(s) missing or different from expected",
+  "arquivo(s) ainda não conferem": "file(s) still don't match",
+  "na biblioteca, mas": "in the library, but",
+  "Abrir Emuladores": "Open Emulators",
+  "não está instalado": "is not installed",
+  "nenhum emulador está vinculado": "no emulator is linked",
+  "Jogos no lugar, emulador faltando": "Games in place, emulator missing",
+  "jogo não encontrado": "game not found",
+  "jogos não encontrados": "games not found",
+  "Remover todos da biblioteca": "Remove all from the library",
+  "Só a entrada na biblioteca sai. Nenhum arquivo no disco é apagado. Os jogos podem ser importados ou adicionados de novo depois.": "Only the library entry goes. No file on disk is deleted. The games can be imported or added again later.",
+  "jogo removido": "game removed",
+  "jogos removidos": "games removed",
+  "Executável não encontrado dentro dela — escolha qual abre o jogo.": "Executable not found inside it — choose which one opens the game.",
+  "na biblioteca": "in the library",
+  "cópias de saves": "save copies",
+  "configurações": "settings",
+  "Não foi possível gerar": "Could not generate",
+  "Zip de diagnóstico pronto": "Diagnostic zip ready",
+  "Cole onde quiser (chat, e-mail, bloco de notas).": "Paste it wherever you want (chat, e-mail, notepad).",
+  "Nenhuma fonte achou esse nome. Você pode corrigir o nome, escolher onde procurar ou preencher à mão.": "No source found that name. You can correct the name, choose where to search or fill it in by hand.",
+  "jogos não reconhecidos": "unrecognized games",
+  "e mais": "and more",
+  "jogos sem informações": "games without info",
+  "Clique num jogo para corrigir o nome ou preencher os detalhes à mão.": "Click a game to correct the name or fill in the details by hand.",
+  "Você jogou": "You played",
+  "Já joguei": "Already played",
+  "Últimos 7 dias": "Last 7 days",
+  "Últimos 30 dias": "Last 30 days",
+  "Último ano": "Last year",
+  "Há mais de um ano": "More than a year ago",
+  "Menos de 1 h": "Less than 1 h",
+  "Mais de 50 h": "More than 50 h",
+  "Menos de 1 GB": "Less than 1 GB",
+  "Mais de 50 GB": "More than 50 GB",
+  "Coleção": "Collection",
+  "Ano de lançamento": "Release year",
+  "Última vez jogado": "Last played",
+  "Nada com esse nome": "Nothing with that name",
+  "Fechar painel": "Close panel",
+  "Exibição e filtros": "Display and filters",
+  "Marque quantos quiser: dentro de um grupo vale qualquer um; entre grupos, todos.": "Check as many as you want: within a group any one counts; across groups, all of them.",
+  "Nenhum filtro salvo": "No saved filter",
+  "Excluir este filtro salvo": "Delete this saved filter",
+  "Salvar a combinação atual com um nome": "Save the current combination under a name",
+  "Dê um nome para esta combinação. Ela fica na lista \"Filtros salvos\" do painel.": "Give this combination a name. It stays in the panel's \"Saved filters\" list.",
+  "Ordem, grupos, modo de exibição e filtros — o painel fica aberto até você fechar": "Sort, groups, view mode and filters — the panel stays open until you close it",
+  "Recolher todos": "Collapse all",
+  "Expandir todos": "Expand all",
+  "Colunas da lista": "List columns",
+  "dos": "of the",
+  "já jogados": "already played",
+  "novos nas fontes": "new at the sources",
+  "Último jogado": "Last played",
+  "Da biblioteca": "From the library",
+  "Ferramentas de mod e os VC++ e DirectX que os jogos pedem — tudo verificado e instalado daqui.": "Mod tools and the VC++ and DirectX that games ask for — all checked and installed from here.",
+  "Um programa à parte para a TV: monitor inteiro, capas numa esteira, temas próprios. Controle, teclado ou mouse. Abra em Ajustes › Ao jogar › Modo Console (ou pelo LudrixConsole.exe).": "A separate program for the TV: full monitor, covers on a carousel, its own themes. Controller, keyboard or mouse. Open it in Settings › Playing › Console Mode (or via LudrixConsole.exe).",
+  "Aguarde, últimos ajustes finais…": "Please wait, final touches…",
+  "Pular configuração": "Skip setup",
+  "Tudo isso pode ser mudado depois em Ajustes.": "All of this can be changed later in Settings.",
+  "Bem-vindo ao LudrixHub": "Welcome to LudrixHub",
+  "Um lugar só para os seus jogos: os que já estão no PC, os que você baixar das suas fontes e os de console emulados — com capa, tempo jogado e tudo organizado.": "One place for your games: the ones already on the PC, the ones you download from your sources and emulated console games — with cover, play time and everything organized.",
+  "São 4 passos rápidos: onde guardar os jogos, a aparência e o que fazer quando um jogo abre.": "4 quick steps: where to keep games, the look, and what to do when a game opens.",
+  "Seus jogos com capa grande, favoritos e tempo jogado.": "Your games with big covers, favorites and play time.",
+  "Baixe das fontes que você adicionar; o jogo entra na biblioteca sozinho.": "Download from the sources you add; the game enters the library by itself.",
+  "Consoles antigos com emulador instalado em um clique.": "Old consoles with the emulator installed in one click.",
+  "Tela cheia para a TV, com controle, teclado ou mouse.": "Full screen for the TV, with controller, keyboard or mouse.",
+  "Os jogos baixados pelo Ludrix são extraídos e instalados nesta pasta. Escolha um disco com espaço — dá para mover depois, jogo por jogo.": "Games downloaded by Ludrix are extracted and installed in this folder. Pick a disk with room — you can move later, game by game.",
+  "Escolher pasta…": "Choose folder…",
+  "A pasta padrão fica junto do launcher, em": "The default folder sits next to the launcher, at",
+  "Usar a padrão": "Use the default",
+  "Antes de abrir, mostra as três opções abaixo (com \"lembrar\").": "Before opening, shows the three options below (with \"remember\").",
+  "Some da barra de tarefas e volta quando o jogo fechar. Conta o tempo jogado.": "Leaves the taskbar and comes back when the game closes. Counts play time.",
+  "Sai da memória por completo; o tempo da sessão não é contado.": "Leaves memory entirely; the session time is not counted.",
+  "Adicionar um jogo que já tenho": "Add a game I already have",
+  "Aponte o .exe ou a pasta; capa e descrição vêm sozinhas.": "Point to the .exe or folder; cover and description come by themselves.",
+  "Ligar uma fonte na Store": "Enable a source in the Store",
+  "Cole o link de um pacote .json ou de uma coleção do archive.org.": "Paste the link of a .json package or an archive.org collection.",
+  "Instalar um emulador": "Install an emulator",
+  "PS1, PS2, GameCube, Wii e mais — com um clique.": "PS1, PS2, GameCube, Wii and more — in one click.",
+  "Começar a usar": "Start using",
+  "Jogo oculto": "Game hidden",
+  "Jogo visível de novo": "Game visible again",
+  "Aparece de novo pelo filtro Situação › Ocultos ou pela busca.": "Shows up again through the Status › Hidden filter or the search.",
+  "O processo é finalizado na hora, mesmo travado. Progresso não salvo dentro do jogo se perde.": "The process is ended right away, even if frozen. Unsaved progress inside the game is lost.",
+  "Não foi possível encerrar": "Could not stop",
+  "Um .zip/.7z/.rar/.iso baixado pelo navegador — extraído em games\\ e adicionado": "A .zip/.7z/.rar/.iso downloaded by the browser — extracted into games\\ and added",
+  "Adicionar uma pasta inteira em Emuladores": "Add a whole folder in Emulators",
+  "Nenhum emulador instalado — configure em Emuladores": "No emulator installed — set it up in Emulators",
+  "Trocar arquivo": "Change file",
+  "Emulador para este jogo": "Emulator for this game",
+  "Nome na biblioteca": "Name in the library",
+  "Capa e informações são buscadas sozinhas depois de adicionar. BIOS, keys ou firmware, quando o console precisa, entram pelo guia do console em Emuladores.": "Cover and info are looked up by themselves after adding. BIOS, keys or firmware, when the console needs them, come in through the console guide in Emulators.",
+  "já está na biblioteca": "is already in the library",
+  "(não reconheci pela extensão — escolha)": "(not recognized by extension — choose)",
+  "Registrar a pasta inteira como pasta de ROMs deste console": "Register the whole folder as this console's ROM folder",
+  "Lembrar minha escolha (é possível mudar em Ajustes)": "Remember my choice (can be changed in Settings)",
+  "Vincule outro em Emuladores → ⚙ do console.": "Link another one in Emulators → the console's ⚙.",
+  "Emulador para": "Emulator for",
+  "Vale para todos os jogos desse console.": "Applies to all games of that console.",
+  "nada novo": "nothing new",
+  "canal do Telegram (bot lê posts com .torrent)": "Telegram channel (bot reads posts with .torrent)",
+  "Monta um .json de fonte a partir de uma pasta com os arquivos dos jogos": "Builds a source .json from a folder with the game files",
+  "Testa uma amostra dos links diretos de cada fonte ligada": "Tests a sample of the direct links of each enabled source",
+  "Sem internet — conecte-se para ligar fontes e baixar.": "No internet — connect to enable sources and download.",
+  "Pasta do PC com jogos ou ROMs": "PC folder with games or ROMs",
+  "Arquivo .json": ".json file",
+  "· respondeu em": "· responded in",
+  "Relatório —": "Report —",
+  "Isso é um arquivo no": "This is a file on",
+  "Fonte é um lugar com vários jogos; um link de arquivo é": "A source is a place with several games; a file link is",
+  "e instalado como jogo.": "and installed as a game.",
+  "Nenhum arquivo de jogo (ROMs, .exe, .7z/.zip/.iso), magnet ou .torrent nesse lugar.": "No game file (ROMs, .exe, .7z/.zip/.iso), magnet or .torrent in that place.",
+  "página": "page",
+  "… e mais": "… and more",
+  "PC e ROMs misturados — escolha item por item:": "PC and ROMs mixed — choose item by item:",
+  "Carregando na Store…": "Loading into the Store…",
+  "Lista do Fulano": "Someone's list",
+  "Nome da fonte": "Source name",
+  "Pasta com os arquivos dos jogos": "Folder with the game files",
+  "Onde esses arquivos vão ficar na internet (URL base)": "Where these files will live on the internet (base URL)",
+  "O nome de cada arquivo é colocado depois dessa URL. Vazio = fica um aviso no lugar do link para preencher depois.": "Each file's name is appended to this URL. Empty = a notice takes the link's place, to fill in later.",
+  "Calcular sha256 de cada arquivo": "Compute sha256 of each file",
+  "— recomendado: o Ludrix confere o download; demora em arquivos grandes": "— recommended: Ludrix verifies the download; slow on large files",
+  "Escolha uma pasta com arquivos de jogos": "Choose a folder with game files",
+  "Nenhum jogo marcado": "No game checked",
+  "Não deu para gerar": "Could not generate",
+  "Acompanhe na Fila — o sha256 de arquivos grandes leva um tempo.": "Follow it in the Queue — the sha256 of large files takes a while.",
+  "Quase instantâneo.": "Almost instant.",
+  "Escolha a pasta: cada arquivo (.zip, .7z, .rar, .iso…) ou subpasta vira um jogo. Arquivos em partes (.part1.rar, .001) são agrupados.": "Choose the folder: each file (.zip, .7z, .rar, .iso…) or subfolder becomes a game. Split archives (.part1.rar, .001) are grouped.",
+  "Nenhum arquivo de jogo nessa pasta (procuro na pasta e em 1 nível de subpastas).": "No game file in that folder (searched the folder and 1 level of subfolders).",
+  "confira os títulos antes de gerar": "check the titles before generating",
+  "Versão (opcional)": "Version (optional)",
+  "Não deu para ler a pasta": "Could not read the folder",
+  "Arquivo gravado em:": "File written to:",
+  "Publique esse .json num link (GitHub, Drive público, seu site) e compartilhe o link — quem colar na Store do Ludrix vê os jogos. Você também pode usar o arquivo local como fonte agora para testar.": "Publish this .json at a link (GitHub, public Drive, your site) and share the link — whoever pastes it into Ludrix's Store sees the games. You can also use the local file as a source now to test.",
+  "— carregando na Store…": "— loading into the Store…",
+  "Pasta onde as ferramentas portáteis ficam": "Folder where portable tools are kept",
+  "Pasta tools": "tools folder",
+  "Todas": "All",
+  "portátil, fica em tools\\": "portable, lives in tools\\",
+  "Nenhuma ferramenta instalada": "No tool installed",
+  "As ferramentas do GitHub são baixadas pelo Ludrix e ficam portáteis em tools\\. Escolha uma categoria para ver as disponíveis.": "GitHub tools are downloaded by Ludrix and stay portable in tools\\. Pick a category to see what's available.",
+  "Ver todas": "See all",
+  "Arquivos feitos por jogadores que mudam algo no jogo: roupa, mapa, tradução, correção, conteúdo novo. Vêm quase sempre num .zip baixado de um site.": "Files made by players that change something in the game: outfit, map, translation, fix, new content. They almost always come as a .zip downloaded from a site.",
+  "Muitos jogos não leem mods sozinhos. Um carregador (BepInEx, MelonLoader, Script Hook, Frosty) entra na pasta do jogo e faz essa ponte. Quando o jogo precisa de um, o passo a passo mostra — e instala quando dá.": "Many games don't read mods on their own. A loader (BepInEx, MelonLoader, Script Hook, Frosty) goes into the game folder and bridges that gap. When the game needs one, the step-by-step shows it — and installs it when possible.",
+  "Cada jogo tem a sua pasta de mods (BepInEx/plugins, Data, Content/Paks/~mods, mods/…). O Ludrix detecta a pasta certa pela estrutura do jogo e copia para lá.": "Each game has its own mods folder (BepInEx/plugins, Data, Content/Paks/~mods, mods/…). Ludrix detects the right folder from the game's structure and copies there.",
+  "Jogos online com anti-cheat podem banir por mod — use só no modo um jogador. Antivírus às vezes acusa carregadores (são injeções de código, por natureza). Baixe só dos sites listados aqui.": "Online games with anti-cheat may ban for mods — use only in single player. Antivirus sometimes flags loaders (they are code injections by nature). Download only from the sites listed here.",
+  "Tudo que um mod substitui é copiado antes. Desligar o mod devolve os originais; remover apaga a cópia. Em ROMs, o patch gera um arquivo novo e o original fica intacto.": "Everything a mod replaces is copied first. Disabling the mod gives the originals back; removing deletes the copy. For ROMs, the patch produces a new file and the original stays intact.",
+  "Abra a página do mod: ela diz a versão do jogo e do carregador que ele espera. Mods que mexem na mesma coisa brigam — desligue um por vez para achar o culpado.": "Open the mod page: it says which game and loader version it expects. Mods that touch the same thing fight — disable one at a time to find the culprit.",
+  "Nenhum jogo instalado": "No game installed",
+  "Instale ou adicione um jogo na Biblioteca; depois volte aqui para colocar mods nele.": "Install or add a game in the Library; then come back here to put mods in it.",
+  "Procurar jogo…": "Search game…",
+  "lendo a pasta do jogo…": "reading the game folder…",
+  "Não deu para ler": "Could not read",
+  "Arquivo": "File",
+  "Arquivos .ips, .bps ou .ups. A página diz para qual versão da ROM (região/revisão) ele foi feito.": ".ips, .bps or .ups files. The page says which ROM version (region/revision) it was made for.",
+  "O Ludrix gera uma cópia modificada ao lado da ROM original e coloca na biblioteca como outro jogo. A original não muda.": "Ludrix produces a modified copy next to the original ROM and puts it in the library as another game. The original doesn't change.",
+  "a ROM original não está no lugar": "the original ROM is not in place",
+  "Ela aparece na Biblioteca com o nome do patch depois de um travessão; se der errado, é só apagar esse arquivo.": "It appears in the Library with the patch name after a dash; if it goes wrong, just delete that file.",
+  "Pasta do jogo desconhecida": "Game folder unknown",
+  "Sem a pasta instalada o Ludrix não tem onde copiar os arquivos. Abra a ficha e confira o executável.": "Without the installed folder Ludrix has nowhere to copy the files. Open the game entry and check the executable.",
+  "não identificado": "not identified",
+  "(ainda não existe — criada no primeiro mod)": "(doesn't exist yet — created with the first mod)",
+  "É o carregador que faz o jogo ler mods. O Ludrix baixa a versão certa para o executável deste jogo e coloca na pasta; dá para desligar depois como qualquer mod.": "It's the loader that makes the game read mods. Ludrix downloads the right version for this game's executable and puts it in the folder; it can be disabled later like any mod.",
+  "É o carregador que faz o jogo ler mods. Baixe, extraia o conteúdo na pasta do jogo (junto do executável) e abra o jogo uma vez.": "It's the loader that makes the game read mods. Download it, extract the contents into the game folder (next to the executable) and open the game once.",
+  "Pasta do jogo": "Game folder",
+  "O carregador cria as pastas de configuração na primeira abertura.": "The loader creates its config folders on first launch.",
+  "já está na pasta": "is already in the folder",
+  "Se o mod pedir Script Extender": "If the mod asks for a Script Extender",
+  "Abra o jogo pelo executável do extender quando usar mods com script.": "Open the game through the extender's executable when using script mods.",
+  "Mods com scripts (SKSE, F4SE, OBSE…) exigem o extender do jogo, baixado do site oficial e extraído na pasta do jogo. Mods simples (texturas, armaduras) não precisam.": "Script mods (SKSE, F4SE, OBSE…) require the game's extender, downloaded from the official site and extracted into the game folder. Simple mods (textures, armor) don't need it.",
+  "Ele cuida de instalar, ordenar e ligar/desligar os mods deste jogo; o jogo passa a ser aberto por ele quando houver mods ativos.": "It takes care of installing, ordering and toggling this game's mods; the game is opened through it whenever mods are active.",
+  "Os arquivos entram em": "The files go into",
+  "; o que for substituído fica guardado. Mods de Unreal (.pak) e de Unity (.dll) entram direto; se o zip vier com a estrutura inteira do jogo, escolha a raiz.": "; whatever gets replaced is kept. Unreal (.pak) and Unity (.dll) mods go straight in; if the zip comes with the whole game structure, choose the root.",
+  "pasta do jogo": "game folder",
+  "A lista abaixo mostra o que está no jogo. Desligar tira os arquivos e devolve os originais, sem apagar o mod.": "The list below shows what's in the game. Disabling removes the files and gives the originals back, without deleting the mod.",
+  "Atenção": "Attention",
+  "Ligar de novo": "Enable again",
+  "patches geram cópias novas da ROM": "patches produce new copies of the ROM",
+  "Nada instalado por aqui ainda.": "Nothing installed from here yet.",
+  "Aplicar mesmo assim pode gerar um arquivo que não abre.": "Applying anyway may produce a file that doesn't open.",
+  "Não foi possível aplicar": "Could not apply",
+  "· já está na biblioteca": "· already in the library",
+  "Caminho do patch (.ips, .bps, .ups)": "Patch path (.ips, .bps, .ups)",
+  "Arquivo do mod (.zip, .7z, .rar)": "Mod file (.zip, .7z, .rar)",
+  "Pasta já extraída": "Already extracted folder",
+  "Pasta do jogo (raiz)": "Game folder (root)",
+  "Copiar para": "Copy to",
+  "como vai aparecer na lista": "how it will appear in the list",
+  "Se o zip já vem com a pasta certa dentro (ex.:": "If the zip already comes with the right folder inside (e.g.",
+  "), escolha a raiz do jogo. Se vem só o conteúdo do mod, escolha a pasta de mods.": "), choose the game root. If it comes with just the mod contents, choose the mods folder.",
+  "Caminho da pasta do mod": "Mod folder path",
+  "Caminho do arquivo do mod": "Mod file path",
+  "Os arquivos do mod saem do jogo, os originais voltam e a cópia guardada é apagada.": "The mod files leave the game, the originals come back and the stored copy is deleted.",
+  "A pasta da ferramenta será apagada.": "The tool's folder will be deleted.",
+  "MÉDIO": "MEDIUM",
+  "BÁSICO": "BASIC",
+  "Todos os seus jogos num lugar só: instalados no PC, baixados pelo Ludrix, importados de outros launchers e ROMs já baixadas.": "All your games in one place: installed on the PC, downloaded by Ludrix, imported from other launchers and ROMs already downloaded.",
+  "Clique numa capa para selecionar; dois cliques ou botão direito abrem os detalhes. Ctrl+clique seleciona vários para favoritar, atualizar metadados ou remover de uma vez.": "Click a cover to select; double-click or right-click opens the details. Ctrl+click selects several to favorite, update metadata or remove at once.",
+  "Use a busca (tecla /), a categoria e a ordenação na barra de tarefas. O botão Filtros abre um painel lateral com todos os critérios: situação, origem, categoria, gênero, desenvolvedora, ano, quando jogou, quando adicionou, tempo jogado e tamanho; marque quantos quiser. Uma combinação pode ser salva pelo botão Salvar e reaplicada pela lista \"Filtros salvos\".": "Use the search (/ key), the category and the sorting in the taskbar. The Filters button opens a side panel with every criterion: status, origin, category, genre, developer, year, when played, when added, play time and size; check as many as you want. A combination can be saved with the Save button and reapplied from the \"Saved filters\" list.",
+  "\"Adicionar jogo\" aceita um .exe, um atalho ou uma pasta inteira. Jogos com faixa NÃO ENCONTRADO mudaram de lugar: Jogar neles abre a opção de apontar a pasta nova.": "\"Add game\" accepts an .exe, a shortcut or a whole folder. Games with the NOT FOUND ribbon moved: Play on them offers to point to the new folder.",
+  "Busca com prefixo: dev:nintendo (desenvolvedora), ano:2017 ou ano:2010s (ano ou década), gen:rpg (gênero), sis:snes (sistema), origem:steam (origem). Dá para misturar com palavras normais, como \"mario sis:gba\".": "Prefix search: dev:nintendo (developer), year:2017 or year:2010s (year or decade), gen:rpg (genre), sys:snes (system), origin:steam (origin). Mix it with normal words, like \"mario sys:gba\".",
+  "Arrastar um .exe, atalho ou ROM para a janela adiciona o jogo à biblioteca.": "Dragging an .exe, shortcut or ROM onto the window adds the game to the library.",
+  "Com mais de uma fonte ligada, cada cartão mostra de onde o jogo vem e Filtros ganha a seção \"Fonte\".": "With more than one source enabled, each card shows where the game comes from and Filters gains a \"Source\" section.",
+  "Instale emuladores por console e traga suas ROMs. A configuração básica é automática.": "Install emulators per console and bring your ROMs. Basic setup is automatic.",
+  "Os consoles com emulador pronto ou ROMs na pasta ficam em \"Meus consoles\"; os outros aparecem abaixo, os mais usados primeiro.": "Consoles with an emulator ready or ROMs in the folder sit under \"My consoles\"; the others appear below, most used first.",
+  "Em Baixar ROMs aparecem as fontes de ROM que você ligou, com um seletor por console; a ROM só entra na Biblioteca depois de baixada.": "Download ROMs shows the ROM sources you enabled, with a selector per console; the ROM only enters the Library after it's downloaded.",
+  "Ao baixar uma ROM você escolhe a pasta de destino; marque \"Usar sempre\" para fixar a pasta daquele console — ou use \"Baixar em…\" no cartão do console.": "When downloading a ROM you choose the destination folder; check \"Always use\" to pin that console's folder — or use \"Download to…\" on the console card.",
+  "Consoles que precisam de BIOS, keys ou firmware (Switch, PS2, PS3, PS1, Xbox, Saturn) têm o botão \"guia\" no cartão: mostra o que falta, de onde vem e instala no lugar certo do emulador. Se faltar algo, o Jogar avisa e abre o guia.": "Consoles that need BIOS, keys or firmware (Switch, PS2, PS3, PS1, Xbox, Saturn) have a \"guide\" button on the card: it shows what's missing, where it comes from and installs it in the emulator's right place. If something is missing, Play warns and opens the guide.",
+  "Meus mods instala mods nos seus jogos a partir do arquivo baixado, com botão pra desligar e religar; as outras abas trazem utilitários e sites de mods.": "My mods installs mods into your games from the downloaded file, with a button to disable and re-enable; the other tabs bring utilities and mod sites.",
+  "Escolha o jogo, Instalar mod, aponte o .zip.": "Pick the game, Install mod, point to the .zip.",
+  "Arquivos do jogo substituídos ficam guardados: desligar o mod devolve os originais.": "Replaced game files are kept: disabling the mod gives the originals back.",
+  "Em Ferramentas, os chips no alto filtram por categoria ou mostram só as instaladas; cada cartão diz para quais jogos serve. Portátil = o Ludrix baixa do GitHub para tools\\; Site = abre a página oficial.": "In Tools, the chips at the top filter by category or show only installed ones; each card says which games it serves. Portable = Ludrix downloads from GitHub into tools\\; Site = opens the official page.",
+  "Dependências que os jogos pedem (Visual C++, DirectX, .NET…) e o Minecraft com os launchers que você já tem.": "Dependencies that games ask for (Visual C++, DirectX, .NET…) and Minecraft with the launchers you already have.",
+  "Se um jogo fecha na hora ou reclama de .dll, instale as dependências marcadas como faltando; o pacote Clássico cobre quase tudo.": "If a game closes right away or complains about a .dll, install the dependencies marked as missing; the Classic bundle covers almost everything.",
+  "Em Minecraft, o Ludrix acha as edições e os launchers instalados e coloca o Minecraft na Biblioteca; Jogar abre o launcher escolhido.": "In Minecraft, Ludrix finds the installed editions and launchers and puts Minecraft in the Library; Play opens the chosen launcher.",
+  "Jogos leves que abrem dentro do launcher: Flash (pelo Ruffle), HTML5 e jogos de site.": "Light games that open inside the launcher: Flash (through Ruffle), HTML5 and website games.",
+  "Meus jogos é o que já está pronto; Baixar mais é o acervo.": "My games is what's already ready; Download more is the collection.",
+  "Clique para jogar; Esc fecha; \"Tela cheia\" ocupa a janela inteira.": "Click to play; Esc closes; \"Full screen\" takes the whole window.",
+  "Adicionar aceita .swf, .zip ou pasta com index.html e links de sites.": "Add accepts .swf, .zip or a folder with index.html and website links.",
+  "Tudo o que está baixando, extraindo ou já terminou, separado por situação.": "Everything downloading, extracting or already finished, split by status.",
+  "Concluídos ficam no histórico até você limpar.": "Finished items stay in the history until you clear them.",
+  "Uma aba por assunto: comportamento (Geral), visual (Aparência e Personalizar), exibição dos jogos (Biblioteca), ao jogar (Ao jogar), fontes e downloads (Store e downloads), manutenção (Ferramentas) e máquina (Sistema).": "One tab per subject: behavior (General), look (Appearance and Customize), how games are shown (Library), while playing (Playing), sources and downloads (Store and downloads), maintenance (Tools) and machine (System).",
+  "Formato de disco não suportado": "Unsupported disc format",
+  "Disco com faixas de áudio": "Disc with audio tracks",
+  "O WinCDEmu é gratuito e de código aberto; instala um driver (pede permissão de administrador uma vez). Depois de montar o disco com ele, abra o instalador e, no fim, use \"Procurar instalação agora\" nos detalhes do jogo.": "WinCDEmu is free and open source; it installs a driver (asks for administrator permission once). After mounting the disc with it, open the installer and, at the end, use \"Look for the install now\" in the game details.",
+  "Montar sem o áudio": "Mount without the audio",
+  "O instalador vai abrir em seguida.": "The installer will open next.",
+  "no catálogo": "in the catalog",
+  "não encontrados": "not found",
+  "e mais opções": "and more options",
+  "Nenhum jogo rápido ainda": "No quick game yet",
+  "Pegue alguns no acervo ou adicione um .swf, um jogo HTML5 ou o link de um site.": "Grab some from the collection or add an .swf, an HTML5 game or a website link.",
+  "Troque o filtro ou baixe mais jogos.": "Change the filter or download more games.",
+  "Troque o filtro para ver o resto do acervo.": "Change the filter to see the rest of the collection.",
+  "Todo o acervo já está baixado.": "The whole collection is already downloaded.",
+  "· Flash, HTML5 e jogos de site, dentro do launcher": "· Flash, HTML5 and website games, inside the launcher",
+  "Os jogos Flash vêm do acervo público do archive.org e ficam em": "Flash games come from archive.org's public collection and live in",
+  "; jogos HTML5 em": "; HTML5 games in",
+  "Arquivo .swf (Flash)": ".swf file (Flash)",
+  "Jogo HTML5 em .zip": "HTML5 game as .zip",
+  "Caminho do .zip com o index.html": "Path of the .zip containing index.html",
+  "Pasta de um jogo HTML5": "HTML5 game folder",
+  "Caminho da pasta que tem o index.html": "Path of the folder containing index.html",
+  "Link de um jogo de site": "Website game link",
+  "Adicionar jogo rápido": "Add quick game",
+  "Tirar dos favoritos": "Remove from favorites",
+  "Apagar os arquivos": "Delete the files",
+  "Só o atalho sai da lista.": "Only the shortcut leaves the list.",
+  "Os arquivos copiados e a capa serão apagados.": "The copied files and the cover will be deleted.",
+  "Como vai aparecer no cartão": "How it will appear on the card",
+  "Endereço do jogo": "Game address",
+  "O jogo abre numa janela própria do Ludrix, com internet. Serve pra qualquer página de jogo (Newgrounds, itch.io, Poki, CrazyGames…).": "The game opens in its own Ludrix window, with internet. Works for any game page (Newgrounds, itch.io, Poki, CrazyGames…).",
+  "Largura/altura definem o tamanho inicial da janela do jogo.": "Width/height set the initial size of the game window.",
+  "Espaço em disco": "Disk space",
+  "dependência faltando — jogos podem fechar na hora": "dependency missing — games may close right away",
+  "dependências faltando — jogos podem fechar na hora": "dependencies missing — games may close right away",
+  "Abrir a pasta redists\\": "Open the redists\\ folder",
+  "sem conexão": "offline",
+  "quanto cada jogo ocupa, por disco": "how much each game takes, per disk",
+  "jogo ocupa": "game takes",
+  "jogos ocupam": "games take",
+  "Calculando o tamanho das pastas…": "Calculating folder sizes…",
+  "Nenhum jogo em pasta": "No game in a folder",
+  "Só jogos instalados em pasta entram aqui. ROMs e jogos abertos por link (Steam, Epic…) não contam.": "Only games installed in a folder count here. ROMs and games opened by link (Steam, Epic…) don't.",
+  "Outro lugar": "Somewhere else",
+  "livres de": "free of",
+  "Mover a pasta deste jogo para outro disco": "Move this game's folder to another disk",
+  "Jogos": "Games",
+  "não cabe": "doesn't fit",
+  "Nenhum outro disco encontrado. Você ainda pode escolher uma pasta.": "No other disk found. You can still choose a folder.",
+  "Movendo pasta": "Moving folder",
+  "nenhum launcher": "no launcher",
+  "para abri-lo. Sem launcher ele não abre: instale um abaixo (": "to open it. Without a launcher it won't open: install one below (",
+  "recomendado, código aberto, ou o oficial da Mojang).": "recommended, open source, or Mojang's official one).",
+  "abre pelo": "opens through",
+  "os instalados e dois sugeridos: Prism Launcher (código aberto, modpacks) e SKLauncher (leve e prático)": "the installed ones and two suggestions: Prism Launcher (open source, modpacks) and SKLauncher (light and practical)",
+  "instalam várias de uma vez": "install several at once",
+  "O prefixo do Proton ainda não existe. Ele é criado na primeira instalação daqui ou ao abrir um jogo de Windows.": "The Proton prefix doesn't exist yet. It is created on the first install from here or when a Windows game opens.",
+  "1 que falta": "1 missing",
+  "que faltam": "missing",
+  "Aberto no navegador": "Opened in the browser",
+  "Instala o Ruffle (10 MB, uma vez só) para rodar os jogos Flash.": "Installs Ruffle (10 MB, once) to run Flash games.",
+  "Guardada em data\\covers — vale para sempre, mesmo atualizando metadados.": "Kept in data\\covers — stays forever, even when updating metadata.",
+  "Save de versão com crack (emulador de Steam)": "Save from a cracked version (Steam emulator)",
+  "Se o jogo é pirata/crackeado, o save pode estar em outro lugar: rode o jogo uma vez, salve, e depois use": "If the game is pirated/cracked, the save may be elsewhere: run the game once, save, then use",
+  "· o save é uma pasta inteira": "· the save is a whole folder",
+  "Copia o save para Downloads para guardar ou compartilhar": "Copies the save to Downloads to keep or share",
+  "No modo navegador, digite o caminho do arquivo/pasta/.zip do save:": "In browser mode, type the path of the save file/folder/.zip:",
+  "arquivo(s) copiado(s)": "file(s) copied",
+  "último usado": "last used",
+  "não encontrado no local padrão — é possível apontar a pasta mesmo assim": "not found in the default location — you can still point to the folder",
+  "De onde você quer trazer os jogos?": "Where do you want to bring the games from?",
+  "Incluir jogos marcados como ocultos no Playnite (entram ocultos aqui também)": "Include games marked as hidden in Playnite (they come in hidden here too)",
+  "Importar do": "Import from",
+  "Selecionar arquivo…": "Select file…",
+  "Selecionar pasta…": "Select folder…",
+  "Nenhum jogo nesse local. Confira a dica do que selecionar.": "No game in that location. Check the hint about what to select.",
+  "pasta de ROMs ·": "ROM folder ·",
+  "Marcado como oculto no Playnite": "Marked as hidden in Playnite",
+  "O arquivo não foi encontrado neste PC": "The file was not found on this PC",
+  "arquivo ausente": "file missing",
+  "Ordem da lista": "List order",
+  "Marca só o que ainda não está na biblioteca": "Checks only what isn't in the library yet",
+  "pasta": "folder",
+  "de fora (lista no final)": "outside (listed at the end)",
+  "Marque ao menos um item para importar.": "Check at least one item to import.",
+  "Baixar de link…": "Download from link…",
+  "Pasta emulation\\games": "emulation\\games folder",
+  "Aparência e temas…": "Appearance and themes…",
+  "(jogos instalados)": "(installed games)",
+  "Ligar animações": "Enable animations",
+  "na Store": "in the Store",
+  "Pasta emulation": "emulation folder",
+  "Adicionar jogo rápido…": "Add quick game…",
+  ": amostra de até 25 links diretos": ": sample of up to 25 direct links",
+  "Todas as fontes ligadas (amostra de até 25 links cada)": "All enabled sources (sample of up to 25 links each)",
+  "Teste de links": "Link test",
+  "Nada para testar": "Nothing to test",
+  "Essa fonte só tem torrents (magnet não dá para testar) ou está vazia": "That source only has torrents (magnets can't be tested) or is empty",
+  "Os jogos afetados ganharam o aviso \"link fora do ar\" na Store": "The affected games got the \"link down\" notice in the Store",
+  "Gerenciar coleções": "Manage collections",
+  "Não deu para salvar.": "Could not save.",
+  "Jogo": "Game",
+  "Nova coleção": "New collection",
+  "Um nome curto, do seu jeito: “Terminar”, “Com amigos”, “Clássicos”…": "A short name, your way: “Finish”, “With friends”, “Classics”…",
+  "Em espera": "On hold",
+  "Apagar coleção": "Delete collection",
+  "Nenhuma coleção ainda. Crie pelo botão abaixo ou pelo menu de um jogo (Coleções › Nova coleção…).": "No collection yet. Create one with the button below or from a game's menu (Collections › New collection…).",
+  "Nova coleção…": "New collection…",
+  "lendo configurações": "reading settings",
+  "procurando jogos": "looking for games",
+  "Sua nota": "Your rating",
+  "Atualizado para": "Updated to",
+  "Veja o que mudou nesta versão.": "See what changed in this version.",
+  "Voltei para a versão": "Went back to version",
+  "com arquivo não encontrado": "with file not found",
+  "O executável ou a ROM não está mais onde estava.": "The executable or ROM is no longer where it was.",
+  "A atividade aparece quando um jogo abrir.": "Activity shows up when a game opens.",
+  "Não conectou.": "Didn't connect.",
+  "Use um modificador": "Use a modifier",
+  "Combine com Ctrl, Alt, Shift ou Win.": "Combine with Ctrl, Alt, Shift or Win.",
+  "Tecla não aceita": "Key not accepted",
+  "Use letra, número, F1–F24 ou setas.": "Use a letter, number, F1–F24 or arrows.",
+  "Atalho não registrado": "Shortcut not registered",
+  "Jogados esta semana": "Played this week",
+  "Os jogos que já estão no PC ficam escondidos na Store": "Games already on the PC are hidden in the Store",
+  "Mostrando também os jogos que já estão no PC": "Also showing games already on the PC",
+  "Já instalados": "Already installed",
+  "Com instalados": "With installed",
+  "Catálogo": "Catalog",
+  "Me surpreenda — escolhe um jogo para você jogar agora": "Surprise me — picks a game for you to play now",
+  "Última leitura das fontes:": "Last source read:",
+  ": site de download, coleção do archive.org, GitHub ou lista .json.": ": download site, archive.org collection, GitHub or .json list.",
+  "— as fontes de ROM ficam na aba": "— ROM sources live in the tab",
+  "Nenhum favorito ainda": "No favorite yet",
+  "Clique na estrela de um jogo para ele aparecer aqui.": "Click a game's star to make it show up here.",
+  "Tente outro termo ou limpe os filtros.": "Try another term or clear the filters.",
+  "Baixe algo na Store ou adicione um jogo que você já tem — um .exe, um atalho ou uma ROM.": "Download something in the Store or add a game you already have — an .exe, a shortcut or a ROM.",
+  "Sem nota": "No rating",
+  "Sem gênero": "No genre",
+  "Sem ano": "No year",
+  "Sem desenvolvedora": "No developer",
+  "Sem": "No",
+  "Não encontrado": "Not found",
+  "Abrir detalhes": "Open details",
+  "Mais": "More",
+  "Sessões": "Sessions",
+  "Lançamento": "Release",
+  "Jogados por último": "Last played",
+  "Adicionados por último": "Last added",
+  "Tente outro nome ou limpe a busca (Y).": "Try another name or clear the search (Y).",
+  "Nenhum favorito": "No favorite",
+  "Marque um jogo com X › Favoritar e ele aparece aqui.": "Mark a game with X › Favorite and it shows up here.",
+  "Os últimos jogos abertos ficam nesta aba.": "The last opened games stay in this tab.",
+  "As fontes ainda estão carregando. Volte em instantes.": "The sources are still loading. Come back in a moment.",
+  "Nada novo para baixar: tudo que as fontes oferecem já está instalado.": "Nothing new to download: everything the sources offer is already installed.",
+  "Nenhuma fonte ativa": "No active source",
+  "Ative uma fonte pelo Ludrix em janela, em Loja › Fontes.": "Enable a source in windowed Ludrix, under Store › Sources.",
+  "Instale ou adicione jogos pelo Ludrix em janela; aqui aparecem só os instalados.": "Install or add games in windowed Ludrix; only installed ones appear here.",
+  "Ver todos em grade": "See all in a grid",
+  "instalados · aperte A para abrir a biblioteca": "installed · press A to open the library",
+  "Em andamento": "In progress",
+  "Na fila de downloads": "In the download queue",
+  "Entra na fila e começa assim que possível.": "Enters the queue and starts as soon as possible.",
+  "Não deu para baixar": "Could not download",
+  "entrou na fila de downloads.": "entered the download queue.",
+  "Concluído · pronto para jogar": "Finished · ready to play",
+  "· opções": "· options",
+  "· tentar de novo": "· try again",
+  "Nada na fila": "Nothing queued",
+  "Downloads e instalações feitos pelo Ludrix em janela aparecem aqui, com o andamento. Enquanto algo baixa, a porcentagem fica no topo da tela em qualquer aba.": "Downloads and installs made in windowed Ludrix appear here, with progress. While something downloads, the percentage stays at the top of the screen in any tab.",
+  "Para o download; depois é só escolher Continuar na Fila.": "Stops the download; then just choose Continue in the Queue.",
+  "Interrompe e apaga o que foi baixado até agora.": "Interrupts and deletes what was downloaded so far.",
+  "Tirado da lista": "Removed from the list",
+  "concluído": "finished",
+  "concluídos": "finished",
+  "Nada na fila.": "Nothing queued.",
+  "Tira da lista o que já terminou. Os jogos continuam instalados.": "Clears what already finished from the list. The games stay installed.",
+  "— abrir a fila": "— open the queue",
+  "Últimos": "Latest",
+  "Até abrir": "Until opened",
+  "Tema do console": "Console theme",
+  "Quantas capas cabem na esteira de uma vez.": "How many covers fit on the carousel at once.",
+  "Ordem dos jogos": "Game order",
+  "Como a Biblioteca e os Favoritos ficam ordenados.": "How the Library and Favorites are sorted.",
+  "Confere se cada jogo instalado ainda está na pasta e com o executável no lugar.": "Checks whether each installed game is still in its folder with the executable in place.",
+  "Busca de novo capa, descrição e ano de todos os jogos, em segundo plano.": "Looks up cover, description and year again for all games, in the background.",
+  "Quão rápido a seleção anda ao segurar o direcional ou o analógico.": "How fast the selection moves while holding the d-pad or stick.",
+  "Vibrar ao confirmar": "Vibrate on confirm",
+  "Um toque curto no controle ao abrir um jogo ou menu.": "A short pulse on the controller when opening a game or menu.",
+  "Vale quando houver um controle conectado.": "Applies when a controller is connected.",
+  "Sons de navegação": "Navigation sounds",
+  "Um toque curto ao mover a seleção e confirmar.": "A short tick when moving the selection and confirming.",
+  "Quão alto são os toques de navegação.": "How loud the navigation ticks are.",
+  "Legenda dos botões": "Button legend",
+  "Mostra no rodapé o que cada botão do controle (ou tecla) faz.": "Shows in the footer what each controller button (or key) does.",
+  "Relógio em 24 horas": "24-hour clock",
+  "Desligado, mostra 12 horas com AM/PM.": "Off, shows 12 hours with AM/PM.",
+  "Download no topo": "Download at the top",
+  "Enquanto algo baixa ou instala, a porcentagem aparece ao lado do relógio em qualquer aba. Toque nela para abrir a Fila.": "While something downloads or installs, the percentage shows next to the clock in any tab. Tap it to open the Queue.",
+  "Sem ninguém mexer por esse tempo, a tela escurece para poupar a TV. Qualquer botão acende de novo.": "With nobody touching it for this long, the screen dims to spare the TV. Any button lights it up again.",
+  "Enquanto o jogo roda": "While the game runs",
+  "O que fazer com o Modo Console depois que o jogo abre.": "What to do with Console Mode after the game opens.",
+  "Tela de abertura": "Opening screen",
+  "A capa do jogo em tela cheia enquanto ele carrega.": "The game's cover in full screen while it loads.",
+  "Backup automático dos saves": "Automatic save backup",
+  "Guarda uma cópia dos saves quando o jogo fecha, para recuperar depois pelo Ludrix em janela.": "Keeps a copy of the saves when the game closes, to recover later from windowed Ludrix.",
+  "Confirmar antes de sair": "Confirm before quitting",
+  "Pergunta antes de fechar o Modo Console pelo botão ou pelo ícone.": "Asks before closing Console Mode by the button or the icon.",
+  "Procura uma versão nova do LudrixHub. A instalação é feita pelo Ludrix em janela.": "Looks for a new LudrixHub version. The install is done in windowed Ludrix.",
+  "Voltar para a janela": "Back to the window",
+  "Fecha o Modo Console e abre o Ludrix normal, com todas as abas (Loja, Emuladores, Central…).": "Closes Console Mode and opens regular Ludrix, with all tabs (Store, Emulators, Hub…).",
+  "Verificando jogos…": "Checking games…",
+  "com problema": "with problems",
+  "— veja no Ludrix em janela.": "— see it in windowed Ludrix.",
+  "jogos conferidos.": "games checked.",
+  "Capas e dados em segundo plano.": "Covers and data in the background.",
+  "Procurando atualização…": "Looking for an update…",
+  "nova": "new",
+  "Não deu para verificar": "Could not check",
+  "Você já está na versão mais nova": "You are already on the newest version",
+  "Instale pelo Ludrix em janela, em Ajustes › Sistema.": "Install it from windowed Ludrix, under Settings › System.",
+  "Emulador não instalado": "Emulator not installed",
+  "Instale o emulador deste sistema pelo Ludrix em janela (aba Emuladores).": "Install this system's emulator from windowed Ludrix (Emulators tab).",
+  "não está conectada.": "is not connected.",
+  "Aponte a pasta nova pelo Ludrix em janela (Jogar → Apontar).": "Point to the new folder from windowed Ludrix (Play → Point).",
+  "Enquanto o jogo roda, o que fazer com o Modo Console?": "While the game runs, what should Console Mode do?",
+  "Volta sozinho quando o jogo fechar.": "Comes back by itself when the game closes.",
+  "O console fica atrás do jogo.": "The console stays behind the game.",
+  "tem mais de um emulador instalado.": "has more than one emulator installed.",
+  "Removido dos favoritos": "Removed from favorites",
+  "Ver tudo em grade": "See everything in a grid",
+  "Escolhe um jogo ao acaso.": "Picks a game at random.",
+  "Encerrar jogo": "Stop game",
+  "Filtrar por uma coleção sua.": "Filter by one of your collections.",
+  "Botões": "Buttons",
+  "Listas que você montou no Ludrix em janela.": "Lists you built in windowed Ludrix.",
+  "Ordenar jogos": "Sort games",
+  "Vale para Biblioteca e Favoritos.": "Applies to Library and Favorites.",
+  "Sem descrição nesta fonte.": "No description at this source.",
+  "Sem descrição. Você pode preencher os dados deste jogo pelo Ludrix em janela (Editar).": "No description. You can fill in this game's data from windowed Ludrix (Edit).",
+  "Sair do Modo Console?": "Quit Console Mode?",
+  "Jogos abertos continuam rodando. Para voltar depois, abra o LudrixHub Console de novo.": "Open games keep running. To come back later, open LudrixHub Console again.",
+  "O Modo Console vai fechar.": "Console Mode will close.",
+  "Não foi possível": "Could not",
+  "há pouco": "just now",
+  "Pronto para jogar": "Ready to play",
+  "O jogo foi movido ou apagado. Aponte o novo caminho ou remova da biblioteca.": "The game was moved or deleted. Point to the new path or remove it from the library.",
+  "Placa de vídeo dedicada": "Dedicated graphics card",
+  "Sem placa de vídeo dedicada (o jogo pede uma)": "No dedicated graphics card (the game asks for one)",
+  "itens abaixo do mínimo": "items below minimum",
+  "Baixar pelo navegador": "Download in the browser",
+  "O site pede verificação humana, então o download abre no navegador. Depois: Adicionar → Jogo de Windows.": "The site asks for human verification, so the download opens in the browser. Afterwards: Add → Windows game.",
+  "Escolha o mirror ao lado →": "Choose the mirror on the side →",
+  "Página na Steam": "Steam page",
+  "Baixar em partes": "Download in parts",
+  "Em partes: escolha os arquivos ao lado →": "In parts: choose the files on the side →",
+  "fontes têm este jogo": "sources have this game",
+  "ESPELHOS — ESCOLHA UM": "MIRRORS — CHOOSE ONE",
+  "O mesmo build em hospedagens diferentes; o downloader embutido baixa o escolhido. Google Drive limita arquivos gigantes — prefira Gofile/buzzheavier.": "The same build on different hosts; the built-in downloader fetches the chosen one. Google Drive limits huge files — prefer Gofile/buzzheavier.",
+  "Para você": "For you",
+  "Link fora do ar": "Link down",
+  "não instalado.": "not installed.",
+  "Instalar na aba Emuladores": "Install it in the Emulators tab",
+  "para jogar.": "to play.",
+  "Já instalei": "Already installed it",
+  "Procurar instalação agora": "Look for the install now",
+  "Abrir instalador (setup)": "Open installer (setup)",
+  "Central Ludrix — otimizar antes de jogar, dependências e programas úteis": "Ludrix Hub — optimize before playing, dependencies and useful programs",
+  "Jogo, ação ou ajuste…  (  só ações)": "Game, action or setting…  (  actions only)",
+  "Com painel, clicar numa capa abre o jogo ao lado; grade mostra só as capas; lista mostra uma linha por jogo com ano, gênero, tamanho e tempo jogado": "With panel, clicking a cover opens the game on the side; grid shows only covers; list shows one row per game with year, genre, size and play time",
+  "Cabeçalhos recolhíveis na Biblioteca; a ordenação vale dentro de cada grupo. A Store tem o próprio agrupamento no menu Exibição": "Collapsible headers in the Library; sorting applies inside each group. The Store has its own grouping in the Display menu",
+  "Capas com painel lateral": "Covers with side panel",
+  "Selo pequeno com de onde o jogo veio: Steam, Epic, GOG, ROM, Manual…": "Small badge with where the game came from: Steam, Epic, GOG, ROM, Manual…",
+  "Fontes de metadados": "Metadata sources",
+  "De onde vêm capa, descrição, ano e gêneros — na busca automática e em \"Baixar metadados…\". Nenhuma precisa de chave.": "Where cover, description, year and genres come from — in the automatic lookup and in \"Download metadata…\". None needs a key.",
+  "Destino definitivo dos jogos baixados e extraídos. Atual:": "Final destination of downloaded and extracted games. Current:",
+  "Outras pastas com jogos": "Other folders with games",
+  "Pastas de outros discos ou de outros launchers. O Ludrix procura jogos novos nelas (e na pasta de instalados) ao abrir e no botão abaixo.": "Folders on other disks or from other launchers. Ludrix looks for new games in them (and in the installed folder) on open and with the button below.",
+  "Adicionar pasta": "Add folder",
+  "Procurar jogos novos": "Look for new games",
+  "Nenhuma adicionada.": "None added.",
+  "Fica de olho na pasta de instalados e nas pastas acima enquanto o Ludrix está aberto. Caiu uma pasta nova com um jogo dentro, chega um aviso em Notificações para adicionar com um clique. Quase nenhum custo: o sistema avisa, o Ludrix não varre nada": "Keeps an eye on the installed folder and the folders above while Ludrix is open. When a new folder with a game inside shows up, a notice arrives in Notifications to add it in one click. Almost no cost: the system notifies, Ludrix scans nothing",
+  "Procurar jogos novos ao abrir": "Look for new games on open",
+  "Alguns segundos depois de abrir, o Ludrix olha as pastas acima e avisa se achou jogo que ainda não está na biblioteca. Nada é adicionado sem revisão": "A few seconds after opening, Ludrix looks at the folders above and notifies if it found a game not yet in the library. Nothing is added without review",
+  "O tempo de jogo é contado enquanto o processo do jogo estiver em execução.": "Play time is counted while the game's process is running.",
+  "Pergunta antes de abrir (com opção de lembrar).": "Asks before opening (with a remember option).",
+  "Continua visível normalmente.": "Stays visible as usual.",
+  "Sai da barra de tarefas e volta quando o jogo fechar.": "Leaves the taskbar and comes back when the game closes.",
+  "Fecha por completo; o tempo de jogo desta sessão não é contado.": "Closes entirely; this session's play time is not counted.",
+  "Contar tempo de jogos abertos fora do Ludrix": "Count time for games opened outside Ludrix",
+  "Quando um jogo da biblioteca é aberto pela Steam, por um atalho ou direto pelo .exe, o Ludrix percebe e conta o tempo do mesmo jeito. Checa os processos a cada 15 s; não interfere no jogo": "When a library game is opened through Steam, a shortcut or straight from the .exe, Ludrix notices and counts the time all the same. Checks processes every 15 s; doesn't interfere with the game",
+  "Downloads em andamento param quando o jogo abre e voltam sozinhos quando ele fecha; o que já estava extraindo termina": "Ongoing downloads stop when the game opens and resume by themselves when it closes; whatever was already extracting finishes",
+  "Jogos de Windows no Linux": "Windows games on Linux",
+  "Como abrir .exe": "How to open .exe",
+  "Proton via umu baixa o GE-Proton e o runtime da Steam sozinho na primeira vez que um jogo de Windows for aberto (~1 GB, uma vez só). Wine usa o que já estiver instalado na distro.": "Proton via umu downloads GE-Proton and the Steam runtime by itself the first time a Windows game opens (~1 GB, once). Wine uses whatever is already installed in the distro.",
+  "Versão do Proton": "Proton version",
+  "Vazio = GE-Proton mais recente. Aceita o nome de uma pasta em ~/.local/share/Steam/compatibilitytools.d ou um caminho completo.": "Empty = latest GE-Proton. Accepts a folder name in ~/.local/share/Steam/compatibilitytools.d or a full path.",
+  "Separadas por espaço, ex.:": "Space-separated, e.g.:",
+  "Manter o runtime do Proton atualizado": "Keep the Proton runtime updated",
+  "O umu confere e baixa atualizações do runtime da Steam ao abrir um jogo. Desligue se a conexão for lenta": "umu checks and downloads Steam runtime updates when a game opens. Turn it off on a slow connection",
+  "Avisar quando um jogo fechar sozinho": "Warn when a game closes by itself",
+  "Se o jogo morrer nos primeiros segundos, mostra o motivo provável e oferece instalar o que falta (Visual C++, DirectX, .NET).": "If the game dies in the first seconds, shows the likely reason and offers to install what's missing (Visual C++, DirectX, .NET).",
+  "Jogos sem esse aviso": "Games without this warning",
+  "sem resposta": "no response",
+  "Mostra na hora cada botão e analógico que você mexer; serve para conferir se o controle está sendo lido": "Shows live every button and stick you move; useful to check that the controller is being read",
+  "Um programa à parte, pensado para a TV: ocupa o monitor inteiro, mostra só os jogos instalados numa esteira de capas e tem temas próprios. Funciona com controle, teclado ou mouse. Ao abrir, esta janela fecha; lá dentro, \"Voltar para a janela\" reabre o Ludrix normal.": "A separate program made for the TV: it takes the whole monitor, shows only installed games on a cover carousel and has its own themes. Works with controller, keyboard or mouse. When it opens, this window closes; inside it, \"Back to the window\" reopens regular Ludrix.",
+  "Velocidade máxima": "Maximum speed",
+  "Limite somado de todos os downloads diretos, para sobrar banda para o resto da casa. Torrent tem o limite próprio abaixo": "Combined limit of all direct downloads, to leave bandwidth for the rest of the house. Torrent has its own limit below",
+  "Horário para baixar": "Download schedule",
+  "Fora da janela os downloads ficam esperando na Fila e continuam sozinhos quando ela abre": "Outside the window downloads wait in the Queue and continue by themselves when it opens",
+  "O ícone do Ludrix na barra do Windows mostra o andamento dos downloads": "Ludrix's icon on the Windows taskbar shows download progress",
+  "Usado quando o item oferece magnet ou .torrent. Limites em KB/s (0 = sem limite).": "Used when the item offers a magnet or .torrent. Limits in KB/s (0 = no limit).",
+  "Mantém o torrent ativo depois do download, enquanto o launcher estiver aberto": "Keeps the torrent active after the download, while the launcher is open",
+  "A lista de jogos (library.json) é copiada uma vez por dia em": "The game list (library.json) is copied once a day into",
+  "; ficam as últimas 7 diárias e as 10 últimas feitas à mão. Restaurar traz de volta o que sumiu e recupera tempo de jogo zerado, sem apagar o que existe hoje": "; the last 7 daily and the last 10 manual ones are kept. Restore brings back what vanished and recovers zeroed play time, without deleting what exists today",
+  "Mostra um aviso ao iniciar quando algum jogo da biblioteca está com arquivo não encontrado": "Shows a notice at startup when some library game has a missing file",
+  "· última verificação": "· last check",
+  "Enviar para a Steam": "Send to Steam",
+  "Cria os atalhos \"não-Steam\" com capa; os jogos aparecem na Steam e no Big Picture. A Steam precisa estar fechada. Rodar de novo atualiza os atalhos do Ludrix e não mexe nos outros": "Creates the \"non-Steam\" shortcuts with cover; the games appear in Steam and Big Picture. Steam must be closed. Running it again updates Ludrix's shortcuts and leaves the others alone",
+  "com a lista de jogos, metadados e capas em quatro formatos: pacote para o Playnite (": "with the game list, metadata and covers in four formats: Playnite package (",
+  ": dois cliques nele, depois menu Extensões › Ludrix › Importar), JSON completo do Ludrix, planilha CSV (Excel) e o": ": double-click it, then menu Extensions › Ludrix › Import), full Ludrix JSON, CSV spreadsheet (Excel) and the",
+  "Para voltar a biblioteca inteira num Ludrix novo, use \"Meus dados › Exportar meus dados\" (zip com tudo). \"Exportar biblioteca\" serve para levar os jogos a outro programa: o pacote do Playnite leva nome, capa, pasta, executável, tempo jogado, favoritos, gênero, ano e desenvolvedora; jogos já importados são atualizados, não duplicados. ROMs entram com o arquivo preenchido e o emulador é escolhido no Playnite. Playnite 11 em diante não aceita o pacote (sem PowerShell): aí vale o CSV.": "To bring the whole library back into a fresh Ludrix, use \"My data › Export my data\" (zip with everything). \"Export library\" is for taking the games to another program: the Playnite package carries name, cover, folder, executable, play time, favorites, genre, year and developer; already imported games are updated, not duplicated. ROMs come with the file filled in and the emulator is chosen in Playnite. Playnite 11 onwards doesn't accept the package (no PowerShell): use the CSV then.",
+  "Gera Ludrix-dados- data .zip. Guarde antes de formatar, trocar de PC ou mexer em algo delicado": "Generates Ludrix-dados- date .zip. Keep it before formatting, changing PC or touching anything delicate",
+  "Uma vez por semana, ao abrir, gera o Ludrix-dados- data .zip sozinho (biblioteca, ajustes, fontes, capas, temas). Guarda os 4 últimos.": "Once a week, on open, generates Ludrix-dados- date .zip by itself (library, settings, sources, covers, themes). Keeps the last 4.",
+  "Último:": "Last:",
+  "— o padrão fica dentro do Ludrix; para sobreviver a um disco morto, aponte outro disco ou uma pasta sincronizada": "— the default sits inside Ludrix; to survive a dead disk, point to another disk or a synced folder",
+  "O backup é um zip com configurações, biblioteca (com tempo jogado e favoritos), capas personalizadas, fontes, temas importados, cópias de saves e jogos rápidos adicionados por você. Não inclui os jogos em si nem caches. Importar substitui o que existe hoje pelo que está no zip e reabre o Ludrix — antes disso, o estado atual é guardado em data/updates.": "The backup is a zip with settings, library (with play time and favorites), custom covers, sources, imported themes, save copies and quick games you added. It doesn't include the games themselves or caches. Import replaces what exists today with what's in the zip and reopens Ludrix — before that, the current state is kept in data/updates.",
+  "Capas e miniaturas de jogos que não estão mais em nenhuma fonte nem na biblioteca (com mais de 30 dias). O Ludrix faz essa limpeza sozinho uma vez por semana": "Covers and thumbnails of games no longer in any source or in the library (older than 30 days). Ludrix does this cleanup by itself once a week",
+  "Criado e idealizado por": "Created and conceived by",
+  "Motor da janela": "Window engine",
+  "Visíveis em todas as abas": "Visible in every tab",
+  "Ocultas — mostra as opções marcadas como avançado": "Hidden — shows the options marked as advanced",
+  "Ocultar opções avançadas": "Hide advanced options",
+  "Mostrar opções avançadas": "Show advanced options",
+  "Opções avançadas ligadas": "Advanced options on",
+  "Esta aba não tem opções avançadas. Elas aparecem com a marca AVANÇADO nas abas que têm.": "This tab has no advanced options. They show up with the ADVANCED mark in the tabs that have them.",
+  "Versão restaurada": "Version restored",
+  "O atualizador restaurou a versão anterior.": "The updater restored the previous version.",
+  "Esta é a versão": "This is version",
+  "em AppImage. Para atualizar, baixe o AppImage novo e substitua o arquivo — jogos, ajustes e temas ficam em": "as AppImage. To update, download the new AppImage and replace the file — games, settings and themes live in",
+  "e não são tocados.": "and are not touched.",
+  "Baixar a versão mais recente": "Download the latest version",
+  "· verificada, pronta para instalar": "· verified, ready to install",
+  "· correção": "· fix",
+  "disponível para download": "available for download",
+  "· checado às": "· checked at",
+  "Em branco usa o endereço do projeto (GitHub). Preencha só para testar outro feed https.": "Blank uses the project address (GitHub). Fill in only to test another https feed.",
+  "O Ludrix confere o endereço de atualizações (https) ao abrir e ao clicar em Checar. Um arquivo .lxup recebido por fora entra por \"Instalar de arquivo\". Só pacotes assinados pelo projeto são instalados. Jogos, configurações, temas e emuladores nunca são tocados numa atualização.": "Ludrix checks the update address (https) on open and when you click Check. An .lxup file received elsewhere goes in through \"Install from file\". Only packages signed by the project are installed. Games, settings, themes and emulators are never touched by an update.",
+  "O Ludrix fecha por completo (inclusive da bandeja) e o atualizador instala a versão nova mostrando o progresso. No fim ele pergunta se quer reabrir.": "Ludrix closes entirely (tray included) and the updater installs the new version showing progress. At the end it asks whether to reopen.",
+  "Fechando para atualizar…": "Closing to update…",
+  "Nesse modo não é possível abrir a janela de escolher arquivo. Copie o .lxup para pasta updates, dentro da pasta do launcher, e clique em \"Checar\".": "In this mode the file picker can't be opened. Copy the .lxup to the updates folder, inside the launcher folder, and click \"Check\".",
+  "Atualização pronta para instalar": "Update ready to install",
+  "Nesse modo não é possível abrir a janela de escolher arquivo. Abra o updater pela pasta do Ludrix e use \"Escolher arquivo\".": "In this mode the file picker can't be opened. Open the updater from the Ludrix folder and use \"Choose file\".",
+  "Voltar para": "Go back",
+  "Você está na": "You are on",
+  "e reabre nela. Jogos, configurações, temas e emuladores ficam como estão.": "and reopens on it. Games, settings, themes and emulators stay as they are.",
+  "regrava todos os arquivos da versão": "rewrites every file of version",
+  "troca o código pela versão": "swaps the code for version",
+  "Fechando para trocar de versão…": "Closing to switch version…",
+  "Arquivo com": "File with",
+  "Caminho do .lxtheme, .zip (um ou vários estilos) ou theme.json. Para vários arquivos, um por linha.": "Path of the .lxtheme, .zip (one or several styles) or theme.json. For several files, one per line.",
+  "As pastas deles em themes serão removidas. É possível importar de novo depois.": "Their folders in themes will be removed. They can be imported again later.",
+  "As pastas deles em themes serão removidas. Os temas Escuro e Claro continuam. É possível importar de novo depois.": "Their folders in themes will be removed. The Dark and Light themes stay. They can be imported again later.",
+  "A pasta dele em themes será removida. É possível importar de novo depois.": "Its folder in themes will be removed. It can be imported again later.",
+  "Abrir com o": "Open with",
+  "Com um jogo aberto e a bandeja ligada, o Ludrix apenas se recolhe para continuar contando o tempo.": "With a game open and the tray on, Ludrix only tucks itself away to keep counting time.",
+  "Notificações do sistema": "System notifications",
+  "Mantém o launcher acessível ao lado do relógio quando recolhido. Botão direito no ícone: jogar um dos últimos jogos, ir direto a uma tela, ver a fila, verificar atualizações ou sair. Desligado, ele apenas minimiza para a barra de tarefas": "Keeps the launcher within reach next to the clock when tucked away. Right-click the icon: play one of the last games, jump to a screen, see the queue, check for updates or quit. Off, it just minimizes to the taskbar",
+  "Mostra as opções ao clicar no X e memoriza a escolha.": "Shows the options when clicking the X and remembers the choice.",
+  "Sai da barra de tarefas e fica no ícone ao lado do relógio.": "Leaves the taskbar and stays in the icon next to the clock.",
+  "Fecha por completo, inclusive o ícone da bandeja.": "Closes entirely, tray icon included.",
+  "Sem o ícone na bandeja, o X sempre encerra o launcher.": "Without the tray icon, the X always quits the launcher.",
+  "Clique para trocar": "Click to change",
+  "Onde ficam Biblioteca, Store, Emuladores… \"Só ícones\" libera espaço em janela pequena": "Where Library, Store, Emulators… live. \"Icons only\" frees space in a small window",
+  "A barra de título segue o tema, com os botões de minimizar, maximizar e fechar desenhados pelo launcher. Vale após reabrir.": "The title bar follows the theme, with the minimize, maximize and close buttons drawn by the launcher. Applies after reopening.",
+  "no tom do tema. No Windows 10 só o claro/escuro acompanha": "in the theme's tone. On Windows 10 only light/dark follows",
+  "Com a janela sem moldura, vale para a borda fina e os cantos": "With the frameless window, applies to the thin border and the corners",
+  "Barra de título, texto e borda da janela": "Title bar, text and window border",
+  "Seguir o tema (padrão: Ludrix)": "Follow the theme (default: Ludrix)",
+  "Menu nativo do Windows": "Native Windows menu",
+  "Modo sofá": "Couch mode",
+  "Com um controle ligado, qualquer botão passa a navegação para ele: direcional move, A seleciona, B volta, X abre o menu, Y favorita, LB/RB trocam de aba, Start joga. Mexer o mouse volta ao normal": "With a controller on, any button hands navigation to it: d-pad moves, A selects, B goes back, X opens the menu, Y favorites, LB/RB switch tabs, Start plays. Moving the mouse goes back to normal",
+  "Zoom no sofá": "Couch zoom",
+  "Aumenta a interface enquanto o controle está no comando, para ler de longe": "Enlarges the interface while the controller is in charge, to read from afar",
+  "Ligar quando um controle for usado": "Turn on when a controller is used",
+  "Botões, seleção e realces. \"Do tema\" usa a cor que o tema define": "Buttons, selection and highlights. \"From the theme\" uses the color the theme defines",
+  "Janela translúcida com desfoque do Windows 11 (acrílico), por trás de toda a interface. Em Windows 10 ou com alto contraste fica opaco": "Translucent window with Windows 11 blur (acrylic), behind the whole interface. On Windows 10 or with high contrast it stays opaque",
+  "; \"Do Windows\" acompanha a cor de destaque em Configurações › Personalização": "; \"From Windows\" follows the accent color in Settings › Personalization",
+  "Corta transições e animações de uma vez. Liga sozinho quando o sistema pede menos movimento": "Cuts transitions and animations at once. Turns on by itself when the system asks for less motion",
+  "O menu do Ludrix fica dentro da janela, com cabeçalho, ícones e submenus; o nativo é o menu padrão do Windows, sem as cores do tema": "The Ludrix menu stays inside the window, with header, icons and submenus; the native one is the standard Windows menu, without the theme colors",
+  "Menu do Windows": "Windows menu",
+  "Prefixos: dev:, ano:, gen:, sis:, origem:, tag:": "Prefixes: dev:, year:, gen:, sys:, origin:, tag:",
+  "Minecraft Java não encontrado neste PC (nem a pasta .minecraft, nem um launcher). Instale um launcher abaixo e abra-o uma vez.": "Minecraft Java not found on this PC (neither the .minecraft folder nor a launcher). Install a launcher below and open it once.",
+  "Ainda sem launcher: ao clicar em Jogar o Ludrix indica um.": "Still no launcher: when you click Play, Ludrix suggests one.",
+  "Minecraft Java entrou na biblioteca, mas sem launcher": "Minecraft Java entered the library, but without a launcher",
+  "Pasta .minecraft encontrada, mas nenhum launcher para abrir o jogo. Instale um em Central › Minecraft (Prism ou o oficial); ao clicar em Jogar eu também indico.": ".minecraft folder found, but no launcher to open the game. Install one in Hub › Minecraft (Prism or the official one); clicking Play also suggests one.",
+  "Esse launcher não está instalado. Instale ou use \"Localizar\".": "That launcher is not installed. Install it or use \"Locate\".",
+  "Minecraft Java agora abre pelo": "Minecraft Java now opens through",
+  "Launcher encontrado; o jogo está pronto para Jogar.": "Launcher found; the game is ready to Play.",
+  "o instalador não terminou a tempo": "the installer did not finish in time",
+  "pacote sem .exe": "package without .exe",
+  "DXSETUP.exe não apareceu após extrair": "DXSETUP.exe did not appear after extracting",
+  "O pacote baixado não bate com o esperado (sem MSI no lugar certo)": "The downloaded package doesn't match what was expected (no MSI in the right place)",
+  "o Windows recusou a instalação: normalmente já existe uma versão mais nova, ou faltou permissão de administrador": "Windows refused the install: usually a newer version already exists, or administrator permission was missing",
+  "instalação cancelada": "install cancelled",
+  "outra instalação está em andamento; espere ela terminar": "another install is in progress; wait for it to finish",
+  "pacote de outra arquitetura": "package for another architecture",
+  "faltou permissão de administrador": "administrator permission was missing",
+  "O instalador devolveu código": "The installer returned code",
+  "O Java não foi encontrado. Instale o Java (Adoptium Temurin ou Microsoft OpenJDK) para abrir este launcher.": "Java was not found. Install Java (Adoptium Temurin or Microsoft OpenJDK) to open this launcher.",
+  "O que falta": "What's missing",
+  "Edição desconhecida": "Unknown edition",
+  "O Minecraft Bedrock não está instalado. Instale pela Microsoft Store e volte aqui.": "Minecraft Bedrock is not installed. Install it from the Microsoft Store and come back here.",
+  "O DuckStation precisa da BIOS do console (scph1001.bin, scph5501.bin, scph7001.bin ou outra da sua região).": "DuckStation needs the console BIOS (scph1001.bin, scph5501.bin, scph7001.bin or another from your region).",
+  "Copie a BIOS do seu PlayStation (ou PS2, que também contém a BIOS do PS1 via biosdrain).": "Copy the BIOS from your PlayStation (or PS2, which also contains the PS1 BIOS via biosdrain).",
+  "Clique em Instalar BIOS e escolha o arquivo .bin (ou um .zip com vários).": "Click Install BIOS and choose the .bin file (or a .zip with several).",
+  "Com mais de uma BIOS, o DuckStation escolhe pela região do jogo.": "With more than one BIOS, DuckStation picks by the game's region.",
+  "O RPCS3 precisa do firmware oficial do PS3 (arquivo PS3UPDAT.PUP), distribuído gratuitamente pela Sony.": "RPCS3 needs the official PS3 firmware (PS3UPDAT.PUP file), distributed free by Sony.",
+  "Baixe o arquivo PS3UPDAT.PUP na página de atualização de software do PS3 no site da PlayStation.": "Download the PS3UPDAT.PUP file from the PS3 software update page on the PlayStation site.",
+  "Clique em Instalar firmware e escolha o PS3UPDAT.PUP. O RPCS3 abre, instala e fecha sozinho (leva alguns minutos).": "Click Install firmware and choose PS3UPDAT.PUP. RPCS3 opens, installs and closes by itself (takes a few minutes).",
+  "Jogos ficam em pastas (PS3_GAME/USRDIR/EBOOT.BIN); arquivos .pkg são instalados no próprio RPCS3 em Arquivo › Instalar pacotes.": "Games live in folders (PS3_GAME/USRDIR/EBOOT.BIN); .pkg files are installed inside RPCS3 under File › Install packages.",
+  "O Cemu abre jogos descriptografados (.rpx/.wua) sem nada extra. Para jogos criptografados (pastas com code/content/meta ou .wud/.wux) precisa do arquivo keys.txt com as chaves dos seus títulos.": "Cemu opens decrypted games (.rpx/.wua) with nothing extra. Encrypted games (folders with code/content/meta or .wud/.wux) need the keys.txt file with your titles' keys.",
+  "Com o seu Wii U e o dumpling (ou outro dumper), extraia os jogos; o keys.txt é gerado junto (ou copie as chaves para o keys.txt do Cemu).": "With your Wii U and dumpling (or another dumper), extract the games; keys.txt is generated along (or copy the keys into Cemu's keys.txt).",
+  "Clique em Instalar keys.txt e escolha o arquivo.": "Click Install keys.txt and choose the file.",
+  "Para a loja/online use a conta do próprio Cemu; o Ludrix só abre os jogos.": "For the shop/online use Cemu's own account; Ludrix only opens the games.",
+  "O Azahar abre ROMs descriptografadas (.3ds/.cci decrypted, .cxi) sem nada extra. Para ROMs criptografadas e .cia precisa do aes_keys.txt do seu 3DS.": "Azahar opens decrypted ROMs (.3ds/.cci decrypted, .cxi) with nothing extra. Encrypted ROMs and .cia need the aes_keys.txt from your 3DS.",
+  "No 3DS, com o GodMode9, gere o aes_keys.txt (ou dumpe os jogos já descriptografados, o que dispensa as chaves).": "On the 3DS, with GodMode9, generate aes_keys.txt (or dump the games already decrypted, which needs no keys).",
+  "Clique em Instalar aes_keys.txt e escolha o arquivo.": "Click Install aes_keys.txt and choose the file.",
+  "Jogos .cia são instalados no próprio Azahar: Arquivo › Instalar CIA.": ".cia games are installed inside Azahar: File › Install CIA.",
+  "O xemu precisa de três arquivos: a BIOS (mcpx_1.0.bin e Complex_4627.bin, do seu Xbox) e uma imagem de disco rígido (xbox_hdd.qcow2, distribuída pelo próprio xemu).": "xemu needs three files: the BIOS (mcpx_1.0.bin and Complex_4627.bin, from your Xbox) and a hard disk image (xbox_hdd.qcow2, distributed by xemu itself).",
+  "Abra o xemu pelo botão Abrir. Na primeira vez ele mostra um assistente pedindo cada arquivo.": "Open xemu with the Open button. The first time it shows a wizard asking for each file.",
+  "Em MCPX escolha mcpx_1.0.bin; em Flash escolha Complex_4627.bin; em Hard disk escolha xbox_hdd.qcow2 (baixado na página de releases do xemu, arquivo xbox_hdd.qcow2.zip).": "Under MCPX choose mcpx_1.0.bin; under Flash choose Complex_4627.bin; under Hard disk choose xbox_hdd.qcow2 (downloaded from xemu's releases page, file xbox_hdd.qcow2.zip).",
+  "O EEPROM é criado sozinho. Depois disso, os jogos (.iso no formato xiso) abrem pelo Jogar.": "The EEPROM is created by itself. After that, games (.iso in xiso format) open with Play.",
+  "O Flycast funciona sem BIOS na maioria dos jogos. Para o menu original do console e alguns jogos, coloque dc_boot.bin e dc_flash.bin.": "Flycast works without BIOS for most games. For the console's original menu and some games, add dc_boot.bin and dc_flash.bin.",
+  "Copie dc_boot.bin e dc_flash.bin do seu Dreamcast.": "Copy dc_boot.bin and dc_flash.bin from your Dreamcast.",
+  "Clique em Instalar BIOS e escolha os arquivos (um por vez ou um .zip com os dois).": "Click Install BIOS and choose the files (one at a time or a .zip with both).",
+  "Saturn precisa da BIOS do console (sega_101.bin para o Japão ou mpr-17933.bin para América/Europa).": "Saturn needs the console BIOS (sega_101.bin for Japan or mpr-17933.bin for America/Europe).",
+  "Copie a BIOS do seu Saturn.": "Copy the BIOS from your Saturn.",
+  "Clique em Instalar BIOS e escolha o arquivo .bin.": "Click Install BIOS and choose the .bin file.",
+  "No Kronos, se necessário, aponte a BIOS em Configurações › Geral › BIOS.": "In Kronos, if needed, point to the BIOS under Settings › General › BIOS.",
+  "Arcade — conjuntos de ROM": "Arcade — ROM sets",
+  "Arcade não usa BIOS única: cada jogo é um .zip que precisa bater com a versão do emulador. Alguns jogos dependem de um .zip de BIOS do sistema (neogeo.zip, cps2 e outros).": "Arcade doesn't use a single BIOS: each game is a .zip that must match the emulator version. Some games depend on a system BIOS .zip (neogeo.zip, cps2 and others).",
+  "Use conjuntos de ROM da mesma versão do emulador instalado (MAME ou FBNeo).": "Use ROM sets from the same version as the installed emulator (MAME or FBNeo).",
+  "Deixe os .zip de BIOS (neogeo.zip, pgm.zip, etc.) na mesma pasta dos jogos; eles não aparecem na biblioteca, só servem de apoio.": "Leave the BIOS .zip files (neogeo.zip, pgm.zip, etc.) in the same folder as the games; they don't show in the library, they only support it.",
+  "Não renomeie os arquivos: o emulador identifica o jogo pelo nome do .zip.": "Don't rename the files: the emulator identifies the game by the .zip name.",
+  "Este console não tem guia": "This console has no guide",
+  "Emulador não instalado. Instale ou aponte o executável primeiro.": "Emulator not installed. Install it or point to the executable first.",
+  "Nenhum arquivo .nca encontrado nesse firmware": "No .nca file found in that firmware",
+  "RPCS3 não encontrado": "RPCS3 not found",
+  "O RPCS3 abriu para instalar o firmware. Quando terminar, feche-o e volte aqui.": "RPCS3 opened to install the firmware. When it finishes, close it and come back here.",
+  "Esse item não tem instalação automática; siga os passos do guia.": "That item has no automatic install; follow the guide steps.",
+  "Não consegui copiar:": "Could not copy:",
+  "O emulador precisa das chaves (prod.keys) e do firmware do console. Os dois saem do seu próprio Switch; o Ludrix não fornece nem baixa esses arquivos.": "The emulator needs the keys (prod.keys) and the console firmware. Both come from your own Switch; Ludrix neither provides nor downloads these files.",
+  "No Switch, com o Lockpick_RCM gere o arquivo prod.keys. Com o mesmo Lockpick (opção Dump firmware) ou o TegraExplorer copie o firmware (uma pasta com vários arquivos .nca, normalmente compactada em .zip).": "On the Switch, with Lockpick_RCM generate the prod.keys file. With the same Lockpick (Dump firmware option) or TegraExplorer copy the firmware (a folder with several .nca files, usually zipped).",
+  "Clique em Instalar prod.keys e escolha o arquivo prod.keys (title.keys é opcional e entra pelo mesmo botão).": "Click Install prod.keys and choose the prod.keys file (title.keys is optional and goes in through the same button).",
+  "Clique em Instalar firmware e escolha o .zip do firmware ou a pasta com os arquivos .nca.": "Click Install firmware and choose the firmware .zip or the folder with the .nca files.",
+  "Abra o emulador uma vez pelo botão Abrir para ele reconhecer os arquivos. Depois, os jogos abrem direto pelo Jogar.": "Open the emulator once with the Open button so it recognizes the files. After that, games open straight from Play.",
+  "Jogos em .nsp/.xci entram pela pasta de ROMs do console. Atualizações e DLC (.nsp) são instaladas no próprio emulador: Arquivo › Instalar arquivos no NAND.": ".nsp/.xci games come in through the console's ROM folder. Updates and DLC (.nsp) are installed inside the emulator: File › Install files to NAND.",
+  "O PCSX2 só abre jogos com a BIOS do console. Ela sai do seu próprio PS2.": "PCSX2 only opens games with the console BIOS. It comes from your own PS2.",
+  "No PS2, com FreeMcBoot e o programa biosdrain, copie a BIOS para um pendrive (arquivos .bin, .rom0, .nvm e outros).": "On the PS2, with FreeMcBoot and the biosdrain program, copy the BIOS to a USB stick (.bin, .rom0, .nvm and other files).",
+  "Clique em Instalar BIOS e escolha o arquivo .bin principal (ou o .zip com todos).": "Click Install BIOS and choose the main .bin file (or the .zip with all of them).",
+  "Se o PCSX2 reclamar, abra-o pelo botão Abrir e em Configurações › BIOS escolha a BIOS instalada.": "If PCSX2 complains, open it with the Open button and under Settings › BIOS choose the installed BIOS.",
+  "não está instalado.": "is not installed.",
+  "Este console não precisa de configuração extra": "This console needs no extra setup",
+  "Dê um nome ao emulador": "Give the emulator a name",
+  "Sistema inválido": "Invalid system",
+  "Nenhuma versão publicada encontrada em": "No published version found at",
+  "de Linux ou": "Linux or",
+  "Atualizando arquivos (configurações e saves ficam)...": "Updating files (settings and saves stay)...",
+  "Link do MEGA sem a chave (precisa ser o link completo, com a parte depois do #)": "MEGA link without the key (it must be the full link, with the part after the #)",
+  "MEGA nao liberou o link desse arquivo (cota de transferencia?)": "MEGA did not release that file's link (transfer quota?)",
+  "Link do Google Drive sem id de arquivo (pastas nao sao suportadas)": "Google Drive link without a file id (folders are not supported)",
+  "O Google Drive nao liberou o arquivo (cota excedida ou pede login)": "Google Drive did not release the file (quota exceeded or asks for login)",
+  "Google Drive: cota de download excedida — tente mais tarde": "Google Drive: download quota exceeded — try again later",
+  "Google Drive: o arquivo nao e publico (pede login)": "Google Drive: the file is not public (asks for login)",
+  "Google Drive: nao achei o link de download nessa pagina": "Google Drive: couldn't find the download link on that page",
+  "Gofile nao deu um token de convidado — tente de novo em 1 minuto": "Gofile did not give a guest token — try again in 1 minute",
+  "Essa pasta do Gofile pede senha — adicione ?password=SENHA ao final do link": "That Gofile folder asks for a password — add ?password=PASSWORD to the end of the link",
+  "1fichier: arquivo nao existe mais": "1fichier: file no longer exists",
+  "1fichier: pagina sem o formulario de download (pede espera/premium)": "1fichier: page without the download form (asks for waiting/premium)",
+  "itch.io: link precisa ser a pagina do jogo (usuario.itch.io/jogo)": "itch.io: the link must be the game page (user.itch.io/game)",
+  "itch.io: o site nao devolveu o token da pagina": "itch.io: the site did not return the page token",
+  "itch.io: esse jogo nao libera download gratuito": "itch.io: that game doesn't offer a free download",
+  "Esse link abre uma pagina, nao um arquivo — o Ludrix nao conhece esse site": "That link opens a page, not a file — Ludrix doesn't know that site",
+  "Isso nao e um link http(s)": "That is not an http(s) link",
+  "Host bloqueado por segurança:": "Host blocked for security:",
+  ": o site mudou e nao consegui achar o arquivo": ": the site changed and the file couldn't be found",
+  "Essa ferramenta é só link — abra a página e baixe manualmente.": "That tool is link only — open the page and download manually.",
+  "Nenhum release encontrado no GitHub": "No release found on GitHub",
+  "Nenhum arquivo Windows encontrado no release": "No Windows file found in the release",
+  "Ferramenta não instalada": "Tool not installed",
+  "dxgi/d3d (ReShade ou wrapper)": "dxgi/d3d (ReShade or wrapper)",
+  "(será criada)": "(will be created)",
+  "Esse jogo não tem pasta instalada": "That game has no installed folder",
+  "Instalação automática só para BepInEx 5 (jogos Unity Mono)": "Automatic install only for BepInEx 5 (Unity Mono games)",
+  "BepInEx já está nesse jogo": "BepInEx is already in that game",
+  "Nenhuma versão 5.x do BepInEx encontrada no GitHub": "No BepInEx 5.x version found on GitHub",
+  "BepInEx instalado. Abra o jogo uma vez para ele criar as pastas de configuração.": "BepInEx installed. Open the game once so it creates the config folders.",
+  "A ROM desse jogo não foi encontrada": "That game's ROM was not found",
+  "Arquivo do patch não encontrado": "Patch file not found",
+  "Formato de patch não reconhecido (aceita .ips, .ups e .bps)": "Patch format not recognized (accepts .ips, .ups and .bps)",
+  "Arquivo do mod não encontrado": "Mod file not found",
+  "Pasta de destino inválida": "Invalid destination folder",
+  "O mod não tinha arquivos pra copiar": "The mod had no files to copy",
+  "Mod não encontrado": "Mod not found",
+  "Jogo, ação ou ajuste…  (> só ações)": "Game, action or setting…  (> actions only)",
+  "Fora da janela os downloads ficam esperando na Fila e continuam sozinhos quando ela abre. Útil para baixar de madrugada": "Outside the window downloads wait in the Queue and continue by themselves when it opens. Useful for downloading overnight",
+  "Pastas de outros discos ou de outros launchers. O Ludrix procura jogos novos nelas (e na pasta de instalados) ao abrir e no botão abaixo. Nenhuma adicionada.": "Folders on other disks or from other launchers. Ludrix looks for new games in them (and in the installed folder) on open and with the button below. None added.",
+  "PlayStation 3 (pastas com PS3_GAME/USRDIR/EBOOT.BIN)": "PlayStation 3 (folders with PS3_GAME/USRDIR/EBOOT.BIN)",
+  "Switch — código aberto (fork do Yuzu), releases oficiais em git.eden-emu.dev. Precisa de prod.keys e firmware (botão guia do console).": "Switch — open source (Yuzu fork), official releases at git.eden-emu.dev. Needs prod.keys and firmware (console guide button).",
+  "Multi-sistema focado em precisão": "Multi-system focused on accuracy",
+  "MS-DOS (um dosbox.conf ou .bat por jogo)": "MS-DOS (one dosbox.conf or .bat per game)",
+  "Dreamcast (leve, fácil)": "Dreamcast (light, easy)",
+  "Nintendo DS — alternativa clássica ao melonDS": "Nintendo DS — classic alternative to melonDS",
+  "SNES — precisão máxima": "SNES — maximum accuracy",
+  "Nintendo 64 — alternativa ao RMG": "Nintendo 64 — alternative to RMG",
+  "NES — leve e com ferramentas de TAS": "NES — light, with TAS tools",
+  "Mega Drive / Master System — o mais preciso": "Mega Drive / Master System — the most accurate",
+  "GBA / GBC — alternativa ao mGBA": "GBA / GBC — alternative to mGBA",
+  "PSP — aponte outra instalação do PPSSPP": "PSP — point to another PPSSPP install",
+  "PS2 — aponte um nightly ou fork do PCSX2": "PS2 — point to a PCSX2 nightly or fork",
+  "PS2 — precisa da BIOS do console (botão guia do console)": "PS2 — needs the console BIOS (console guide button)",
+  "PS1 — clássico; aponte o .exe": "PS1 — classic; point to the .exe",
+  "Xbox original — alternativa ao xemu (roda .xbe extraídos)": "Original Xbox — alternative to xemu (runs extracted .xbe)",
+  "Xbox 360 — build oficial (mais estável, menos jogos que a Canary)": "Xbox 360 — official build (more stable, fewer games than Canary)",
+  "3DS — aponte outra build (Lime3DS, PabloMK7)": "3DS — point to another build (Lime3DS, PabloMK7)",
+  "Sega Saturn — alternativa ao Mednafen (usa OpenGL)": "Sega Saturn — alternative to Mednafen (uses OpenGL)",
+  "MS-DOS / Win 3.x / Win9x — mais completo que o Staging": "MS-DOS / Win 3.x / Win9x — more complete than Staging",
+  "Aventuras point-and-click (LucasArts, Sierra…) — aponte a pasta do jogo": "Point-and-click adventures (LucasArts, Sierra…) — point to the game folder",
+  "Arcade (CPS1/2/3, Neo Geo…) — mais leve que o MAME": "Arcade (CPS1/2/3, Neo Geo…) — lighter than MAME",
+  "Multi-sistema com foco em precisão e TAS": "Multi-system focused on accuracy and TAS",
+  "Switch — outro fork aberto do Yuzu; alternativa ao Eden. Baixe e aponte o .exe": "Switch — another open Yuzu fork; alternative to Eden. Download and point to the .exe",
+  "Mods de jogos Unity (BepInEx), Lethal Company, Valheim, R.E.P.O.": "Mods for Unity games (BepInEx), Lethal Company, Valheim, R.E.P.O.",
+  "Patches e option files de PES": "PES patches and option files",
+  "Patches, kits e faces de FIFA": "FIFA patches, kits and faces",
+  "Mods de Need for Speed": "Need for Speed mods",
+  "Mods de GTA": "GTA mods",
+  "Mods de corrida/simuladores": "Racing/sim mods",
+  "Hacks e traduções de ROMs": "ROM hacks and translations",
+  "Traduções PT-BR (Romhacking.net.br)": "PT-BR translations (Romhacking.net.br)",
+  "Traduções brasileiras": "Brazilian translations",
+  "O gerenciador de mods padrão pra qualquer jogo Frostbite. O Editor (mesmo pacote) cria mods.": "The standard mod manager for any Frostbite game. The Editor (same package) creates mods.",
+  "Jogos EA/Origin com Frosty": "EA/Origin games with Frosty",
+  "Corrige o EA App/Origin ignorando os mods do Frosty.": "Fixes the EA App/Origin ignoring Frosty mods.",
+  "Editor de banco de dados e mods de FIFA/FC (antigo FIFA Editor Tool).": "Database and mod editor for FIFA/FC (formerly FIFA Editor Tool).",
+  "Edição em tempo real de elenco, dinheiro do modo carreira, etc.": "Live editing of squads, career mode money, etc.",
+  "Ferramentas de edição dos FIFAs antigos: faces, kits, estádios e banco de dados.": "Editing tools for the old FIFAs: faces, kits, stadiums and database.",
+  "Loader de mods do PES: kits, escudos, bolas e módulos Lua sem tocar nos arquivos originais.": "PES mod loader: kits, badges, balls and Lua modules without touching the original files.",
+  "O clássico: kits, faces, bolas e aumento de resolução dos PES antigos.": "The classic: kits, faces, balls and higher resolution for the old PES.",
+  "PES até 2013": "PES up to 2013",
+  "Abre .afs/.img/.bin dos PES antigos pra trocar texturas e faces.": "Opens .afs/.img/.bin of the old PES to swap textures and faces.",
+  "Qualquer jogo": "Any game",
+  "Scanner de memória — trainers, tabelas .CT, velocidade do jogo. Cuidado com o instalador (desmarque ofertas).": "Memory scanner — trainers, .CT tables, game speed. Mind the installer (untick the offers).",
+  "Jogos DX9/11/12": "DX9/11/12 games",
+  "Injeta HDR, frame limiter, correção de janela sem borda e texturas em jogos antigos.": "Injects HDR, frame limiter, borderless window fix and textures into old games.",
+  "Jogos DX1–9 / Glide": "DX1–9 / Glide games",
+  "Faz jogos antigos rodarem no Windows moderno (wrapper DirectX/Glide → DX11/12).": "Makes old games run on modern Windows (DirectX/Glide → DX11/12 wrapper).",
+  "Jogos antigos": "Old games",
+  "Roda jogos em janela e corrige resolução/velocidade/cores de jogos de 1998–2008.": "Runs games in a window and fixes resolution/speed/colors of 1998–2008 games.",
+  "Correções de tela larga, FOV e HUD pra dezenas de clássicos.": "Widescreen, FOV and HUD fixes for dozens of classics.",
+  "Gerenciador com pastas virtuais — não suja a pasta do jogo.": "Manager with virtual folders — doesn't clutter the game folder.",
+  "Centenas de jogos": "Hundreds of games",
+  "Aplica patches .ips/.bps de hacks e traduções em ROMs.": "Applies .ips/.bps patches of hacks and translations to ROMs.",
+  "ISOs de PS1/PS2/PSP": "PS1/PS2/PSP ISOs",
+  "Aplica patches .xdelta (traduções de ISO).": "Applies .xdelta patches (ISO translations).",
+  "Pós-processamento (sharpen, cores, SSAO) injetado em qualquer jogo.": "Post-processing (sharpen, colors, SSAO) injected into any game.",
+  "Jogos DX9": "DX9 games",
+  "Troca texturas em tempo real (base de muitos mods de PES/FIFA/NFS antigos).": "Swaps textures in real time (the base of many old PES/FIFA/NFS mods).",
+  "Abre e edita o data.win de jogos feitos no GameMaker (Undertale, Deltarune, Pizza Tower, Hotline Miami).": "Opens and edits the data.win of GameMaker games (Undertale, Deltarune, Pizza Tower, Hotline Miami).",
+  "Jogos GameMaker": "GameMaker games",
+  "Carregador de mods para jogos Unity, inclusive IL2CPP. Alternativa ao BepInEx quando o mod pede.": "Mod loader for Unity games, IL2CPP included. Alternative to BepInEx when the mod asks for it.",
+  "Jogos Unity": "Unity games",
+  "Jogos Unity não têm sistema de mods próprio. O BepInEx é um carregador: ele entra na pasta do jogo e lê os mods (.dll) de BepInEx/plugins quando o jogo abre.": "Unity games have no mod system of their own. BepInEx is a loader: it goes into the game folder and reads the mods (.dll) from BepInEx/plugins when the game opens.",
+  "Este jogo Unity foi compilado em IL2CPP: o BepInEx 5 comum não serve, precisa da versão 6 (ou MelonLoader). A página do mod diz qual dos dois ele usa.": "This Unity game was compiled with IL2CPP: regular BepInEx 5 won't do, it needs version 6 (or MelonLoader). The mod page says which of the two it uses.",
+  "Mods de Unreal vêm como arquivos .pak (às vezes com .ucas e .utoc do mesmo nome). Eles vão numa pasta ~mods dentro de Content/Paks; o jogo carrega sozinho ao abrir.": "Unreal mods come as .pak files (sometimes with .ucas and .utoc of the same name). They go in a ~mods folder inside Content/Paks; the game loads them by itself on open.",
+  "Alguns jogos checam a assinatura dos .pak e precisam de um 'sig bypass' (geralmente um arquivo .sig copiado junto); a página do mod avisa.": "Some games check the .pak signature and need a 'sig bypass' (usually a .sig file copied along); the mod page says so.",
+  "Mods que trocam a mesma coisa brigam entre si — o último em ordem alfabética vence.": "Mods that swap the same thing fight each other — the last one in alphabetical order wins.",
+  "Jogos da Bethesda leem plugins (.esp/.esm/.esl) e arquivos da pasta Data. Com poucos mods dá para copiar direto; com muitos, um gerenciador (Mod Organizer 2 ou Vortex) evita bagunça e cuida da ordem de carga.": "Bethesda games read plugins (.esp/.esm/.esl) and files from the Data folder. With few mods you can copy them straight in; with many, a manager (Mod Organizer 2 or Vortex) avoids a mess and handles the load order.",
+  "Mods com scripts pedem o Script Extender do jogo (SKSE, F4SE, OBSE); nesse caso o jogo passa a ser aberto pelo .exe do extender.": "Script mods ask for the game's Script Extender (SKSE, F4SE, OBSE); in that case the game is opened through the extender's .exe.",
+  "Ative o plugin na tela de mods do próprio jogo ou no gerenciador, senão ele fica na pasta sem fazer nada.": "Enable the plugin in the game's own mods screen or in the manager, otherwise it sits in the folder doing nothing.",
+  "Jogos Source aceitam pastas ou .vpk dentro de custom/ (skins, sons, mapas). Cada mod fica numa pasta própria, fácil de tirar depois.": "Source games accept folders or .vpk inside custom/ (skins, sounds, maps). Each mod sits in its own folder, easy to remove later.",
+  "Jogos GameMaker guardam tudo num data.win. Mods costumam vir como data.win pronto (substitui o original) ou como script para o UndertaleModTool aplicar.": "GameMaker games keep everything in a data.win. Mods usually come as a ready data.win (replaces the original) or as a script for UndertaleModTool to apply.",
+  "Guarde uma cópia do data.win original; o Ludrix faz isso automaticamente quando o mod substitui o arquivo.": "Keep a copy of the original data.win; Ludrix does that automatically when the mod replaces the file.",
+  "Plugins .js vão em www/js/plugins e precisam ser ligados no arquivo plugins.js; a maioria dos mods de tradução troca os arquivos de www/data.": ".js plugins go in www/js/plugins and must be enabled in the plugins.js file; most translation mods swap the files in www/data.",
+  "Mods e traduções Ren'Py são arquivos .rpy/.rpyc colocados dentro da pasta game/ (ou game/tl/ para idiomas).": "Ren'Py mods and translations are .rpy/.rpyc files placed inside the game/ folder (or game/tl/ for languages).",
+  "Engines como Psych Engine leem mods soltos da pasta mods/, cada um na própria subpasta. Baixe no GameBanana e aponte o .zip.": "Engines like Psych Engine read loose mods from the mods/ folder, each in its own subfolder. Download from GameBanana and point to the .zip.",
+  "Jogos Frostbite não aceitam arquivos soltos: os mods (.fbmod) são aplicados pelo Frosty Mod Manager, que gera uma cópia modificada e abre o jogo por ele.": "Frostbite games don't accept loose files: mods (.fbmod) are applied by Frosty Mod Manager, which produces a modified copy and opens the game through it.",
+  "Este jogo usa mods .asi carregados por um ASI Loader (dinput8.dll ou similar) e scripts via Script Hook. Arquivos vão na raiz do jogo ou em scripts/.": "This game uses .asi mods loaded by an ASI Loader (dinput8.dll or similar) and scripts via Script Hook. Files go in the game root or in scripts/.",
+  "Mods de console são patches (.ips, .bps, .ups) feitos sobre a ROM original. O Ludrix aplica o patch numa cópia e deixa a ROM original intacta; a versão modificada entra na biblioteca como outro jogo.": "Console mods are patches (.ips, .bps, .ups) made over the original ROM. Ludrix applies the patch to a copy and leaves the original ROM intact; the modified version enters the library as another game.",
+  "O patch é feito para uma versão exata da ROM (região e revisão). Se o CRC não bater, pode travar ou nem abrir.": "The patch is made for an exact ROM version (region and revision). If the CRC doesn't match, it may freeze or not even open.",
+  "Sem motor conhecido": "No known engine",
+  "Não foi possível identificar o motor deste jogo. A página do mod sempre diz onde os arquivos vão; na dúvida, a pasta do jogo (raiz) com a mesma estrutura do zip costuma ser o caminho.": "Could not identify this game's engine. The mod page always says where the files go; when in doubt, the game folder (root) with the same structure as the zip is usually the way.",
+  "Mural": "Wall",
+  "Grade": "Grid",
+  "Plataformas": "Platforms",
+  "+ Adicionar": "+ Add"
  },
  "patterns": [
   [
-   "^(\\d+) jogos?$",
-   "$1 games"
+   "^Aviso do (.*?) quando um download termina, um jogo é atualizado ou fecha sozinho — com botão Jogar, mesmo com o Ludrix recolhido na bandeja\\. Nada aparece enquanto a janela está em uso\\.$",
+   "$1 notice when a download finishes, a game is updated or closes by itself — with a Play button, even with Ludrix tucked in the tray. Nothing shows while the window is in use."
+  ],
+  [
+   "^Depois de cada sessão, copia a pasta de saves do jogo para (.+) \\(até 5 cópias por jogo, só quando algo mudou; pastas acima de 512 MB são puladas\\)\\. Restaure em Saves, no menu do jogo$",
+   "After each session, copies the game's save folder to $1 (up to 5 copies per game, only when something changed; folders over 512 MB are skipped). Restore from Saves in the game menu"
+  ],
+  [
+   "^Feito em (.*?) com a versão (.*?)\\. Contém: (.*?)\\. O que existe hoje será substituído \\(uma cópia do estado atual fica em data(.*?)updates\\) e o Ludrix reabre em seguida\\.$",
+   "Made on $1 with version $2. Contains: $3. What exists today will be replaced (a copy of the current state stays in data$4updates) and Ludrix reopens afterwards."
+  ],
+  [
+   "^A atualização (.*) não conseguiu abrir duas vezes seguidas, então a versão anterior foi restaurada sozinha\\. Você pode tentar atualizar de novo em Ajustes › Atualizações\\.$",
+   "Update $1 failed to open twice in a row, so the previous version was restored automatically. You can try updating again in Settings › Updates."
+  ],
+  [
+   "^Para restaurar, use o pacote da mesma versão \\(Ludrix-(.*)-src\\.zip ou ludrix-(.*)-patch\\.lxup\\)\\. Um pacote de outra versão troca o launcher inteiro por aquela versão\\.$",
+   "To restore, use the package of the same version (Ludrix-$1-src.zip or ludrix-$2-patch.lxup). A package of another version replaces the whole launcher with that version."
+  ],
+  [
+   "^Uma vez por semana, ao abrir, gera o Ludrix-dados-<data>\\.zip sozinho \\(biblioteca, ajustes, fontes, capas, temas\\)\\. Guarda os 4 últimos\\. Último: há (.*)$",
+   "Once a week, on open, generates Ludrix-dados-<date>.zip by itself (library, settings, sources, covers, themes). Keeps the last 4. Last: $1 ago"
+  ],
+  [
+   "^Uma vez por semana, ao abrir, gera o Ludrix-dados-<data>\\.zip sozinho \\(biblioteca, ajustes, fontes, capas, temas\\)\\. Guarda os 4 últimos\\. Último: (.*)$",
+   "Once a week, on open, generates Ludrix-dados-<date>.zip by itself (library, settings, sources, covers, themes). Keeps the last 4. Last: $1"
+  ],
+  [
+   "^Imagens suas ficam na pasta data(.*?)covers do Ludrix e nunca são trocadas pela busca automática\\. Se colar um link, ele é baixado uma vez e guardado\\.$",
+   "Your own images stay in Ludrix's data$1covers folder and are never replaced by the automatic lookup. If you paste a link, it is downloaded once and kept."
+  ],
+  [
+   "^Pastas de outros discos ou de outros launchers\\. O Ludrix procura jogos novos nelas \\(e na pasta de instalados\\) ao abrir e no botão abaixo\\. (.*)$",
+   "Folders on other disks or from other launchers. Ludrix looks for new games in them (and in the installed folder) on open and with the button below. $1"
+  ],
+  [
+   "^Falta: (.*)\\. O botão Preparar resolve tudo de uma vez; se preferir, isso também é feito na primeira vez que você clicar em Jogar num \\.exe\\.$",
+   "Missing: $1. The Set up button handles everything at once; if you prefer, it also happens the first time you click Play on an .exe."
+  ],
+  [
+   "^O padrão do console \\((.*?)\\) não está instalado nem apontado — em Emuladores, use Instalar ou Apontar executável\\. Enquanto isso:$",
+   "The console default ($1) is neither installed nor set — in Emulators, use Install or Point to executable. Meanwhile:"
+  ],
+  [
+   "^Veio como imagem de disco \\((.*?)\\)\\. O disco é montado, o instalador abre e, quando ele terminar, o jogo fica pronto para jogar\\.$",
+   "It came as a disc image ($1). The disc is mounted, the installer opens and, when it finishes, the game is ready to play."
+  ],
+  [
+   "^Não achei subpastas com ROMs em (.*?)\\. Dica: uma pasta por console \\(snes, ps1, gba…\\) ou arquivos com as extensões do console\\.$",
+   "No subfolders with ROMs found in $1. Tip: one folder per console (snes, ps1, gba…) or files with the console's extensions."
+  ],
+  [
+   "^Ex\\.: (.*?) — cada subpasta vira um jogo\\. Separo o \\.exe do jogo de instaladores, redists e ferramentas e dou nome pela pasta\\.$",
+   "E.g. $1 — each subfolder becomes a game. The game's .exe is told apart from installers, redists and tools, and the name comes from the folder."
+  ],
+  [
+   "^Seguir o (Windows|macOS|Linux) troca junto com o modo claro/escuro dele; por horário, você define quando o claro entra e sai$",
+   "Follow $1 switches along with its light/dark mode; by schedule, you set when light starts and ends"
+  ],
+  [
+   "^· (.*?)\\. Os ignorados abaixo não entraram na biblioteca; corrija o caminho no Playnite ou adicione pelo botão \\+ depois\\.$",
+   "· $1. The skipped ones below didn't enter the library; fix the path in Playnite or add them with the + button later."
+  ],
+  [
+   "^Procuro por \"(.*?)\" na fonte escolhida e mostro a lista do que achei\\. Você escolhe o item certo antes de aplicar\\.$",
+   "Searches for \"$1\" in the chosen source and shows the list of matches. You pick the right item before applying."
+  ],
+  [
+   "^(\\d+) arquivo\\(s\\) voltaram a ser os da versão (.*)\\. Os arquivos novos valem depois de reabrir o launcher\\.$",
+   "$1 file(s) are back to version $2. The new files take effect after reopening the launcher."
+  ],
+  [
+   "^arquivo\\(s\\) voltaram a ser os da versão (.*?)\\. Os arquivos novos valem depois de reabrir o launcher\\.$",
+   "file(s) are back to those of version $1. The new files take effect after reopening the launcher."
+  ],
+  [
+   "^Há um pacote da versão (.*?) guardado: os arquivos podem ser restaurados agora, sem trocar de versão\\.$",
+   "A package of version $1 is stored: the files can be restored now, without changing version."
+  ],
+  [
+   "^Nenhuma fonte achou: (.*?)(.*?)\\. Dá para corrigir o nome, escolher onde procurar ou preencher à mão\\.$",
+   "No source found: $1$2. You can correct the name, choose where to search or fill it in by hand."
+  ],
+  [
+   "^Há um pacote da versão (.*) guardado: os arquivos podem ser restaurados agora, sem trocar de versão\\.$",
+   "A package of version $1 is stored: the files can be restored now without changing version."
+  ],
+  [
+   "^Fora do horário de download \\((.*?)–(.*?)\\): fica esperando na Fila\\. Ajustes › Store e downloads\\.$",
+   "Outside the download window ($1–$2): it waits in the Queue. Settings › Store and downloads."
+  ],
+  [
+   "^Primeira abertura: o Proton prepara o prefixo antes do jogo aparecer \\(pode levar um minuto\\)\\.$",
+   "First launch: Proton prepares the prefix before the game shows up (it can take a minute)."
+  ],
+  [
+   "^(\\d+) jogos? · (\\d+) links diretos · (\\d+) torrents · (\\d+) ignorados \\(acesso difícil\\)$",
+   "$1 games · $2 direct links · $3 torrents · $4 skipped (hard access)"
+  ],
+  [
+   "^Seguir o (.*?) troca junto com o modo claro/escuro dele; por horário usa as horas abaixo$",
+   "Follow the $1 switches along with its light/dark mode; by schedule uses the hours below"
+  ],
+  [
+   "^Feito em (.+) com a versão (.+)\\. Contém: (.*)\\. O que existe hoje será substituído(.*)$",
+   "Made on $1 with version $2. Contains: $3. What you have today will be replaced$4"
+  ],
+  [
+   "^Conferi (.*?) (.*?): pastas, executáveis, ROMs e emuladores estão onde deveriam\\.$",
+   "Checked $1 $2: folders, executables, ROMs and emulators are where they should be."
+  ],
+  [
+   "^Sites confiáveis para (.*?)\\. Guarde o \\.zip em Downloads — não precisa extrair\\.$",
+   "Trusted sites for $1. Keep the .zip in Downloads — no need to extract."
+  ],
+  [
+   "^(\\d+) fontes configuradas \\((\\d+) ativas\\)\\. Adicionar, ativar e remover fica na$",
+   "$1 sources configured ($2 active). Adding, enabling and removing lives in"
+  ],
+  [
+   "^Esse arquivo pode ser uma ROM de (.*) ou um jogo de PC compactado\\. O que é\\?$",
+   "This file may be a $1 ROM or a packed PC game. Which is it?"
+  ],
+  [
+   "^Os (.*?) jogos estão onde deveriam, mas há consoles sem emulador instalado\\.$",
+   "The $1 games are where they should be, but there are consoles without an installed emulator."
+  ],
+  [
+   "^fontes configuradas \\((.*?) ativas\\)\\. Adicionar, ativar e remover fica na$",
+   "sources configured ($1 active). Adding, enabling and removing happens in the"
+  ],
+  [
+   "^Toque numa imagem para ampliar\\. Imagens leves, guardadas em cache(.*?)\\.$",
+   "Tap an image to enlarge. Light images, kept in cache$1."
+  ],
+  [
+   "^(.*) não tem download automático\\. Baixe em (.*) e use 'Apontar \\.exe'\\.$",
+   "$1 has no automatic download. Get it at $2 and use 'Point to .exe'."
+  ],
+  [
+   "^Conferi (\\d+) jogos?: pastas, executáveis e ROMs estão onde deveriam\\.$",
+   "Checked $1 game(s): folders, executables and ROMs are where they should be."
+  ],
+  [
+   "^Baixa a versão (.*?) por cima; configurações e saves do emulador ficam$",
+   "Downloads version $1 over it; emulator settings and saves stay"
+  ],
+  [
+   "^· (.*?)\\. Se um jogo voltar a aparecer, a imagem é baixada de novo\\.$",
+   "· $1. If a game shows up again, its image is downloaded again."
+  ],
+  [
+   "^não tem download automático\\. Baixe em (.*?) e use 'Apontar \\.exe'\\.$",
+   "has no automatic download. Download it at $1 and use 'Point to .exe'."
+  ],
+  [
+   "^(\\d+) campo\\(s\\) com valor inválido foram corrigidos ao abrir: (.*)$",
+   "$1 field(s) with invalid values were repaired on startup: $2"
+  ],
+  [
+   "^(\\d+) arquivos conferidos ao abrir, todos iguais à versão instalada$",
+   "$1 files checked at startup, all matching the installed version"
+  ],
+  [
+   "^Extraindo \\(py7zr, modo lento\\)\\.\\.\\. instale o 7-Zip pra acelerar$",
+   "Extracting (py7zr, slow mode)... install 7-Zip to speed up"
+  ],
+  [
+   "^A Store mostra o que as suas fontes de jogos de PC oferecem(.*?)\\.$",
+   "The Store shows what your PC game sources offer$1."
+  ],
+  [
+   "^(\\d+) prontos? · Flash, HTML5 e jogos de site, dentro do launcher$",
+   "$1 ready · Flash, HTML5 and website games, inside the launcher"
+  ],
+  [
+   "^, (.*?) atualizados(.*?) na conta (.*?)\\. Abra a Steam para ver\\.$",
+   ", $1 updated$2 in account $3. Open Steam to see them."
+  ],
+  [
+   "^Arquivo não encontrado: (.*)\\. O arquivo foi movido ou apagado\\.$",
+   "File not found: $1. The file was moved or deleted."
+  ],
+  [
+   "^Destino definitivo dos jogos baixados e extraídos\\. Atual: (.*)$",
+   "Final destination of downloaded and extracted games. Current: $1"
+  ],
+  [
+   "^Backups automáticos \\((.*?)\\) — feitos antes de cada importação$",
+   "Automatic backups ($1) — made before each import"
+  ],
+  [
+   "^Pode faltar espaço\\. Libere (.*?) ou escolha outra pasta\\.$",
+   "Space may run out. Free $1 or choose another folder."
+  ],
+  [
+   "^(\\d+) arquivo\\(s\\) faltando ou diferente\\(s\\) do esperado$",
+   "$1 file(s) missing or different from expected"
+  ],
+  [
+   "^Nada com \"(.*?)\"\\. Dica: comece com   para ver só ações\\.$",
+   "Nothing for \"$1\". Tip: start with   to see actions only."
+  ],
+  [
+   "^Nada com \"(.*?)\"\\. Dica: comece com > para ver só ações\\.$",
+   "Nothing for \"$1\". Tip: start with > to see actions only."
+  ],
+  [
+   "^Links diretos testados (.*?): (.*?) de (.*?) responderam$",
+   "Direct links tested $1: $2 of $3 responded"
+  ],
+  [
+   "^1fichier pede espera de (.*?) min entre downloads gratis$",
+   "1fichier asks for a $1 min wait between free downloads"
+  ],
+  [
+   "^Conexão caiu \\((.*)\\), tentando de novo em (\\d+)s\\.\\.\\.$",
+   "Connection dropped ($1), retrying in $2s..."
+  ],
+  [
+   "^(\\d+) arquivos conferidos: todos iguais à versão (.*)\\.$",
+   "$1 files checked: all matching version $2."
+  ],
+  [
+   "^(\\d+) de (\\d+) jogos? ok · (\\d+) erros? · (\\d+) avisos?$",
+   "$1 of $2 games ok · $3 errors · $4 warnings"
+  ],
+  [
+   "^Fora do horário de download \\((.+)\\) — continua às (.+)$",
+   "Outside the download window ($1) — resumes at $2"
+  ],
+  [
+   "^não será sugerido de novo\\. A linha passou para (.*?)\\.$",
+   "won't be suggested again. The row moved to $1."
   ],
   [
    "^(\\d+) jogos · (\\d+) PC · (\\d+) emulados · (.*) jogados$",
    "$1 games · $2 PC · $3 emulated · $4 played"
   ],
   [
-   "^Buscar \\\"(.*)\\\" nos sites ligados$",
-   "Search \"$1\" on enabled sites"
+   "^(\\d+) jogos revisados \\(capas, nomes e informações\\)\\.$",
+   "$1 games reviewed (covers, names and info)."
   ],
   [
-   "^Página (\\d+) de (\\d+)$",
-   "Page $1 of $2"
-  ],
-  [
-   "^Remover \\\"(.*)\\\"\\?$",
-   "Remove \"$1\"?"
-  ],
-  [
-   "^Apagar \\\"(.*)\\\"\\?$",
-   "Delete \"$1\"?"
-  ],
-  [
-   "^Reconheci como (.*)$",
-   "Recognized as $1"
-  ],
-  [
-   "^Jogado por (.*)$",
-   "Played for $1"
-  ],
-  [
-   "^Último: (.*)$",
-   "Last: $1"
-  ],
-  [
-   "^há (\\d+) (min|h|dias?|semanas?|meses?)$",
-   "$1 $2 ago"
-  ],
-  [
-   "^(\\d+) jogos revisados",
-   "$1 games reviewed"
-  ],
-  [
-   "^Página de origem",
-   "Source page"
-  ],
-  [
-   "^(\\d+) outro\\(s\\) \\.exe$",
-   "$1 other .exe(s)"
-  ],
-  [
-   "^Ordenar por \\((\\d+)\\)$",
-   "Sort by ($1)"
-  ],
-  [
-   "^Filtros \\((\\d+)\\)$",
-   "Filters ($1)"
-  ],
-  [
-   "^(\\d+) selecionados?$",
-   "$1 selected"
-  ],
-  [
-   "^(\\d+) pendentes?$",
-   "$1 pending"
-  ],
-  [
-   "^(\\d+) encontrados?$",
-   "$1 found"
-  ],
-  [
-   "^(\\d+) novos?$",
-   "$1 new"
-  ],
-  [
-   "^(\\d+) fontes?$",
-   "$1 sources"
-  ],
-  [
-   "^(\\d+) temas?$",
-   "$1 themes"
-  ],
-  [
-   "^Emulador: (.*)$",
-   "Emulator: $1"
-  ],
-  [
-   "^Pasta de ROMs — (.*)$",
-   "ROM folder — $1"
-  ],
-  [
-   "^Buscando informações de (\\d+) jogos?…$",
-   "Fetching info for $1 games…"
-  ],
-  [
-   "^Repositório (.*)$",
-   "Repository $1"
-  ],
-  [
-   "^(\\d+) jogos? em \\\"(.*)\\\"$",
-   "$1 games in \"$2\""
-  ],
-  [
-   "^Baixando (.*)$",
-   "Downloading $1"
-  ],
-  [
-   "^Extraindo (.*)$",
-   "Extracting $1"
-  ],
-  [
-   "\\bdias\\b",
-   "days"
-  ],
-  [
-   "\\bhoje\\b",
-   "today"
-  ],
-  [
-   "\\bontem\\b",
-   "yesterday"
-  ],
-  [
-   "\\bagora\\b",
-   "now"
-  ],
-  [
-   "\\bnunca\\b",
-   "never"
-  ],
-  [
-   "^mostrando (\\d+) de (\\d+)$",
-   "showing $1 of $2"
-  ],
-  [
-   "^Buscar \\\"(.*)\\\" direto nos sites ligados$",
-   "Search \"$1\" directly on enabled sites"
-  ],
-  [
-   "^Meus estilos · (\\d+)$",
-   "My styles · $1"
-  ],
-  [
-   "^Voltar \"(.+)\" ao original\\?$",
-   "Restore \"$1\" to original?"
-  ],
-  [
-   "^Apagar o estilo \"(.+)\"\\?$",
-   "Delete style \"$1\"?"
-  ],
-  [
-   "^Atualizando metadados \\((\\d+)/(\\d+)\\)…$",
-   "Updating metadata ($1/$2)…"
-  ],
-  [
-   "^Baixando capas e informações \\((\\d+)/(\\d+)\\)…$",
-   "Fetching covers and info ($1/$2)…"
-  ],
-  [
-   "^Buscando capas e informações \\((\\d+) restantes\\)…$",
-   "Fetching covers and info ($1 left)…"
-  ],
-  [
-   "^Carregando catálogo (\\d+)/(\\d+): (.*)$",
-   "Loading catalog $1/$2: $3"
+   "^Versão (.*?) disponível na fonte \\(instalada: (.*?)\\)$",
+   "Version $1 available at the source (installed: $2)"
   ],
   [
    "^Pré-carregando miniaturas da Store \\((\\d+)/(\\d+)\\)…$",
    "Preloading Store thumbnails ($1/$2)…"
   ],
   [
-   "^Instalando (.*) \\(setup aberto\\)…$",
-   "Installing $1 (setup open)…"
+   "^Apagar “(.*?)”\\? Os jogos continuam na biblioteca\\.$",
+   "Delete “$1”? The games stay in the library."
   ],
   [
-   "^(\\d+) jogos? no catálogo$",
-   "$1 games in catalog"
+   "^O instalador devolveu código (.*?) dentro do Proton$",
+   "The installer returned code $1 inside Proton"
   ],
   [
-   "^(\\d+) na fila$",
-   "$1 queued"
+   "^Imagens para \"(.+)\" no Bing, DuckDuckGo e Yandex\\.$",
+   "Images for \"$1\" on Bing, DuckDuckGo and Yandex."
   ],
   [
-   "^(\\d+) jogos? rodando$",
-   "$1 running"
+   "^Buscar capa e informações de novo usando \"(.*?)\"\\?$",
+   "Look up cover and info again using \"$1\"?"
   ],
   [
-   "^(\\d+) de (\\d+) ligadas$",
-   "$1 of $2 enabled"
+   "^arquivos conferidos: todos iguais à versão (.*?)\\.$",
+   "files checked: all identical to version $1."
   ],
   [
-   "^(\\d+) instalados · (\\d+) faltando$",
-   "$1 installed · $2 missing"
+   "^\"(.*?)\" sai da lista\\. Os jogos não são afetados\\.$",
+   "\"$1\" leaves the list. The games are not affected."
   ],
   [
-   "^Instalar (\\d+) pacote\\(s\\)$",
-   "Install $1 package(s)"
+   "^há (\\d+ ?(min|h|d|dias?|semanas?|meses|mês|anos?))$",
+   "$1 ago"
   ],
   [
-   "^Instalar · (.*)$",
-   "Install · $1"
+   "^Buscando capas e informações \\((\\d+) restantes\\)…$",
+   "Fetching covers and info ($1 left)…"
   ],
   [
-   "^pronto · (\\d+) emuladores$",
-   "ready · $1 emulators"
+   "^aponta para um (.*?) que não está mais no lugar\\.$",
+   "points to a $1 that is no longer there."
   ],
   [
-   "^(\\d+) diretos?$",
-   "$1 direct"
+   "^Só (.*) até agora — dá a chance que ele merece\\.$",
+   "Only $1 so far — give it the chance it deserves."
   ],
   [
-   "\\bprecisa de BIOS\\b",
-   "needs BIOS"
+   "^(\\d+)\\+ itens nessa busca · (\\d+) PC · (\\d+) ROM$",
+   "$1+ items in this search · $2 PC · $3 ROM"
+  ],
+  [
+   "^LudrixHub Console (.*?) · (.*?) jogos instalados$",
+   "LudrixHub Console $1 · $2 games installed"
+  ],
+  [
+   "^Arquivo indisponível no servidor \\(HTTP (\\d+)\\)$",
+   "File unavailable on the server (HTTP $1)"
+  ],
+  [
+   "^Ocupa (.*?) em (.*?)\\. Para onde vai a pasta\\?$",
+   "Takes $1 on $2. Where should the folder go?"
+  ],
+  [
+   "^Baixando capas e informações \\((\\d+)/(\\d+)\\)…$",
+   "Fetching covers and info ($1/$2)…"
+  ],
+  [
+   "^(\\d+) arquivo\\(s\\) foram restaurados ao abrir$",
+   "$1 file(s) were restored at startup"
+  ],
+  [
+   "^itch\\.io nao liberou o arquivo \\(HTTP (.*?)\\)$",
+   "itch.io did not release the file (HTTP $1)"
+  ],
+  [
+   "^Core do RetroArch pra (.*) não encontrado\\.$",
+   "RetroArch core for $1 not found."
+  ],
+  [
+   "^Baixa e instala aqui mesmo \\(motor (.*)\\)\\.",
+   "Downloads and installs right here (engine $1)."
+  ],
+  [
+   "^Este sistema precisa de BIOS/keys em (.*)$",
+   "This system needs BIOS/keys in $1"
+  ],
+  [
+   "^(.*): magnet aberto no cliente de torrent$",
+   "$1: magnet opened in torrent client"
+  ],
+  [
+   "^Buscar \\\"(.*)\\\" direto nos sites ligados$",
+   "Search \"$1\" directly on enabled sites"
+  ],
+  [
+   "^(\\d+) itens no archive\\.org · ex\\.: (.*)$",
+   "$1 items on archive.org · e.g. $2"
+  ],
+  [
+   "^(\\d+) ROMs · (\\d+) arquivos de PC · (.*)$",
+   "$1 ROMs · $2 PC files · $3"
+  ],
+  [
+   "^nada baixando agora · (\\d+) no histórico$",
+   "nothing downloading now · $1 in history"
+  ],
+  [
+   "^(\\d+) de (\\d+) jogos? ok · (\\d+) avisos?$",
+   "$1 of $2 games ok · $3 warnings"
+  ],
+  [
+   "^ROMs de (.*?) voltam para a pasta padrão$",
+   "$1 ROMs go back to the default folder"
+  ],
+  [
+   "^Espaço livre: (.*?) GB \\(pede (.*?) GB\\)$",
+   "Free space: $1 GB (asks for $2 GB)"
+  ],
+  [
+   "^O release (.*?) não tem o pacote Windows$",
+   "Release $1 has no Windows package"
+  ],
+  [
+   "^(\\d+) releases · (\\d+) arquivos Windows$",
+   "$1 releases · $2 Windows files"
+  ],
+  [
+   "^(\\d+) de (\\d+) jogos? ok · (\\d+) erros?$",
+   "$1 of $2 games ok · $3 errors"
+  ],
+  [
+   "^Jogando agora · sessão de (.*?) · total$",
+   "Playing now · session of $1 · total"
+  ],
+  [
+   "^Nenhum build (.*?)Windows encontrado em$",
+   "No $1Windows build found at"
+  ],
+  [
+   "^há (\\d+) (min|h|dias?|semanas?|meses?)$",
+   "$1 $2 ago"
+  ],
+  [
+   "^Atualizando metadados \\((\\d+)/(\\d+)\\)…$",
+   "Updating metadata ($1/$2)…"
+  ],
+  [
+   "^\\(\\+(.*?) arquivo(.*?) do mesmo tipo\\)$",
+   "(+$1 file$2 of the same type)"
+  ],
+  [
+   "^Buscando informações de (\\d+) jogos?…$",
+   "Fetching info for $1 games…"
+  ],
+  [
+   "^Carregando catálogo (\\d+)/(\\d+): (.*)$",
+   "Loading catalog $1/$2: $3"
+  ],
+  [
+   "^(\\d+) arquivo\\(s\\) ainda não conferem$",
+   "$1 file(s) still do not match"
+  ],
+  [
+   "^(\\d+) de (\\d+) arquivos não conferem$",
+   "$1 of $2 files do not match"
+  ],
+  [
+   "^A unidade (.*?) não está conectada\\.$",
+   "Drive $1 is not connected."
   ],
   [
    "^(.*) · (\\d+) jogos?( · needs BIOS)?$",
    "$1 · $2 games$3"
   ],
   [
+   "^(\\d+) jogos · página (\\d+) de (\\d+)$",
+   "$1 games · page $2 of $3"
+  ],
+  [
+   "^Instaladas no (Windows|macOS|Linux)$",
+   "Installed on $1"
+  ],
+  [
+   "^Adicionado (.*?) e ainda não aberto$",
+   "Added $1 and not opened yet"
+  ],
+  [
+   "^Memória: (.*?) GB \\(pede (.*?) GB\\)$",
+   "Memory: $1 GB (asks for $2 GB)"
+  ],
+  [
+   "^O instalador devolveu código (\\d+)$",
+   "The installer returned code $1"
+  ],
+  [
+   "^(.*) livre agora \\((\\d+)% em uso\\)$",
+   "$1 free now ($2% in use)"
+  ],
+  [
+   "^Não consegui ler o hardware(.*?)\\.$",
+   "Could not read the hardware$1."
+  ],
+  [
+   "^Apagar os (.*?) temas importados\\?$",
+   "Delete the $1 imported themes?"
+  ],
+  [
+   "^Buscar \\\"(.*)\\\" nos sites ligados$",
+   "Search \"$1\" on enabled sites"
+  ],
+  [
+   "^Instalando (.*) \\(setup aberto\\)…$",
+   "Installing $1 (setup open)…"
+  ],
+  [
+   "^(\\d+) instalados · (\\d+) faltando$",
+   "$1 installed · $2 missing"
+  ],
+  [
+   "^(.*): não achei a pasta instalada$",
+   "$1: couldn't find the installed folder"
+  ],
+  [
+   "^Agora você está na versão (.*?)\\.$",
+   "You are now on version $1."
+  ],
+  [
+   "^(\\d+) arquivos? · (.*) · em (.*)$",
+   "$1 files · $2 · in $3"
+  ],
+  [
+   "^\"(.*?)\" está em Filtros salvos\\.$",
+   "\"$1\" is in Saved filters."
+  ],
+  [
+   "^Instalador não encontrado: (.*)$",
+   "Installer not found: $1"
+  ],
+  [
+   "^(\\d+) de (\\d+) sistemas prontos$",
+   "$1 of $2 systems ready"
+  ],
+  [
+   "^(\\d+) arquivos não reconhecidos$",
+   "$1 files not recognized"
+  ],
+  [
+   "^(.*) — acompanhe em Downloads\\.$",
+   "$1 — follow it in Downloads."
+  ],
+  [
+   "^Última leitura das fontes: (.*)$",
+   "Last source read: $1"
+  ],
+  [
+   "^Fechou sozinho (.*?)— por quê\\?$",
+   "Closed by itself $1— why?"
+  ],
+  [
+   "^Sem resposta de (.*?) \\((.*?)\\)$",
+   "No response from $1 ($2)"
+  ],
+  [
    "^· (\\d+) jogos?( · needs BIOS)?$",
    "· $1 games$2"
   ],
   [
-   "^(\\d+) jogo$",
-   "$1 game"
+   "^(\\d+) ROMs · (\\d+) executáveis$",
+   "$1 ROMs · $2 executables"
+  ],
+  [
+   "^1 jogo · (\\d+) arquivos · (.*)$",
+   "1 game · $1 files · $2"
+  ],
+  [
+   "^Seguir o (Windows|macOS|Linux)$",
+   "Follow $1"
+  ],
+  [
+   "^Instalar o que falta \\((.*?)\\)$",
+   "Install what's missing ($1)"
+  ],
+  [
+   "^de (.*?) arquivos não conferem$",
+   "of $1 files don't match"
+  ],
+  [
+   "^(\\d+) núcleos · (\\d+) threads$",
+   "$1 cores · $2 threads"
+  ],
+  [
+   "^(\\d+) jogos? não encontrados?$",
+   "$1 game(s) not found"
+  ],
+  [
+   "^Buscar em (.*?) jogos…  \\(/\\)$",
+   "Search in $1 games…  (/)"
+  ],
+  [
+   "^Remover (.*?) da biblioteca\\?$",
+   "Remove $1 from the library?"
+  ],
+  [
+   "^livre agora \\((.*?)% em uso\\)$",
+   "free now ($1% in use)"
+  ],
+  [
+   "^· (.*?) — a pasta foi aberta$",
+   "· $1 — the folder was opened"
+  ],
+  [
+   "^O jogo (.*?) já entra nela\\.$",
+   "The game $1 goes straight into it."
+  ],
+  [
+   "^Voltar \"(.+)\" ao original\\?$",
+   "Restore \"$1\" to original?"
+  ],
+  [
+   "^(\\d+) mods? em (\\d+) jogos?$",
+   "$1 mods in $2 games"
+  ],
+  [
+   "^A ROM não está mais em (.+)$",
+   "The ROM is no longer in $1"
+  ],
+  [
+   "^padrão do console \\((.*?)\\)$",
+   "console default ($1)"
+  ],
+  [
+   "^Remover (.*?) da biblioteca$",
+   "Remove $1 from the library"
+  ],
+  [
+   "^Padrão do console \\((.*?)\\)$",
+   "Console default ($1)"
+  ],
+  [
+   "^Procurar em desenvolvedora…$",
+   "Search in developer…"
+  ],
+  [
+   "^Instalar (\\d+) pacote\\(s\\)$",
+   "Install $1 package(s)"
+  ],
+  [
+   "^Site · Jogo de site · (.*)$",
+   "Website · Website game · $1"
+  ],
+  [
+   "^(.*) · Jogo de site · (.*)$",
+   "$1 · Website game · $2"
+  ],
+  [
+   "^Reinstalar a versão (.*)\\?$",
+   "Reinstall version $1?"
+  ],
+  [
+   "^(\\d+) fontes têm este jogo$",
+   "$1 sources have this game"
+  ],
+  [
+   "^fontes lidas há (\\d+) dias$",
+   "sources read $1 days ago"
+  ],
+  [
+   "^· \\+(.*?) outro\\(s\\) \\.exe$",
+   "· +$1 other .exe"
+  ],
+  [
+   "^pronto · (\\d+) emuladores$",
+   "ready · $1 emulators"
+  ],
+  [
+   "^(.*) não está instalado\\.$",
+   "$1 is not installed."
+  ],
+  [
+   "^(\\d+) jogos? · lista (.*)$",
+   "$1 games · $2 list"
+  ],
+  [
+   "^Voltei para a versão (.+)$",
+   "Went back to version $1"
+  ],
+  [
+   "^Fonte \"(.*)\" não carregou$",
+   "Source \"$1\" did not load"
+  ],
+  [
+   "^fontes lidas há (\\d+) min$",
+   "sources read $1 min ago"
+  ],
+  [
+   "^(.+): (\\d+) jogos? novos?$",
+   "$1: $2 new games"
+  ],
+  [
+   "^de (.*?) links fora do ar$",
+   "of $1 links down"
+  ],
+  [
+   "^Coleção “(.*?)” apagada\\.$",
+   "Collection “$1” deleted."
+  ],
+  [
+   "^Fonte \"(.*?)\" sem arquivo$",
+   "Source \"$1\" has no file"
+  ],
+  [
+   "^Instalar a versão (.*?)\\?$",
+   "Install version $1?"
+  ],
+  [
+   "^(\\d+) jogos? em \\\"(.*)\\\"$",
+   "$1 games in \"$2\""
+  ],
+  [
+   "^mostrando (\\d+) de (\\d+)$",
+   "showing $1 of $2"
+  ],
+  [
+   "^Apagar o estilo \"(.+)\"\\?$",
+   "Delete style \"$1\"?"
+  ],
+  [
+   "^(\\d+) jogos? no catálogo$",
+   "$1 games in catalog"
+  ],
+  [
+   "^(\\d+) sistemas? prontos?$",
+   "$1 systems ready"
+  ],
+  [
+   "^Fonte \"(.*)\" sem arquivo$",
+   "Source \"$1\" has no file"
+  ],
+  [
+   "^(\\d+) de (\\d+) jogos? ok$",
+   "$1 of $2 games ok"
+  ],
+  [
+   "^Abre pela loja \\((.*?)\\)$",
+   "Opens through the store ($1)"
+  ],
+  [
+   "^· (.*?) já na biblioteca$",
+   "· $1 already in the library"
+  ],
+  [
+   "^Coleção “(.*?)” criada\\.$",
+   "Collection “$1” created."
+  ],
+  [
+   "^HTML5 · Meu jogo · (.*)$",
+   "HTML5 · My game · $1"
+  ],
+  [
+   "^Total (.*) · desde (.*)$",
+   "Total $1 · since $2"
+  ],
+  [
+   "^(\\d+) jogos adicionados$",
+   "$1 games added"
+  ],
+  [
+   "^fontes lidas há (\\d+) h$",
+   "sources read $1 h ago"
+  ],
+  [
+   "^Baixar a versão (.*?)\\?$",
+   "Download version $1?"
+  ],
+  [
+   "^Versão (.*?) disponível$",
+   "Version $1 available"
+  ],
+  [
+   "^Mostrar todos \\((.*?)\\)$",
+   "Show all ($1)"
+  ],
+  [
+   "^núcleos · (.*?) threads$",
+   "cores · $1 threads"
+  ],
+  [
+   "^v(\\S+) · correção (\\d+)$",
+   "v$1 · fix $2"
+  ],
+  [
+   "^Procurar em plataforma…$",
+   "Search in platform…"
+  ],
+  [
+   "^(\\d+) outro\\(s\\) \\.exe$",
+   "$1 other .exe(s)"
+  ],
+  [
+   "^(\\d+) de (\\d+) ligadas$",
+   "$1 of $2 enabled"
+  ],
+  [
+   "^de (.*) · (\\d+)% usado$",
+   "of $1 · $2% used"
+  ],
+  [
+   "^(\\d+) (versão|versões)$",
+   "$1 versions"
+  ],
+  [
+   "^ROMs de (.*?) vão para$",
+   "$1 ROMs go to"
+  ],
+  [
+   "^Baixar todos \\((.*?)\\)$",
+   "Download all ($1)"
+  ],
+  [
+   "^Procurar em etiquetas…$",
+   "Search in tags…"
+  ],
+  [
+   "^Procurar em categoria…$",
+   "Search in category…"
+  ],
+  [
+   "^Página (\\d+) de (\\d+)$",
+   "Page $1 of $2"
+  ],
+  [
+   "^Ordenar por \\((\\d+)\\)$",
+   "Sort by ($1)"
+  ],
+  [
+   "^Procurar em coleções…$",
+   "Search in collections…"
+  ],
+  [
+   "^Procurar em situação…$",
+   "Search in status…"
+  ],
+  [
+   "^Há (\\d+) meses · (.*)$",
+   "$1 months ago · $2"
+  ],
+  [
+   "^(\\d+) jogos revisados",
+   "$1 games reviewed"
+  ],
+  [
+   "^Pasta de ROMs — (.*)$",
+   "ROM folder — $1"
+  ],
+  [
+   "^Meus estilos · (\\d+)$",
+   "My styles · $1"
+  ],
+  [
+   "^(\\d+) jogos? rodando$",
+   "$1 running"
+  ],
+  [
+   "^Não reconheci \"(.+)\"$",
+   "Didn't recognize \"$1\""
+  ],
+  [
+   "^Versão (.+) na fonte$",
+   "Version $1 at the source"
+  ],
+  [
+   "^· (.*?) no histórico$",
+   "· $1 in history"
+  ],
+  [
+   "^· (.*?) em andamento$",
+   "· $1 in progress"
+  ],
+  [
+   "^Procurar em coleção…$",
+   "Search in collection…"
+  ],
+  [
+   "^Procurar em sistema…$",
+   "Search in system…"
+  ],
+  [
+   "^Há (\\d+) dias · (.*)$",
+   "$1 days ago · $2"
+  ],
+  [
+   "^Há (\\d+) anos · (.*)$",
+   "$1 years ago · $2"
+  ],
+  [
+   "^Reconheci como (.*)$",
+   "Recognized as $1"
+  ],
+  [
+   "^(\\d+) selecionados?$",
+   "$1 selected"
+  ],
+  [
+   "^· Jogo · ontem (.*)$",
+   "· Game · yesterday $1"
+  ],
+  [
+   "^já usado por \"(.+)\"$",
+   "already used by \"$1\""
+  ],
+  [
+   "^de (.*?) instaladas$",
+   "of $1 installed"
+  ],
+  [
+   "^entrou em “(.*?)”\\.$",
+   "joined “$1”."
+  ],
+  [
+   "^: (.*?) arquivos em$",
+   ": $1 files in"
+  ],
+  [
+   "^Procurar em gênero…$",
+   "Search in genre…"
+  ],
+  [
+   "^Procurar em origem…$",
+   "Search in origin…"
+  ],
+  [
+   "^Nunca jogado · (.*)$",
+   "Never played · $1"
+  ],
+  [
+   "^Remover \\\"(.*)\\\"\\?$",
+   "Remove \"$1\"?"
+  ],
+  [
+   "^(\\d+) encontrados?$",
+   "$1 found"
+  ],
+  [
+   "^Adicionado de (.*)$",
+   "Added from $1"
+  ],
+  [
+   "^· Jogo · hoje (.*)$",
+   "· Game · today $1"
+  ],
+  [
+   "^Redefinir \"(.+)\"\\?$",
+   "Reset \"$1\"?"
+  ],
+  [
+   "^Não reconheci (.*)$",
+   "Did not recognize $1"
+  ],
+  [
+   "^fontes lidas ontem$",
+   "sources read yesterday"
+  ],
+  [
+   "^lida há (\\d+) dias$",
+   "read $1 days ago"
+  ],
+  [
+   "^Procurar em (.*?)…$",
+   "Search in $1…"
+  ],
+  [
+   "^mostrando (.*?) de$",
+   "showing $1 of"
+  ],
+  [
+   "^Exibição \\((\\d+)\\)$",
+   "Display ($1)"
+  ],
+  [
+   "^Procurar em fonte…$",
+   "Search in source…"
+  ],
+  [
+   "^Apagar \\\"(.*)\\\"\\?$",
+   "Delete \"$1\"?"
+  ],
+  [
+   "^Filtros \\((\\d+)\\)$",
+   "Filters ($1)"
+  ],
+  [
+   "\\bprecisa de BIOS\\b",
+   "needs BIOS"
+  ],
+  [
+   "^Encontrei em (.+)$",
+   "Found on $1"
+  ],
+  [
+   "^1 jogo adicionado$",
+   "1 game added"
+  ],
+  [
+   "^lida há (\\d+) min$",
+   "read $1 min ago"
+  ],
+  [
+   "^de (.*?) consoles$",
+   "from $1 consoles"
+  ],
+  [
+   "^jogo(.*?) rodando$",
+   "game$1 running"
+  ],
+  [
+   "^saiu de “(.*?)”\\.$",
+   "left “$1”."
+  ],
+  [
+   "^· coleção “(.*?)”$",
+   "· collection “$1”"
+  ],
+  [
+   "^Abre pelo (.*?)\\.$",
+   "Opens through $1."
+  ],
+  [
+   "^(\\d+) pendentes?$",
+   "$1 pending"
+  ],
+  [
+   "^Repositório (.*)$",
+   "Repository $1"
+  ],
+  [
+   "^Relatório — (.+)$",
+   "Report — $1"
+  ],
+  [
+   "^de (.*?) ligadas$",
+   "of $1 enabled"
+  ],
+  [
+   "^a versão (.*?)\\?$",
+   "to version $1?"
+  ],
+  [
+   "^Procurar em ano…$",
+   "Search in year…"
+  ],
+  [
+   "^Jogado por (.*)$",
+   "Played for $1"
+  ],
+  [
+   "^Página de origem",
+   "Source page"
+  ],
+  [
+   "^Instalar · (.*)$",
+   "Install · $1"
+  ],
+  [
+   "^(.*) já baixado$",
+   "$1 already downloaded"
+  ],
+  [
+   "^Meus mods (\\d+)$",
+   "My mods $1"
+  ],
+  [
+   "^Você jogou (.*)$",
+   "You played $1"
+  ],
+  [
+   "^lida há (\\d+) h$",
+   "read $1 h ago"
+  ],
+  [
+   "^de (.*?) ROMs ·$",
+   "from $1 ROMs ·"
+  ],
+  [
+   "^em (.*?)(.*?) ·$",
+   "in $1$2 ·"
+  ],
+  [
+   "^· (.*?) de ROMs$",
+   "· $1 ROM"
+  ],
+  [
+   "^Há 1 dia · (.*)$",
+   "1 day ago · $1"
+  ],
+  [
+   "^Emulador: (.*)$",
+   "Emulator: $1"
+  ],
+  [
+   "^Extraindo (.*)$",
+   "Extracting $1"
+  ],
+  [
+   "^(\\d+) diretos?$",
+   "$1 direct"
+  ],
+  [
+   "^abre pelo (.+)$",
+   "opens through $1"
+  ],
+  [
+   "^há (\\d+) meses$",
+   "$1 months ago"
+  ],
+  [
+   "^Sessão de (.*)$",
+   "Session of $1"
+  ],
+  [
+   "^(\\d+) arquivos$",
+   "$1 files"
+  ],
+  [
+   "^há (\\d+) meses$",
+   "$1 months ago"
+  ],
+  [
+   "^Há (\\d+) meses$",
+   "$1 months ago"
+  ],
+  [
+   "^(\\d+) fontes?$",
+   "$1 sources"
+  ],
+  [
+   "^Baixando (.*)$",
+   "Downloading $1"
+  ],
+  [
+   "^(\\d+) na fila$",
+   "$1 queued"
+  ],
+  [
+   "^Instalar (.+)$",
+   "Install $1"
+  ],
+  [
+   "^· Jogo · (.*)$",
+   "· Game · $1"
+  ],
+  [
+   "^há (\\d+) dias$",
+   "$1 days ago"
+  ],
+  [
+   "^há (\\d+) anos$",
+   "$1 years ago"
+  ],
+  [
+   "^Agrupar: (.+)$",
+   "Group: $1"
+  ],
+  [
+   "^E mais (\\d+)…$",
+   "And $1 more…"
+  ],
+  [
+   "^há (\\d+) dias$",
+   "$1 days ago"
+  ],
+  [
+   "^há (\\d+) anos$",
+   "$1 years ago"
+  ],
+  [
+   "^Há (\\d+) dias$",
+   "$1 days ago"
+  ],
+  [
+   "^Há (\\d+) anos$",
+   "$1 years ago"
+  ],
+  [
+   "^(\\d+) jogos?$",
+   "$1 games"
+  ],
+  [
+   "^Último: (.*)$",
+   "Last: $1"
+  ],
+  [
+   "^(\\d+) novos?$",
+   "$1 new"
+  ],
+  [
+   "^(\\d+) temas?$",
+   "$1 themes"
+  ],
+  [
+   "^Tudo de (.*)$",
+   "Everything from $1"
+  ],
+  [
+   "\\bJogado por\\b",
+   "Played for"
+  ],
+  [
+   "^Ontem · (.*)$",
+   "Yesterday · $1"
   ],
   [
    "^(\\d+) itens$",
@@ -2731,468 +4830,68 @@
    "plan: $1"
   ],
   [
-   "^Só (.*) até agora — dá a chance que ele merece\\.$",
-   "Only $1 so far — give it the chance it deserves."
-  ],
-  [
-   "^(.*) não está instalado\\.$",
-   "$1 is not installed."
-  ],
-  [
-   "^(.*) já baixado$",
-   "$1 already downloaded"
-  ],
-  [
-   "^Extraindo \\(py7zr, modo lento\\)\\.\\.\\. instale o 7-Zip pra acelerar$",
-   "Extracting (py7zr, slow mode)... install 7-Zip to speed up"
-  ],
-  [
-   "^Arquivo indisponível no servidor \\(HTTP (\\d+)\\)$",
-   "File unavailable on the server (HTTP $1)"
-  ],
-  [
-   "^Conexão caiu \\((.*)\\), tentando de novo em (\\d+)s\\.\\.\\.$",
-   "Connection dropped ($1), retrying in $2s..."
-  ],
-  [
-   "^Instalador não encontrado: (.*)$",
-   "Installer not found: $1"
-  ],
-  [
-   "^O instalador devolveu código (\\d+)$",
-   "The installer returned code $1"
-  ],
-  [
-   "^(.*): não achei a pasta instalada$",
-   "$1: couldn't find the installed folder"
-  ],
-  [
-   "^(\\d+) jogos revisados \\(capas, nomes e informações\\)\\.$",
-   "$1 games reviewed (covers, names and info)."
-  ],
-  [
-   "^Core do RetroArch pra (.*) não encontrado\\.$",
-   "RetroArch core for $1 not found."
-  ],
-  [
-   "^Este sistema precisa de BIOS/keys em (.*)$",
-   "This system needs BIOS/keys in $1"
-  ],
-  [
-   "^(.*) não tem download automático\\. Baixe em (.*) e use 'Apontar \\.exe'\\.$",
-   "$1 has no automatic download. Get it at $2 and use 'Point to .exe'."
-  ],
-  [
-   "^(\\d+) jogos? · lista (.*)$",
-   "$1 games · $2 list"
-  ],
-  [
-   "^(\\d+) ROMs · (\\d+) executáveis$",
-   "$1 ROMs · $2 executables"
-  ],
-  [
-   "^(\\d+) releases · (\\d+) arquivos Windows$",
-   "$1 releases · $2 Windows files"
-  ],
-  [
-   "^(\\d+) jogos? · (\\d+) links diretos · (\\d+) torrents · (\\d+) ignorados \\(acesso difícil\\)$",
-   "$1 games · $2 direct links · $3 torrents · $4 skipped (hard access)"
-  ],
-  [
-   "^Tudo de (.*)$",
-   "Everything from $1"
-  ],
-  [
-   "^(\\d+) itens no archive\\.org · ex\\.: (.*)$",
-   "$1 items on archive.org · e.g. $2"
-  ],
-  [
-   "^(\\d+) ROMs · (\\d+) arquivos de PC · (.*)$",
-   "$1 ROMs · $2 PC files · $3"
-  ],
-  [
-   "^1 jogo · (\\d+) arquivos · (.*)$",
-   "1 game · $1 files · $2"
-  ],
-  [
-   "^(\\d+)\\+ itens nessa busca · (\\d+) PC · (\\d+) ROM$",
-   "$1+ items in this search · $2 PC · $3 ROM"
-  ],
-  [
-   "\\bJogado por\\b",
-   "Played for"
-  ],
-  [
-   "^Instalar (.+)$",
-   "Install $1"
-  ],
-  [
-   "^(\\d+) de (\\d+) sistemas prontos$",
-   "$1 of $2 systems ready"
-  ],
-  [
-   "^(\\d+) sistemas? prontos?$",
-   "$1 systems ready"
-  ],
-  [
-   "^Baixa e instala aqui mesmo \\(motor (.*)\\)\\.",
-   "Downloads and installs right here (engine $1)."
-  ],
-  [
-   "^(.*): magnet aberto no cliente de torrent$",
-   "$1: magnet opened in torrent client"
-  ],
-  [
-   "^Não reconheci \"(.+)\"$",
-   "Didn't recognize \"$1\""
-  ],
-  [
-   "^Encontrei em (.+)$",
-   "Found on $1"
-  ],
-  [
-   "^Imagens para \"(.+)\" no Bing, DuckDuckGo e Yandex\\.$",
-   "Images for \"$1\" on Bing, DuckDuckGo and Yandex."
-  ],
-  [
-   "^Falta: (.*)\\. O botão Preparar resolve tudo de uma vez; se preferir, isso também é feito na primeira vez que você clicar em Jogar num \\.exe\\.$",
-   "Missing: $1. The Set up button handles everything at once; if you prefer, it also happens the first time you click Play on an .exe."
-  ],
-  [
-   "^Primeira abertura: o Proton prepara o prefixo antes do jogo aparecer \\(pode levar um minuto\\)\\.$",
-   "First launch: Proton prepares the prefix before the game shows up (it can take a minute)."
-  ],
-  [
-   "^(\\d+) jogos · página (\\d+) de (\\d+)$",
-   "$1 games · page $2 of $3"
-  ],
-  [
-   "^(\\d+) mods? em (\\d+) jogos?$",
-   "$1 mods in $2 games"
-  ],
-  [
-   "^(\\d+) arquivos? · (.*) · em (.*)$",
-   "$1 files · $2 · in $3"
-  ],
-  [
-   "^(\\d+) prontos? · Flash, HTML5 e jogos de site, dentro do launcher$",
-   "$1 ready · Flash, HTML5 and website games, inside the launcher"
-  ],
-  [
-   "^Adicionado de (.*)$",
-   "Added from $1"
-  ],
-  [
-   "^(\\d+) fontes configuradas \\((\\d+) ativas\\)\\. Adicionar, ativar e remover fica na$",
-   "$1 sources configured ($2 active). Adding, enabling and removing lives in"
-  ],
-  [
-   "^Destino definitivo dos jogos baixados e extraídos\\. Atual: (.*)$",
-   "Final destination of downloaded and extracted games. Current: $1"
-  ],
-  [
-   "^(\\d+) núcleos · (\\d+) threads$",
-   "$1 cores · $2 threads"
-  ],
-  [
-   "^de (.*) · (\\d+)% usado$",
-   "of $1 · $2% used"
-  ],
-  [
    "^Site · (.*)$",
    "Website · $1"
-  ],
-  [
-   "^HTML5 · Meu jogo · (.*)$",
-   "HTML5 · My game · $1"
-  ],
-  [
-   "^Meus mods (\\d+)$",
-   "My mods $1"
-  ],
-  [
-   "^nada baixando agora · (\\d+) no histórico$",
-   "nothing downloading now · $1 in history"
-  ],
-  [
-   "^· Jogo · hoje (.*)$",
-   "· Game · today $1"
-  ],
-  [
-   "^· Jogo · ontem (.*)$",
-   "· Game · yesterday $1"
-  ],
-  [
-   "^· Jogo · (.*)$",
-   "· Game · $1"
-  ],
-  [
-   "^(.*) livre agora \\((\\d+)% em uso\\)$",
-   "$1 free now ($2% in use)"
-  ],
-  [
-   "^Site · Jogo de site · (.*)$",
-   "Website · Website game · $1"
-  ],
-  [
-   "^(.*) · Jogo de site · (.*)$",
-   "$1 · Website game · $2"
-  ],
-  [
-   "^abre pelo (.+)$",
-   "opens through $1"
-  ],
-  [
-   "^(\\d+) (versão|versões)$",
-   "$1 versions"
-  ],
-  [
-   "^(\\d+) mods$",
-   "$1 mods"
-  ],
-  [
-   "^Conferi (\\d+) jogos?: pastas, executáveis e ROMs estão onde deveriam\\.$",
-   "Checked $1 game(s): folders, executables and ROMs are where they should be."
-  ],
-  [
-   "^(\\d+) jogos? não encontrados?$",
-   "$1 game(s) not found"
-  ],
-  [
-   "^Voltei para a versão (.+)$",
-   "Went back to version $1"
-  ],
-  [
-   "^A atualização (.*) não conseguiu abrir duas vezes seguidas, então a versão anterior foi restaurada sozinha\\. Você pode tentar atualizar de novo em Ajustes › Atualizações\\.$",
-   "Update $1 failed to open twice in a row, so the previous version was restored automatically. You can try updating again in Settings › Updates."
-  ],
-  [
-   "^Feito em (.+) com a versão (.+)\\. Contém: (.*)\\. O que existe hoje será substituído(.*)$",
-   "Made on $1 with version $2. Contains: $3. What you have today will be replaced$4"
-  ],
-  [
-   "^Depois de cada sessão, copia a pasta de saves do jogo para (.+) \\(até 5 cópias por jogo, só quando algo mudou; pastas acima de 512 MB são puladas\\)\\. Restaure em Saves, no menu do jogo$",
-   "After each session, copies the game's save folder to $1 (up to 5 copies per game, only when something changed; folders over 512 MB are skipped). Restore from Saves in the game menu"
-  ],
-  [
-   "^A ROM não está mais em (.+)$",
-   "The ROM is no longer in $1"
-  ],
-  [
-   "^(\\d+) campo\\(s\\) com valor inválido foram corrigidos ao abrir: (.*)$",
-   "$1 field(s) with invalid values were repaired on startup: $2"
-  ],
-  [
-   "^Seguir o (Windows|macOS|Linux)$",
-   "Follow $1"
-  ],
-  [
-   "^Instaladas no (Windows|macOS|Linux)$",
-   "Installed on $1"
-  ],
-  [
-   "^Seguir o (Windows|macOS|Linux) troca junto com o modo claro/escuro dele; por horário, você define quando o claro entra e sai$",
-   "Follow $1 switches along with its light/dark mode; by schedule, you set when light starts and ends"
-  ],
-  [
-   "^há (\\d+) dias$",
-   "$1 days ago"
-  ],
-  [
-   "^há (\\d+) meses$",
-   "$1 months ago"
-  ],
-  [
-   "^há (\\d+) anos$",
-   "$1 years ago"
-  ],
-  [
-   "^Agrupar: (.+)$",
-   "Group: $1"
-  ],
-  [
-   "^Redefinir \"(.+)\"\\?$",
-   "Reset \"$1\"?"
-  ],
-  [
-   "^Fonte \"(.*)\" sem arquivo$",
-   "Source \"$1\" has no file"
-  ],
-  [
-   "^Fonte \"(.*)\" não carregou$",
-   "Source \"$1\" did not load"
-  ],
-  [
-   "^Arquivo não encontrado: (.*)\\. O arquivo foi movido ou apagado\\.$",
-   "File not found: $1. The file was moved or deleted."
-  ],
-  [
-   "^(\\d+) arquivos conferidos ao abrir, todos iguais à versão instalada$",
-   "$1 files checked at startup, all matching the installed version"
-  ],
-  [
-   "^(\\d+) arquivo\\(s\\) foram restaurados ao abrir$",
-   "$1 file(s) were restored at startup"
-  ],
-  [
-   "^(\\d+) arquivo\\(s\\) faltando ou diferente\\(s\\) do esperado$",
-   "$1 file(s) missing or different from expected"
-  ],
-  [
-   "^(\\d+) arquivos conferidos: todos iguais à versão (.*)\\.$",
-   "$1 files checked: all matching version $2."
-  ],
-  [
-   "^(\\d+) de (\\d+) arquivos não conferem$",
-   "$1 of $2 files do not match"
-  ],
-  [
-   "^Há um pacote da versão (.*) guardado: os arquivos podem ser restaurados agora, sem trocar de versão\\.$",
-   "A package of version $1 is stored: the files can be restored now without changing version."
-  ],
-  [
-   "^Para restaurar, use o pacote da mesma versão \\(Ludrix-(.*)-src\\.zip ou ludrix-(.*)-patch\\.lxup\\)\\. Um pacote de outra versão troca o launcher inteiro por aquela versão\\.$",
-   "To restore, use the package of the same version (Ludrix-$1-src.zip or ludrix-$2-patch.lxup). A package of another version replaces the whole launcher with that version."
-  ],
-  [
-   "^(\\d+) arquivo\\(s\\) voltaram a ser os da versão (.*)\\. Os arquivos novos valem depois de reabrir o launcher\\.$",
-   "$1 file(s) are back to version $2. The new files take effect after reopening the launcher."
-  ],
-  [
-   "^(\\d+) arquivo\\(s\\) ainda não conferem$",
-   "$1 file(s) still do not match"
-  ],
-  [
-   "^Reinstalar a versão (.*)\\?$",
-   "Reinstall version $1?"
-  ],
-  [
-   "^Você jogou (.*)$",
-   "You played $1"
-  ],
-  [
-   "^Total (.*) · desde (.*)$",
-   "Total $1 · since $2"
-  ],
-  [
-   "^Total (.*)$",
-   "Total $1"
-  ],
-  [
-   "^Não reconheci (.*)$",
-   "Did not recognize $1"
-  ],
-  [
-   "^(\\d+) arquivos não reconhecidos$",
-   "$1 files not recognized"
-  ],
-  [
-   "^Esse arquivo pode ser uma ROM de (.*) ou um jogo de PC compactado\\. O que é\\?$",
-   "This file may be a $1 ROM or a packed PC game. Which is it?"
   ],
   [
    "^ROM de (.*)$",
    "$1 ROM"
   ],
   [
-   "^(.*) — acompanhe em Downloads\\.$",
-   "$1 — follow it in Downloads."
+   "^jogo(.*?) ·$",
+   "game$1 ·"
   ],
   [
-   "^Sessão de (.*)$",
-   "Session of $1"
+   "^Hoje · (.*)$",
+   "Today · $1"
   ],
   [
-   "^(\\d+) jogos adicionados$",
-   "$1 games added"
+   "^(\\d+) jogo$",
+   "$1 game"
   ],
   [
-   "^1 jogo adicionado$",
-   "1 game added"
+   "^(\\d+) mods$",
+   "$1 mods"
   ],
   [
-   "^(\\d+) fontes têm este jogo$",
-   "$1 sources have this game"
-  ],
-  [
-   "^Relatório — (.+)$",
-   "Report — $1"
-  ],
-  [
-   "^(\\d+) arquivos$",
-   "$1 files"
-  ],
-  [
-   "^(\\d+) de (\\d+) jogos? ok$",
-   "$1 of $2 games ok"
-  ],
-  [
-   "^(\\d+) de (\\d+) jogos? ok · (\\d+) erros?$",
-   "$1 of $2 games ok · $3 errors"
-  ],
-  [
-   "^(\\d+) de (\\d+) jogos? ok · (\\d+) avisos?$",
-   "$1 of $2 games ok · $3 warnings"
-  ],
-  [
-   "^(\\d+) de (\\d+) jogos? ok · (\\d+) erros? · (\\d+) avisos?$",
-   "$1 of $2 games ok · $3 errors · $4 warnings"
-  ],
-  [
-   "^fontes lidas há (\\d+) min$",
-   "sources read $1 min ago"
-  ],
-  [
-   "^fontes lidas há (\\d+) h$",
-   "sources read $1 h ago"
-  ],
-  [
-   "^fontes lidas ontem$",
-   "sources read yesterday"
-  ],
-  [
-   "^fontes lidas há (\\d+) dias$",
-   "sources read $1 days ago"
-  ],
-  [
-   "^lida há (\\d+) min$",
-   "read $1 min ago"
-  ],
-  [
-   "^lida há (\\d+) h$",
-   "read $1 h ago"
+   "^Total (.*)$",
+   "Total $1"
   ],
   [
    "^lida ontem$",
    "read yesterday"
   ],
   [
-   "^lida há (\\d+) dias$",
-   "read $1 days ago"
+   "^· (.*?) já$",
+   "· $1 already"
   ],
   [
-   "^Última leitura das fontes: (.*)$",
-   "Last source read: $1"
+   "^há 1 dia$",
+   "1 day ago"
   ],
   [
-   "^(.+): (\\d+) jogos? novos?$",
-   "$1: $2 new games"
+   "^Há 1 dia$",
+   "1 day ago"
   ],
   [
-   "^Versão (.+) na fonte$",
-   "Version $1 at the source"
+   "\\bontem\\b",
+   "yesterday"
   ],
   [
-   "^já usado por \"(.+)\"$",
-   "already used by \"$1\""
+   "\\bagora\\b",
+   "now"
   ],
   [
-   "^E mais (\\d+)…$",
-   "And $1 more…"
+   "\\bnunca\\b",
+   "never"
   ],
   [
-   "^Fora do horário de download \\((.+)\\) — continua às (.+)$",
-   "Outside the download window ($1) — resumes at $2"
+   "\\bdias\\b",
+   "days"
+  ],
+  [
+   "\\bhoje\\b",
+   "today"
   ]
  ]
 }

@@ -50,7 +50,7 @@ function touch() {
             if (w && !w.isDestroyed())
                 w.destroy();
         }
-        catch { /* nada */ }
+        catch { }
     }, IDLE_MS);
 }
 
@@ -76,7 +76,7 @@ function getWin(): Promise<any> | null {
                 try {
                     w.destroy();
                 }
-                catch { /* nada */ }
+                catch { }
                 if (win === w) {
                     win = null;
                     ready = null;
@@ -132,7 +132,7 @@ function syncFallback(data: Buffer, o: Opts): Out | null {
             if (bmp.length > i + 3)
                 probe = [bmp[i + 2], bmp[i + 1], bmp[i], bmp[i + 3]];
         }
-        catch { /* nada */ }
+        catch { }
         const buf = (o.fmt || 'jpeg') === 'png' ? img.toPNG() : img.toJPEG(o.quality ?? 85);
         return { buf, w, h, probe };
     }
@@ -196,5 +196,5 @@ export function shutdown() {
         if (w && !w.isDestroyed())
             w.destroy();
     }
-    catch { /* nada */ }
+    catch { }
 }

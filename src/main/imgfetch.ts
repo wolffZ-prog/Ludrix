@@ -93,7 +93,7 @@ export async function fetchImage(s: http.Session, url: string, opts: { referer?:
     try {
         origin = new URL(url).origin + '/';
     }
-    catch { /* nada */ }
+    catch { }
     const tries: Array<[string, Record<string, string>]> = [];
     if (referer)
         tries.push(['referer', { ...base, Referer: referer }]);

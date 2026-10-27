@@ -65,7 +65,7 @@ export function nativeEmulator(emuId: string): string | null {
                 return sh;
             }
         }
-        catch { /* sem flatpak */ }
+        catch { }
     }
     return null;
 }
@@ -103,7 +103,7 @@ function rmrf(p: string) {
     try {
         fs.rmSync(p, { recursive: true, force: true });
     }
-    catch { /* ignore */ }
+    catch { }
 }
 
 export class EmulationManager {
@@ -137,7 +137,7 @@ export class EmulationManager {
                         this.scanCache.set(sid, { at: 0, list: v.list, stale: true } as any);
             }
         }
-        catch { /* sem cache */ }
+        catch { }
     }
 
     private saveScanCache() {
@@ -750,7 +750,7 @@ export class EmulationManager {
                 if (st.isFile())
                     sizes.set(rf.path, st.size);
             }
-            catch { /* sumiu */ }
+            catch { }
         }
         const have = new Set<string>([...sizes.keys()].map((p) => (WIN ? p.toLowerCase() : p)));
         const marker = sc.marker;
@@ -977,7 +977,7 @@ export class EmulationManager {
                     continue;
                 safeExtractAll(Buffer.from(await r.arrayBuffer()), coresDir);
             }
-            catch { /* core opcional */ }
+            catch { }
         }
     }
 

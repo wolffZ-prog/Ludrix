@@ -34,6 +34,9 @@ try {
   const badStr = Object.entries(en.strings || {}).filter(([, v]) => typeof v !== 'string');
   if (badStr.length) bad(`en.json strings não-texto: ${badStr.slice(0, 5).map((x) => x[0]).join(', ')}`); else ok(`en.json ${Object.keys(en.strings || {}).length} strings, ${(en.patterns || []).length} padrões`);
   for (const [re] of en.patterns || []) { try { new RegExp(re); } catch (e) { bad(`en.json padrão inválido: ${re}`); } }
+  const lang = cp.spawnSync(process.execPath, [R('tools/lang.js')], { encoding: 'utf8' });
+  const n = Number((lang.stderr.match(/sem tradução: (\d+)/) || [])[1] || 0);
+  if (lang.status === 0) ok(`textos sem tradução: ${n}`); else bad(`textos sem tradução em inglês: ${n}\n` + lang.stdout.trim().split('\n').slice(0, 15).join('\n'));
 } catch { /* já reportado */ }
 
 const RJS = fs.readdirSync(R('src/renderer')).filter((x) => x.endsWith('.js'));
