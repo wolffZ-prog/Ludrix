@@ -86,7 +86,7 @@ const enc = s => encodeURIComponent(s);
 const fmtTime = sec => { sec = Math.floor(sec || 0); if (sec < 60) return '0 min'; const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60); return h ? `${h} h ${String(m).padStart(2, '0')} min` : `${m} min`; };
 const ago = ts => { if (!ts) return ''; const d = (Date.now() / 1000 - ts); if (d < 3600) return 'há ' + Math.max(1, Math.floor(d / 60)) + ' min'; if (d < 86400) return 'há ' + Math.floor(d / 3600) + ' h'; if (d < 172800) return 'ontem'; return 'há ' + Math.floor(d / 86400) + ' dias'; };
 
-const S = { sel: new Set(), games: [], byKey: {}, cats: [], repos: [], systems: {}, config: {}, view: 'home', cat: 'all', q: '', stageKey: '', sort: 'az', flt: { cats: new Set(), sys: new Set(), flags: new Set(), repos: new Set(), src: new Set(), genres: new Set(), tags: new Set(), devs: new Set(), years: new Set(), lastp: new Set(), added: new Set(), ptime: new Set(), size: new Set(), status: new Set(), score: new Set() }, _fopen: {}, _fq: {}, _fall: {}, home: null, tab: { store: 'games', mods: 'tools', emulation: 'emulators', central: 'overview' }, mods: null,
+const S = { sel: new Set(), games: [], byKey: {}, cats: [], repos: [], systems: {}, config: {}, view: 'home', cat: 'all', q: '', stageKey: '', sort: 'az', flt: { colls: new Set(), cats: new Set(), sys: new Set(), flags: new Set(), repos: new Set(), src: new Set(), genres: new Set(), tags: new Set(), devs: new Set(), years: new Set(), lastp: new Set(), added: new Set(), ptime: new Set(), size: new Set(), status: new Set(), score: new Set() }, _fopen: {}, _fq: {}, _fall: {}, home: null, tab: { store: 'games', mods: 'tools', emulation: 'emulators', central: 'overview' }, mods: null,
             jobs: {}, current: null, hero: [], heroIdx: 0, heroT: null, torrent: false, emu: null, themes: [] };
 
 const FR = [
@@ -131,6 +131,7 @@ const I = {
   layout: '<svg viewBox="0 0 24 24"><path d="M4 6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v1a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2l0 -1" /><path d="M4 15a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2l0 -3" /><path d="M14 6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v3a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2l0 -3" /><path d="M14 17a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v1a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2l0 -1" /></svg>',
   list: '<svg viewBox="0 0 24 24"><path d="M9 6l11 0" /><path d="M9 12l11 0" /><path d="M9 18l11 0" /><path d="M5 6l0 .01" /><path d="M5 12l0 .01" /><path d="M5 18l0 .01" /></svg>',
   grid: '<svg viewBox="0 0 24 24"><path d="M4 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" /><path d="M14 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" /><path d="M4 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" /><path d="M14 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" /></svg>',
+  coll: '<svg viewBox="0 0 24 24"><path d="M15 10v11l-5 -3l-5 3v-11a3 3 0 0 1 3 -3h4a3 3 0 0 1 3 3z" /><path d="M11 3h5a3 3 0 0 1 3 3v11" /></svg>',
   plus: '<svg viewBox="0 0 24 24"><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>',
   dots: '<svg viewBox="0 0 24 24"><path d="M4 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M18 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>',
   search: '<svg viewBox="0 0 24 24"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>',
@@ -143,6 +144,8 @@ const I = {
   wrench: '<svg viewBox="0 0 24 24"><path d="M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5" /></svg>',
   home: '<svg viewBox="0 0 24 24"><path d="M5 12l-2 0l9 -9l9 9l-2 0" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /></svg>',
   win: '<svg viewBox="0 0 24 24"><path d="M17.8 20l-12 -1.5c-1 -.1 -1.8 -.9 -1.8 -1.9v-9.2c0 -1 .8 -1.8 1.8 -1.9l12 -1.5c1.2 -.1 2.2 .8 2.2 1.9v12.1c0 1.2 -1.1 2.1 -2.2 1.9l0 .1" /><path d="M12 5l0 14" /><path d="M4 12l16 0" /></svg>',
+  hdd: '<svg viewBox="0 0 24 24"><path d="M3 7a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v3H3zM3 14a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v3a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3z"/><path d="M7 7h.01M7 17h.01"/></svg>',
+  move: '<svg viewBox="0 0 24 24"><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2M10 14h6M13 11l3 3-3 3"/></svg>',
   disc: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M7 12a5 5 0 0 1 5 -5" /><path d="M12 17a5 5 0 0 0 5 -5" /></svg>',
   tray: '<svg viewBox="0 0 24 24"><path d="M4 20l16 0" /><path d="M12 14l0 -10" /><path d="M12 14l4 -4" /><path d="M12 14l-4 -4" /></svg>',
   power: '<svg viewBox="0 0 24 24"><path d="M7 6a7.75 7.75 0 1 0 10 0" /><path d="M12 4l0 8" /></svg>',
@@ -563,8 +566,46 @@ function renderRailX() {
   const items = [...m.entries()].map(([id, n]) => [id, id === 'pc' ? 'PC' : (S.systems[id] || id), n]).sort((a, b) => a[0] === 'pc' ? -1 : b[0] === 'pc' ? 1 : b[2] - a[2]);
   const nb = rail.querySelector('.rb[data-view="home"] .n'); if (nb) nb.textContent = lib.length || ''; else { const hb = rail.querySelector('.rb[data-view="home"]'); if (hb) hb.insertAdjacentHTML('beforeend', `<span class="n">${lib.length || ''}</span>`); }
   const h = items.length > 1 ? `<div class="rxh">Plataformas</div>${items.map(([id, l, n]) => `<button class="rb sm${railSysOn(id) ? ' on' : ''}" onclick="railSysGo(${jsq(id)})" title="${esc(l)}"><i class="sw" data-s="${esc(id)}">${sysIcon(id) || sysIcon('pc')}</i><span>${esc(l)}</span><span class="n">${n}</span></button>`).join('')}` : '';
-  if (box._h !== h) { box.innerHTML = h; box._h = h; }
-  box.querySelectorAll('.rb').forEach(b => b.classList.toggle('on', railSysOn(b.querySelector('.sw').dataset.s)));
+  const cl = colls();
+  const hc = cl.length ? `<div class="rxh rxc" onclick="collManage()" title="Gerenciar coleções">Coleções<i>${I.cog}</i></div>${cl.map(c => `<button class="rb sm cl${railCollOn(c.id) ? ' on' : ''}" onclick="railCollGo(${jsq(c.id)})" title="${esc(c.name)}" data-c="${esc(c.id)}"><i class="sw">${I.coll}</i><span>${esc(c.name)}</span><span class="n">${c.keys.filter(k => S.byKey[k] && S.byKey[k].installed).length || ''}</span></button>`).join('')}` : '';
+  if (box._h !== h + hc) { box.innerHTML = h + hc; box._h = h + hc; }
+  box.querySelectorAll('.rb').forEach(b => b.classList.toggle('on', b.dataset.c ? railCollOn(b.dataset.c) : railSysOn(b.querySelector('.sw').dataset.s)));
+}
+function colls() { return Array.isArray(S.config.collections) ? S.config.collections : []; }
+function collsOf(key) { return colls().filter(c => c.keys.includes(key)).map(c => c.id); }
+function railCollOn(id) { return S.view === 'home' && S.flt.colls.size === 1 && S.flt.colls.has(id); }
+function railCollGo(id) {
+  const was = railCollOn(id); clearFlt();
+  if (!was) S.flt.colls.add(id);
+  S.page = 1; if (S.view !== 'home') setView('home'); else renderLibrary();
+  renderRailX();
+}
+function collAfter(r, msg) {
+  if (!r || r.error) return toast('bad', 'Coleções', (r && r.error) || 'Não deu para salvar.');
+  S.config.collections = r.collections || []; renderRailX(); S._poolKey = ''; renderLibrary(); if (S.det) renderDetail();
+  if (msg) toast('ok', 'Coleções', msg);
+}
+async function collToggle(id, key) {
+  const c = colls().find(x => x.id === id), g = S.byKey[key] || {};
+  const r = await api.post('/api/collections/toggle', { id, key });
+  collAfter(r, c ? (r.on ? `${g.title || 'Jogo'} entrou em “${c.name}”.` : `${g.title || 'Jogo'} saiu de “${c.name}”.`) : '');
+}
+function collNew(key) {
+  modal({ title: 'Nova coleção', text: key ? `O jogo ${esc((S.byKey[key] || {}).title || '')} já entra nela.` : 'Um nome curto, do seu jeito: “Terminar”, “Com amigos”, “Clássicos”…', input: '', ok: 'Criar', onOk: async v => {
+    const name = String(v || '').trim(); if (!name) return;
+    const r = await api.post('/api/collections/save', { id: '', name, keys: key ? [key] : [] });
+    collAfter(r, r && !r.error ? `Coleção “${name}” criada.` : '');
+  } });
+}
+function collManage() {
+  const cl = colls();
+  const rows = cl.map(c => `<div class="crow" data-id="${esc(c.id)}"><i>${I.coll}</i><input value="${esc(c.name)}" maxlength="60" onchange="collRename(${jsq(c.id)}, this.value)"><span>${pl(c.keys.length, 'jogo', 'jogos')}</span><button class="btn s xs" onclick="$('#modal').classList.remove('on');railCollGo(${jsq(c.id)})" title="Ver na biblioteca">${I.eye}</button><button class="btn s xs danger" onclick="collRemove(${jsq(c.id)})" title="Apagar coleção">${I.trash}</button></div>`).join('');
+  modal({ title: 'Coleções', html: `<div class="crows">${rows || '<p class="muted">Nenhuma coleção ainda. Crie pelo botão abaixo ou pelo menu de um jogo (Coleções › Nova coleção…).</p>'}</div>`, extra: 'Nova coleção…', onExtra: () => collNew(''), noOk: true, cancel: 'Fechar' });
+}
+async function collRename(id, name) { const r = await api.post('/api/collections/save', { id, name }); if (r && r.error) { toast('bad', 'Coleções', r.error); return; } S.config.collections = r.collections || []; renderRailX(); }
+function collRemove(id) {
+  const c = colls().find(x => x.id === id); if (!c) return;
+  modal({ title: 'Apagar coleção', text: `Apagar “${esc(c.name)}”? Os jogos continuam na biblioteca.`, ok: 'Apagar', danger: true, onOk: async () => { const r = await api.post('/api/collections/remove', { id }); S.flt.colls.delete(id); collAfter(r, `Coleção “${c.name}” apagada.`); } });
 }
 async function loadCatalog(refresh) {
   if (!S.loaded && !S._splCfg) { S._splCfg = 1; splashStep('lendo configurações', 36); }
@@ -686,12 +727,14 @@ function qPrefix(g, k, v) {
 }
 function visible() {
   const q = qnorm(S.q), qw0 = q ? q.split(' ') : [], f = S.flt, cat = S.cat, flags = [...f.flags].map(k => FLAG_TEST[k]);
-  const qp = [], qw = [];
-  for (const w of qw0) { const m = w.match(/^(dev|ano|gen|sis|origem|src):(.+)$/); if (m) qp.push([m[1], m[2]]); else qw.push(w); }
+  const qp = [], qw = [], qs = [];
+  for (const w of qw0) { const m = w.match(/^(dev|ano|gen|sis|origem|src):(.+)$/); if (m) qp.push([m[1], m[2]]); else { const sm = smartOf(w); if (sm) qs.push([w, sm]); else qw.push(w); } }
+  S._smart = qs.map(x => x[1]);
   const hasCats = f.cats.size > 0, hasSys = f.sys.size > 0, hasRepos = S.view === 'store' && f.repos.size > 0, hasSrc = f.src.size > 0;
   let list = sortedAZ().filter(g => {
     if (!inView(g)) return false;
     if (qw.length && !qw.every(w => g._q.includes(w))) return false;
+    if (qs.length && !qs.every(([w, sm]) => g._q.includes(w) || sm.test(g))) return false;
     if (qp.length && !qp.every(([k, v]) => qPrefix(g, k, v))) return false;
     if (hasSrc && !f.src.has(originOf(g))) return false;
     if (cat !== 'all' && !(g.cats || []).includes(cat)) return false;
@@ -700,6 +743,7 @@ function visible() {
     if (hasRepos && !f.repos.has(g.repo)) return false;
     if (f.genres.size && !(g.genres || []).some(x => f.genres.has(x))) return false;
     if (f.tags.size && !(g.tags || []).some(x => f.tags.has(x))) return false;
+    if (f.colls.size && !collsOf(g.key).some(id => f.colls.has(id))) return false;
     if (f.devs.size && !f.devs.has(g.creator || '')) return false;
     if (f.years.size && !f.years.has(String(g.year || ''))) return false;
     for (const k of BUCKET_KINDS) if (f[k].size && !f[k].has(bucketOf[k](g))) return false;
@@ -1723,11 +1767,16 @@ async function chooseExe(key) {
 async function crashDialog(key, title) {
   const d = await api.get('/api/game/' + enc(key)).catch(() => null); const why = d?.crash_why || 'Fechou em poucos segundos — normalmente arquivo corrompido ou instalação incompleta.';
   const n = d?.crash_count || 1, isRom = key.startsWith('rom:') || d?.kind === 'rom', uri = isUri(d?.exe || ''), win = S.config.os === 'windows', rc = d?.last_rc;
+  if (S.config.crash_watch === false || (S.config.crash_mute || []).includes(key)) return;
+  const rd = win && !isRom ? await api.get('/api/redists').catch(() => null) : null;
+  const missing = rd && rd.items ? rd.items.filter(i => i.state === 'missing' && !/^physx/.test(i.id)) : [];
   const again = async (fn, label) => { const r = await fn(); if (r && r.error) return; toast('ok', label, 'Abrindo de novo…'); play(key); };
   const acts = [];
   if (!isRom && !uri && win && !d?.admin) acts.push(['shield', 'Abrir como administrador', rc === 740 ? 'O código do erro indica exatamente isso' : 'Resolve jogos antigos que gravam na própria pasta', () => again(() => api.post('/api/edit/save', { key, data: { admin: true } }), 'Administrador ligado')]);
   if (!isRom && !uri && win && d?.compat !== 'win7') acts.push(['refresh', 'Modo de compatibilidade Windows 7', 'Para jogos de antes de 2015 que fecham na hora', () => again(() => api.post('/api/compat/layer', { key, layer: 'win7' }), 'Compatibilidade aplicada')]);
-  acts.push(['dl', 'Instalar dependências', 'Visual C++, DirectX e .NET em um clique (Central)', () => setView('redists')]);
+  if (missing.length) acts.unshift(['dl', `Instalar o que falta (${missing.length})`, missing.slice(0, 4).map(i => i.title).join(', ') + (missing.length > 4 ? '…' : ''), () => { redistBundle('missing'); setView('redists'); }]);
+  else acts.push(['dl', 'Instalar dependências', 'Visual C++, DirectX e .NET em um clique (Central)', () => setView('redists')]);
+  if (!isRom) acts.push(['info', 'Ver requisitos', 'O que o jogo pede e o que o seu PC tem', () => { openGame(key); setTimeout(() => dtab('reqs'), 350); }]);
   if (isRom) acts.push(['info', 'Guia do console', 'BIOS, keys e firmware que o emulador exige', () => { setView('emulation'); }]);
   else if (!uri) acts.push(['cog', 'Trocar o executável', 'Às vezes o certo é outro .exe da pasta', () => chooseExe(key)]);
   if (d?.dir || d?.exe) acts.push(['folder', 'Abrir a pasta', 'Rodar direto pelo Explorer mostra o erro real', () => openPath(d?.dir || '', key)]);
@@ -1736,7 +1785,7 @@ async function crashDialog(key, title) {
   modal({ title: `${title} fechou sozinho`, wide: true, html: `<p>${esc(why)}</p>${n > 1 ? `<p class="mut" style="font-size:12px">${n}ª vez seguida.</p>` : ''}
     <div class="sgrid">${acts.map((a, i) => `<button class="sact" onclick="$('#modal').classList.remove('on');S._crashActs[${i}][3]()">${I[a[0]] || I.cog}<div><b>${esc(a[1])}</b><small>${esc(a[2])}</small></div></button>`).join('')}</div>
     <p class="mut" style="font-size:12px;margin-top:12px">Se o jogo só abre um launcher próprio e fecha, ignore este aviso.</p>`,
-    ok: 'Fechar', noCancel: true, buttons: [{ label: 'Apagar e adicionar de novo', fn: () => confirmUninstall(key) }] });
+    ok: 'Fechar', noCancel: true, buttons: [{ label: 'Apagar e adicionar de novo', fn: () => confirmUninstall(key) }, { label: 'Não avisar para este jogo', fn: () => { setCfg({ crash_mute: [...new Set([...(S.config.crash_mute || []), key])] }); toast('ok', 'Combinado', `${title} não vai mais gerar este aviso. Dá para voltar em Ajustes › Jogar.`); } }] });
 }
 function confirmUninstall(key) { const d = (S.det && S.det.key === key) ? S.det : (S.byKey[key] || {}); const local = d.kind === 'local', rom = key.startsWith('rom:'), repoRom = d.kind === 'rom' && !rom; modal({ title: local || rom ? `Remover ${d.title} da biblioteca?` : `Remover ${d.title}?`, text: local || rom ? 'Os arquivos do jogo NÃO serão apagados — só a entrada no launcher (o tempo jogado se perde).' : repoRom ? `A ROM baixada será apagada e o jogo volta a aparecer na Store:\n${d.exe || d.dir || ''}` : `A pasta será apagada e o jogo volta a aparecer na Store:\n${d.dir || ''}`, ok: 'Remover', danger: true, onOk: async () => { await api.post('/api/uninstall', { key }); const g = S.byKey[key]; if (g) g.installed = false; if (local || rom) toast('', 'Removido da biblioteca', d.title, [{ label: 'Desfazer', fn: undoRemove }, { label: 'OK', fn: () => {} }]); else toast('', 'Removido', d.title); closeDetail(); await loadCatalog(false); } }); }
 async function calcSize(key, el) { if (el) el.textContent = 'Calculando…'; const r = await api.post('/api/game/size', { key }); if (r.error) { if (el) el.textContent = r.error; return; } const g = S.byKey[key]; if (g) g.size = r.size; if (el) el.outerHTML = esc(fmt(r.size)) + (r.partial ? ' <small style="color:var(--muted)">(parcial — pasta muito grande)</small>' : ` <small style="color:var(--muted)">(${pl(r.files, 'arquivo', 'arquivos')})</small>`); }
@@ -2378,7 +2427,7 @@ async function handleEvent(ev) {
     if (ev.kind === 'emulator') { toast('ok', 'Emulador instalado', ev.title); if (S.view === 'emulation') renderEmulation(); return; }
     if (ev.kind === 'tool') { toast('ok', ev.key && ev.key.startsWith('mod:') ? 'Mod instalado' : 'Ferramenta instalada', ev.title); if (S.view === 'mods') renderMods(); return; }
     if (ev.kind === 'source') { toast('ok', 'Fonte criada', `${ev.count || 0} jogo(s)`); sourceMade(ev.out); return; }
-    if (ev.kind === 'move') { toast('ok', 'Pasta movida', ev.title + (ev.dir ? ' → ' + ev.dir : '')); loadCatalog(false); if (S.det && S.det.key === ev.key) { S.det = await api.get('/api/game/' + enc(ev.key)); renderDetail(); } return; }
+    if (ev.kind === 'move') { toast('ok', 'Pasta movida', ev.title + (ev.dir ? ' → ' + ev.dir : '')); loadCatalog(false); if (S.view === 'central' && S.tab.central === 'disk') diskLoad(false); if (S.det && S.det.key === ev.key) { S.det = await api.get('/api/game/' + enc(ev.key)); renderDetail(); } return; }
     if (ev.kind === 'redist' || ev.kind === 'optional') { toast('ok', ev.restart ? 'Instalado — precisa reiniciar o PC' : 'Instalado', ev.title); if (S.view === 'central') renderCentral(); return; }
     if (ev.kind === 'flash') { toast('ok', ev.ruffle ? 'Player Flash pronto' : 'Jogo rápido pronto', ev.title, ev.gid ? [{ label: 'Jogar', fn: () => { if (S.view !== 'flash') setView('flash'); setTimeout(() => playFlash(ev.gid), 400); } }] : undefined); if (S.view === 'flash') renderFlash(); return; }
     const g = S.byKey[ev.key]; if (g) { g.installed = true; S._poolKey = ''; }
@@ -2745,7 +2794,7 @@ const FLAGS = [['fresh', 'Novos nas fontes'], ['upd', 'Versão nova na fonte'], 
                ['installed', 'Instalados'], ['notinst', 'Não instalados'], ['old', 'Clássicos (antes de 2005)'], ['big', 'Grandes (> 10 GB)'], ['nometa', 'Sem capa / metadados'], ['broken', 'Arquivo não encontrado'], ['playnite', 'Vindos do Playnite'], ['withargs', 'Com argumentos'], ['hidden', 'Ocultos']];
 const repoFltN = () => (S.view === 'store' ? S.flt.repos.size : 0) + S.flt.src.size;
 const repoName = id => (S.repos.find(r => r.id === id) || {}).name || id || '';
-const FLT_KINDS = ['cats', 'sys', 'flags', 'repos', 'src', 'genres', 'tags', 'devs', 'years', 'lastp', 'added', 'ptime', 'size', 'status', 'score'];
+const FLT_KINDS = ['colls', 'cats', 'sys', 'flags', 'repos', 'src', 'genres', 'tags', 'devs', 'years', 'lastp', 'added', 'ptime', 'size', 'status', 'score'];
 const BUCKET_KINDS = ['lastp', 'added', 'ptime', 'size', 'status', 'score'];
 const BUCKETS = {
   lastp: [['never', 'Nunca'], ['today', 'Hoje'], ['week', 'Últimos 7 dias'], ['month', 'Últimos 30 dias'], ['year', 'Último ano'], ['older', 'Há mais de um ano']],
@@ -2764,13 +2813,14 @@ const bucketOf = {
   status: g => g.status || 'none',
   score: g => { const n = +g.score || 0; return !n ? 'none' : n >= 9 ? 's9' : n >= 7 ? 's7' : n >= 5 ? 's5' : 's1'; },
 };
-const FLT_TITLES = { repos: 'Fonte', src: 'Origem', sys: 'Plataforma', cats: 'Categoria', genres: 'Gênero', tags: 'Etiqueta', years: 'Ano de lançamento', devs: 'Desenvolvedora', lastp: 'Última vez jogado', added: 'Adicionado', ptime: 'Tempo de jogo', size: 'Tamanho', status: 'Status', score: 'Sua nota', flags: 'Situação' };
+const FLT_TITLES = { colls: 'Coleção', repos: 'Fonte', src: 'Origem', sys: 'Plataforma', cats: 'Categoria', genres: 'Gênero', tags: 'Etiqueta', years: 'Ano de lançamento', devs: 'Desenvolvedora', lastp: 'Última vez jogado', added: 'Adicionado', ptime: 'Tempo de jogo', size: 'Tamanho', status: 'Status', score: 'Sua nota', flags: 'Situação' };
 const QUICK = [['installed', 'Instalados'], ['notinst', 'Não instalados'], ['fav', 'Favoritos'], ['never', 'Nunca joguei']];
 const fltCount = () => FLT_KINDS.reduce((a, k) => a + (k === 'repos' && S.view !== 'store' ? 0 : S.flt[k].size), 0);
 const filtersActive = () => S.cat !== 'all' || fltCount() > 0;
 const fpOn = () => !!S.config.filter_panel && ['home', 'store'].includes(S.view) && !(S.view === 'store' && S.tab.store === 'sources');
 function fltLabel(kind, id) {
   if (kind === 'cats') return (S.cats.find(c => c.id === id) || {}).name || id;
+  if (kind === 'colls') return (colls().find(c => c.id === id) || {}).name || 'Coleção';
   if (kind === 'sys') return id === 'pc' ? 'PC' : (S.systems[id] || id);
   if (kind === 'flags') return (FLAGS.find(f => f[0] === id) || [])[1] || id;
   if (kind === 'repos') return repoName(id);
@@ -2784,6 +2834,7 @@ function fpItems(kind) {
   const P = poolStats();
   const byCount = o => Object.keys(o).sort((a, b) => o[b] - o[a] || COLL.compare(a, b)).map(id => [id, fltLabel(kind, id), o[id]]);
   if (kind === 'repos') return S.view === 'store' ? byCount(P.rcount) : [];
+  if (kind === 'colls') return S.view === 'home' ? colls().map(c => [c.id, c.name, c.keys.filter(k => S.byKey[k] && S.byKey[k].installed).length]) : [];
   if (kind === 'src') return S.view === 'home' ? byCount(P.ocount) : [];
   if (kind === 'sys') { const it = byCount(P.scount); return it.length > 1 ? it : []; }
   if (kind === 'cats') return S.cats.filter(c => P.counts[c.id]).map(c => [c.id, c.name, P.counts[c.id]]);
@@ -2817,7 +2868,7 @@ function fpanelHtml() {
     <div class="fpre"><select onchange="fpApplyPreset(this.value)" title="Filtros salvos"><option value="">${presets.length ? 'Filtros salvos…' : 'Nenhum filtro salvo'}</option>${presets.map((p, i) => `<option value="${i}" ${S._fpreset === i ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
       ${S._fpreset !== undefined && presets[S._fpreset] ? `<button class="btn s xs" onclick="fpDelPreset()" title="Excluir este filtro salvo">${I.trash}</button>` : `<button class="btn s xs" onclick="fpSavePreset()" ${n ? '' : 'disabled'} title="Salvar a combinação atual com um nome">Salvar</button>`}</div>
     ${quick ? `<div class="fquick">${quick}</div>` : ''}
-    ${['repos', 'src', 'sys', 'cats', 'status', 'score', 'genres', 'tags', 'years', 'devs', 'lastp', 'added', 'ptime', 'size', 'flags'].map(sec).join('')}
+    ${['colls', 'repos', 'src', 'sys', 'cats', 'status', 'score', 'genres', 'tags', 'years', 'devs', 'lastp', 'added', 'ptime', 'size', 'flags'].map(sec).join('')}
     <div class="fpfoot">Marque quantos quiser: dentro de um grupo vale qualquer um; entre grupos, todos.</div>
   </aside>`;
 }
@@ -2846,9 +2897,31 @@ function filterBtn() {
   const n = fltCount();
   return `<button class="btn s xs ${n || fpOn() ? 'p' : ''}" onclick="fpOpen()" title="Abre ou fecha o painel de filtros (fica aberto até você fechar)">${I.filter}<span class="lb">Filtros${n ? ` (${n})` : ''}</span></button>`;
 }
+const SYS_ALIAS = { ps1: ['ps1', 'psx', 'psone', 'playstation1', 'play1'], ps2: ['ps2', 'playstation2', 'play2'], ps3: ['ps3', 'playstation3', 'play3'], psp: ['psp'], snes: ['snes', 'supernintendo'], nes: ['nes', 'nintendinho', 'famicom'], n64: ['n64', 'nintendo64'], gc: ['gc', 'gamecube', 'ngc'], wii: ['wii'], wiiu: ['wiiu'], switch: ['switch', 'nsw'], '3ds': ['3ds'], nds: ['ds', 'nds'], gba: ['gba'], gbc: ['gbc'], gb: ['gb', 'gameboy'], dc: ['dc', 'dreamcast'], saturn: ['saturn'], genesis: ['genesis', 'megadrive', 'md'], sms: ['sms', 'mastersystem'], xbox: ['xbox'], x360: ['x360', 'xbox360'], arcade: ['arcade', 'mame', 'fliperama'], pce: ['pce', 'pcengine', 'turbografx'], dos: ['dos', 'msdos'], atari2600: ['atari', 'atari2600'], pc: ['pc', 'windows', 'computador'] };
+const SMART_WORDS = { instalado: 'installed', instalados: 'installed', instalada: 'installed', instaladas: 'installed', favorito: 'fav', favoritos: 'fav', favorita: 'fav', favoritas: 'fav', nunca: 'never', jogado: 'played', jogados: 'played', recente: 'recent', recentes: 'recent', novo: 'fresh', novos: 'fresh', novidade: 'fresh', novidades: 'fresh', torrent: 'torrent', direto: 'direct', grande: 'big', grandes: 'big', pesado: 'big', pesados: 'big', antigo: 'old', antigos: 'old', leve: 'light', leves: 'light' };
+const SMART_FLAG_NAME = { installed: 'instalados', fav: 'favoritos', never: 'nunca jogados', played: 'já jogados', recent: 'jogados recentemente', fresh: 'novos nas fontes', torrent: 'torrent', direct: 'download direto', hidden: 'escondidos', big: 'grandes', old: 'antigos', light: 'leves' };
+function smartOf(w) {
+  if (!w || w.length < 2) return null;
+  if (/^(19[7-9]\d|20[0-4]\d)$/.test(w)) return { kind: 'year', v: w, label: 'Ano ' + w, test: g => String(g.year || '') === w };
+  for (const [id, al] of Object.entries(SYS_ALIAS)) if (al.includes(w) && (id === 'pc' || S.systems[id] || S.games.some(g => g.system === id))) return { kind: 'sys', v: id, label: id === 'pc' ? 'PC' : (S.systems[id] || id), test: g => (g.system || 'pc') === id };
+  const fl = SMART_WORDS[w];
+  if (fl === 'light') return { kind: 'flag', v: fl, label: SMART_FLAG_NAME[fl], test: g => g.size > 0 && g.size < 1e9 };
+  if (fl && FLAG_TEST[fl]) return { kind: 'flag', v: fl, label: SMART_FLAG_NAME[fl] || fl, test: FLAG_TEST[fl] };
+  if (w.length >= 3) { const gn = genreIndex().get(w); if (gn) return { kind: 'gen', v: gn, label: gn, test: g => (g.genres || []).includes(gn) }; }
+  return null;
+}
+function genreIndex() {
+  if (S._gidx && S._gidxN === S.games.length) return S._gidx;
+  const m = new Map(); for (const g of S.games) for (const x of (g.genres || [])) { const k = qnorm(x).replace(/\s+/g, ''); if (k && !m.has(k)) m.set(k, x); if (k.endsWith('s') && !m.has(k.slice(0, -1))) m.set(k.slice(0, -1), x); }
+  m.set('rpg', m.get('rpg') || 'RPG'); S._gidx = m; S._gidxN = S.games.length; return m;
+}
+function smartChips() {
+  const sm = S._smart || []; if (!S.q || !sm.length) return '';
+  return `<div class="fchips smart"><span class="lbl">${I.search} Entendi:</span>${sm.map(x => `<span class="fchip ro">${esc(x.label)}</span>`).join('')}</div>`;
+}
 function activeChips() {
-  const L = fltLabels(); if (!L.length && S.cat === 'all') return '';
-  return `<div class="fchips">${S.cat !== 'all' ? `<button class="fchip" onclick="S.cat='all';S.page=1;renderLibrary()" title="Remover">${esc((S.cats.find(c => c.id === S.cat) || {}).name || S.cat)}${I.x}</button>` : ''}${L.map(([k, id, nm]) => `<button class="fchip" onclick="toggleFlt('${k}',${jsq(id)})" title="Remover">${esc(nm)}${I.x}</button>`).join('')}${L.length + (S.cat !== 'all' ? 1 : 0) > 1 ? `<button class="lnk" onclick="clearFlt()">Limpar tudo</button>` : ''}</div>`;
+  const L = fltLabels(); if (!L.length && S.cat === 'all') return smartChips();
+  return smartChips() + `<div class="fchips">${S.cat !== 'all' ? `<button class="fchip" onclick="S.cat='all';S.page=1;renderLibrary()" title="Remover">${esc((S.cats.find(c => c.id === S.cat) || {}).name || S.cat)}${I.x}</button>` : ''}${L.map(([k, id, nm]) => `<button class="fchip" onclick="toggleFlt('${k}',${jsq(id)})" title="Remover">${esc(nm)}${I.x}</button>`).join('')}${L.length + (S.cat !== 'all' ? 1 : 0) > 1 ? `<button class="lnk" onclick="clearFlt()">Limpar tudo</button>` : ''}</div>`;
 }
 function viewBtn() {
   const g = groupBy(), defS = S.view === 'store' ? 'fresh' : 'az', defG = S.view === 'store' ? '' : 'letter', lm = listMode(), n = (S.sort !== defS ? 1 : 0) + (g !== defG ? 1 : 0) + ((S.config.view_mode || 'mural') !== 'mural' ? 1 : 0);
@@ -3169,6 +3242,8 @@ async function ctxDo(key, id) {
   closeCtx();
   const g = S.byKey[key] || {};
   if (id.startsWith('status:')) return setStatus(key, id.slice(7));
+  if (id === 'coll:new') return collNew(key);
+  if (id.startsWith('coll:')) return collToggle(id.slice(5), key);
   switch (id) {
     case 'play': return play(key);
     case 'play_opt': return play(key, S.config.after_launch === 'ask' ? undefined : S.config.after_launch, undefined, true);
@@ -3704,7 +3779,7 @@ function editFlash(id) {
     ok: 'Salvar', onOk: async () => { await api.post('/api/flash/update', { id, title: $('#feT').value, genre: $('#feG').value, controls: $('#feC').value, players: $('#feP').value, tip: $('#feD').value, w: +$('#feW').value || g.w, h: +$('#feH').value || g.h, url: $('#feU') ? $('#feU').value : undefined }); renderFlash(); } });
 }
 
-const CENTRAL_TABS = [['redists', 'Dependências'], ['minecraft', 'Minecraft']];
+const CENTRAL_TABS = [['redists', 'Dependências'], ['minecraft', 'Minecraft'], ['disk', 'Espaço em disco']];
 async function renderCentral(force) {
   let tab = S.tab.central || 'redists'; if (!CENTRAL_TABS.some(([id]) => id === tab)) tab = 'redists';
   const cached = S.redists && S.mc;
@@ -3731,16 +3806,72 @@ function refreshCentral(tab) {
 function centralHtml(tab, r, mc) {
   const missing = r.items.filter(i => i.state === 'missing').length;
   const mcInst = mc.items.filter(i => i.installed).length;
-  const body = tab === 'minecraft' ? minecraftHtml(mc) : redistsHtml(r);
-  const badge = { redists: missing && (r.windows || r.prefix_ready) ? `<span class="n">${missing}</span>` : '', minecraft: mcInst ? `<span class="n">${mcInst}</span>` : '' };
-  const sub = { redists: missing && (r.windows || r.prefix_ready) ? pl(missing, 'dependência faltando — jogos podem fechar na hora', 'dependências faltando — jogos podem fechar na hora') : 'bibliotecas que os jogos pedem (Visual C++, DirectX, .NET…)', minecraft: 'edições e launchers encontrados neste PC' }[tab];
+  const body = tab === 'minecraft' ? minecraftHtml(mc) : tab === 'disk' ? diskHtml(S.disk) : redistsHtml(r);
+  const badge = { redists: missing && (r.windows || r.prefix_ready) ? `<span class="n">${missing}</span>` : '', minecraft: mcInst ? `<span class="n">${mcInst}</span>` : '', disk: '' };
+  const sub = { disk: diskSub(), redists: missing && (r.windows || r.prefix_ready) ? pl(missing, 'dependência faltando — jogos podem fechar na hora', 'dependências faltando — jogos podem fechar na hora') : 'bibliotecas que os jogos pedem (Visual C++, DirectX, .NET…)', minecraft: 'edições e launchers encontrados neste PC' }[tab];
   const acts = { redists: `<button class="btn s" onclick="api.post('/api/redist/open',{})" title="Abrir a pasta redists\\">${I.folder}</button><button class="btn s" onclick="renderCentral(true)">${I.refresh} Re-checar</button>`,
-    minecraft: `<button class="btn s" onclick="renderCentral(true)">${I.refresh} Procurar de novo</button>` }[tab];
+    minecraft: `<button class="btn s" onclick="renderCentral(true)">${I.refresh} Procurar de novo</button>`,
+    disk: `<button class="btn s" onclick="diskLoad(true)" ${S.disk && S.disk.pending ? 'disabled' : ''}>${I.refresh} Recalcular</button>` }[tab];
   $('#view').innerHTML = `<div class="h1"><h2>Central Ludrix</h2><span>${sub}</span><div class="acts">${ONLINE ? '' : '<span class="offl">sem conexão</span>'}${acts}</div></div>
     <div class="tabs ctabs">${CENTRAL_TABS.map(([id, n]) => `<button class="${tab === id ? 'on' : ''}" onclick="centralTab('${id}')">${n}${badge[id]}</button>`).join('')}</div>
     <div class="cbody">${body}</div>`;
 }
-async function centralTab(id) { S.tab.central = id; await renderCentral(); }
+async function centralTab(id) { S.tab.central = id; await renderCentral(); if (id === 'disk') diskLoad(false); }
+let DISK_T = 0;
+function diskSub() {
+  const d = S.disk; if (!d) return 'quanto cada jogo ocupa, por disco';
+  const tot = d.games.reduce((a, g) => a + g.size, 0);
+  return d.pending ? `calculando… faltam ${d.pending}` : `${pl(d.games.length, 'jogo ocupa', 'jogos ocupam')} ${fmt(tot) || '0 B'} em ${pl(d.disks.filter(k => k.games).length || 1, 'disco', 'discos')}`;
+}
+async function diskLoad(refresh) {
+  clearTimeout(DISK_T);
+  const r = await api.post('/api/disk/space', { refresh: !!refresh });
+  if (!r || r.error) { if (r && r.error) toast('err', 'Espaço em disco', r.error); return; }
+  S.disk = r;
+  if (S.view === 'central' && (S.tab.central || 'redists') === 'disk') centralHtml('disk', S.redists || { items: [] }, S.mc || { items: [] });
+  if (r.pending) DISK_T = setTimeout(() => { if (S.view === 'central' && S.tab.central === 'disk') diskLoad(false); }, 1500);
+}
+function diskHtml(d) {
+  if (!d) return `<div class="note">Calculando o tamanho das pastas…</div>`;
+  if (!d.games.length) return emptyHtml('folder', 'Nenhum jogo em pasta', 'Só jogos instalados em pasta entram aqui. ROMs e jogos abertos por link (Steam, Epic…) não contam.');
+  const byDisk = new Map();
+  for (const g of d.games) { const k = g.disk || '?'; if (!byDisk.has(k)) byDisk.set(k, []); byDisk.get(k).push(g); }
+  const disks = d.disks.filter(k => byDisk.has(k.mount)).concat(byDisk.has('?') ? [{ mount: '?', total: 0, free: 0, games: 0 }] : []);
+  disks.sort((a, b) => (byDisk.get(b.mount).reduce((x, g) => x + g.size, 0)) - (byDisk.get(a.mount).reduce((x, g) => x + g.size, 0)));
+  const busy = k => { const j = S.jobs[k]; return j && j.stage === 'move'; };
+  return disks.map(k => {
+    const gs = byDisk.get(k.mount).slice().sort((a, b) => b.size - a.size);
+    const gsum = gs.reduce((x, g) => x + g.size, 0);
+    const used = k.total ? k.total - k.free : 0, pu = k.total ? Math.min(100, used / k.total * 100) : 0, pg = k.total ? Math.min(pu, gsum / k.total * 100) : 0;
+    const name = k.mount === '?' ? 'Outro lugar' : k.mount.replace(/\\$/, '');
+    const open = DISK_OPEN.has(k.mount) || disks.length === 1 || DISK_OPEN.size === 0 && k === disks[0];
+    return `<div class="dsk ${open ? 'open' : ''}" data-m="${esc(k.mount)}">
+      <div class="dskh" onclick="diskToggle(${jsq(k.mount)})">${I.hdd}<b>${esc(name)}</b><span class="dsn">${pl(gs.length, 'jogo', 'jogos')} · ${fmt(gsum) || '0 B'}</span><span class="sp"></span>${k.total ? `<span class="dsf">${fmt(k.free)} livres de ${fmt(k.total)}</span>` : ''}${I.chev}</div>
+      ${k.total ? `<div class="dsbar" title="Usado: ${fmt(used)} · jogos do Ludrix: ${fmt(gsum) || '0 B'}"><i style="width:${pu.toFixed(1)}%"></i><em style="width:${pg.toFixed(1)}%"></em></div>` : ''}
+      <div class="dskl">${gs.map(g => `<div class="dsg ${busy(g.key) ? 'busy' : ''}"><img src="/cover/${enc(g.key)}?v=${(S.byKey[g.key] || {}).cv || 0}" loading="lazy" onerror="this.style.visibility='hidden'"><div class="dsgt"><b title="${esc(g.title)}" onclick="openGame(${jsq(g.key)})">${esc(g.title)}</b><span title="${esc(g.dir)}">${esc(g.dir)}</span></div><span class="dsz">${g.at ? (fmt(g.size) || '0 B') : '<i>…</i>'}</span>${busy(g.key) ? `<span class="pill">movendo…</span>` : `<button class="btn s xs" onclick="diskMove(${jsq(g.key)})" title="Mover a pasta deste jogo para outro disco">${I.move} Mover</button>`}</div>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+const DISK_OPEN = new Set();
+function diskToggle(m) { if (DISK_OPEN.has(m)) DISK_OPEN.delete(m); else DISK_OPEN.add(m); const el = document.querySelector(`.dsk[data-m="${CSS.escape(m)}"]`); if (el) el.classList.toggle('open', DISK_OPEN.has(m)); }
+function diskMove(key) {
+  const d = S.disk, g = d && d.games.find(x => x.key === key); if (!g) return;
+  const others = d.disks.filter(k => k.mount !== g.disk && k.total);
+  const sub = (() => { const parts = g.dir.split(/[\\/]/).filter(Boolean); return parts.length >= 2 ? parts.slice(1, -1).join(SEP()) : 'Jogos'; })();
+  const dest = m => m.replace(/[\\/]$/, '') + SEP() + sub;
+  const suggested = others.length ? dest(others[0].mount) : '';
+  const html = others.length ? `<div class="mlist dskp">${others.map(k => `<button data-d="${esc(dest(k.mount))}"><b>${esc(k.mount.replace(/\\$/, ''))}</b><span>${fmt(k.free)} livres de ${fmt(k.total)}</span>${k.free < g.size * 1.05 + 2e8 ? '<em>não cabe</em>' : ''}</button>`).join('')}</div>` : `<div class="note">Nenhum outro disco encontrado. Você ainda pode escolher uma pasta.</div>`;
+  modal({ title: `Mover “${g.title}”`, text: `Ocupa ${fmt(g.size) || '?'} em ${g.dir}. Para onde vai a pasta?`, html, input: suggested, ok: 'Mover', extra: 'Escolher pasta…', wait: true,
+    onExtra: async () => { const r = await api.post('/api/pick_path', { kind: 'folder', initial: suggested }); if (r && r.path) diskMoveTo(key, g.title, r.path); },
+    onOk: v => { if (!v) { toast('err', 'Informe a pasta de destino', ''); return false; } return diskMoveTo(key, g.title, v); } });
+  document.querySelectorAll('.dskp button').forEach(b => b.onclick = () => { document.querySelectorAll('.dskp button').forEach(y => y.classList.remove('on')); b.classList.add('on'); const i = $('#mIn'); if (i) i.value = b.dataset.d; });
+}
+async function diskMoveTo(key, title, dest) {
+  const r = await api.post('/api/game/move', { key, dest }); if (r.error) { toast('err', 'Não foi possível mover', r.error); return false; }
+  S.jobs[key] = { stage: 'move', fraction: 0, detail: 'Iniciando…' }; qfabSync(); toast('ok', 'Movendo pasta', `${title} → ${dest}`);
+  if (S.view === 'central') centralHtml('disk', S.redists || { items: [] }, S.mc || { items: [] });
+  return true;
+}
 function minecraftHtml(m) {
   const tile = i => {
     const j = S.jobs['mc:' + i.id];

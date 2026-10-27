@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.0.16 — 2026-10-27
+- Coleções: crie as suas ("Terminar", "Com amigos"…) pelo menu do jogo › Coleções; aparecem na barra lateral, nos filtros e no modo console (menu X › Coleções). Gerenciar: renomear e apagar na própria barra.
+- Central › Espaço em disco: quanto cada jogo ocupa, agrupado por disco (barra de uso com a parte dos jogos destacada), ordenado do maior para o menor; "Mover" leva a pasta para outro disco ali mesmo, com sugestão de destino e aviso quando não cabe. Tamanhos ficam em cache e são refeitos a cada 7 dias ou com "Recalcular".
+- Notificações do sistema (Windows): quando um download termina, um jogo é atualizado ou fecha sozinho, aparece o aviso do Windows com a capa e o botão "Jogar" — mesmo com o Ludrix recolhido na bandeja. Clicar no aviso abre os detalhes. Nada aparece enquanto a janela está em uso. Liga/desliga em Ajustes › Geral.
+- Modo console: Fila com Pausar/Continuar/Cancelar/Tirar da lista por item e "Pausar tudo / Continuar tudo / Limpar concluídos" no Menu; volume dos sons em Ajustes; busca entende plataforma e ano; screenshots nos detalhes.
+- Jogo fechou sozinho: o aviso agora oferece "Instalar o que falta" (só os pacotes ausentes: Visual C++, DirectX, .NET), "Ver requisitos" e "Não avisar para este jogo"; tudo em Ajustes › Jogar.
+- Busca inteligente: "rpg ps2 2004" filtra gênero, plataforma e ano; "instalados", "favoritos", "nunca", "torrent", "direto", "grandes", "antigos" também valem; abaixo da busca aparece "Entendi: RPG · PlayStation 2 · Ano 2004". Palavras que não forem reconhecidas continuam buscando no título.
+- Mover pasta do jogo: cria a pasta de destino quando ela ainda não existe (desde que o disco exista).
+
 ## 4.0.15 — 2026-10-26
 - Loja com a cara da biblioteca: grade de capas, busca instantânea, filtros (gênero, tamanho, torrent/direto, já instalado), ordenação e agrupamento próprios da Loja; capa do jogo da biblioteca quando a fonte não traz imagem.
 - Saúde das fontes: cada JSON mostra se respondeu, quantos itens tem e quando foi atualizado; teste de links marca "Link fora do ar" no catálogo e nos detalhes.
@@ -10,6 +19,7 @@
 - Transições entre telas (Início ↔ Loja) e mola em modais, painéis, filtros e avisos; tudo desliga com "Reduzir movimento".
 - Auto-reparo dos dados: JSONs do usuário são validados ao abrir; se corrompidos, o Ludrix restaura do último backup em vez de apagar; arquivo ruim fica guardado como .bad. Ajustes › Sobre › "Diagnóstico" gera um zip com logs, configuração e memória.
 - Em espera na bandeja: além de fechar a janela, o servidor solta os caches em memória (catálogo, metadados, capas) e registra no log a memória antes/depois.
+- Menu de contexto (Windows): a janela do menu agora tem só o tamanho do menu, em vez de cobrir a tela inteira; vídeos em outras janelas (YouTube, players) não ficam mais brancos enquanto o menu está aberto. Menu perto da borda de baixo não passa mais do limite da tela.
 - Pôster do jogo selecionado na biblioteca: na aparência Base é o banner do topo (já existente); não há pôster de página inteira para manter o visual plano.
 
 ## 4.0.14-hf2 — 2026-10-26

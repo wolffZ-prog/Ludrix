@@ -911,7 +911,9 @@ export class CentralFront {
         return this.be.jobs.run(`redist:${rid}`, `${it.title} (${it.arch})`, 'redist', (cb: any, cancel: Cancel) => this.redists.install(rid, cb, cancel, true, this.store.config), { m: 'redist_install', a: [rid] });
     }
     async redistBundle(bid: string): Promise<any> {
-        const b = (this.redists.presets.bundles || []).find((x: any) => x.id === bid);
+        const b = bid === 'missing'
+            ? { id: 'missing', title: 'O que falta', items: this.redists.presets.items.filter((i: any) => !/^physx/.test(String(i.id))).map((i: any) => i.id) }
+            : (this.redists.presets.bundles || []).find((x: any) => x.id === bid);
         if (!b)
             return { error: 'Kit desconhecido' };
         if (!(await this.be.online()))
@@ -919,7 +921,7 @@ export class CentralFront {
         const st: Record<string, any> = {};
         for (const i of (await this.redists.status(this.store.config)).items)
             st[i.id] = i;
-        const todo: string[] = b.items.filter((i: string) => (st[i] || {}).state !== 'installed');
+        const todo: string[] = b.items.filter((i: string) => bid === 'missing' ? (st[i] || {}).state === 'missing' : (st[i] || {}).state !== 'installed');
         if (!todo.length)
             return { ok: true, queued: 0 };
         const run = async (cb: (p: Progress) => void, cancel: Cancel) => {

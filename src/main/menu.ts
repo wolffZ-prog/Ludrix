@@ -55,7 +55,7 @@ function page() {
     const css = `
 ${fontFace()}
 :root{--bg:#1b1f26;--text:#e8ebf0;--muted:#8b93a1;--primary:#5c6b82;--onprimary:#fff;--danger:#ff6b6b;--line:#2c323c;--hover:#272d37;--card:#222731;--r:12px;--rr:7px;--font:Rubik,'Segoe UI',system-ui,sans-serif;--alpha:1;--sh:0 14px 34px rgba(0,0,0,.32),0 2px 6px rgba(0,0,0,.18)}
-*{box-sizing:border-box;user-select:none;-webkit-user-select:none}html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
+*{box-sizing:border-box;user-select:none;-webkit-user-select:none}html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}body{position:relative;left:0;top:0}
 body{font:13px/1.25 var(--font);color:var(--text);-webkit-font-smoothing:antialiased}
 .m{position:absolute;min-width:232px;max-width:340px;padding:6px;background:color-mix(in srgb,var(--bg) calc(var(--alpha)*100%),transparent);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);opacity:0;transform:translateY(-4px) scale(.97);transform-origin:var(--ox,0) var(--oy,0);transition:opacity .09s ease-out,transform .14s cubic-bezier(.2,.85,.25,1.08)}
 .m.on{opacity:1;transform:none}
@@ -89,10 +89,12 @@ function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'
 const rowHtml=(it)=>it.sep?'<div class="sep"></div>':it.title?'<div class="ttl">'+esc(it.label)+'</div>':'<div class="r '+(it.primary?'primary ':'')+(it.danger?'danger ':'')+(it.disabled?'disabled ':'')+'" data-id="'+it.id+'"><span class="ic">'+(it.icon?'<img src="'+it.icon+'" alt="">':'')+'</span><span class="lb">'+esc(it.label)+'</span>'+(it.hint?'<span class="ht">'+esc(it.hint)+'</span>':'')+(it.sub?'<span class="ar">'+CHEV+'</span>':'')+'</div>';
 function build(items,cls){const m=document.createElement('div');m.className='m '+cls+(items.some(i=>i&&i.icon)?'':' noic');m.innerHTML=items.map(rowHtml).join('');return m}
 let root=null,A=null,openSub=null,subOwner=null,subT=null,cur=-1;const pad=6;
-function place(el,x,y,flipW){const r=el.getBoundingClientRect();let l=x,t=y,ox='0',oy='0';if(l+r.width>A.width-pad){l=Math.max(pad,(flipW?x-flipW-r.width:x-r.width));ox='100%'}if(t+r.height>A.height-pad){t=Math.max(pad,A.height-pad-r.height);oy='100%'}el.style.left=l+'px';el.style.top=t+'px';el.style.setProperty('--ox',ox);el.style.setProperty('--oy',oy)}
-function closeSub(){if(openSub){openSub.remove();openSub=null;subOwner&&subOwner.classList.remove('sel');subOwner=null}}
+function place(el,x,y,flipW){const r={width:el.offsetWidth,height:el.offsetHeight};let l=x,t=y,ox='0',oy='0';if(l+r.width>A.width-pad){l=Math.max(pad,(flipW?x-flipW-r.width:x-r.width));ox='100%'}if(t+r.height>A.height-pad){t=Math.max(pad,A.height-pad-r.height);oy='100%'}el.style.left=l+'px';el.style.top=t+'px';el.style.setProperty('--ox',ox);el.style.setProperty('--oy',oy)}
+const M=44;function box(){const els=[root,openSub].filter(Boolean);if(!els.length)return null;let l=1e9,t=1e9,r=0,b=0;for(const e of els){l=Math.min(l,e.offsetLeft);t=Math.min(t,e.offsetTop);r=Math.max(r,e.offsetLeft+e.offsetWidth);b=Math.max(b,e.offsetTop+e.offsetHeight)}l=Math.max(0,l-M);t=Math.max(0,t-M);r=Math.min(A.width,r+M);b=Math.min(A.height,b+M);return{l:Math.round(l),t:Math.round(t),w:Math.round(r-l),h:Math.round(b-t)}}
+function fit(){const r=box();if(!r)return null;document.body.style.left=(-r.l)+'px';document.body.style.top=(-r.t)+'px';return r}
+function closeSub(){if(openSub){openSub.remove();openSub=null;subOwner&&subOwner.classList.remove('sel');subOwner=null;const r=fit();if(r)send('rect',r)}}
 function find(id){const [a,b]=id.split('.');const it=D.items[+a];return b===undefined?it:(it.sub||[])[+b]}
-function showSub(row){const it=find(row.dataset.id);if(!it||!it.sub)return;if(subOwner===row)return;closeSub();const m=build(it.sub,'sub');document.body.appendChild(m);const rr=row.getBoundingClientRect();place(m,rr.right+4,rr.top-7,rr.width+8);requestAnimationFrame(()=>m.classList.add('on'));openSub=m;subOwner=row;row.classList.add('sel');wire(m)}
+function showSub(row){const it=find(row.dataset.id);if(!it||!it.sub)return;if(subOwner===row)return;closeSub();const m=build(it.sub,'sub');document.body.appendChild(m);const rr=row.getBoundingClientRect(),ox=-(parseFloat(document.body.style.left)||0),oy=-(parseFloat(document.body.style.top)||0);place(m,rr.right+ox+4,rr.top+oy-7,rr.width+8);requestAnimationFrame(()=>m.classList.add('on'));openSub=m;subOwner=row;row.classList.add('sel');wire(m);const fr=fit();if(fr)send('rect',fr)}
 function wire(m){m.querySelectorAll('.r').forEach(r=>{r.addEventListener('mouseenter',()=>{m.querySelectorAll('.r.sel').forEach(z=>{if(z!==subOwner||m!==root)z.classList.remove('sel')});if(m===root&&subOwner&&subOwner!==r){clearTimeout(subT);subT=setTimeout(()=>{if(!r.matches(':hover'))return;closeSub();r.classList.add('sel')},120)}r.classList.add('sel');const it=find(r.dataset.id);if(it&&it.sub){clearTimeout(subT);subT=setTimeout(()=>showSub(r),140)}});
 r.addEventListener('mouseup',e=>{if(e.button!==0&&e.button!==2)return;const it=find(r.dataset.id);if(!it||it.disabled)return;if(it.sub){showSub(r);return}send('pick',it.id)})})}
 function clear(){closeSub();if(root){root.remove();root=null}cur=-1;clearTimeout(subT)}
@@ -101,7 +103,7 @@ function render(d){D=d;A=d.area;U=d.ui||{};clear();theme(d.colors||{},U);
 root=build(D.items,'root');
 if(D.head){const h=document.createElement('div');h.className='hd';h.innerHTML=(D.head.thumb?'<img src="'+D.head.thumb+'" alt="">':'')+'<div class="t"><b>'+esc(D.head.title)+'</b>'+(D.head.sub?'<span>'+esc(D.head.sub)+'</span>':'')+'</div>';root.prepend(h)}
 else if(D.title){const t=document.createElement('div');t.className='ttl';t.textContent=D.title;root.prepend(t)}
-document.body.appendChild(root);place(root,D.x,D.y);wire(root);requestAnimationFrame(()=>{root&&root.classList.add('on');send('ready',d.seq)})}
+document.body.appendChild(root);const go=()=>{if(D!==d||!root)return;place(root,D.x,D.y);wire(root);const fr=fit();requestAnimationFrame(()=>{root&&root.classList.add('on');send('ready',{seq:d.seq,rect:fr})})};if(document.fonts&&document.fonts.status!=='loaded')document.fonts.ready.then(go);else go()}
 window.lxm.on(d=>{if(d&&d.items)render(d);else clear()});
 document.addEventListener('mousedown',e=>{if(!e.target.closest('.m'))send('cancel')});
 document.addEventListener('contextmenu',e=>e.preventDefault());
@@ -133,13 +135,23 @@ function hideNow(r: any) {
     if (fin)
         fin(r);
 }
+let areaOrigin = { x: 0, y: 0 };
+function applyRect(w: electron.BrowserWindow, r: { l: number; t: number; w: number; h: number }) {
+    try {
+        w.setBounds({ x: areaOrigin.x + Math.round(r.l), y: areaOrigin.y + Math.round(r.t), width: Math.max(8, Math.round(r.w)), height: Math.max(8, Math.round(r.h)) });
+        w.webContents.invalidate();
+    }
+    catch (e) {
+        log.warn('menu popup: %s', e);
+    }
+}
 function ensureWin(): electron.BrowserWindow {
     if (pool && !pool.isDestroyed())
         return pool;
     poolReady = false;
     const area = electron.screen.getPrimaryDisplay().workArea;
     const w = new electron.BrowserWindow({
-        x: area.x, y: area.y, width: area.width, height: area.height, show: false, frame: false, transparent: true, resizable: false, movable: false,
+        x: area.x, y: area.y, width: 320, height: 420, show: false, frame: false, transparent: true, resizable: true, movable: false,
         minimizable: false, maximizable: false, fullscreenable: false, skipTaskbar: true, alwaysOnTop: true, hasShadow: false, focusable: true, title: '',
         backgroundColor: '#00000000',
         webPreferences: { preload: path.join(__dirname, 'menuPreload.js'), sandbox: true, contextIsolation: true, nodeIntegration: false, devTools: false, backgroundThrottling: false },
@@ -166,8 +178,16 @@ electron.ipcMain.on('lxm', (e, t: string, v: any) => {
         poolReady = true;
         return;
     }
+    if (t === 'rect') {
+        if (current === pool && v && v.w > 0 && v.h > 0)
+            applyRect(pool, v);
+        return;
+    }
     if (t === 'ready') {
-        if (Number(v) === seq && current === pool && !visible) {
+        const sq = v && typeof v === 'object' ? Number(v.seq) : Number(v);
+        if (sq === seq && current === pool && !visible) {
+            if (v && typeof v === 'object' && v.rect && v.rect.w > 0 && v.rect.h > 0)
+                applyRect(pool, v.rect);
             visible = true;
             pool.show();
             pool.focus();
@@ -220,9 +240,7 @@ export function show(o: MenuOpts): Promise<any> {
             pt = electron.screen.getCursorScreenPoint();
         const area = electron.screen.getDisplayNearestPoint(pt).workArea;
         const w = ensureWin();
-        const b = w.getBounds();
-        if (b.x !== area.x || b.y !== area.y || b.width !== area.width || b.height !== area.height)
-            w.setBounds({ x: area.x, y: area.y, width: area.width, height: area.height });
+        areaOrigin = { x: area.x, y: area.y };
         const my = ++seq;
         t0 = Date.now();
         current = w;

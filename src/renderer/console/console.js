@@ -5,6 +5,7 @@ const api = (p, body) => fetch(p, body ? {method: 'POST', headers: {'Content-Typ
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const LOGO = '<svg viewBox="0 0 128 128"><defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff7fae"/><stop offset=".3" stop-color="#ffb37a"/><stop offset=".55" stop-color="#ffe58a"/><stop offset=".78" stop-color="#7fe6c6"/><stop offset="1" stop-color="#6fb6ff"/></linearGradient><linearGradient id="vs" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><filter id="vb" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="4"/></filter><filter id="vb2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2"/></filter></defs><rect x="2" y="2" width="124" height="124" rx="28" fill="#1a1d22"/><path d="M24 52 Q24 40 36 40 H92 Q104 40 104 52 L109 78 Q110 92 97 92 Q88 92 83 82 L78 72 H50 L45 82 Q40 92 31 92 Q18 92 19 78 Z" fill="none" stroke="url(#vg)" stroke-width="7" opacity=".45" filter="url(#vb)"/><path d="M24 52 Q24 40 36 40 H92 Q104 40 104 52 L109 78 Q110 92 97 92 Q88 92 83 82 L78 72 H50 L45 82 Q40 92 31 92 Q18 92 19 78 Z" fill="#23272e"/><path d="M24 52 Q24 40 36 40 H92 Q104 40 104 52 L109 78 Q110 92 97 92 Q88 92 83 82 L78 72 H50 L45 82 Q40 92 31 92 Q18 92 19 78 Z" fill="url(#vs)"/><path d="M24 52 Q24 40 36 40 H92 Q104 40 104 52 L109 78 Q110 92 97 92 Q88 92 83 82 L78 72 H50 L45 82 Q40 92 31 92 Q18 92 19 78 Z" fill="none" stroke="url(#vg)" stroke-width="3.2" stroke-linejoin="round"/><g filter="url(#vb2)" opacity=".9"><rect x="44.75" y="53.0" width="4.5" height="14" rx="1.5" fill="#ffd27a"/><rect x="40.0" y="57.75" width="14" height="4.5" rx="1.5" fill="#ffd27a"/><circle cx="81" cy="53.5" r="2.8" fill="#8be0c4"/><circle cx="87.5" cy="60" r="2.8" fill="#6fb3f2"/><circle cx="81" cy="66.5" r="2.8" fill="#f3d58a"/><circle cx="74.5" cy="60" r="2.8" fill="#f5a07f"/></g><rect x="44.75" y="53.0" width="4.5" height="14" rx="1.5" fill="#ffd27a"/><rect x="40.0" y="57.75" width="14" height="4.5" rx="1.5" fill="#ffd27a"/><circle cx="81" cy="53.5" r="2.8" fill="#8be0c4"/><circle cx="87.5" cy="60" r="2.8" fill="#6fb3f2"/><circle cx="81" cy="66.5" r="2.8" fill="#f3d58a"/><circle cx="74.5" cy="60" r="2.8" fill="#f5a07f"/></svg>';
 const IC = {
+  coll: '<svg viewBox="0 0 24 24"><path d="M15 10v11l-5 -3l-5 3v-11a3 3 0 0 1 3 -3h4a3 3 0 0 1 3 3z"/><path d="M11 3h5a3 3 0 0 1 3 3v11"/></svg>',
   down: '<svg viewBox="0 0 24 24"><path d="M12 4v12m0 0 5-5m-5 5-5-5M4 20h16"/></svg>',
   x: '<svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>', pause: '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>', refresh: '<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>',
   sort: '<svg viewBox="0 0 24 24"><path d="M3 9l4-4 4 4M7 5v14M21 15l-4 4-4-4M17 19V5"/></svg>',
@@ -20,7 +21,7 @@ const IC = {
   grid: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>',
   dice: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1"/><circle cx="15.5" cy="15.5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="15.5" cy="8.5" r="1"/><circle cx="8.5" cy="15.5" r="1"/></svg>',
 };
-const S = {data: null, games: [], byKey: {}, view: 'library', sel: 0, sys: '', q: '', focus: 'strip', fx: 0, fi: 0, list: [], busy: {}, layer: null, lastPing: 0, more: false, sig: ''};
+const S = {data: null, games: [], byKey: {}, view: 'library', sel: 0, sys: '', coll: '', q: '', focus: 'strip', fx: 0, fi: 0, list: [], busy: {}, layer: null, lastPing: 0, more: false, sig: ''};
 const ZONES = ['top', 'head', 'acts', 'strip'];
 function zoneEls(z) {
   if (z === 'acts') return $$('#sttxt .btn');
@@ -52,16 +53,25 @@ function legend(pad) {
 }
 const VIEWS = ['library', 'recent', 'favorites', 'store', 'queue', 'settings'];
 const VNAME = {library: 'Biblioteca', recent: 'Recentes', favorites: 'Favoritos', store: 'Loja', queue: 'Fila', settings: 'Ajustes'};
-const isStore = g => !!(g && g.repo);
+const isStore = g => !!(g && g._st);
 const fmtSize = b => { b = +b || 0; if (!b) return ''; if (b >= 1073741824) return (b / 1073741824).toFixed(b >= 10737418240 ? 0 : 1) + ' GB'; return Math.round(b / 1048576) + ' MB'; };
 const tabsHtml = () => `<div class="tabs">${VIEWS.map(v => `<button class="tab${S.view === v ? ' on' : ''}" data-view="${v}">${VNAME[v]}${v === 'queue' ? '<i class="dot" id="qdot"></i>' : ''}</button>`).join('')}</div>`;
 const bindTabs = () => $$('.tab').forEach(t => t.onclick = () => setView(t.dataset.view));
+const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+const CSYS = { ps1: ['ps1', 'psx', 'psone'], ps2: ['ps2'], ps3: ['ps3'], psp: ['psp'], snes: ['snes', 'supernintendo'], nes: ['nes', 'nintendinho'], n64: ['n64'], gc: ['gc', 'gamecube', 'ngc'], wii: ['wii'], wiiu: ['wiiu'], switch: ['switch'], '3ds': ['3ds'], nds: ['ds', 'nds'], gba: ['gba'], dc: ['dc', 'dreamcast'], saturn: ['saturn'], genesis: ['genesis', 'megadrive', 'md'], sms: ['sms', 'mastersystem'], xbox: ['xbox'], x360: ['x360', 'xbox360'], arcade: ['arcade', 'mame', 'fliperama'], pce: ['pce'], dos: ['dos'], atari2600: ['atari', 'atari2600'], pc: ['pc', 'windows'] };
+function smartHit(x, w) {
+  if (/^(19[7-9]\d|20[0-4]\d)$/.test(w)) return String(x.year || '') === w;
+  for (const id in CSYS) if (CSYS[id].includes(w)) return (x.system || 'pc') === id;
+  if (w === 'instalado' || w === 'instalados') return !!x.installed;
+  if (w === 'favorito' || w === 'favoritos') return !!x.fav;
+  return false;
+}
 const SYSN = k => (S.data && S.data.systems && S.data.systems[k]) || k || '';
 
 async function load(first) {
   const d = await api('/api/console');
   S.data = d;
-  S.byKey = {}; d.games.forEach(g => S.byKey[g.key] = g);
+  S.byKey = {}; d.games.forEach(g => S.byKey[g.key] = g); if (S.store) S.store.forEach(g => { if (!S.byKey[g.key]) S.byKey[g.key] = g; });
   document.body.dataset.theme = d.theme || 'noite';
   document.body.classList.toggle('nolegend', !d.config.console_hint);
   document.body.classList.toggle('rm', !!d.config.reduce_motion || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches));
@@ -87,7 +97,7 @@ async function loadStore(force) {
     const seen = new Set();
     S.store = (d.games || []).filter(g => g.repo && !g.installed && !g.owned && !g.dup_of && !seen.has(g.key) && seen.add(g.key));
     S.storeLoading = !!d.loading; S.storeRepos = (d.repos || []).length;
-    S.store.forEach(g => S.byKey[g.key] = g);
+    S.store.forEach(g => { g._st = true; S.byKey[g.key] = g; });
     S.storeP = null; return S.store;
   }).catch(() => { S.storeP = null; S.store = S.store || []; return S.store; });
   return S.storeP;
@@ -98,7 +108,8 @@ function listFor(view) {
   if (view === 'recent') g = S.data.recent.map(k => S.byKey[k]).filter(Boolean);
   if (view === 'favorites') g = g.filter(x => x.fav);
   if (S.sys) g = g.filter(x => (x.system || 'pc') === S.sys);
-  if (S.q) { const q = S.q.toLowerCase(); g = g.filter(x => (x.title || '').toLowerCase().includes(q)); }
+  if (S.coll && view !== 'store') { const c = (S.data.collections || []).find(x => x.id === S.coll); const ks = new Set(c ? c.keys : []); g = g.filter(x => ks.has(x.key)); }
+  if (S.q) { const ws = norm(S.q).split(' ').filter(Boolean); g = g.filter(x => { const t = norm(x.title) + ' ' + norm((x.genres || []).join(' ')) + ' ' + (x.year || ''); return ws.every(w => t.includes(w) || smartHit(x, w)); }); }
   const srt = S.data.config.console_sort || 'title';
   if (view !== 'recent' && srt !== 'title') { g = [...g]; if (srt === 'recent') g.sort((a, b) => (b.last_played || 0) - (a.last_played || 0)); else if (srt === 'playtime') g.sort((a, b) => (b.playtime || 0) - (a.playtime || 0)); else if (srt === 'count') g.sort((a, b) => (b.play_count || 0) - (a.play_count || 0) || (b.playtime || 0) - (a.playtime || 0)); else if (srt === 'added') g.sort((a, b) => (b.installed_at || 0) - (a.installed_at || 0)); }
   if (S.data.config.fav_first && view !== 'recent' && view !== 'favorites' && view !== 'store') g = g.filter(x => x.fav).concat(g.filter(x => !x.fav));
@@ -135,7 +146,7 @@ function render(keep) {
   const sysBar = systems.length > 1 ? `<div class="sys"><button class="${S.sys ? '' : 'on'}" data-sys="">Todos</button>${systems.map(s => `<button class="${S.sys === s ? 'on' : ''}" data-sys="${esc(s)}">${esc(SYSN(s))}</button>`).join('')}</div>` : '';
   m.innerHTML = `
     <div class="txt" id="sttxt"></div>
-    <div class="head">${tabsHtml()}<span class="n">${S.games.length} ${S.games.length === 1 ? 'jogo' : 'jogos'}${S.q ? ` · busca “${esc(S.q)}”` : ''}</span><div class="sp"></div>${sysBar}<div class="sys tools">${S.view === 'store' ? '' : `<button data-tool="sort" title="Ordenar">${IC.sort || ''}${esc(SORTN[S.data.config.console_sort] || 'A–Z')}</button>`}<button data-tool="grid" title="Ver todos em grade">${IC.grid}Grade</button></div></div>
+    <div class="head">${tabsHtml()}<span class="n">${S.games.length} ${S.games.length === 1 ? 'jogo' : 'jogos'}${S.q ? ` · busca “${esc(S.q)}”` : ''}${S.coll ? ` · coleção “${esc(collName(S.coll))}”` : ''}</span><div class="sp"></div>${sysBar}<div class="sys tools">${S.view === 'store' ? '' : `<button data-tool="sort" title="Ordenar">${IC.sort || ''}${esc(SORTN[S.data.config.console_sort] || 'A–Z')}</button>`}<button data-tool="grid" title="Ver todos em grade">${IC.grid}Grade</button></div></div>
     <div class="strip" id="strip">${S.games.map((g, i) => card(g, i)).join('')}${more ? `<div class="card more" data-i="${S.games.length}">${IC.grid}Todos os jogos<small>+${S.data.games.length - S.games.length}</small></div>` : ''}</div>`;
   fitCards();
   if (S.lastView !== S.view) { S.lastView = S.view; const st = $('#strip'); st.classList.add('swap'); st.addEventListener('animationend', () => st.classList.remove('swap'), {once: true}); }
@@ -268,7 +279,7 @@ function qitem(h, i) {
 async function renderQueue(soft) {
   const q = await api('/api/queue');
   if (S.view !== 'queue') return;
-  const items = (q.items || q.history || []).slice(0, 60);
+  const items = (q.items || q.history || []).slice(0, 60); S.qitems = items;
   const sig = items.map(h => h.key + ':' + (h.job ? 'run' : h.status) + (h.installed ? '+' : '')).join(',');
   const m = $('#main');
   if (soft && sig === S.qsig && m.querySelector('.list')) {
@@ -295,17 +306,31 @@ function queueMenu(h) {
     if (h.can_retry) opts.push(`<button class="opt" data-a="retry">${h.status === 'paused' ? IC.play : IC.refresh}<span>${h.status === 'paused' ? 'Continuar' : 'Tentar de novo'}</span></button>`);
     if (h.status === 'done' && h.installed && g) opts.push(`<button class="opt" data-a="play">${IC.play}<span>Jogar</span></button>`);
     if (g) opts.push(`<button class="opt" data-a="detail">${IC.info}<span>Detalhes</span></button>`);
+    opts.push(`<button class="opt" data-a="remove">${IC.x}<span>Tirar da lista</span></button>`);
   }
   if (!opts.length) { toast(h.title || h.key, qstatus(h)); return; }
   layer('dlg', `<div class="mbox"><h3>${esc(h.title || h.key)}</h3><p>${esc(qstatus(h))}</p>${opts.join('')}<button class="opt" data-a="cancel">${IC.back}<span>Não fazer nada</span></button></div>`, async a => {
     closeLayer();
     if (a === 'play') return play(h.key);
     if (a === 'detail') return openDetail(h.key);
-    if (a === 'pause' || a === 'stop' || a === 'retry') {
+    if (a === 'pause' || a === 'stop' || a === 'retry' || a === 'remove') {
       const r = await api('/api/queue/action', {action: a, key: h.key});
-      if (r && r.error) toast('Não deu', r.error, 'err'); else toast({pause: 'Pausado', stop: 'Cancelado', retry: 'Retomando'}[a], h.title || h.key);
+      if (r && r.error) toast('Não deu', r.error, 'err'); else toast({pause: 'Pausado', stop: 'Cancelado', retry: 'Retomando', remove: 'Tirado da lista'}[a], h.title || h.key);
       setTimeout(() => { if (S.view === 'queue') renderQueue(); }, 600);
     }
+  });
+}
+function queueAllMenu() {
+  const items = S.qitems || [], running = items.filter(h => h.job).length, paused = items.filter(h => h.status === 'paused').length, done = items.filter(h => !h.job && h.status !== 'paused').length;
+  layer('dlg', `<div class="mbox"><h3>Fila</h3><p>${[running ? running + ' em andamento' : '', paused ? paused + (paused === 1 ? ' pausado' : ' pausados') : '', done ? done + (done === 1 ? ' concluído' : ' concluídos') : ''].filter(Boolean).join(' · ') || 'Nada na fila.'}</p>
+    ${running ? `<button class="opt" data-a="pause_all">${IC.pause}<span>Pausar tudo</span></button>` : ''}
+    ${paused ? `<button class="opt" data-a="resume_all">${IC.play}<span>Continuar tudo</span></button>` : ''}
+    ${done ? `<button class="opt" data-a="clear_done">${IC.x}<span>Limpar concluídos<small>Tira da lista o que já terminou. Os jogos continuam instalados.</small></span></button>` : ''}
+    <button class="opt" data-a="cancel">${IC.back}<span>Fechar</span></button></div>`, async a => {
+    closeLayer(); if (a === 'cancel') return;
+    const r = await api('/api/queue/action', {action: a});
+    if (r && r.error) toast('Não deu', r.error, 'err'); else toast({pause_all: 'Tudo pausado', resume_all: 'Retomando tudo', clear_done: 'Lista limpa'}[a] || 'Feito', '');
+    setTimeout(() => { if (S.view === 'queue') renderQueue(); }, 600);
   });
 }
 function dlPill(jobs) {
@@ -326,6 +351,7 @@ const SEGS = {
   gamepad_speed: [['slow', 'Lenta'], ['normal', 'Normal'], ['fast', 'Rápida']],
   after_launch: [['minimize', 'Minimizar'], ['none', 'Manter'], ['ask', 'Perguntar']],
   console_card_size: [['small', 'Pequenas'], ['normal', 'Normais'], ['large', 'Grandes']],
+  console_volume: [[25, 'Baixo'], [60, 'Médio'], [100, 'Alto']],
   console_start_view: [['library', 'Biblioteca'], ['recent', 'Recentes'], ['favorites', 'Favoritos']],
   console_dim_idle: [[0, 'Nunca'], [5, '5 min'], [15, '15 min'], [30, '30 min']],
   console_sort: [['title', 'A–Z'], ['recent', 'Últimos'], ['playtime', 'Mais jogados'], ['count', 'Mais vezes'], ['added', 'Novos']],
@@ -351,6 +377,7 @@ function renderSettings() {
     ${segRow('gamepad_speed', 'Velocidade do cursor', 'Quão rápido a seleção anda ao segurar o direcional ou o analógico.')}
     ${swRow('console_vibrate', 'Vibrar ao confirmar', pad ? 'Um toque curto no controle ao abrir um jogo ou menu.' : 'Vale quando houver um controle conectado.')}
     ${swRow('console_sound', 'Sons de navegação', 'Um toque curto ao mover a seleção e confirmar.')}
+    ${segRow('console_volume', 'Volume dos sons', 'Quão alto são os toques de navegação.')}
     ${swRow('console_hint', 'Legenda dos botões', 'Mostra no rodapé o que cada botão do controle (ou tecla) faz.')}
     <h2>Tela</h2>
     ${swRow('console_clock24', 'Relógio em 24 horas', 'Desligado, mostra 12 horas com AM/PM.')}
@@ -395,6 +422,7 @@ async function rowAct(r, v) {
     if (k === 'console_card_size') { document.body.dataset.cards = nv; fitCards(); }
     if (k === 'console_sort') S.sig = '';
     if (k === 'console_dim_idle') idleArm();
+    if (k === 'console_volume') { setTimeout(tick, 80); }
     return;
   }
   c[k] = !c[k]; r.querySelector('.sw').classList.toggle('on', c[k]);
@@ -482,13 +510,25 @@ function openMenu() {
     ${live ? `<button class="opt danger" data-a="stop">${IC.stop}<span>Encerrar jogo</span></button>` : `<button class="opt" data-a="play">${IC.play}<span>Jogar</span></button>`}
     <button class="opt" data-a="detail">${IC.info}<span>Detalhes</span></button>
     <button class="opt" data-a="fav">${IC.star}<span>${g.fav ? 'Tirar dos favoritos' : 'Favoritar'}</span></button>
+    ${(S.data.collections || []).length || S.coll ? `<button class="opt" data-a="colls">${IC.coll}<span>Coleções<small>${S.coll ? 'Vendo “' + esc(collName(S.coll)) + '”' : 'Filtrar por uma coleção sua.'}</small></span></button>` : ''}
     <button class="opt" data-a="random">${IC.dice}<span>Me surpreenda<small>Escolhe um jogo ao acaso.</small></span></button>
     <button class="opt" data-a="grid">${IC.grid}<span>Ver todos em grade</span></button>
     <button class="opt" data-a="sort">${IC.sort || IC.grid}<span>Ordenar<small>${SORTN[S.data.config.console_sort] || 'A–Z'}</small></span></button>
     <button class="opt" data-a="search">${IC.search || IC.info}<span>Buscar</span></button>
     <button class="opt" data-a="cancel">${IC.back}<span>Fechar</span></button></div>`, a => {
     closeLayer();
-    if (a === 'play') play(g.key); else if (a === 'stop') stop(g.key); else if (a === 'detail') openDetail(g.key); else if (a === 'fav') fav(g.key); else if (a === 'random') surprise(); else if (a === 'grid') openGrid(); else if (a === 'sort') sortMenu(); else if (a === 'search') openSearch();
+    if (a === 'play') play(g.key); else if (a === 'stop') stop(g.key); else if (a === 'detail') openDetail(g.key); else if (a === 'fav') fav(g.key); else if (a === 'random') surprise(); else if (a === 'grid') openGrid(); else if (a === 'sort') sortMenu(); else if (a === 'search') openSearch(); else if (a === 'colls') collMenu();
+  });
+}
+function collName(id) { const c = (S.data.collections || []).find(x => x.id === id); return c ? c.name : ''; }
+function collMenu() {
+  const cl = S.data.collections || [];
+  layer('menu', `<div class="mbox"><h3>Coleções</h3><p>Listas que você montou no Ludrix em janela.</p>
+    <button class="opt${S.coll ? '' : ' on'}" data-a="">${S.coll ? '' : IC.check || ''}<span>Todas</span></button>
+    ${cl.map(c => `<button class="opt${S.coll === c.id ? ' on' : ''}" data-a="${esc(c.id)}">${S.coll === c.id ? IC.check || '' : ''}<span>${esc(c.name)}<small>${c.keys.filter(k => S.byKey[k]).length} na biblioteca</small></span></button>`).join('')}
+    <button class="opt" data-a="cancel">${IC.back}<span>Fechar</span></button></div>`, a => {
+    closeLayer(); if (a === 'cancel') return;
+    S.coll = a || ''; S.sig = ''; if (S.view === 'store' || S.view === 'queue' || S.view === 'settings') S.view = 'library'; render();
   });
 }
 function sortMenu() {
@@ -527,6 +567,7 @@ async function openDetail(key) {
     <div class="dwrap"><div class="dcov"><img src="/cover/${encodeURIComponent(key)}" alt="" onerror="this.remove()"></div>
     <div class="dmain"><h1>${esc(g.title)}</h1><div class="meta">${[d.year, d.creator, SYSN(g.system || 'pc')].filter(Boolean).map(esc).join(' · ')}</div>
       ${d.description ? `<div class="desc">${esc(d.description)}</div>` : `<div class="desc" style="color:var(--muted)">${isStore(g) ? 'Sem descrição nesta fonte.' : 'Sem descrição. Você pode preencher os dados deste jogo pelo Ludrix em janela (Editar).'}</div>`}
+      ${(m.shots || []).length ? `<div class="dshots">${m.shots.slice(0, 6).map((_, i) => `<img src="/shot/${encodeURIComponent(key)}/${i}?v=${m.fetched_at || 0}" alt="" loading="lazy" onerror="this.remove()">`).join('')}</div>` : ''}
       <div class="info">${info.map(([k, v]) => `<b>${k}</b><span>${esc(v)}</span>`).join('')}</div>
       <div class="acts">${isStore(g) ? (g.job ? `<button class="btn" data-a="queue">${IC.grid}Ver fila</button>` : `<button class="btn p" data-a="install">${IC.down}Baixar</button>`) : live ? `<button class="btn d" data-a="stop">${IC.stop}Encerrar</button>` : `<button class="btn p" data-a="play">${IC.play}Jogar</button>`}${isStore(g) ? '' : `<button class="btn" data-a="fav">${IC.star}${g.fav ? 'Tirar dos favoritos' : 'Favoritar'}</button>`}</div>
     </div></div>`, a => {
@@ -572,7 +613,7 @@ function nav(dir) {
   }
   if (dir === 'lb' || dir === 'rb') { const i = VIEWS.indexOf(S.view); return setView(VIEWS[(i + (dir === 'rb' ? 1 : VIEWS.length - 1)) % VIEWS.length]); }
   if (dir === 'search' || dir === 'y') return openSearch();
-  if (dir === 'menu' || dir === 'start') { if (S.view === 'queue' || S.view === 'settings') return; return openMenu(); }
+  if (dir === 'menu' || dir === 'start') { if (S.view === 'queue') return queueAllMenu(); if (S.view === 'settings') return; return openMenu(); }
   const panel = S.view === 'queue' || S.view === 'settings';
   if (S.focus !== 'strip') {
     const zi = ZONES.indexOf(S.focus), els = zoneEls(S.focus);
@@ -604,7 +645,7 @@ function nav(dir) {
   else if (dir === 'left') select(S.sel - 1);
   else if (dir === 'up') { setFocus(S.games.length ? 'acts' : 'head', 0, -1); tick(); }
   else if (dir === 'ok') { if (S.more && S.sel >= S.games.length) return setView('library'); primary(S.games[S.sel]); }
-  else if (dir === 'back') { if (S.q) { S.q = ''; render(); } else if (S.sys) { S.sys = ''; render(); } else if (S.view !== 'library') setView('library'); else confirmQuit(); }
+  else if (dir === 'back') { if (S.q) { S.q = ''; render(); } else if (S.coll) { S.coll = ''; S.sig = ''; render(); } else if (S.sys) { S.sys = ''; render(); } else if (S.view !== 'library') setView('library'); else confirmQuit(); }
 }
 
 document.addEventListener('keydown', e => {
@@ -654,7 +695,7 @@ document.addEventListener('mousemove', () => { S.lastPing = performance.now(); }
 let AC = null;
 function beep(f, d) {
   if (!S.data || !S.data.config.console_sound) return;
-  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.value = .035; o.connect(g); g.connect(AC.destination); o.start(); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + d); o.stop(AC.currentTime + d); } catch (e) {}
+  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); const o = AC.createOscillator(), g = AC.createGain(); o.type = 'sine'; o.frequency.value = f; g.gain.value = .035 * (Math.max(0, Math.min(100, +S.data.config.console_volume || 60)) / 60); o.connect(g); g.connect(AC.destination); o.start(); g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + d); o.stop(AC.currentTime + d); } catch (e) {}
 }
 function tick() { beep(880, .04); }
 function toast(t, s, k) {

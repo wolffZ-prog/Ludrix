@@ -139,6 +139,7 @@ class Backend {
         setInterval(() => { try { require('./torrent').setHold?.(Boolean(this.dlHold())); } catch { /* sem torrent */ } }, 30_000);
         setTimeout(() => this.watchDirs(), 20_000);
         setTimeout(() => this.fileAssocSync(), 45_000);
+        setTimeout(() => require('./notify').protocolSync(this.store.config.win_notify !== false), 50_000);
         setTimeout(() => this.startMenuSync(), 1500);
         if (this.store.schemaInfo?.newer)
             setTimeout(() => this.notify('warn', 'Dados de uma versão mais nova', `A pasta data foi gravada pelo Ludrix ${this.store.schemaInfo.app || '?'} (formato ${this.store.schemaInfo.version}). Esta versão lê o formato ${require('./store').Store.SCHEMA}. Atualize o Ludrix ou restaure um backup antes de mexer na biblioteca.`, 'schema_newer', 'updates'), 3000);
@@ -416,6 +417,10 @@ class Backend {
         acts.push({ id: 'fav', label: g.fav ? 'Tirar dos favoritos' : 'Favoritar', icon: 'star' });
         if (inLib)
             acts.push({ id: 'status', label: 'Status', icon: 'flag', sub: STATUS.map(([id, l]) => ({ id: 'status:' + id, label: l, icon: status === id ? 'check' : '' })) });
+        if (inLib) {
+            const cols = this.collections();
+            acts.push({ id: 'colls', label: 'Coleções', icon: 'coll', sub: [...cols.map((c) => ({ id: 'coll:' + c.id, label: c.name, icon: c.keys.includes(key) ? 'check' : '' })), ...(cols.length ? [{ sep: true }] : []), { id: 'coll:new', label: 'Nova coleção…', icon: 'plus' }] });
+        }
         if (inLib)
             acts.push({ id: 'mark_played', label: g.last_played > 0 ? 'Marcar como nunca jogado' : 'Marcar como jogado', icon: 'check' });
         acts.push({ id: 'hide', label: hidden ? 'Mostrar na biblioteca' : 'Esconder da biblioteca', icon: 'eye' });
@@ -567,6 +572,24 @@ class Backend {
         this.store.setConfig({ notifications: out, notif_seen: seen, notif_hidden: hidden });
         return { ok: true };
     }
+    async osToast(t: { title: string; body?: string; key?: string; play?: boolean }) {
+        try {
+            if (this.store.config.win_notify === false)
+                return false;
+            if (this.windowHooks?.focused?.())
+                return false;
+            let image = '';
+            if (t.key) {
+                try { image = String((await this.hub.coverPath(t.key)) || ''); } catch { image = ''; }
+                if (image && !fs.existsSync(image)) image = '';
+            }
+            return require('./notify').show({ ...t, image, silent: this.store.config.notify_sound === false });
+        }
+        catch (e: any) {
+            log.warn('os toast: %s', e?.message || e);
+            return false;
+        }
+    }
     notify(kind: string, title: string, text = '', key = '', action = '') {
         const n: any = { id: `${Date.now()}-${kind}`, kind, title, text, key, action, at: util.now(), read: false };
         const lst = (this.store.config.notifications || []).filter((x: any) => !(x.key && x.key === key && x.kind === kind));
@@ -673,6 +696,8 @@ class Backend {
         }
         if ('hotkey' in patch || 'hotkey_enabled' in patch)
             this.windowHooks?.hotkey?.();
+        if ('win_notify' in patch)
+            require('./notify').protocolSync(this.store.config.win_notify !== false);
         if ('discord_enabled' in patch || 'discord_app_id' in patch) {
             if (!this.discord.enabled())
                 void this.discord.set(null);
@@ -1398,6 +1423,9 @@ class Backend {
         if (!src || !isDir(src))
             return { error: 'A pasta atual do jogo não existe' };
         const parent = String(destParent || '').trim().replace(/^"+|"+$/g, '');
+        if (parent && !fs.existsSync(parent) && isDir(path.parse(path.resolve(parent)).root) && isDir(path.dirname(path.resolve(parent)))) {
+            try { fs.mkdirSync(parent, { recursive: true }); } catch { /* cai no erro abaixo */ }
+        }
         if (!parent || !isDir(parent))
             return { error: 'A pasta de destino não existe' };
         const dst = path.join(parent, path.basename(src));
@@ -1478,6 +1506,48 @@ class Backend {
             this.favorites.add(key);
         this.persistFav();
         return { ok: true, fav: this.favorites.has(key) };
+    }
+    collections(): any[] {
+        const raw = this.store.config.collections;
+        return Array.isArray(raw) ? raw.filter((c: any) => c && typeof c === 'object' && c.id).map((c: any) => ({ id: String(c.id), name: String(c.name || '').slice(0, 60), keys: Array.isArray(c.keys) ? c.keys.filter((k: any) => typeof k === 'string') : [], at: Number(c.at) || 0 })) : [];
+    }
+    private saveCollections(list: any[]) {
+        this.store.setConfig({ collections: list });
+        return { ok: true, collections: list };
+    }
+    collectionSave(id: string, name: string, keys?: string[]) {
+        const list = this.collections();
+        const nm = String(name || '').trim().slice(0, 60);
+        if (!nm)
+            return { error: 'Dê um nome para a coleção.' };
+        if (list.some((c) => c.id !== id && c.name.toLowerCase() === nm.toLowerCase()))
+            return { error: 'Já existe uma coleção com esse nome.' };
+        let c = list.find((x) => x.id === id);
+        if (!c) {
+            c = { id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: nm, keys: [], at: Math.floor(Date.now() / 1000) };
+            list.push(c);
+        }
+        c.name = nm;
+        if (Array.isArray(keys))
+            c.keys = [...new Set(keys.filter((k) => typeof k === 'string'))];
+        const r = this.saveCollections(list);
+        return { ...r, id: c.id };
+    }
+    collectionRemove(id: string) {
+        return this.saveCollections(this.collections().filter((c) => c.id !== id));
+    }
+    collectionToggle(id: string, key: string, on?: boolean) {
+        const list = this.collections();
+        const c = list.find((x) => x.id === id);
+        if (!c || !key)
+            return { error: 'Coleção não encontrada.' };
+        const has = c.keys.includes(key), want = on === undefined ? !has : Boolean(on);
+        if (want && !has)
+            c.keys.push(key);
+        if (!want && has)
+            c.keys = c.keys.filter((k) => k !== key);
+        const r = this.saveCollections(list);
+        return { ...r, on: want };
     }
     toggleHidden(key) {
         if (this.hiddenSet.has(key))
@@ -2490,7 +2560,9 @@ class Backend {
                 console_vibrate: get('console_vibrate', true), console_dim_idle: Number(c.console_dim_idle || 0),
                 console_confirm_quit: get('console_confirm_quit', true), console_sort: get('console_sort', 'title'), fav_first: Boolean(c.fav_first), console_dl_pill: get('console_dl_pill', true),
                 save_auto_backup: Boolean(c.save_auto_backup), launch_splash: get('launch_splash', 'short'),
+                console_volume: Number.isFinite(Number(c.console_volume)) ? Number(c.console_volume) : 60,
             },
+            collections: this.collections(),
             playing: this.sessions.keys().length > 0, version: VERSION, count: games.length,
         };
     }
@@ -2838,19 +2910,56 @@ class Backend {
         }
         return { native: true, ok: true, path: f, folder: f, what };
     }
+    private sizeQueue: string[] = [];
+    private sizeBusy = false;
+    diskSpace(refresh = false) {
+        const sys = require('./hardware');
+        let disks: Array<{ mount: string; total: number; free: number; launcher: boolean }> = [];
+        try { disks = sys.disks(); } catch { disks = []; }
+        const diskOf = (d: string) => {
+            const n = process.platform === 'win32' ? d.toUpperCase() : d;
+            let best = '';
+            for (const k of disks) { const m = process.platform === 'win32' ? k.mount.toUpperCase() : k.mount; if (n.startsWith(m) && m.length > best.length) best = k.mount; }
+            return best;
+        };
+        const now = Date.now(), stale = now - 7 * 86400e3;
+        const games: any[] = [];
+        const todo: string[] = [];
+        for (const [key, info] of Object.entries(this.store.library as Record<string, any>)) {
+            if (!info || info.kind === 'rom' || String(info.exe || '').includes('://')) continue;
+            const d = String(info.dir || '');
+            if (!d) continue;
+            games.push({ key, title: info.title || key, dir: d, size: Number(info.size || 0), at: Number(info.size_at || 0), disk: diskOf(d) });
+            if (refresh || !info.size_at || Number(info.size_at) < stale) todo.push(key);
+        }
+        for (const k of todo) if (!this.sizeQueue.includes(k)) this.sizeQueue.push(k);
+        this.pumpSizes();
+        const used: Record<string, number> = {};
+        for (const g of games) used[g.disk] = (used[g.disk] || 0) + g.size;
+        return { disks: disks.map(k => ({ ...k, games: used[k.mount] || 0 })), games, pending: this.sizeQueue.length + (this.sizeBusy ? 1 : 0) };
+    }
+    private pumpSizes() {
+        if (this.sizeBusy) return;
+        const key = this.sizeQueue.shift();
+        if (!key) return;
+        this.sizeBusy = true;
+        this.folderSize(key).catch(() => null).then(() => { this.sizeBusy = false; setTimeout(() => this.pumpSizes(), 50); });
+    }
     async folderSize(key: string) {
         const info = this.store.lib(key) || {};
         const d = String(info.dir || (info.exe && !String(info.exe).includes('://') ? path.dirname(String(info.exe)) : ''));
         let isDir = false;
         try { isDir = Boolean(d) && fs.statSync(d).isDirectory(); } catch { isDir = false; }
-        if (!isDir)
+        if (!isDir) {
+            this.store.patchLib(key, { size_at: Date.now() });
             return { error: 'Pasta não encontrada' };
+        }
         const { walkFilesAsync } = require('./scanner');
         const items: Array<{ size: number }> = await walkFilesAsync([d], 24, []);
         let total = 0;
         for (const it of items)
             total += Number(it.size || 0);
-        this.store.patchLib(key, { size: total });
+        this.store.patchLib(key, { size: total, size_at: Date.now() });
         return { size: total, files: items.length, partial: false };
     }
     setQuiet(on: boolean) {
@@ -2943,7 +3052,8 @@ class Backend {
                 void this.runHook(info0.post_cmd, cwd0, false);
             }
         }
-        this.push({ type: 'session_end', key: sess.key, title: sess.title, elapsed, elapsed_h: humanSession(elapsed), crashed: Boolean(sess.crashed), rc: sess.rc ?? null });
+        const crashMuted = this.store.config.crash_watch === false || (Array.isArray(this.store.config.crash_mute) && this.store.config.crash_mute.includes(sess.key));
+        this.push({ type: 'session_end', key: sess.key, title: sess.title, elapsed, elapsed_h: humanSession(elapsed), crashed: Boolean(sess.crashed) && !crashMuted, rc: sess.rc ?? null });
         if (!sess.crashed && elapsed > 60 && (this.store.lib(sess.key) || {}).crash_count)
             this.store.patchLib(sess.key, { crash_count: 0 });
         if (sess.crashed) {
@@ -2951,7 +3061,10 @@ class Backend {
             const n = Number(info.crash_count || 0) + 1;
             this.store.patchLib(sess.key, { crash_count: n, last_crash: util.now(), last_rc: sess.rc ?? null });
             const why = this.diagnoseCrash(sess.key, info, sess.rc);
-            this.notify('error', `${sess.title} fechou sozinho`, why, sess.key);
+            if (!crashMuted) {
+                this.notify('error', `${sess.title} fechou sozinho`, why, sess.key);
+                void this.osToast({ title: `${sess.title} fechou sozinho`, body: why, key: sess.key });
+            }
         }
         if (this.quiet && !this.sessions.keys().length)
             this.setQuiet(false);

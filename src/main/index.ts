@@ -18,6 +18,7 @@ import * as store from './store';
 import * as diagMod from './diag';
 import * as server2 from './server2';
 import * as trayMod from './tray';
+import * as notifyMod from './notify';
 import * as menuMod from './menu';
 import * as gamepadMod from './gamepad';
 import * as imgdecode from './imgdecode';
@@ -79,13 +80,17 @@ async function closeOther(timeout = 6000) {
 }
 /* --------------------------- instancia unica --------------------------- */
 const fileArgRe = /\.(lxup|lxtheme)$/i;
-const gotLock = electron.app.requestSingleInstanceLock({ files: process.argv.slice(1).filter((a) => fileArgRe.test(a)).map((a) => path.resolve(a)) });
+const gotLock = electron.app.requestSingleInstanceLock({ files: process.argv.slice(1).filter((a) => fileArgRe.test(a)).map((a) => path.resolve(a)), urls: process.argv.slice(1).filter((a) => notifyMod.isUrlArg(a)) });
 if (!gotLock)
     electron.app.exit(0);
 else {
     electron.app.on('second-instance', (_e, argv, _cwd, extra: any) => {
-        showWindow();
+        const urls: string[] = Array.isArray(extra?.urls) ? extra.urls : (argv || []).filter((a: string) => notifyMod.isUrlArg(a));
         const files = Array.isArray(extra?.files) ? extra.files : (argv || []).filter((a: string) => fileArgRe.test(a));
+        if (!urls.length || files.length)
+            showWindow();
+        for (const u of urls)
+            handleUrlArg(u);
         for (const f of files)
             void handleFileArg(f);
     });
@@ -557,6 +562,7 @@ async function main() {
         show: () => showWindow(),
         hotkey: () => applyHotkey(),
         notify_hidden: (msg: string) => { if (win && !win.isVisible() && (backend?.store.config || {}).notify_hidden !== false) trayMod.notify(msg); },
+        focused: () => Boolean(win && !win.isDestroyed() && win.isVisible() && win.isFocused() && !win.isMinimized()),
         progress: (v: number) => { try { win?.setProgressBar(v, { mode: v < 0 ? 'none' : v >= 1 ? 'none' : 'normal' }); } catch { /* sem barra */ } },
     };
     if (process.platform === 'win32')
@@ -570,6 +576,7 @@ async function main() {
         createWindow(`http://127.0.0.1:${server.port}/index.html`);
         applyHotkey();
         trayMod.build({ be: backend, show: () => showWindow(), quit: () => quitApp(), js: (code) => { showWindow(); runJs(code); }, frameLast: () => frameLast });
+        notifyMod.attach({ be: backend, show: () => showWindow(), openGame: (k) => { showWindow(); runJs(`openGame(${JSON.stringify(k)})`); }, play: (k) => { showWindow(); runJs(`play(${JSON.stringify(k)})`); } });
     }
     // prepara as pastas e a biblioteca em segundo plano
     setTimeout(() => backend?.bootstrapRun(), 800);
@@ -584,8 +591,10 @@ async function main() {
     stall.unref?.();
     if (!CONSOLE) {
         const files = [...pendingFiles, ...process.argv.slice(1).filter((a) => fileArgRe.test(a)).map((a) => path.resolve(a))];
+        const urls = [...pendingUrls, ...process.argv.slice(1).filter((a) => notifyMod.isUrlArg(a))];
         pendingFiles.length = 0;
-        setTimeout(() => { for (const f of new Set(files)) void handleFileArg(f); }, 2500);
+        pendingUrls.length = 0;
+        setTimeout(() => { for (const f of new Set(files)) void handleFileArg(f); for (const u of new Set(urls)) handleUrlArg(u); }, 2500);
     }
     setTimeout(() => backend?.autostartSync(), 1500);
     if (!CONSOLE) {
@@ -666,6 +675,14 @@ electron.app.on('window-all-closed', () => {
  * janela), o arquivo chega no argv. Aqui ele e entregue ao modulo certo.
  */
 const pendingFiles: string[] = [];
+const pendingUrls: string[] = [];
+function handleUrlArg(u: string) {
+    if (!backend || CONSOLE) {
+        pendingUrls.push(u);
+        return;
+    }
+    notifyMod.handleUrl(u);
+}
 async function handleFileArg(file) {
     if (!file || !fs.existsSync(file))
         return;

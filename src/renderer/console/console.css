@@ -190,3 +190,5 @@ body.dim::after{content:"";position:fixed;inset:0;z-index:200;background:#000;op
 .item.err .prog i,.item.err .st{color:#ff6b7a}
 .item.err .prog i{background:#ff6b7a}
 .item .act{flex:none;font-size:calc(12px * var(--u));opacity:.6;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+
+#detail .dshots{display:flex;gap:calc(8px * var(--u));overflow:hidden;margin:0 0 calc(16px * var(--u));flex:none}#detail .dshots img{height:calc(96px * var(--u));aspect-ratio:16/9;object-fit:cover;border-radius:calc(8px * var(--u));background:rgba(255,255,255,.06);flex:none}

@@ -43,6 +43,7 @@ export class Jobs {
             },
         };
         const job: Job = { cancel, last: prog('download', 0, 'Iniciando...'), kind, title, started: util.now(), retry, pause: false };
+        const wasInstalled = kind === 'install' && Boolean((this.be.store.lib(key) || {}).installed);
         this.jobs.set(key, job);
         this.histPut(key, title, kind, 'running', { retry });
         const cb = (p: Progress) => {
@@ -53,8 +54,10 @@ export class Jobs {
                 const result = await fn(cb, cancel);
                 this.histPut(key, title, kind, 'done', { dir: (result || {}).dir });
                 this.be.push({ type: 'done', key, title, kind, ...(result || {}) });
-                if (kind === 'install' || kind === 'emulator')
-                    this.be.windowHooks?.notify_hidden?.(`${title}: pronto`);
+                if (kind === 'install' && !(result || {}).external)
+                    void this.be.osToast({ title: wasInstalled ? `${title} atualizado` : `${title} pronto`, body: wasInstalled ? 'A nova versão já está instalada.' : 'Download e instalação concluídos.', key, play: true });
+                else if (kind === 'emulator')
+                    void this.be.osToast({ title: `${title} pronto`, body: 'Emulador instalado.' });
             }
             catch (ex: any) {
                 if (ex instanceof CancelledError || ex?.name === 'CancelledError' || (cancel.aborted && /cancel/i.test(String(ex?.message || ex)))) {
@@ -197,7 +200,7 @@ export class Jobs {
         timer.unref?.();
         this.after = { action: act, at, timer };
         this.be.push({ type: 'after_queue', action: act, at });
-        this.be.windowHooks?.notify_hidden?.(`Fila terminou: ${AFTER_LABEL[act] || act} em 1 minuto`);
+        void this.be.osToast({ title: 'Fila terminou', body: `${AFTER_LABEL[act] || act} em 1 minuto.` });
     }
     afterRun(act: string) {
         this.after = null;

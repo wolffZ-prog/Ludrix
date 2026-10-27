@@ -1,7 +1,7 @@
 {
-  "version": "4.0.15",
+  "version": "4.0.16",
   "channel": "stable",
-  "date": "2026-10-26",
+  "date": "2026-10-27",
   "name": "LudrixHub",
   "changelog": "",
   "patch_min": "4.0.1",

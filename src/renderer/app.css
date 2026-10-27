@@ -485,7 +485,7 @@ body:has(.gpind.on) .top,body:has(.gpind.on)[data-layout=top] .rail{padding-righ
 .src b{font-size:14px}.src span{font-size:12px;color:var(--muted)}
 .src.add{border-style:dashed;align-items:center;justify-content:center;color:var(--muted)}
 .src .n{font-size:20px;font-weight:800;color:var(--accent2);line-height:1.2;margin-top:2px}
-.src .u{font-size:11px;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl;text-align:left}
+.src .u{font-size:11px;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 .sites{display:flex;gap:8px;flex-wrap:wrap}
 .site{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;background:var(--card);border:1px solid var(--line);font-size:12.5px;font-weight:600;cursor:pointer}
@@ -2350,3 +2350,23 @@ html:not([data-anim="off"]) body:not(.rm) .filt .pop{animation:popIn .4s var(--s
 @keyframes popIn{from{opacity:0;transform:translateY(-6px) scale(.96)}to{opacity:1;transform:none}}
 html:not([data-anim="off"]) body:not(.rm) .toast{animation:toastIn .5s var(--spring,cubic-bezier(.2,.8,.2,1))}
 @keyframes toastIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+
+.rxh.rxc{display:flex;align-items:center;justify-content:space-between;cursor:pointer}.rxh.rxc i{display:none;width:14px;height:14px;opacity:.7}.rxh.rxc i svg{width:14px;height:14px}.rxh.rxc:hover i{display:inline-flex}
+.crows{display:flex;flex-direction:column;gap:6px;margin:4px 0 2px}.crow{display:flex;align-items:center;gap:8px;padding:4px 6px;border:1px solid var(--line);border-radius:var(--r2,8px)}.crow>i{display:inline-flex;width:16px;height:16px;color:var(--muted)}.crow>i svg{width:16px;height:16px}.crow input{flex:1;min-width:0;background:transparent;border:0;color:var(--text);font:inherit;font-size:13px;padding:4px 2px;outline:0}.crow input:focus{background:var(--hover)}.crow span{font-size:11.5px;color:var(--muted);white-space:nowrap}
+
+.fchips.smart .lbl{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--muted);margin-right:2px}.fchips.smart .lbl svg{width:12px;height:12px}.fchips.smart .fchip.ro{cursor:default;opacity:.85}.fchips.smart .fchip.ro:hover{background:inherit}
+
+.dsk{border:1px solid var(--line);border-radius:var(--r);background:var(--card);margin-bottom:10px;overflow:hidden}
+.dskh{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;user-select:none;min-width:0}
+.dskh>svg{width:18px;height:18px;flex:none;color:var(--muted)}.dskh>svg:last-child{width:16px;height:16px;transition:transform .2s}.dsk.open .dskh>svg:last-child{transform:rotate(180deg)}
+.dskh b{font-size:14px;font-weight:700}.dskh .dsn{font-size:12px;color:var(--muted2)}.dskh .dsf{font-size:12px;color:var(--muted);white-space:nowrap}
+.dsbar{position:relative;height:5px;margin:0 14px 12px;border-radius:3px;background:color-mix(in srgb,var(--text) 10%,transparent);overflow:hidden}
+.dsbar i,.dsbar em{position:absolute;left:0;top:0;bottom:0;border-radius:3px}.dsbar i{background:color-mix(in srgb,var(--text) 28%,transparent)}.dsbar em{background:var(--accent)}
+.dskl{display:none;border-top:1px solid var(--line)}.dsk.open .dskl{display:block}
+.dsg{display:flex;align-items:center;gap:10px;padding:7px 14px;min-width:0;border-top:1px solid color-mix(in srgb,var(--line) 55%,transparent)}.dsg:first-child{border-top:0}
+.dsg img{width:26px;height:36px;object-fit:cover;border-radius:4px;flex:none;background:color-mix(in srgb,var(--text) 8%,transparent)}
+.dsg .dsgt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}.dsg .dsgt b{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}.dsg .dsgt b:hover{color:var(--accent)}
+.dsg .dsgt span{font-size:11px;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dsg .dsz{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;min-width:64px;text-align:right}.dsg .dsz i{color:var(--muted2);font-style:normal}
+.dsg.busy{opacity:.7}
+.mlist.dskp button{display:flex;align-items:center;gap:10px;text-align:left}.mlist.dskp button b{font-weight:700}.mlist.dskp button span{color:var(--muted);font-size:12px;flex:1}.mlist.dskp button em{font-style:normal;font-size:11px;color:var(--amber)}

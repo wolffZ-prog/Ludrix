@@ -204,7 +204,7 @@ async function osInfo() {
     return { name, version: ver, build, arch: os.arch() === 'x64' ? 'AMD64' : os.arch(), python: '', node: process.versions.node, electron: process.versions.electron || '' };
 }
 
-function disks() {
+export function disks() {
     const out: Array<{ mount: string; total: number; free: number; launcher: boolean }> = [];
     const usage = (p: string) => {
         const st = fs.statfsSync(p);

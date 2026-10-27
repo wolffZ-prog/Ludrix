@@ -423,6 +423,12 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, be.markPlayed(b.key, b.played !== false));
     if (p === '/api/fav')
         return sendJson(res, be.toggleFavorite(b.key));
+    if (p === '/api/collections/save')
+        return sendJson(res, be.collectionSave(String(b.id || ''), String(b.name || ''), Array.isArray(b.keys) ? b.keys : undefined));
+    if (p === '/api/collections/remove')
+        return sendJson(res, be.collectionRemove(String(b.id || '')));
+    if (p === '/api/collections/toggle')
+        return sendJson(res, be.collectionToggle(String(b.id || ''), String(b.key || ''), typeof b.on === 'boolean' ? b.on : undefined));
     if (p === '/api/hide')
         return sendJson(res, be.toggleHidden(b.key));
     if (p === '/api/local/add')
@@ -457,6 +463,8 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, be.undoRemove());
     if (p === '/api/set_exe')
         return sendJson(res, await be.setExe(b.key, b.rel));
+    if (p === '/api/disk/space')
+        return sendJson(res, be.diskSpace(Boolean(b.refresh)));
     if (p === '/api/game/size')
         return sendJson(res, await be.folderSize(b.key));
     if (p === '/api/open')
