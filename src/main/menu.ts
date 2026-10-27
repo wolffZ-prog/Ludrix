@@ -136,13 +136,21 @@ function hideNow(r: any) {
         fin(r);
 }
 let areaOrigin = { x: 0, y: 0 };
-function applyRect(w: electron.BrowserWindow, r: { l: number; t: number; w: number; h: number }) {
+function applyRect(w: electron.BrowserWindow, r: { l: number; t: number; w: number; h: number }): boolean {
+    const want = { x: areaOrigin.x + Math.round(r.l), y: areaOrigin.y + Math.round(r.t), width: Math.max(8, Math.round(r.w)), height: Math.max(8, Math.round(r.h)) };
     try {
-        w.setBounds({ x: areaOrigin.x + Math.round(r.l), y: areaOrigin.y + Math.round(r.t), width: Math.max(8, Math.round(r.w)), height: Math.max(8, Math.round(r.h)) });
+        w.setBounds(want);
+        const got = w.getBounds();
+        if (Math.abs(got.width - want.width) > 4 || Math.abs(got.height - want.height) > 4) {
+            log.warn('menu popup: janela não aceitou %dx%d (ficou %dx%d)', want.width, want.height, got.width, got.height);
+            return false;
+        }
         w.webContents.invalidate();
+        return true;
     }
     catch (e) {
         log.warn('menu popup: %s', e);
+        return false;
     }
 }
 function ensureWin(): electron.BrowserWindow {
@@ -151,7 +159,7 @@ function ensureWin(): electron.BrowserWindow {
     poolReady = false;
     const area = electron.screen.getPrimaryDisplay().workArea;
     const w = new electron.BrowserWindow({
-        x: area.x, y: area.y, width: 320, height: 420, show: false, frame: false, transparent: true, resizable: true, movable: false,
+        x: area.x, y: area.y, width: 320, height: 420, show: false, frame: false, transparent: true, resizable: false, movable: false,
         minimizable: false, maximizable: false, fullscreenable: false, skipTaskbar: true, alwaysOnTop: true, hasShadow: false, focusable: true, title: '',
         backgroundColor: '#00000000',
         webPreferences: { preload: path.join(__dirname, 'menuPreload.js'), sandbox: true, contextIsolation: true, nodeIntegration: false, devTools: false, backgroundThrottling: false },
@@ -186,11 +194,19 @@ electron.ipcMain.on('lxm', (e, t: string, v: any) => {
     if (t === 'ready') {
         const sq = v && typeof v === 'object' ? Number(v.seq) : Number(v);
         if (sq === seq && current === pool && !visible) {
-            if (v && typeof v === 'object' && v.rect && v.rect.w > 0 && v.rect.h > 0)
-                applyRect(pool, v.rect);
+            if (v && typeof v === 'object' && v.rect && v.rect.w > 0 && v.rect.h > 0 && !applyRect(pool, v.rect)) {
+                hideNow({ ok: false });
+                dispose();
+                return;
+            }
             visible = true;
             pool.show();
             pool.focus();
+            if (!pool.isVisible()) {
+                log.warn('menu popup: janela não apareceu');
+                hideNow({ ok: false });
+                return;
+            }
             log.debug('menu popup: %d ms', Date.now() - t0);
         }
         return;
@@ -261,7 +277,7 @@ export function show(o: MenuOpts): Promise<any> {
             go();
         else
             w.webContents.once('did-finish-load', () => setTimeout(go, 0));
-        setTimeout(() => { if (seq === my && current === w && !visible) hideNow({ ok: false }); }, 2500);
+        setTimeout(() => { if (seq === my && current === w && !visible) { log.warn('menu popup: sem resposta em 1,2 s'); hideNow({ ok: false }); } }, 1200);
     });
 }
 export const activeWindow = () => current;

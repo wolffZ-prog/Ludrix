@@ -144,6 +144,7 @@ const I = {
   wrench: '<svg viewBox="0 0 24 24"><path d="M7 10h3v-3l-3.5 -3.5a6 6 0 0 1 8 8l6 6a2 2 0 0 1 -3 3l-6 -6a6 6 0 0 1 -8 -8l3.5 3.5" /></svg>',
   home: '<svg viewBox="0 0 24 24"><path d="M5 12l-2 0l9 -9l9 9l-2 0" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /></svg>',
   win: '<svg viewBox="0 0 24 24"><path d="M17.8 20l-12 -1.5c-1 -.1 -1.8 -.9 -1.8 -1.9v-9.2c0 -1 .8 -1.8 1.8 -1.9l12 -1.5c1.2 -.1 2.2 .8 2.2 1.9v12.1c0 1.2 -1.1 2.1 -2.2 1.9l0 .1" /><path d="M12 5l0 14" /><path d="M4 12l16 0" /></svg>',
+  sliders: '<svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
   hdd: '<svg viewBox="0 0 24 24"><path d="M3 7a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v3H3zM3 14a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v3a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3z"/><path d="M7 7h.01M7 17h.01"/></svg>',
   move: '<svg viewBox="0 0 24 24"><path d="M5 4h4l3 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2M10 14h6M13 11l3 3-3 3"/></svg>',
   disc: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" /><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M7 12a5 5 0 0 1 5 -5" /><path d="M12 17a5 5 0 0 0 5 -5" /></svg>',
@@ -691,8 +692,7 @@ function renderView() {
   qfabSync();
   closeCtx(); enterFx();
   const grid = ['home', 'store'].includes(S.view) && !(S.view === 'store' && S.tab.store === 'sources');
-  parkTop(); $('#sort').style.display = grid ? '' : 'none';
-  if (grid) renderSortBtn(); applyQPlaceholder();
+  applyQPlaceholder();
   $('#helppop').classList.remove('on');
   if (S.view === 'home') renderLibrary();
   else if (S.view === 'store') { if (S.tab.store === 'sources') renderSources(); else { renderLibrary(); guide('store'); } }
@@ -799,7 +799,6 @@ function catMenu(btn) {
   const r = btn.getBoundingClientRect(); showCtx(items, r.left, r.bottom + 6, 'Categoria');
 }
 $('#chips').addEventListener('click', e => { const b = e.target.closest('[data-dd]'); if (!b) return; e.stopPropagation(); catMenu(b); });
-function parkTop() { const top = $('.top'), sb = $('#sort'); if (top && sb && sb.parentElement !== top) top.appendChild(sb); }
 const QCHIPS = [['', 'Todos'], ['fav', 'Favoritos'], ['recent', 'Jogados esta semana'], ['never', 'Nunca joguei']];
 function qchipOn(id) { if (!id) return !filtersActive(); return S.flt.flags.size === 1 && S.flt.flags.has(id) && fltCount() === 1 && S.cat === 'all'; }
 const STORE_CHIPS = [['', 'Tudo'], ['fresh', 'Novos'], ['direct', 'Download direto'], ['torrent', 'Torrent']];
@@ -820,14 +819,13 @@ function renderLibrary() {
   const list = visible();
   const fltNames = fltLabels().map(x => x[2]);
   const catName = S.view === 'home' ? 'Biblioteca' : S.cat !== 'all' ? (S.cats.find(c => c.id === S.cat) || {}).name : fltNames.length ? fltNames.slice(0, 3).join(' · ') + (fltNames.length > 3 ? ` +${fltNames.length - 3}` : '') : 'Catálogo';
-  parkTop();
   let h = '';
   if (S.view === 'store') h += storeTabs();
   if (S.view === 'store' && !filtersActive() && !S.q && S.hero.length && S.config.hero_enabled !== false) h += heroHtml();
   if (S.view === 'home' && !filtersActive() && !S.q) h += homeTop();
   h += `<div class="h1"><h2>${esc(catName)}</h2>${S.view === 'home' ? quickChips() : storeChips()}<span class="cnt">${list.length} ${list.length === 1 ? 'jogo' : 'jogos'}</span><span class="sp"></span>
         ${!topSearchVisible() ? `<div class="qmini ${S.q ? 'on' : ''}"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="qm" placeholder="Buscar…" value="${esc(S.q)}" autocomplete="off" spellcheck="false" oninput="miniSearch(this.value)" onfocus="this.parentElement.classList.add('on')" onblur="if(!this.value)this.parentElement.classList.remove('on')"><kbd>/</kbd></div>` : ''}
-        <span class="slot" id="sortSlot"></span>${['home', 'store'].includes(S.view) ? viewBtn() : ''}${filterBtn()}
+${filterBtn()}
         ${S.view === 'home' ? `<button class="btn s xs ic" onclick="surprise()" title="Me surpreenda — escolhe um jogo para você jogar agora">${I.dice}</button><button class="btn p xs addbtn" onclick="addGameMenu()">+ Adicionar</button>` : `<button class="btn s xs" onclick="loadCatalog(true)" title="${S.checkedAt ? 'Última leitura das fontes: ' + new Date(S.checkedAt * 1000).toLocaleString('pt-BR') : 'Fontes ainda não lidas'}">${I.refresh}<span class="lb">Atualizar</span></button>`}</div>`;
   h += activeChips();
   const noSrc = S.view === 'store' && !S.repos.some(r => r.enabled && r.kind !== 'rom');
@@ -841,7 +839,6 @@ function renderLibrary() {
   if (!pk) S.panelKey = '';
   $('#view').innerHTML = pin || pk ? `<div class="libwrap${pk ? ' pw' : ''}${pin && pk ? ' fp' : ''}"><div class="libmain">${h}</div>${pin ? fpanelHtml() : ''}${pk ? gpanelHtml(pk) : ''}</div>` : h;
   if (pk) gpanelFill(pk);
-  const slot = $('#sortSlot'), sb = $('#sort'); if (slot && sb && ['home', 'store'].includes(S.view)) { slot.appendChild(sb); sb.style.display = ''; }
   if (pin && pst) { const np = $('#fpanel'); if (np) np.scrollTop = pst; }
   if (list.length) fillGrid(list);
   if (S.hero.length && $('#hero')) showHero(S.heroIdx);
@@ -1201,14 +1198,6 @@ function cardHtml(g, i) {
       ${job ? ringSvg(job.fraction) + prog : ''}</div>
     <h4 title="${esc([g.title, g.creator || g.fr, g.year, g.playtime >= 60 ? fmtTime(g.playtime) + ' jogados' : ''].filter(Boolean).join(' · '))}">${esc(g.title)}</h4>${cardSub(g)}${srcB ? `<div class="sub">${srcB}</div>` : ''}</div>`;
 }
-$('#sort').addEventListener('click', e => { e.stopPropagation(); sortMenu($('#sort')); });
-function sortMenu(btn) {
-  const items = SORTS.filter(([id]) => id !== 'fresh' || S.view === 'store').map(([id, l]) => ({ label: l, icon: S.sort === id ? 'check' : '', fn: () => setSort(id) }));
-  items.push({ label: 'Ordem inversa', icon: S.sortRev ? 'check' : '', fn: () => { S.sortRev = !S.sortRev; S.page = 1; renderSortBtn(); renderLibrary(); } });
-  if (S.view === 'home') items.push({ label: 'Favoritos primeiro', icon: S.config.fav_first ? 'check' : '', fn: () => setCfg({ fav_first: !S.config.fav_first }).then(() => { S.page = 1; renderLibrary(); }) });
-  if (['home', 'store'].includes(S.view)) { items.push({ sep: true }); for (const [id, l] of GROUPS) items.push({ label: id ? 'Agrupar: ' + l : 'Sem grupos', icon: groupBy() === id ? 'check' : '', fn: () => setGroupBy(id) }); if (groupBy()) { items.push({ sep: true }, { label: 'Recolher todos os grupos', icon: 'chev', fn: () => groupsAll(true) }, { label: 'Expandir todos os grupos', icon: '', fn: () => groupsAll(false) }); } }
-  const r = btn.getBoundingClientRect(); showCtx(items, r.right - 230, r.bottom + 6, 'Ordenar e agrupar');
-}
 const FILTER_VIEWS = ['settings', 'central', 'emulation', 'mods', 'downloads', 'flash'];
 const Q_PLACEHOLDER = { home: 'Buscar em tudo…  (/)', store: 'Buscar na Store…  (/)', settings: 'Buscar nos ajustes…  (/)', central: 'Buscar na Central…  (/)', emulation: 'Buscar emuladores e ROMs…  (/)', mods: 'Buscar em Mods…  (/)', downloads: 'Buscar na fila…  (/)', flash: 'Buscar jogos rápidos…  (/)' };
 const Q_LEAF = '.frow, .tile, .theme, .iset, .hw, .item, .site, .mrow, .card, .src, .row, label.mchk1, .checks label, .sec > p, .gmapps > *';
@@ -1255,7 +1244,7 @@ function searchInView() {
 function applyQPlaceholder() { const i = $('#q'); if (!i) return; const n = S.view === 'home' ? S.games.filter(g => g.installed).length : 0; i.title = n ? 'Prefixos: dev:, ano:, gen:, sis:, origem:' : ''; i.placeholder = n ? `Buscar em ${n} jogos…  (/)` : (Q_PLACEHOLDER[S.view] || Q_PLACEHOLDER.home); }
 const qObs = new MutationObserver(() => { if (S.q && FILTER_VIEWS.includes(S.view) && !S._qfBusy) { S._qfBusy = true; requestAnimationFrame(() => { S._qfBusy = false; viewFilter(); }); } });
 qObs.observe($('#view'), { childList: true, subtree: true });
-function renderSortBtn() { const b = $('#sort'); if (!b) return; const cur = SORTS.find(x => x[0] === S.sort) || SORTS[0]; b.innerHTML = `${I.sort}<span class="lbl">${esc(cur[1])}</span><svg class="car" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>`; b.classList.toggle('on', S.sort !== (S.view === 'store' ? 'fresh' : 'az') || !!S.sortRev); if (S.sortRev) b.querySelector('.lbl').textContent += ' ↓'; }
+function renderSortBtn() { }
 function focusSearch() { const m = $('#qm'); if (m && m.offsetParent) { m.parentElement.classList.add('on'); m.focus(); return; } if (topSearchVisible()) { $('#q').focus(); return; } if (!['home', 'store'].includes(S.view)) { setView(S.repos.some(r => r.enabled) ? 'store' : 'home'); return setTimeout(focusSearch, 80); } $('#q').focus(); }
 let qmt; function miniSearch(v) { S._siteQ = ''; clearTimeout(qmt); qmt = setTimeout(() => { S.q = v; S.page = 1; const i = $('#q'); if (i) i.value = v; renderLibrary(); const m = $('#qm'); if (m) { m.parentElement.classList.add('on'); m.focus(); m.setSelectionRange(v.length, v.length); } }, 160); }
 $('#q').addEventListener('keydown', e => { if (e.key === 'Escape' && e.target.value) { e.preventDefault(); e.stopPropagation(); clearSearch(); } else if (e.key === 'Escape') e.target.blur(); });
@@ -2864,7 +2853,9 @@ function fpanelHtml() {
   const presets = S.config.filter_presets || [];
   const quick = QUICK.filter(([id]) => S.view !== 'store' || !['installed', 'notinst', 'never'].includes(id)).map(([id, nm]) => `<button class="${f.flags.has(id) ? 'on' : ''}" onclick="toggleFlt('flags',${jsq(id)})">${esc(nm)}${P.fcount[id] ? ` <em>${P.fcount[id]}</em>` : ''}</button>`).join('');
   return `<aside class="fpanel" id="fpanel" onclick="event.stopPropagation()">
-    <div class="fph"><b>Filtros</b>${n ? `<span class="n">${n}</span>` : ''}<span class="sp"></span>${n ? `<button class="lnk" onclick="clearFlt()">Limpar</button>` : ''}<button class="fpx" onclick="fpOpen(false)" title="Fechar painel">${I.x}</button></div>
+    <div class="fph"><b>Exibição e filtros</b>${n ? `<span class="n">${n}</span>` : ''}<span class="sp"></span>${n ? `<button class="lnk" onclick="clearFlt()">Limpar filtros</button>` : ''}<button class="fpx" onclick="fpOpen(false)" title="Fechar painel">${I.x}</button></div>
+    ${fpViewHtml()}
+    <div class="fpsub"><b>Filtros</b>${n ? `<i>${n}</i>` : ''}</div>
     <div class="fpre"><select onchange="fpApplyPreset(this.value)" title="Filtros salvos"><option value="">${presets.length ? 'Filtros salvos…' : 'Nenhum filtro salvo'}</option>${presets.map((p, i) => `<option value="${i}" ${S._fpreset === i ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
       ${S._fpreset !== undefined && presets[S._fpreset] ? `<button class="btn s xs" onclick="fpDelPreset()" title="Excluir este filtro salvo">${I.trash}</button>` : `<button class="btn s xs" onclick="fpSavePreset()" ${n ? '' : 'disabled'} title="Salvar a combinação atual com um nome">Salvar</button>`}</div>
     ${quick ? `<div class="fquick">${quick}</div>` : ''}
@@ -2893,9 +2884,30 @@ function fpDelPreset() {
   const list = [...(S.config.filter_presets || [])], p = list[S._fpreset]; if (!p) return;
   modal({ title: 'Excluir filtro salvo', text: `"${p.name}" sai da lista. Os jogos não são afetados.`, ok: 'Excluir', danger: true, onOk: () => { list.splice(S._fpreset, 1); S._fpreset = undefined; setCfg({ filter_presets: list }).then(renderLibrary); } });
 }
+function viewTweaks() {
+  if (!['home', 'store'].includes(S.view)) return 0;
+  const defS = S.view === 'store' ? 'fresh' : 'az', defG = S.view === 'store' ? '' : 'letter';
+  return (S.sort !== defS || S.sortRev ? 1 : 0) + (groupBy() !== defG ? 1 : 0) + ((S.config.view_mode || 'mural') !== 'mural' ? 1 : 0);
+}
 function filterBtn() {
-  const n = fltCount();
-  return `<button class="btn s xs ${n || fpOn() ? 'p' : ''}" onclick="fpOpen()" title="Abre ou fecha o painel de filtros (fica aberto até você fechar)">${I.filter}<span class="lb">Filtros${n ? ` (${n})` : ''}</span></button>`;
+  const n = fltCount() + viewTweaks();
+  return `<button class="btn s xs ${n || fpOn() ? 'p' : ''}" onclick="fpOpen()" title="Ordem, grupos, modo de exibição e filtros — o painel fica aberto até você fechar">${I.sliders}<span class="lb">Exibição${n ? ` (${n})` : ''}</span></button>`;
+}
+function fpViewHtml() {
+  if (!['home', 'store'].includes(S.view)) return '';
+  const g = groupBy(), defS = S.view === 'store' ? 'fresh' : 'az', defG = S.view === 'store' ? '' : 'letter', lm = listMode(), n = viewTweaks();
+  const open = S._fopen.view !== undefined ? S._fopen.view : true;
+  const seg = (items, cur, fn) => `<div class="seg fsort">${items.map(([id, l]) => `<button class="${cur === id ? 'on' : ''}" onclick="${fn(id)}">${l}</button>`).join('')}</div>`;
+  return `<div class="fsc fview${open ? ' open' : ''}"><button class="fsh" onclick="fpToggle('view')"><b>Exibição</b>${n ? `<i>${n}</i>` : ''}<svg class="car" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+    ${open ? `<div class="fsb">
+      <h6>Ordem</h6>${seg(SORTS.filter(([id]) => id !== 'fresh' || S.view === 'store'), S.sort, id => `setSort('${id}')`)}
+      <label class="fbox ${S.sortRev ? 'on' : ''}"><input type="checkbox" ${S.sortRev ? 'checked' : ''} onchange="S.sortRev=!S.sortRev;S.page=1;renderLibrary()"><span>Ordem inversa</span></label>
+      ${S.view === 'home' ? `<label class="fbox ${S.config.fav_first ? 'on' : ''}"><input type="checkbox" ${S.config.fav_first ? 'checked' : ''} onchange="setCfg({fav_first:!S.config.fav_first}).then(()=>{S.page=1;renderLibrary()})"><span>Favoritos primeiro</span></label>` : ''}
+      <h6>Agrupar</h6>${seg(GROUPS, g, id => `setGroupBy(${jsq(id)})`)}${g ? `<div class="gall"><button class="lnk" onclick="groupsAll(true)">Recolher todos</button><button class="lnk" onclick="groupsAll(false)">Expandir todos</button></div>` : ''}
+      <h6>Modo</h6>${seg([['mural', 'Mural'], ['grid', 'Grade'], ['list', 'Lista']], S.config.view_mode || 'mural', id => `setViewMode(${jsq(id)})`)}
+      ${lm ? `<h6>Colunas da lista</h6><div class="seg fsort">${LIST_COLS.map(([id, l]) => `<button class="${listCols().includes(id) ? 'on' : ''}" onclick="toggleListCol(${jsq(id)})">${l}</button>`).join('')}</div>` : `<h6>Tamanho das capas</h6><label class="zoom vz"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><input type="range" min="100" max="300" step="10" value="${S.config.card_size || 136}" oninput="setCardSize(this.value,false)" onchange="setCardSize(this.value,true)"></label>`}
+      ${n ? `<button class="lnk fsmore" onclick="S.sortRev=false;setSort(${jsq(defS)});setGroupBy(${jsq(defG)}).then(()=>setCfg({view_mode:'mural'}).then(renderLibrary))">Voltar ao padrão</button>` : ''}
+    </div>` : ''}</div>`;
 }
 const SYS_ALIAS = { ps1: ['ps1', 'psx', 'psone', 'playstation1', 'play1'], ps2: ['ps2', 'playstation2', 'play2'], ps3: ['ps3', 'playstation3', 'play3'], psp: ['psp'], snes: ['snes', 'supernintendo'], nes: ['nes', 'nintendinho', 'famicom'], n64: ['n64', 'nintendo64'], gc: ['gc', 'gamecube', 'ngc'], wii: ['wii'], wiiu: ['wiiu'], switch: ['switch', 'nsw'], '3ds': ['3ds'], nds: ['ds', 'nds'], gba: ['gba'], gbc: ['gbc'], gb: ['gb', 'gameboy'], dc: ['dc', 'dreamcast'], saturn: ['saturn'], genesis: ['genesis', 'megadrive', 'md'], sms: ['sms', 'mastersystem'], xbox: ['xbox'], x360: ['x360', 'xbox360'], arcade: ['arcade', 'mame', 'fliperama'], pce: ['pce', 'pcengine', 'turbografx'], dos: ['dos', 'msdos'], atari2600: ['atari', 'atari2600'], pc: ['pc', 'windows', 'computador'] };
 const SMART_WORDS = { instalado: 'installed', instalados: 'installed', instalada: 'installed', instaladas: 'installed', favorito: 'fav', favoritos: 'fav', favorita: 'fav', favoritas: 'fav', nunca: 'never', jogado: 'played', jogados: 'played', recente: 'recent', recentes: 'recent', novo: 'fresh', novos: 'fresh', novidade: 'fresh', novidades: 'fresh', torrent: 'torrent', direto: 'direct', grande: 'big', grandes: 'big', pesado: 'big', pesados: 'big', antigo: 'old', antigos: 'old', leve: 'light', leves: 'light' };
@@ -2923,31 +2935,10 @@ function activeChips() {
   const L = fltLabels(); if (!L.length && S.cat === 'all') return smartChips();
   return smartChips() + `<div class="fchips">${S.cat !== 'all' ? `<button class="fchip" onclick="S.cat='all';S.page=1;renderLibrary()" title="Remover">${esc((S.cats.find(c => c.id === S.cat) || {}).name || S.cat)}${I.x}</button>` : ''}${L.map(([k, id, nm]) => `<button class="fchip" onclick="toggleFlt('${k}',${jsq(id)})" title="Remover">${esc(nm)}${I.x}</button>`).join('')}${L.length + (S.cat !== 'all' ? 1 : 0) > 1 ? `<button class="lnk" onclick="clearFlt()">Limpar tudo</button>` : ''}</div>`;
 }
-function viewBtn() {
-  const g = groupBy(), defS = S.view === 'store' ? 'fresh' : 'az', defG = S.view === 'store' ? '' : 'letter', lm = listMode(), n = (S.sort !== defS ? 1 : 0) + (g !== defG ? 1 : 0) + ((S.config.view_mode || 'mural') !== 'mural' ? 1 : 0);
-  return `<div class="filt" id="vpop"><button class="btn s xs ${n ? 'p' : ''}" onclick="toggleFilt(undefined,'vpop')" title="Ordem, grupos, grade ou lista e tamanho das capas">${I.layout}<span class="lb">Exibição</span></button>
-    <div class="pop wide" onclick="event.stopPropagation()">
-      <div class="fhead"><b>Exibição</b><span>como os jogos aparecem nesta tela</span>${n ? `<button class="btn s xs" onclick="setSort(${jsq(defS)});setGroupBy(${jsq(defG)}).then(()=>setCfg({view_mode:'mural'}))">Padrão</button>` : ''}</div>
-      <div class="fsec"><h5>Ordem</h5><div class="seg fsort">${SORTS.filter(([id]) => id !== 'fresh' || S.view === 'store').map(([id, l]) => `<button class="${S.sort === id ? 'on' : ''}" onclick="setSort('${id}');toggleFilt(true,'vpop')">${l}</button>`).join('')}</div></div>
-      <div class="fsec"><h5>Agrupar</h5><div class="seg fsort">${GROUPS.map(([id, l]) => `<button class="${g === id ? 'on' : ''}" onclick="setGroupBy(${jsq(id)}).then(()=>toggleFilt(true,'vpop'))">${l}</button>`).join('')}</div>${g ? `<div class="gall"><button class="lnk" onclick="groupsAll(true)">Recolher todos</button><button class="lnk" onclick="groupsAll(false)">Expandir todos</button></div>` : ''}</div>
-      <div class="fsec"><h5>Modo</h5><div class="seg fsort">${[['mural', 'Mural com painel'], ['grid', 'Grade de capas'], ['list', 'Lista']].map(([id, l]) => `<button class="${(S.config.view_mode || 'mural') === id ? 'on' : ''}" onclick="setViewMode(${jsq(id)});requestAnimationFrame(()=>toggleFilt(true,'vpop'))">${l}</button>`).join('')}</div></div>
-      ${lm ? `<div class="fsec"><h5>Colunas da lista</h5><div class="seg fsort">${LIST_COLS.map(([id, l]) => `<button class="${listCols().includes(id) ? 'on' : ''}" onclick="toggleListCol(${jsq(id)})">${l}</button>`).join('')}</div></div>` : ''}
-      ${lm ? '' : `<div class="fsec"><h5>Tamanho das capas</h5><label class="zoom vz"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><input type="range" min="100" max="300" step="10" value="${S.config.card_size || 136}" oninput="setCardSize(this.value,false)" onchange="setCardSize(this.value,true)"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></label></div>`}
-    </div></div>`;
-}
-function vpopPortal() { let w = $('#vpop-portal'); if (!w) { w = document.createElement('div'); w.id = 'vpop-portal'; w.className = 'filt'; document.body.appendChild(w); } return w; }
-function vpopClose() { const w = $('#vpop-portal'); if (!w) return; w.classList.remove('on'); const pop = w.querySelector('.pop'), f = $('#vpop'); if (pop) { pop.removeAttribute('style'); if (f && !f.querySelector('.pop')) f.appendChild(pop); else pop.remove(); } }
 function toggleFilt(force, id) {
   if (!id) return fpOpen(force);
   const f = $('#' + id); if (!f) return; const on = force !== undefined ? force : !f.classList.contains('on');
   if (on) document.querySelectorAll('.filt.on').forEach(x => { if (x !== f) x.classList.remove('on'); });
-  if (id === 'vpop') {
-    vpopClose(); f.classList.toggle('on', on); if (!on) return;
-    const w = vpopPortal(), pop = f.querySelector('.pop'); if (!pop) return;
-    w.innerHTML = ''; w.appendChild(pop); w.classList.add('on');
-    for (const [k, v] of [['position', 'fixed'], ['left', '50%'], ['top', '50%'], ['right', 'auto'], ['bottom', 'auto'], ['transform', 'translate(-50%,-50%)'], ['margin', '0'], ['max-height', 'min(78vh, 680px)'], ['overflow', 'auto'], ['z-index', '720']]) pop.style.setProperty(k, v, 'important');
-    return;
-  }
   f.classList.toggle('on', on); if (!on) return;
   const pop = f.querySelector('.pop'), b = f.querySelector('button').getBoundingClientRect();
   pop.style.maxHeight = ''; const r = pop.getBoundingClientRect(), pad = 8;
@@ -3122,8 +3113,7 @@ function welcomeGo(d) { const n = W_I + d; if (n >= W_STEPS.length) return welco
 function welcomeDone() { const el = $('#welcome'); if (el) { el.classList.remove('on'); setTimeout(() => el.remove(), 300); } if (!S.config.welcome_done) { S.config.welcome_done = true; api.post('/api/config', { welcome_done: true }); } if (S._tourDir) { const d = S._tourDir; S._tourDir = ''; setTimeout(() => scanRun('windows', d), 400); } }
 document.addEventListener('keydown', e => { const w = $('#welcome'); if (!w || !w.classList.contains('on') || $('#swBody')) return; if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); welcomeGo(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); welcomeGo(-1); } else if (e.key === 'Escape') { e.preventDefault(); welcomeDone(); } });
 function toggleToolbarItem(id, on) { const cur = new Set(S.config.toolbar_items || ['search', 'cats', 'sort', 'bell']); on ? cur.add(id) : cur.delete(id); setCfg({ toolbar_items: TOOLBAR_ITEMS.map(x => x[0]).filter(x => cur.has(x)) }); }
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#vpop-portal.on')) { $('#vpop')?.classList.remove('on'); vpopClose(); } });
-document.addEventListener('click', e => { if (!e.target.closest('#filt')) $('#filt')?.classList.remove('on'); if (!e.target.closest('#vpop,#vpop-portal')) { $('#vpop')?.classList.remove('on'); vpopClose(); } });
+document.addEventListener('click', e => { if (!e.target.closest('#filt')) $('#filt')?.classList.remove('on'); });
 async function toggleHidden(key) { const r = await api.post('/api/hide', { key }); if (r.error) return toast('err', 'Não foi possível concluir', r.error); const g = S.byKey[key]; if (g) { g.hidden = r.hidden; S._poolKey = ''; } if (S.home && S.home.games[key]) S.home.games[key].hidden = r.hidden; toast('ok', r.hidden ? 'Jogo oculto' : 'Jogo visível de novo', r.hidden ? 'Aparece de novo pelo filtro Situação › Ocultos ou pela busca.' : '', r.hidden ? [{ label: 'Desfazer', fn: () => toggleHidden(key) }] : undefined); if (S.view === 'home') { refreshHome(); renderLibrary(); } }
 async function toggleFav(key) { const r = await api.post('/api/fav', { key }); const g = S.byKey[key]; if (g) { g.fav = r.fav; S._poolKey = ''; } document.querySelectorAll(`[data-fav="${CSS.escape(key)}"]`).forEach(b => b.classList.toggle('on', r.fav)); if (S.home && S.home.games[key]) S.home.games[key].fav = r.fav; if (S.view === 'home') refreshHome(); }
 async function stopGame(key, force) {

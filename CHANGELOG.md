@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.0.16-hf1 — 2026-10-27
+- Menu de contexto (Windows): voltou a abrir em todo lugar — jogos, barra lateral, bandeja. A janela do menu era redimensionável, o que faz janelas transparentes pararem de funcionar no Windows; agora tem tamanho fixo por abertura. Se o menu não aparecer em 1,2 s, o menu interno entra no lugar.
+- Ordenar, agrupar, modo (mural/grade/lista), tamanho das capas e filtros ficaram num botão só: "Exibição", no topo da Biblioteca e da Store. O menu "Recentes ▾" e o botão separado de exibição saíram.
+
 ## 4.0.16 — 2026-10-27
 - Coleções: crie as suas ("Terminar", "Com amigos"…) pelo menu do jogo › Coleções; aparecem na barra lateral, nos filtros e no modo console (menu X › Coleções). Gerenciar: renomear e apagar na própria barra.
 - Central › Espaço em disco: quanto cada jogo ocupa, agrupado por disco (barra de uso com a parte dos jogos destacada), ordenado do maior para o menor; "Mover" leva a pasta para outro disco ali mesmo, com sugestão de destino e aviso quando não cabe. Tamanhos ficam em cache e são refeitos a cada 7 dias ou com "Recalcular".
