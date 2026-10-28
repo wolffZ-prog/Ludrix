@@ -185,7 +185,7 @@ export class MetadataService {
     }
     private listing(): Record<string, number> {
         const now = Date.now() / 1000;
-        if (now - this.namesT > 2.0) {
+        if (now - this.namesT > 15) {
             const d: Record<string, number> = {};
             try {
                 for (const de of fs.readdirSync(P.CACHE_META, { withFileTypes: true })) {
@@ -211,6 +211,30 @@ export class MetadataService {
     }
     mtime(key: string): number {
         return this.listing()[this.fname(key)] || 0;
+    }
+    async warm(keys: string[], limit = 8): Promise<number> {
+        const names = this.listing();
+        const todo = keys.filter((k) => { const mt = names[this.fname(k)]; return mt !== undefined && this.mem.get(k)?.[0] !== mt; });
+        let i = 0, read = 0;
+        const worker = async () => {
+            while (i < todo.length) {
+                const k = todo[i++];
+                const mt = names[this.fname(k)];
+                let data: any = null;
+                try {
+                    data = JSON.parse(await fs.promises.readFile(this.path(k), 'utf8'));
+                }
+                catch {
+                    data = null;
+                }
+                if (this.mem.size > 3000)
+                    this.mem.clear();
+                this.mem.set(k, [mt, data]);
+                read++;
+            }
+        };
+        await Promise.all(Array.from({ length: Math.min(limit, todo.length || 1) }, worker));
+        return read;
     }
     get(key: string): any | null {
         const mtime = this.listing()[this.fname(key)];

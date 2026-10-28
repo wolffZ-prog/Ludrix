@@ -85,13 +85,22 @@ async function startServer(backend, getWindow) {
     });
     server.keepAliveTimeout = 30_000;
     server.headersTimeout = 35_000;
+    const preferred = 21000 + (parseInt(crypto.createHash('sha256').update(path.resolve(P.ROOT).toLowerCase()).digest('hex').slice(0, 6), 16) % 30000);
     return new Promise<any>((resolve, reject) => {
-        server.on('error', reject);
-        server.listen(0, '127.0.0.1', () => {
+        let tried = false;
+        server.on('error', (err: any) => {
+            if (!tried && err && err.code === 'EADDRINUSE') {
+                tried = true;
+                server.listen(0, '127.0.0.1');
+                return;
+            }
+            reject(err);
+        });
+        server.on('listening', () => {
             const addr = server.address();
             const port = typeof addr === 'object' && addr ? addr.port : 0;
             LOCAL_PORT = port;
-            log.info('servidor local em 127.0.0.1:%d', port);
+            log.info('servidor local em 127.0.0.1:%d%s', port, port === preferred ? '' : ' (porta preferida ocupada)');
             resolve({
                 port,
                 token: TOKEN,
@@ -104,16 +113,19 @@ async function startServer(backend, getWindow) {
                 },
             });
         });
+        server.listen(preferred, '127.0.0.1');
     });
 }
-function send(res, code, body, ctype, cache = false) {
+function send(res, code, body, ctype, cache: boolean | string = false) {
     let out = body;
     const headers = {
         'Content-Type': ctype,
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'no-referrer',
-        'Cache-Control': cache ? 'public, max-age=2592000, immutable' : 'no-store',
+        'Cache-Control': cache === true ? 'public, max-age=2592000, immutable' : cache ? 'no-cache' : 'no-store',
     };
+    if (typeof cache === 'string')
+        headers['ETag'] = cache;
     if (out.length > 4096 && /json|text|javascript|svg/.test(ctype) && String(res.req.headers['accept-encoding'] || '').includes('gzip')) {
         out = zlib.gzipSync(out, { level: 4 });
         headers['Content-Encoding'] = 'gzip';
@@ -130,7 +142,7 @@ function send(res, code, body, ctype, cache = false) {
 function sendJson(res, data, code = 200) {
     send(res, code, Buffer.from(JSON.stringify(data ?? null), 'utf8'), 'application/json; charset=utf-8');
 }
-function sendFile(res, file, cache = false) {
+function sendFile(res, file, cache: boolean | 'etag' = false) {
     if (!file)
         return send(res, 404, Buffer.alloc(0), 'text/plain');
     try {
@@ -138,6 +150,14 @@ function sendFile(res, file, cache = false) {
         if (!st.isFile())
             return send(res, 404, Buffer.alloc(0), 'text/plain');
         const ctype = ctypeOf(file);
+        if (cache === 'etag') {
+            const tag = `"${st.size.toString(36)}-${Math.trunc(st.mtimeMs).toString(36)}"`;
+            if (String(res.req.headers['if-none-match'] || '') === tag) {
+                res.writeHead(304, { 'ETag': tag, 'Cache-Control': 'no-cache' });
+                return res.end();
+            }
+            return send(res, 200, fs.readFileSync(file), ctype, tag);
+        }
         send(res, 200, fs.readFileSync(file), ctype, cache);
     }
     catch {
@@ -249,7 +269,7 @@ async function routeGet(req, res, p, q, be, getWindow) {
         const target = path.resolve(P.UI, '.' + p.slice(3));
         if (!target.startsWith(path.resolve(P.UI)))
             return send(res, 403, Buffer.alloc(0), 'text/plain');
-        return sendFile(res, target);
+        return sendFile(res, target, 'etag');
     }
     if (p === '/api/catalog') {
         P.bootOk();

@@ -444,7 +444,7 @@ html body.bs.acr :is(.chip.on,.tabs button.on,.azbar span.on,.sofabar kbd){color
 html body.bs.acr[data-nav=bottom]>#app>.rail .rb.on,html body.bs.acr[data-nav=bottom]>#app>.rail .rb.on svg{color:var(--bg-solid)}
 html body.bs.acr .sw::after{background:var(--bg-solid)}
 html body.bs.acr .card .cov{background:var(--card2-solid)}
-html body.bs.acr .h1,html body.bs.acr .ggh,html body.bs.acr .gpanel .glinks,html body.bs.acr .pop,html body.bs.acr .ctx,html body.bs.acr .bellpop,html body.bs.acr .helppop,html body.bs.acr .modal .box{backdrop-filter:blur(14px) saturate(1.15);-webkit-backdrop-filter:blur(14px) saturate(1.15)}
+html body.bs.acr .h1,html body.bs.acr .ggh{backdrop-filter:blur(14px) saturate(1.15);-webkit-backdrop-filter:blur(14px) saturate(1.15)}
 html body.bs[data-face] #vpop-portal{position:fixed;inset:auto;z-index:720}
 html body.bs.acr .gpanel .glinks{background:var(--bg2)}
 html body.bs[data-face] .sec>.btn,html body.bs[data-face] .sec>div[style*="display:flex"]{margin-top:2px}
@@ -466,3 +466,12 @@ html body.bs[data-face] .szoom{display:inline-flex;align-items:center;gap:6px;ma
 html body.bs[data-face] .szoom input{width:92px;height:3px;accent-color:var(--accent);cursor:pointer}
 html body.bs[data-face] .szoom button{all:unset;cursor:pointer;width:16px;height:16px;line-height:16px;text-align:center;border-radius:4px;color:var(--muted);font-size:13px}
 html body.bs[data-face] .szoom button:hover{background:var(--card2);color:var(--text)}
+html body.bs[data-face]{--ease:cubic-bezier(.2,.7,.2,1)}
+html body.bs[data-face] #view.vin>*,html body.bs[data-face] .gpanel,html body.bs[data-face] #modal.on .box,html body.bs[data-face] .modal.on .box,html body.bs[data-face] .toast,html body.bs[data-face] .nowbar.nbsw>*{animation-timing-function:var(--ease)}
+html body.bs[data-face] #setBody{animation:viewIn .2s var(--ease) both}
+html body.bs[data-face] .ctx .sub.open,html body.bs[data-face] .ctx .subw:hover>.sub{animation:ctxIn .12s var(--ease) both}
+html body.bs[data-face] .filt .pop,html body.bs[data-face] .bellpop,html body.bs[data-face] .helppop{animation:ctxIn .14s var(--ease) both;transform-origin:top right}
+html body.bs[data-face] .card .cov img{transition:opacity .25s ease-out}
+html body.bs[data-face] .rb,html body.bs[data-face] .tabs button,html body.bs[data-face] .stabs button{transition:background .15s,color .15s,border-color .15s}
+html body.bs[data-face] .sw::after{transition:transform .16s var(--ease),background .15s}
+html[data-anim="off"] body.bs[data-face] *{animation:none!important;transition:none!important}

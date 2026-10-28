@@ -105,6 +105,46 @@ export function verify(app: string) {
     return { version: String(m.version), ok: !bad.length, bad, checked: Object.keys(m.files).length, critical: isCritical(bad), at: Date.now() / 1000 };
 }
 
+export function quickVerify(app: string) {
+    const m = load(app);
+    if (!m)
+        return null;
+    const bad: any[] = [];
+    for (const [rel, e] of Object.entries<any>(m.files)) {
+        const p = path.join(app, rel);
+        if (e.version_only) {
+            const why = checkOne(app, rel, e, m.version);
+            if (why)
+                bad.push({ file: rel, why });
+            continue;
+        }
+        try {
+            const st = fs.statSync(p);
+            if (e.size !== undefined && st.size !== e.size)
+                bad.push({ file: rel, why: 'alterado' });
+        }
+        catch {
+            bad.push({ file: rel, why: 'faltando' });
+        }
+    }
+    return { version: String(m.version), ok: !bad.length, bad, checked: Object.keys(m.files).length };
+}
+
+export async function verifyAsync(app: string, pauseMs = 12) {
+    const m = load(app);
+    if (!m)
+        return null;
+    const bad: any[] = [];
+    const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+    for (const [rel, e] of Object.entries<any>(m.files)) {
+        const why = checkOne(app, rel, e, m.version);
+        if (why)
+            bad.push({ file: rel, why });
+        await sleep(pauseMs);
+    }
+    return { version: String(m.version), ok: !bad.length, bad, checked: Object.keys(m.files).length, critical: isCritical(bad), at: Date.now() / 1000 };
+}
+
 export function isCritical(bad: any[]) {
     return bad.some((b) => CRITICAL_PREFIX.some((pre) => String(b.file).startsWith(pre)));
 }
@@ -233,6 +273,45 @@ export function repair(app: string, root: string, result: any, seed: string) {
 
 export function stateFile(root: string) {
     return path.join(root, 'data', 'integrity-state.json');
+}
+
+export async function bootCheckDeferred(app: string, root: string) {
+    const quick = quickVerify(app);
+    if (!quick)
+        return bootCheck(app, root);
+    if (!quick.ok)
+        return bootCheck(app, root);
+    cache = { status: 'ok', bad: [], fixed: [], critical: false, version: quick.version, checked: quick.checked, pending: true };
+    return cache;
+}
+
+export async function bootCheckFull(app: string, root: string) {
+    let res = await verifyAsync(app);
+    if (!res) {
+        cache = { status: 'skipped', bad: [], fixed: [], critical: false, version: '', checked: 0 };
+        return cache;
+    }
+    const out: any = { status: 'ok', bad: [], fixed: [], critical: false, version: res.version, checked: res.checked, seed: '' };
+    if (!res.ok) {
+        const seed = findSeed(root, res.version);
+        out.seed = seed || '';
+        if (seed) {
+            const rep = repair(app, root, res, seed);
+            out.fixed = rep.fixed;
+            res = verify(app) || res;
+        }
+        out.bad = res.bad;
+        out.critical = isCritical(res.bad);
+        out.status = res.bad.length ? 'damaged' : 'repaired';
+    }
+    try {
+        const sf = stateFile(root);
+        fs.mkdirSync(path.dirname(sf), { recursive: true });
+        fs.writeFileSync(sf, JSON.stringify({ ...out, at: Date.now() / 1000 }), 'utf8');
+    }
+    catch { }
+    cache = out;
+    return out;
 }
 
 export function bootCheck(app: string, root: string) {

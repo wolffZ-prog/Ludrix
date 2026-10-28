@@ -301,7 +301,6 @@ function applyNavItems() {
   groups.forEach(g => g.classList.toggle('nhid', ![...g.children].some(b => !b.classList.contains('nhid'))));
   rail.querySelectorAll('.rsep').forEach(sep => { let prev = sep.previousElementSibling, next = sep.nextElementSibling; while (prev && !prev.matches('.rg')) prev = prev.previousElementSibling; while (next && !next.matches('.rg')) next = next.nextElementSibling; sep.classList.toggle('nhid', !prev || !next || prev.classList.contains('nhid') || next.classList.contains('nhid')); });
 }
-const rmq = window.matchMedia('(prefers-reduced-motion: reduce)');
 let clockT = null;
 function clockTick() {
   const el = $('#sclock'); if (!el) return; const m = S.config.clock || 'off'; if (m === 'off') { el.textContent = ''; return; }
@@ -316,14 +315,13 @@ function applyClock() {
 const hcq = window.matchMedia ? window.matchMedia('(prefers-contrast: more)') : null;
 if (hcq && hcq.addEventListener) hcq.addEventListener('change', () => applyMotion());
 function applyMotion() {
-  const rm = !!S.config.reduce_motion || rmq.matches;
+  const rm = !!S.config.reduce_motion;
   document.body.classList.toggle('rm', rm);
   document.body.classList.toggle('hc', !!S.config.high_contrast || !!(hcq && hcq.matches));
   document.body.classList.toggle('sadv', !!S.config.settings_adv);
   document.body.dataset.hover = rm ? 'none' : (S.config.card_hover || 'lift');
   document.body.dataset.detart = S.config.detail_art || 'auto';
 }
-rmq.addEventListener('change', applyMotion);
 function applyPlx() {
   const on = (S.themePlx || 0) > 0 && S.config.parallax !== false && document.documentElement.dataset.anim !== 'off';
   const h = document.documentElement.style;
@@ -354,8 +352,8 @@ function applyGlass() {
   if (S._glassLight !== want) { S._glassLight = want; api.post('/api/window', { cmd: 'scheme', light: want }); }
   if (!on) { for (const n of GLASS_VARS) { st.removeProperty('--' + n); st.removeProperty('--' + n + '-solid'); } return; }
   const cs = getComputedStyle(document.documentElement);
-  const A = light ? { bg: 60, bg2: 66, panel: 66, card: 74, card2: 80, 'logo-bg': 66 } : { bg: 62, bg2: 68, panel: 68, card: 76, card2: 82, 'logo-bg': 68 };
-  for (const n of GLASS_VARS) { const v = cs.getPropertyValue('--' + n).trim(); if (!v) continue; st.setProperty('--' + n + '-solid', v); st.setProperty('--' + n, `color-mix(in srgb, ${v} ${A[n]}%, transparent)`); }
+  const A = light ? { bg: 64, panel: 72, 'logo-bg': 72 } : { bg: 66, panel: 74, 'logo-bg': 74 };
+  for (const n of GLASS_VARS) { const v = cs.getPropertyValue('--' + n).trim(); if (!v) continue; st.setProperty('--' + n + '-solid', v); if (n in A) st.setProperty('--' + n, `color-mix(in srgb, ${v} ${A[n]}%, transparent)`); else st.setProperty('--' + n, v); }
 }
 function bandMix(c, pct, base) {
   const m = `color-mix(in srgb, ${c} ${pct}%, var(--${base}-solid, var(--${base})))`;
@@ -2414,7 +2412,7 @@ async function handleEvent(ev) {
     document.querySelectorAll('.card img, .scov img, .gcov img').forEach(im => { if (im.getAttribute('src').startsWith(want)) { im.classList.remove('err'); im.src = `${want}v=${cv}&t=${Date.now() % 1e6}`; } });
   } else if (ev.type === 'meta_batch_done') {
     metaReloadSoon(); if (ev.count > 3) toast('ok', 'Capas e informações atualizadas', pl(ev.count, 'jogo', 'jogos'));
-  } else if (ev.type === 'meta_ready') {
+  } else if (ev.type === 'meta_ready' || ev.type === 'library_warm') {
     metaReloadSoon();
     const g = S.byKey[ev.key]; if (g) { g.cv = ev.cv; g.has_meta = true; if (ev.genres && ev.genres.length) g.genres = ev.genres; if (ev.year) g.year = ev.year; if (ev.creator) g.creator = ev.creator; if (ev.hero_ok) g.hero_ok = true; }
     if (ev.hero_ok) { const nb = $('#nowbar'); if (nb && nb.dataset.key === ev.key) { nb.dataset.cv = ''; nowbarFill(); } if (S.det && S.det.key === ev.key && $('#detail').classList.contains('on')) { const h = $('#dHero'); if (h && !h.classList.contains('himg')) { const d = await api.get('/api/game/' + enc(ev.key)); S.det = d; renderDetail(); } } }
@@ -2642,7 +2640,7 @@ function sessionCard(ev, g) {
 function toastPlain(type, title, msg) { const t = document.createElement('div'); t.className = 'toast ' + type; t.innerHTML = `<div><b>${esc(title)}</b><span>${esc(msg || '')}</span></div>`; const box = $('#toasts'); box.appendChild(t); while (box.children.length > 5) box.firstElementChild.remove(); let left = 5000, tm, t0 = Date.now(); const go = () => { t0 = Date.now(); tm = setTimeout(() => { t.style.transition = '.3s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, left); }; t.onmouseenter = () => { clearTimeout(tm); left = Math.max(1500, left - (Date.now() - t0)); }; t.onmouseleave = go; t.onclick = () => { clearTimeout(tm); t.remove(); }; go(); }
 
 function applyAnim() {
-  const mode = (S.config.reduce_motion || rmq.matches) ? 'off' : (S.config.animations || 'full');
+  const mode = S.config.reduce_motion ? 'off' : (S.config.animations || 'full');
   if (document.documentElement.dataset.anim !== mode) document.documentElement.dataset.anim = mode;
   applyPlx();
   const fx = $('#fx'); if (!fx) return;

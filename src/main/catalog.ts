@@ -55,6 +55,10 @@ export class Catalog {
     onLoaded: (() => void) | null = null;
     onFirstPayload: (() => void) | null = null;
 
+    private cold: any = undefined;
+    private coldTimer: any = null;
+    private warmStarted = false;
+    private warmDone = false;
     constructor(public be: any) {
         this.repos = new RepoRegistry(be.store);
         this.categories = this.loadCategories();
@@ -321,7 +325,105 @@ export class Catalog {
         return out;
     }
 
+    private coldFile() {
+        return path.join(P.CACHE, 'library-cold.json');
+    }
+    private loadCold(): any {
+        const c = util.readJson(this.coldFile(), null);
+        const ver = String(this.be.publicConfig().version || '');
+        if (!c || c.format !== 1 || c.version !== ver || !Array.isArray(c.games) || !c.games.length)
+            return null;
+        return c;
+    }
+    private saveColdSoon(body: any) {
+        clearTimeout(this.coldTimer);
+        this.coldTimer = setTimeout(() => {
+            const data = { format: 1, version: String(this.be.publicConfig().version || ''), at: Math.floor(Date.now() / 1000), ...body };
+            try {
+                util.writeJson(this.coldFile(), data);
+            }
+            catch (e) {
+                log.warn('cache da biblioteca: %s', e);
+            }
+        }, 2500);
+        this.coldTimer.unref?.();
+    }
+    private startWarm() {
+        if (this.warmStarted)
+            return;
+        this.warmStarted = true;
+        void this.warm();
+    }
+    private async warm() {
+        const t0 = Date.now();
+        const lib = Object.entries(this.store.library as Record<string, any>);
+        let metas = 0, probed = 0;
+        try {
+            const keys = lib.map(([k]) => k).concat([...this.entries.keys()]);
+            metas = await this.be.hub.meta.warm(keys);
+            const paths = new Set<string>();
+            for (const [, info] of lib) {
+                const exe = String(info.exe || '');
+                if (exe && !exe.includes('://') && !/^(shell|flatpak):/.test(exe))
+                    paths.add(exe);
+                if (info.mc === 'java' && !info.exe && info.dir)
+                    paths.add(String(info.dir));
+            }
+            for (const e of this.entries.values())
+                if (e.extra.local_path)
+                    paths.add(String(e.extra.local_path));
+            for (const [k] of lib) {
+                const bg = this.be.hub.meta.get(k)?.background_file;
+                if (bg)
+                    paths.add(String(bg));
+            }
+            const todo = [...paths];
+            let i = 0;
+            const worker = async () => {
+                while (i < todo.length) {
+                    const q = todo[i++];
+                    let ok = false;
+                    try {
+                        await fs.promises.access(q);
+                        ok = true;
+                    }
+                    catch { }
+                    this.existsCache.set(q, [Date.now() / 1000, ok]);
+                    probed++;
+                }
+            };
+            await Promise.all(Array.from({ length: Math.min(6, todo.length || 1) }, worker));
+        }
+        catch (e) {
+            log.warn('aquecimento da biblioteca: %s', e);
+        }
+        this.warmDone = true;
+        log.info('biblioteca aquecida em %ss (%d fichas, %d caminhos)', ((Date.now() - t0) / 1000).toFixed(2), metas, probed);
+        this.be.push({ type: 'library_warm' });
+    }
     payload(): any {
+        if (!this.warmDone) {
+            if (this.cold === undefined)
+                this.cold = this.loadCold();
+            if (this.cold) {
+                this.startWarm();
+                return this.live({ ...this.cold, cold: true });
+            }
+        }
+        const body = this.payloadBody();
+        this.saveColdSoon(body);
+        return this.live(body);
+    }
+    private live(body: any): any {
+        return {
+            ...body, ...this.state,
+            config: this.be.publicConfig(), faces: themes.faces(), custom: this.be.custom(),
+            torrent_available: torrentMod.available(), torrent_engine: torrentMod.engine(),
+            sessions: this.be.sessions.status(),
+            gamepad: this.be.gamepad ? this.be.gamepad.status() : { available: false, connected: 0 },
+        };
+    }
+    private payloadBody(): any {
         const entries = [...this.entries.values()];
         const repoList = this.repos.list();
         const hiddenRepos = new Set(repoList.filter((r) => r.hidden_in_library).map((r) => r.id));
@@ -405,14 +507,10 @@ export class Catalog {
         for (const [k, v] of Object.entries(this.be.emu.presets.systems as Record<string, any>))
             systems[k] = v.name;
         return {
-            ...this.state, games: all, categories: cats, sites_loading: false, roms_pending: this.be.emu.scanPending(),
+            games: all, categories: cats, sites_loading: false, roms_pending: this.be.emu.scanPending(),
             checked_at: checkedAt, news_count: newsCount,
             repos: repoList.map((r) => ({ id: r.id, name: r.name, enabled: r.enabled, kind: r.kind || 'pc', hidden: Boolean(r.hidden_in_library), checked_at: Number(r.checked_at || 0), new_count: Number(r.new_count || 0) })),
             systems,
-            config: this.be.publicConfig(), faces: themes.faces(), custom: this.be.custom(),
-            torrent_available: torrentMod.available(), torrent_engine: torrentMod.engine(),
-            sessions: this.be.sessions.status(),
-            gamepad: this.be.gamepad ? this.be.gamepad.status() : { available: false, connected: 0 },
         };
     }
 

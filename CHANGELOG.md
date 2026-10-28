@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.0.17 — 2026-10-28
+- Abertura mais rápida, principalmente em HDD: a biblioteca aparece a partir de um cache único (um arquivo, em vez de centenas de leituras espalhadas pelo disco) e a conferência de cada jogo roda em segundo plano logo depois; a verificação de integridade dos arquivos do launcher saiu do caminho de abertura (só tamanho na hora, hash depois, sem bloquear); a interface, capas e fontes passam a ser reaproveitadas do cache do navegador entre uma abertura e outra.
+- Glass: só o fundo da janela e os painéis ficam translúcidos. Cards, menus, janelas, avisos e o cartão de sessão (jogo fechado) agora têm fundo sólido e legível.
+- Animações: o Ludrix não desliga mais as transições quando as animações do Windows estão desativadas; "Reduzir movimento" em Ajustes › Aparência continua desligando tudo. Curva de movimento mais suave em telas, painéis, menus, janelas e avisos; troca de aba em Ajustes com transição.
+- Botões da janela (minimizar, maximizar, fechar) no padrão do Windows: 46 px de largura, encostados no canto, sem folga à direita.
+- Ludrix-HDD.ps1 (fora do app): analisa o disco dos jogos (modelo, SMR, saúde, temperatura, fragmentação, indexação, suspensão do HDD, cache NTFS, Defender) e aplica cada ajuste só com a sua confirmação, com medição antes e depois.
+
 ## 4.0.16-hf5 — 2026-10-28
 - A janela volta com o mesmo tamanho, posição e estado (maximizada ou não) da última vez. Se o monitor mudou e a posição guardada ficou fora da tela, abre no tamanho padrão.
 

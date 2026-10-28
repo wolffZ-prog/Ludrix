@@ -532,18 +532,33 @@ async function main() {
         log.warn('modo seguro: duas aberturas seguidas não completaram; aparência voltou ao padrão');
     }
     dialogs.bindWindow(getWindow);
-    try {
-        const integrity = await import('./integrity');
-        const rep = integrity.bootCheck(P.APP_DIR, P.ROOT);
+    const integrityLog = (rep: any) => {
         if (rep.status === 'repaired')
             log.warn('arquivos reparados a partir do pacote da versão: %s', JSON.stringify((rep.fixed || []).map((b: any) => b.file)));
         if (rep.status === 'damaged')
             log.error('arquivos do launcher alterados/faltando: %s', JSON.stringify((rep.bad || []).map((b: any) => b.file)));
+    };
+    let integrityPending = false;
+    try {
+        const integrity = await import('./integrity');
+        const rep: any = await integrity.bootCheckDeferred(P.APP_DIR, P.ROOT);
+        integrityLog(rep);
+        integrityPending = Boolean(rep.pending);
         backend.integrityReport(rep);
     }
     catch (e) {
         log.warn('verificação de arquivos falhou: %s', e);
     }
+    if (integrityPending)
+        setTimeout(() => {
+            void import('./integrity').then((integrity) => integrity.bootCheckFull(P.APP_DIR, P.ROOT)).then((rep: any) => {
+                integrityLog(rep);
+                if (rep.status !== 'ok')
+                    backend?.integrityReport(rep);
+                else if (backend)
+                    backend.integrity = rep;
+            }).catch((e) => log.warn('verificação de arquivos falhou: %s', e));
+        }, 20000).unref();
     server = await serverMod.startServer(backend, getWindow);
     setTimeout(legacySweep, 90000).unref();
     util.writeJson(P.INSTANCE_FILE, {
