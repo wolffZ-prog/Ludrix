@@ -91,3 +91,7 @@ Antes de distribuir um tema, veja estas telas com ele aplicado: Biblioteca com c
 ## Assinatura
 
 `.lxtheme` assinados pelo projeto aparecem como **oficial**. Um tema sem assinatura funciona igual; só não ganha a marca. Nenhum tema executa código: é só JSON e CSS filtrado.
+
+## Temas experimentais
+
+Fora dos dois embutidos, o projeto mantém um pacote de temas experimentais usado para testar o formato até o limite: fundos em camadas com parallax (`wallpaper` em várias imagens), barra no alto ou embaixo, fontes próprias e releituras do Windows XP. Capturas de alguns deles ficam em [screenshots/temas/](screenshots/temas/); o README mostra oito. São temas de laboratório: podem mudar ou sair entre versões, e nenhum deles altera a aparência Base nem os embutidos.

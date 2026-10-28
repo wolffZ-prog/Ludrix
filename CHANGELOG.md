@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.0.18 — 2026-10-28
+
+- Ícone novo: controle preto sobre grafite fosco, em todos os lugares — executáveis, janela, barra de tarefas, bandeja, atalhos, modo console, atualizador e página do projeto.
+- Página do projeto refeita: estado atual do Ludrix, capturas novas de todas as telas, galeria de temas experimentais e documentação revisada (português e inglês).
+- Inclui as correções rápidas da 4.0.17: ficha do jogo abrindo numa transição só, névoa de cor em movimento (também na barra lateral), barra de navegação solta (com nomes ou em quadrados) e troca de página sem piscar nem deslocar.
+
 ## 4.0.17-hf4 — 2026-10-28
 
 - Trocar de página não dá mais o salto para cima: o conteúdo e os cabeçalhos das letras aparecem no lugar, sem deslocar.

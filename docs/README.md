@@ -7,4 +7,4 @@
 | [TEMAS.md](TEMAS.md) | Formato dos temas: `theme.json`, `extra.css`, variáveis, layout, assinatura |
 | [ATUALIZACOES.md](ATUALIZACOES.md) | Como o Ludrix se atualiza, feed, rollback |
 | [COMPILAR.md](COMPILAR.md) | `tools/build.js`, pacotes gerados, assinatura, publicação |
-| [screenshots/](screenshots/) | Capturas usadas no README |
+| [screenshots/](screenshots/) | Capturas usadas no README; `temas/` tem os temas experimentais |
