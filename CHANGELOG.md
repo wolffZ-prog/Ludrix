@@ -1,5 +1,8 @@
 # Changelog
 
+## 4.0.16-hf5 — 2026-10-28
+- A janela volta com o mesmo tamanho, posição e estado (maximizada ou não) da última vez. Se o monitor mudou e a posição guardada ficou fora da tela, abre no tamanho padrão.
+
 ## 4.0.16-hf4 — 2026-10-27
 - Submenus do menu de contexto (Editar, Copiar, Status, Coleções) com fundo sólido: com o Glass ligado ficavam transparentes e ilegíveis.
 

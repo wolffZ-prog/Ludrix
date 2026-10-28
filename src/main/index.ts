@@ -94,6 +94,31 @@ let mainUrl = '';
 let standby = false;
 let standbyTimer: any = null;
 let pendingJs: string[] = [];
+const WINDOW_FILE = () => path.join(P.DATA, 'window.json');
+let windowTimer: any = null;
+function savedWindow(): { x: number; y: number; width: number; height: number; maximized: boolean } | null {
+    const w = util.readJson(WINDOW_FILE(), null);
+    if (!w || !(w.width > 0 && w.height > 0))
+        return null;
+    const fits = electron.screen.getAllDisplays().some((d) => {
+        const a = d.workArea;
+        return w.x + w.width - 80 > a.x && w.x + 80 < a.x + a.width && w.y + 40 > a.y && w.y + 40 < a.y + a.height;
+    });
+    if (!fits)
+        return null;
+    return { x: Math.round(w.x), y: Math.round(w.y), width: Math.round(w.width), height: Math.round(w.height), maximized: Boolean(w.maximized) };
+}
+function rememberWindow() {
+    clearTimeout(windowTimer);
+    windowTimer = setTimeout(() => {
+        if (!win || win.isDestroyed() || win.isFullScreen() || win.isMinimized())
+            return;
+        const b = win.getNormalBounds();
+        if (!(b.width > 0 && b.height > 0))
+            return;
+        util.writeJson(WINDOW_FILE(), { ...b, maximized: win.isMaximized() });
+    }, 400);
+}
 function createWindow(url, recreate = false) {
     mainUrl = url;
     const iconPath = path.join(P.UI, 'icon.png');
@@ -107,10 +132,12 @@ function createWindow(url, recreate = false) {
     const area = electron.screen.getPrimaryDisplay().workAreaSize;
     const width = Math.min(1380, Math.max(640, area.width - 60));
     const height = Math.min(880, Math.max(480, area.height - 110));
+    const saved = savedWindow();
     const dark = String(backend?.store.config.theme || 'dark') !== 'light';
     win = new electron.BrowserWindow({
-        width,
-        height,
+        width: saved ? saved.width : width,
+        height: saved ? saved.height : height,
+        ...(saved ? { x: saved.x, y: saved.y } : {}),
         minWidth: Math.min(1000, width),
         minHeight: Math.min(660, height),
         title: 'Ludrix',
@@ -144,6 +171,8 @@ function createWindow(url, recreate = false) {
         }
     });
     win.once('ready-to-show', () => {
+        if (saved?.maximized)
+            win?.maximize();
         if (!startHidden) {
             win?.show();
             if (recreate)
@@ -153,7 +182,9 @@ function createWindow(url, recreate = false) {
             win?.setTitle(`Ludrix ${backend.publicConfig().version || ''}`.trim());
     });
     for (const ev of ['maximize', 'unmaximize'] as const)
-        win.on(ev, () => backend?.push({ type: 'win', max: ev === 'maximize' }));
+        win.on(ev, () => { backend?.push({ type: 'win', max: ev === 'maximize' }); rememberWindow(); });
+    for (const ev of ['resize', 'move'] as const)
+        win.on(ev, rememberWindow);
     win.on('close', (e) => {
         if (allowClose)
             return;
