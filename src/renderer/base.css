@@ -344,8 +344,6 @@ html body.bs[data-face] .thcard .tht small{font-size:11px;color:var(--muted2)}
 html body.bs[data-face] .thcard .ib{flex:none;width:26px;height:26px;opacity:.6}
 html body.bs[data-face] .thcard:hover .ib{opacity:1}
 
-html body.bs[data-face] #view.vin>*{animation:viewIn .22s var(--ease,ease-out) both}
-@keyframes viewIn{from{transform:translateY(6px)}to{transform:none}}
 html body.bs[data-face] .grid .card{transition:transform .18s ease-out}
 html body.bs[data-face] .grid:not(.lst) .card:hover,html body.bs[data-face] .grid:not(.lst) .card.gp-focus{transform:translateY(-3px)}
 html body.bs[data-face] .card .cov{transition:outline-color .15s,box-shadow .18s}
@@ -365,8 +363,6 @@ html body.bs[data-face] .toast{animation:toastIn .22s ease-out both}
 @keyframes toastIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
 html body.bs[data-face] .rb.on{animation:navOn .2s ease-out}
 @keyframes navOn{from{background:color-mix(in srgb,var(--accent) 12%,transparent)}}
-html body.bs[data-face] .ggh{animation:nbIn .25s ease-out both}
-html body.bs[data-face] #view.vin .dhero{animation:viewIn .25s ease-out both}
 html body.bs[data-face] .dpane.on{animation:nbIn .22s ease-out both}
 html body.bs[data-face] .tile,html body.bs[data-face] .item{transition:transform .15s ease-out,border-color .15s,background .15s}
 html body.bs[data-face] .tile:hover,html body.bs[data-face] .item:hover{transform:translateY(-1px)}
@@ -467,7 +463,7 @@ html body.bs[data-face] .szoom input{width:92px;height:3px;accent-color:var(--ac
 html body.bs[data-face] .szoom button{all:unset;cursor:pointer;width:16px;height:16px;line-height:16px;text-align:center;border-radius:4px;color:var(--muted);font-size:13px}
 html body.bs[data-face] .szoom button:hover{background:var(--card2);color:var(--text)}
 html body.bs[data-face]{--ease:cubic-bezier(.2,.7,.2,1)}
-html body.bs[data-face] #view.vin>*,html body.bs[data-face] .gpanel,html body.bs[data-face] #modal.on .box,html body.bs[data-face] .modal.on .box,html body.bs[data-face] .toast,html body.bs[data-face] .nowbar.nbsw>*{animation-timing-function:var(--ease)}
+html body.bs[data-face] .gpanel,html body.bs[data-face] #modal.on .box,html body.bs[data-face] .modal.on .box,html body.bs[data-face] .toast,html body.bs[data-face] .nowbar.nbsw>*{animation-timing-function:var(--ease)}
 html body.bs[data-face] #setBody{animation:viewIn .2s var(--ease) both}
 html body.bs[data-face] .ctx .sub.open,html body.bs[data-face] .ctx .subw:hover>.sub{animation:ctxIn .12s var(--ease) both}
 html body.bs[data-face] .filt .pop,html body.bs[data-face] .bellpop,html body.bs[data-face] .helppop{animation:ctxIn .14s var(--ease) both;transform-origin:top right}

@@ -647,23 +647,21 @@ document.querySelectorAll('.rb').forEach(b => b.onclick = () => setView(b.datase
 function setView(v) {
   if (v === 'redists' || v === 'gamemode') { S.tab.central = 'redists'; v = 'central'; }
   if (v === S.view && !S.current && !$('#modal').classList.contains('on')) { $('#view').scrollTop = 0; return; }
-  const vw = $('#view'); vw.classList.remove('vin'); void vw.offsetWidth; vw.classList.add('vin'); clearTimeout(S._vinT); S._vinT = setTimeout(() => vw.classList.remove('vin'), 400);
   if (S._metaDirty && ['home', 'store'].includes(v)) { S._metaDirty = false; api.get('/api/catalog').then(d => { if (d && !d.loading) { setGames(d.games || []); if (['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'home') refreshHome(); } }); }
   S.page = 1;
   if (v !== 'home') gameFocus(null);
   if (['home', 'store'].includes(v) && v !== S.view) { S.sort = sortForView(v); S.sortRev = false; }
   S.view = v; closeDetail();
   document.querySelectorAll('.rb').forEach(b => b.classList.toggle('on', b.dataset.view === v));
-  $('#view').scrollTop = 0; S._enter = true; guideDismiss();
+  $('#view').scrollTop = 0; guideDismiss();
   renderView();
   zoomVis();
 }
-function enterFx() { const v = $('#view'); if (S._enter) { S._enter = false; v.classList.add('enter'); clearTimeout(S._enterT); S._enterT = setTimeout(() => v.classList.remove('enter'), 700); } }
 let tsvMemo = null;
 function topSearchVisible() { if (tsvMemo !== null) return tsvMemo; const el = document.querySelector('.top .search, .rail .search'); let v = false; if (el && el.offsetParent !== null) { const r = el.getBoundingClientRect(); v = r.width > 40 && r.height > 0; } tsvMemo = v; requestAnimationFrame(() => { tsvMemo = null; }); return v; }
 function renderView() {
   qfabSync();
-  closeCtx(); enterFx();
+  closeCtx();
   const grid = ['home', 'store'].includes(S.view) && !(S.view === 'store' && S.tab.store === 'sources');
   applyQPlaceholder();
   $('#helppop').classList.remove('on');

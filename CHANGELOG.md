@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.0.17-hf4 — 2026-10-28
+
+- Trocar de página não dá mais o salto para cima: o conteúdo e os cabeçalhos das letras aparecem no lugar, sem deslocar.
+
 ## 4.0.17-hf3 — 2026-10-28
 
 - Trocar de página não pisca mais: o conteúdo entra com um deslize leve, sem apagar e reaparecer.
