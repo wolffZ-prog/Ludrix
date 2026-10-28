@@ -187,7 +187,7 @@ let themeLayout = '', themeAccent = '';
 const LAYOUT_ALIAS = { taskbar: 'bottom', dock: 'bottom' };
 function normLayout(l) { return LAYOUT_ALIAS[l] || l || ''; }
 function setLayout(l) { if (l === themeLayout) return; themeLayout = l; applyChrome(); }
-function themeLay() { const o = S.config.nav_layout; if (['side', 'rail', 'float', 'top', 'bottom'].includes(o)) return o; const l = normLayout(themeLayout); return ['top', 'rail', 'bottom'].includes(l) ? l : 'side'; }
+function themeLay() { const o = S.config.nav_layout; if (['side', 'rail', 'sfloat', 'float', 'top', 'bottom'].includes(o)) return o; const l = normLayout(themeLayout); return ['top', 'rail', 'bottom'].includes(l) ? l : 'side'; }
 mq.addEventListener('change', () => { if ((S.config.theme || 'system') === 'system' || S.config.theme_mode === 'system') applyTheme(); });
 function inLightWindow() {
   const [f, t] = [S.config.theme_light_from || '07:00', S.config.theme_light_to || '19:00'].map(x => { const [h, m] = String(x).split(':').map(Number); return (h || 0) * 60 + (m || 0); });
@@ -364,7 +364,7 @@ function applyChrome() {
   applyGlass();
   applyRailIcons(); applyNavItems(); applyMotion(); applyClock();
   document.body.dataset.status = S.config.status_position === 'top' ? 'top' : 'bottom';
-  const lay0 = themeLay(), lay = lay0 === 'float' ? 'rail' : lay0; document.body.classList.toggle('rfloat', lay0 === 'float'); delete document.body.dataset.layout; document.body.dataset.nav = lay === 'bottom' ? 'bottom' : 'side';
+  const lay0 = themeLay(), lay = lay0 === 'float' ? 'rail' : lay0 === 'sfloat' ? 'side' : lay0; document.body.classList.toggle('rfloat', lay0 === 'float' || lay0 === 'sfloat'); delete document.body.dataset.layout; document.body.dataset.nav = lay === 'bottom' ? 'bottom' : 'side';
   if (lay === 'top' || lay === 'rail') document.body.dataset.layout = lay;
   const qb = $('#qbox'), sp = lay === 'side' ? 'rail' : 'top'; if (qb) { const host = sp === 'rail' ? $('#rail') : $('#brandBtn').parentElement; if (qb.parentElement !== host) { if (sp === 'rail') $('#rail .brandrow').after(qb); else $('#brandBtn').after(qb); } document.body.dataset.search = sp; } document.body.dataset.navLabels = '1';
   placeWctl(lay);
@@ -647,9 +647,7 @@ document.querySelectorAll('.rb').forEach(b => b.onclick = () => setView(b.datase
 function setView(v) {
   if (v === 'redists' || v === 'gamemode') { S.tab.central = 'redists'; v = 'central'; }
   if (v === S.view && !S.current && !$('#modal').classList.contains('on')) { $('#view').scrollTop = 0; return; }
-  const vtOk = ['home', 'store'].includes(v) && ['home', 'store', 'mods', 'flash'].includes(S.view) && v !== S.view && !S.current && document.documentElement.dataset.anim !== 'off' && !document.body.classList.contains('rm') && !!document.startViewTransition;
-  if (!vtOk) { const vw = $('#view'); vw.classList.remove('vin'); void vw.offsetWidth; vw.classList.add('vin'); clearTimeout(S._vinT); S._vinT = setTimeout(() => vw.classList.remove('vin'), 400); }
-  else { const order = gpViews(); const dir = order.indexOf(v) < order.indexOf(S.view) ? 'back' : 'fwd'; document.documentElement.dataset.vdir = dir; S._vtView = true; }
+  const vw = $('#view'); vw.classList.remove('vin'); void vw.offsetWidth; vw.classList.add('vin'); clearTimeout(S._vinT); S._vinT = setTimeout(() => vw.classList.remove('vin'), 400);
   if (S._metaDirty && ['home', 'store'].includes(v)) { S._metaDirty = false; api.get('/api/catalog').then(d => { if (d && !d.loading) { setGames(d.games || []); if (['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'home') refreshHome(); } }); }
   S.page = 1;
   if (v !== 'home') gameFocus(null);
@@ -657,7 +655,7 @@ function setView(v) {
   S.view = v; closeDetail();
   document.querySelectorAll('.rb').forEach(b => b.classList.toggle('on', b.dataset.view === v));
   $('#view').scrollTop = 0; S._enter = true; guideDismiss();
-  if (S._vtView) { S._vtView = false; vtRun(() => { renderView(); }, 'view').then(() => { delete document.documentElement.dataset.vdir; }); } else renderView();
+  renderView();
   zoomVis();
 }
 function enterFx() { const v = $('#view'); if (S._enter) { S._enter = false; v.classList.add('enter'); clearTimeout(S._enterT); S._enterT = setTimeout(() => v.classList.remove('enter'), 700); } }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.0.17-hf3 — 2026-10-28
+
+- Trocar de página não pisca mais: o conteúdo entra com um deslize leve, sem apagar e reaparecer.
+- Barra de navegação: nova opção "Lateral solta, com nomes" (barra separada do conteúdo, mantendo os nomes).
+
 ## 4.0.17-hf2 — 2026-10-28
 - Névoa de cor: as manchas agora atravessam a tela da esquerda para a direita, como nuvens, em loop contínuo, passando também pela barra lateral.
 - Barra de navegação: nova opção "Lateral solta, em quadrados" (Ajustes › Aparência › Barra de navegação): a barra fica separada do conteúdo, com cantos arredondados e botões quadrados só com ícone.

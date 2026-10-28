@@ -66,8 +66,9 @@ main{display:flex;flex-direction:column;min-width:0;overflow:hidden}
 .hero .cov{position:absolute;right:48px;top:30px;height:240px;aspect-ratio:3/4;border-radius:12px;object-fit:cover;box-shadow:0 30px 60px -20px rgba(0,0,0,.9),0 0 0 1px var(--line2);transform:rotate(3deg);transition:transform .4s}
 .hero:hover .cov{transform:rotate(0) scale(1.03)}
 .hero .txt{position:absolute;left:36px;bottom:34px;max-width:55%}
-.view.enter .hero .txt{animation:up .5s ease both}
+.view.enter .hero .txt{animation:lift .4s var(--ease,ease-out) both}
 @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes lift{from{transform:translateY(7px)}to{transform:none}}
 .tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:1px;color:var(--accent2);background:color-mix(in srgb,var(--accent) 15%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);padding:4px 10px;border-radius:99px;margin-bottom:12px}
 .hero h1{font-size:34px;line-height:1.05;font-weight:800;letter-spacing:-.5px}
 .hero .meta{color:var(--muted);margin:10px 0 18px;font-size:13px}
@@ -423,9 +424,9 @@ main.glass[style]::before{display:none}
 .grid{contain:layout}
 .brand{filter:drop-shadow(0 6px 14px rgba(0,0,0,.45))}
 .brand img{width:40px;height:40px;border-radius:0;opacity:.92}
-.view.enter .card{animation:up .26s cubic-bezier(.2,.8,.2,1) both}
+.view.enter .card{animation:lift .26s var(--ease,ease-out) both}
 .card{contain:layout style;content-visibility:auto;contain-intrinsic-size:auto 160px auto 260px}
-.view.enter>*{animation:up .28s ease both}
+.view.enter>*{animation:lift .24s var(--ease,ease-out) both}
 .gpind{display:none;position:fixed;top:calc(var(--tb) + 10px);right:14px;z-index:760;width:34px;height:34px;border-radius:99px;place-items:center;color:var(--green);background:color-mix(in srgb,var(--bg) 82%,transparent);border:1px solid color-mix(in srgb,var(--green) 45%,transparent);box-shadow:0 6px 18px -8px rgba(0,0,0,.5);backdrop-filter:blur(12px);margin:0;pointer-events:none}
 .gpind.on{display:grid;animation:pop .4s ease}
 body:has(.gpind.on) .top,body:has(.gpind.on)[data-layout=top] .rail{padding-right:64px}
@@ -632,7 +633,7 @@ body.fs.frameless{--tb:0px}
 
 .fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:14px;max-width:1400px}
 .fcard{position:relative;display:flex;flex-direction:column;padding:12px;border-radius:16px;background:var(--card);border:1px solid var(--line);transition:.2s}
-.view.enter .fcard{animation:up .3s ease both}
+.view.enter .fcard{animation:lift .26s var(--ease,ease-out) both}
 .fcard.ok{cursor:pointer}
 .fcard.ok:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 50%,transparent);box-shadow:0 18px 40px -20px rgba(0,0,0,.8)}
 .fart{position:relative;height:110px;border-radius:12px;display:grid;place-items:center;margin-bottom:10px;overflow:hidden;
@@ -2310,14 +2311,6 @@ body.frameless .qfab{bottom:calc(26px + 16px)}
 .rrows{display:flex;flex-direction:column;gap:4px;max-height:50vh;overflow:auto;margin-top:8px}
 .rrow{display:grid;grid-template-columns:18px 1fr auto 150px auto;gap:10px;align-items:center;padding:7px 10px;border:1px solid var(--line2);border-radius:10px;font-size:12.5px}
 .rrow.dim{opacity:.6}.rrow .mono{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rrow em{font-style:normal;color:var(--muted);font-size:11.5px;white-space:nowrap}.rrow select{height:30px;padding:0 26px 0 8px;border-radius:8px;font-size:12px}.rrow i{font-style:normal;font-size:11px;color:var(--muted)}
-html[data-vt="view"] #view{view-transition-name:view}
-html[data-vt="view"]::view-transition-old(root),html[data-vt="view"]::view-transition-new(root){animation:none}
-::view-transition-old(view){animation:vOut .16s ease-in both}
-::view-transition-new(view){animation:vInR .42s var(--spring,cubic-bezier(.2,.8,.2,1)) both}
-html[data-vdir="back"]::view-transition-new(view){animation-name:vInL}
-@keyframes vOut{to{opacity:0}}
-@keyframes vInR{from{opacity:0;transform:translateX(18px)}to{opacity:1;transform:none}}
-@keyframes vInL{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
 .modal .box{transition:transform .5s var(--spring,cubic-bezier(.2,.8,.2,1)),opacity .18s}
 .gpanel,.fpanel{animation-timing-function:var(--spring,cubic-bezier(.2,.8,.2,1));animation-duration:.5s}
 .filt .pop,.ctx{transform-origin:top right}
