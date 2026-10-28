@@ -475,15 +475,36 @@ html body.bs[data-face] .card .cov img{transition:opacity .25s ease-out}
 html body.bs[data-face] .rb,html body.bs[data-face] .tabs button,html body.bs[data-face] .stabs button{transition:background .15s,color .15s,border-color .15s}
 html body.bs[data-face] .sw::after{transition:transform .16s var(--ease),background .15s}
 html[data-anim="off"] body.bs[data-face] *{animation:none!important;transition:none!important}
-.fog{position:absolute;z-index:0;overflow:hidden;pointer-events:none;contain:strict}
-.fog i{position:absolute;width:95vmax;height:95vmax;border-radius:50%;opacity:calc(var(--fog,.3) * .5);will-change:transform;background:radial-gradient(circle at center,var(--fc) 0%,transparent 58%);animation:fogA 46s ease-in-out infinite alternate}
-.fog i:nth-child(1){--fc:var(--accent);left:15%;top:20%}
-.fog i:nth-child(2){--fc:var(--accent2,var(--accent));left:85%;top:75%;animation:fogB 58s -20s ease-in-out infinite alternate}
-.fog i:nth-child(3){--fc:color-mix(in oklch,var(--accent) 60%,#22d3ee);left:50%;top:105%;width:75vmax;height:75vmax;animation:fogC 70s -35s ease-in-out infinite alternate}
-@keyframes fogA{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(-15%,-25%) scale(1.15)}}
-@keyframes fogB{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(-80%,-70%) scale(.9)}}
-@keyframes fogC{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(-70%,-85%) scale(1.1)}}
+.fog{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;contain:strict}
+html body.bs.fogon[data-face] .rail{position:relative;background:color-mix(in srgb,var(--bg2) 55%,transparent)}
+.fog i{position:absolute;left:50%;width:95vmax;height:95vmax;border-radius:50%;opacity:calc(var(--fog,.3) * .5);will-change:transform;background:radial-gradient(60% 45% at center,var(--fc) 0%,transparent 60%);animation:fogDrift 110s linear infinite}
+.fog i:nth-child(1){--fc:var(--accent);top:22%;animation-delay:-30s}
+.fog i:nth-child(2){--fc:var(--accent2,var(--accent));top:72%;width:80vmax;height:80vmax;animation-duration:150s;animation-delay:-95s}
+.fog i:nth-child(3){--fc:color-mix(in oklch,var(--accent) 60%,#22d3ee);top:100%;width:70vmax;height:70vmax;animation-duration:130s;animation-delay:-60s}
+@keyframes fogDrift{0%{transform:translate(calc(-50% - 100vw),-50%) scale(.9)}50%{transform:translate(-50%,-56%) scale(1.08)}100%{transform:translate(calc(-50% + 100vw),-50%) scale(.9)}}
 html[data-light="1"] .fog i{mix-blend-mode:multiply;opacity:calc(var(--fog,.3) * .32)}
 html.mono .fog{display:none}
 html[data-anim="off"] .fog i{animation:none!important}
 html body.bs[data-face] main{background:transparent}
+html body.bs.rfloat[data-face]{--side:86px;--fgap:10px}
+html body.bs.rfloat[data-face] .rail{margin:var(--fgap) 0 var(--fgap) var(--fgap);padding:8px 0 10px;border:1px solid var(--line);border-radius:calc(var(--r) + 6px);align-items:center;gap:4px}
+html body.bs.rfloat[data-face] .rail .brandrow{height:44px;padding:0;justify-content:center}
+html body.bs.rfloat[data-face] .rail .rg{gap:5px;align-items:center;width:auto;padding:0}
+html body.bs.rfloat[data-face] .rail .rg+.rg{margin-top:8px}
+html body.bs.rfloat[data-face] .rb,html body.bs.rfloat[data-face] .rail .rb{width:46px;height:46px;border-radius:calc(var(--r) + 2px);border:1px solid var(--line);background:color-mix(in srgb,var(--text) 3%,transparent)}
+html body.bs.rfloat[data-face] .rail .rb:hover{background:var(--card2);border-color:var(--line2);color:var(--text)}
+html body.bs.rfloat[data-face] .rail .rb.on{background:color-mix(in srgb,var(--accent) 14%,var(--bg2));border-color:color-mix(in srgb,var(--accent) 55%,transparent);color:var(--text)}
+html body.bs.rfloat[data-face] .rail .rb>svg{width:20px;height:20px}
+html body.bs.rfloat[data-face] .rail .rx{gap:5px;align-items:center;border-top:1px solid var(--line);margin-top:8px;padding-top:8px;width:46px}
+html body.bs.rfloat[data-face] .rail .sp{flex:1}
+html body.bs.rfloat[data-face] .detail{left:calc(var(--side) - var(--fgap) + 1px)}
+html body.bs.rfloat[data-face] .dclose{left:calc(var(--side) + 26px)}
+html body.bs.rfloat[data-face] .bellpop,html body.bs.rfloat[data-face] .helppop{left:calc(var(--side) + 2px)}
+html body.bs.rfloat[data-face] .rail .rb.sm{height:36px;width:46px;flex:none}
+html body.bs.rfloat[data-face] .rail .rx{width:auto;padding:8px 0 0;margin:8px 0 0;scrollbar-width:none;overflow-x:hidden}
+html body.bs.rfloat[data-face] .rail .rx::-webkit-scrollbar{display:none}
+html body.bs.rfloat[data-face] .rail .rbot{margin:0;padding:8px 0 0;gap:5px;align-items:center;border-top:1px solid var(--line);width:46px}
+html body.bs.rfloat[data-face] .rail .bell{width:46px;height:46px;padding:0;justify-content:center;gap:0;border-radius:calc(var(--r) + 2px);border:1px solid var(--line);background:color-mix(in srgb,var(--text) 3%,transparent)}
+html body.bs.rfloat[data-face] .rail .bell:hover{background:var(--card2);border-color:var(--line2);color:var(--text)}
+html body.bs.rfloat[data-face] .rail .bell .hl{display:none!important}
+html body.bs.rfloat[data-face] .rail .rsep{width:46px;margin:4px 0}

@@ -187,7 +187,7 @@ let themeLayout = '', themeAccent = '';
 const LAYOUT_ALIAS = { taskbar: 'bottom', dock: 'bottom' };
 function normLayout(l) { return LAYOUT_ALIAS[l] || l || ''; }
 function setLayout(l) { if (l === themeLayout) return; themeLayout = l; applyChrome(); }
-function themeLay() { const o = S.config.nav_layout; if (['side', 'rail', 'top', 'bottom'].includes(o)) return o; const l = normLayout(themeLayout); return ['top', 'rail', 'bottom'].includes(l) ? l : 'side'; }
+function themeLay() { const o = S.config.nav_layout; if (['side', 'rail', 'float', 'top', 'bottom'].includes(o)) return o; const l = normLayout(themeLayout); return ['top', 'rail', 'bottom'].includes(l) ? l : 'side'; }
 mq.addEventListener('change', () => { if ((S.config.theme || 'system') === 'system' || S.config.theme_mode === 'system') applyTheme(); });
 function inLightWindow() {
   const [f, t] = [S.config.theme_light_from || '07:00', S.config.theme_light_to || '19:00'].map(x => { const [h, m] = String(x).split(':').map(Number); return (h || 0) * 60 + (m || 0); });
@@ -364,7 +364,7 @@ function applyChrome() {
   applyGlass();
   applyRailIcons(); applyNavItems(); applyMotion(); applyClock();
   document.body.dataset.status = S.config.status_position === 'top' ? 'top' : 'bottom';
-  const lay = themeLay(); delete document.body.dataset.layout; document.body.dataset.nav = lay === 'bottom' ? 'bottom' : 'side';
+  const lay0 = themeLay(), lay = lay0 === 'float' ? 'rail' : lay0; document.body.classList.toggle('rfloat', lay0 === 'float'); delete document.body.dataset.layout; document.body.dataset.nav = lay === 'bottom' ? 'bottom' : 'side';
   if (lay === 'top' || lay === 'rail') document.body.dataset.layout = lay;
   const qb = $('#qbox'), sp = lay === 'side' ? 'rail' : 'top'; if (qb) { const host = sp === 'rail' ? $('#rail') : $('#brandBtn').parentElement; if (qb.parentElement !== host) { if (sp === 'rail') $('#rail .brandrow').after(qb); else $('#brandBtn').after(qb); } document.body.dataset.search = sp; } document.body.dataset.navLabels = '1';
   placeWctl(lay);
@@ -2651,12 +2651,10 @@ function applyFog() {
   const main = document.querySelector('main'), app = $('#app'); if (!main || !app) return;
   let f = $('#fog');
   const v = Math.max(0, Math.min(100, Number(S.config.fog ?? 0)));
-  if (!v || S.config.high_contrast) { if (f) f.remove(); if (S._fogRO) { S._fogRO.disconnect(); S._fogRO = null; } return; }
-  if (!f) { f = document.createElement('div'); f.id = 'fog'; f.className = 'fog'; f.setAttribute('aria-hidden', 'true'); f.innerHTML = '<i></i><i></i><i></i>'; app.insertBefore(f, main); }
+  document.body.classList.toggle('fogon', !!v && !S.config.high_contrast);
+  if (!v || S.config.high_contrast) { if (f) f.remove(); return; }
+  if (!f) { f = document.createElement('div'); f.id = 'fog'; f.className = 'fog'; f.setAttribute('aria-hidden', 'true'); f.innerHTML = '<i></i><i></i><i></i>'; app.insertBefore(f, app.firstChild); }
   f.style.setProperty('--fog', (v / 100).toFixed(2));
-  const fit = () => { const r = main.getBoundingClientRect(), a = app.getBoundingClientRect(); f.style.left = (r.left - a.left) + 'px'; f.style.top = (r.top - a.top) + 'px'; f.style.width = r.width + 'px'; f.style.height = r.height + 'px'; };
-  if (!S._fogRO && window.ResizeObserver) { S._fogRO = new ResizeObserver(fit); S._fogRO.observe(main); S._fogRO.observe(app); }
-  fit();
 }
 function applyAnim() {
   applyFog();

@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.0.17-hf2 — 2026-10-28
+- Névoa de cor: as manchas agora atravessam a tela da esquerda para a direita, como nuvens, em loop contínuo, passando também pela barra lateral.
+- Barra de navegação: nova opção "Lateral solta, em quadrados" (Ajustes › Aparência › Barra de navegação): a barra fica separada do conteúdo, com cantos arredondados e botões quadrados só com ícone.
+
 ## 4.0.17-hf1 — 2026-10-28
 - Abrir detalhes: a página chega pronta numa transição só (capa desliza do card para o lugar final); antes a capa subia sozinha e o resto aparecia depois.
 - Névoa de cor: manchas suaves na cor de destaque se movendo devagar atrás do conteúdo. Intensidade em Ajustes › Aparência (zero desliga); segue "Reduzir movimento" e some em alto contraste.
