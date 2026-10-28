@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.0.17-hf1 — 2026-10-28
+- Abrir detalhes: a página chega pronta numa transição só (capa desliza do card para o lugar final); antes a capa subia sozinha e o resto aparecia depois.
+- Névoa de cor: manchas suaves na cor de destaque se movendo devagar atrás do conteúdo. Intensidade em Ajustes › Aparência (zero desliga); segue "Reduzir movimento" e some em alto contraste.
+
 ## 4.0.17 — 2026-10-28
 - Abertura mais rápida, principalmente em HDD: a biblioteca aparece a partir de um cache único (um arquivo, em vez de centenas de leituras espalhadas pelo disco) e a conferência de cada jogo roda em segundo plano logo depois; a verificação de integridade dos arquivos do launcher saiu do caminho de abertura (só tamanho na hora, hash depois, sem bloquear); a interface, capas e fontes passam a ser reaproveitadas do cache do navegador entre uma abertura e outra.
 - Glass: só o fundo da janela e os painéis ficam translúcidos. Cards, menus, janelas, avisos e o cartão de sessão (jogo fechado) agora têm fundo sólido e legível.

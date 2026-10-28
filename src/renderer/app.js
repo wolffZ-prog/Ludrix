@@ -1298,18 +1298,26 @@ async function openGame(key) {
   S.current = key; S.dtab = 'about'; const g = S.byKey[key] || { title: '...' };
   if (S.config.accent_from_cover) { S._focusKey = key; dynAccent(key); }
   setHero(key, `/hero/${enc(key)}`);
+  const d = await Promise.race([api.get('/api/game/' + enc(key)), new Promise(r => setTimeout(() => r(null), 700))]);
+  if (S.current !== key) return;
+  if (d && d.error) { S.current = null; toast('err', 'Não foi possível concluir', d.error); return; }
   const src = cardImg(key); if (src) src.style.viewTransitionName = 'gcov';
   await vtRun(() => {
     if (src) src.style.viewTransitionName = '';
-    $('#dWrap').innerHTML = `<div class="dcov"><img src="/cover/${enc(key)}" alt="${esc((g.title || '?').trim().charAt(0).toUpperCase())}" onerror="dph(this)"></div><div class="dmain"><h1>${esc(g.title)}</h1><div class="meta"><span class="pill">carregando…</span></div></div>`;
     $('#detail').classList.add('on'); $('#detail').scrollTop = 0;
+    if (d) { S.det = d; renderDetail(); }
+    else $('#dWrap').innerHTML = `<div class="dcov"><img src="/cover/${enc(key)}" alt="${esc((g.title || '?').trim().charAt(0).toUpperCase())}" onerror="dph(this)"></div><div class="dmain"><h1>${esc(g.title)}</h1><div class="meta"><span class="pill">carregando…</span></div></div>`;
   }, 'open');
   if (S.current !== key) return;
-  const d = await api.get('/api/game/' + enc(key));
-  if (S.current !== key) return;
-  if (d.error) { toast('err', 'Não foi possível concluir', d.error); return; }
-  S.det = d; renderDetail(); guide('detail');
-  if (!d.meta && S.config.auto_metadata && d.kind !== 'emulator') fetchMeta(key, false, true);
+  let data = d;
+  if (!data) {
+    data = await api.get('/api/game/' + enc(key));
+    if (S.current !== key) return;
+    if (data.error) { toast('err', 'Não foi possível concluir', data.error); return; }
+    S.det = data; renderDetail();
+  }
+  guide('detail');
+  if (!data.meta && S.config.auto_metadata && data.kind !== 'emulator') fetchMeta(key, false, true);
 }
 function closeDetail() { if (!S.current) return closeDetailNow(); uiSound('back'); const was = S.current; const src = cardImg(was); vtRun(() => { closeDetailNow(); if (src) src.style.viewTransitionName = 'gcov'; }, 'close').then(() => { if (src) src.style.viewTransitionName = ''; }); }
 function closeDetailNow() { const was = S.current; S.current = null; $('#detail').classList.remove('on'); $('#detail').classList.remove('bar'); if (S._dObs) { S._dObs.disconnect(); S._dObs = null; } if (was && S.config.accent_from_cover) { if (S.view === 'home' && S.stageKey) gameFocus(S.stageKey); else { S._focusKey = ''; dynAccent(null); } } }
@@ -2639,7 +2647,19 @@ function sessionCard(ev, g) {
 }
 function toastPlain(type, title, msg) { const t = document.createElement('div'); t.className = 'toast ' + type; t.innerHTML = `<div><b>${esc(title)}</b><span>${esc(msg || '')}</span></div>`; const box = $('#toasts'); box.appendChild(t); while (box.children.length > 5) box.firstElementChild.remove(); let left = 5000, tm, t0 = Date.now(); const go = () => { t0 = Date.now(); tm = setTimeout(() => { t.style.transition = '.3s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, left); }; t.onmouseenter = () => { clearTimeout(tm); left = Math.max(1500, left - (Date.now() - t0)); }; t.onmouseleave = go; t.onclick = () => { clearTimeout(tm); t.remove(); }; go(); }
 
+function applyFog() {
+  const main = document.querySelector('main'), app = $('#app'); if (!main || !app) return;
+  let f = $('#fog');
+  const v = Math.max(0, Math.min(100, Number(S.config.fog ?? 0)));
+  if (!v || S.config.high_contrast) { if (f) f.remove(); if (S._fogRO) { S._fogRO.disconnect(); S._fogRO = null; } return; }
+  if (!f) { f = document.createElement('div'); f.id = 'fog'; f.className = 'fog'; f.setAttribute('aria-hidden', 'true'); f.innerHTML = '<i></i><i></i><i></i>'; app.insertBefore(f, main); }
+  f.style.setProperty('--fog', (v / 100).toFixed(2));
+  const fit = () => { const r = main.getBoundingClientRect(), a = app.getBoundingClientRect(); f.style.left = (r.left - a.left) + 'px'; f.style.top = (r.top - a.top) + 'px'; f.style.width = r.width + 'px'; f.style.height = r.height + 'px'; };
+  if (!S._fogRO && window.ResizeObserver) { S._fogRO = new ResizeObserver(fit); S._fogRO.observe(main); S._fogRO.observe(app); }
+  fit();
+}
 function applyAnim() {
+  applyFog();
   const mode = S.config.reduce_motion ? 'off' : (S.config.animations || 'full');
   if (document.documentElement.dataset.anim !== mode) document.documentElement.dataset.anim = mode;
   applyPlx();

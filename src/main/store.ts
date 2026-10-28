@@ -91,6 +91,7 @@ const DEFAULT_CONFIG = {
     look: 0,
     card_hover: 'lift',
     reduce_motion: false,
+    fog: 30,
     acrylic: true,
     parallax: true,
     high_contrast: false,

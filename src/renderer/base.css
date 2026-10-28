@@ -475,3 +475,15 @@ html body.bs[data-face] .card .cov img{transition:opacity .25s ease-out}
 html body.bs[data-face] .rb,html body.bs[data-face] .tabs button,html body.bs[data-face] .stabs button{transition:background .15s,color .15s,border-color .15s}
 html body.bs[data-face] .sw::after{transition:transform .16s var(--ease),background .15s}
 html[data-anim="off"] body.bs[data-face] *{animation:none!important;transition:none!important}
+.fog{position:absolute;z-index:0;overflow:hidden;pointer-events:none;contain:strict}
+.fog i{position:absolute;width:95vmax;height:95vmax;border-radius:50%;opacity:calc(var(--fog,.3) * .5);will-change:transform;background:radial-gradient(circle at center,var(--fc) 0%,transparent 58%);animation:fogA 46s ease-in-out infinite alternate}
+.fog i:nth-child(1){--fc:var(--accent);left:15%;top:20%}
+.fog i:nth-child(2){--fc:var(--accent2,var(--accent));left:85%;top:75%;animation:fogB 58s -20s ease-in-out infinite alternate}
+.fog i:nth-child(3){--fc:color-mix(in oklch,var(--accent) 60%,#22d3ee);left:50%;top:105%;width:75vmax;height:75vmax;animation:fogC 70s -35s ease-in-out infinite alternate}
+@keyframes fogA{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(-15%,-25%) scale(1.15)}}
+@keyframes fogB{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(-80%,-70%) scale(.9)}}
+@keyframes fogC{from{transform:translate(-50%,-50%) scale(1)}to{transform:translate(-70%,-85%) scale(1.1)}}
+html[data-light="1"] .fog i{mix-blend-mode:multiply;opacity:calc(var(--fog,.3) * .32)}
+html.mono .fog{display:none}
+html[data-anim="off"] .fog i{animation:none!important}
+html body.bs[data-face] main{background:transparent}

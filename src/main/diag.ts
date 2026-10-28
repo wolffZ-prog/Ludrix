@@ -6,7 +6,7 @@ import * as P from './paths';
 import * as log from './log';
 import { DEFAULT_CONFIG } from './store';
 
-export const SAFE_KEYS = ['theme', 'face', 'accent', 'layout', 'nav', 'custom', 'ctx_menu', 'animations', 'fx_type',
+export const SAFE_KEYS = ['theme', 'face', 'accent', 'layout', 'nav', 'custom', 'ctx_menu', 'animations', 'fog', 'fx_type',
     'fx_intensity', 'glass', 'ui_scale', 'density', 'rail_icons', 'hero_enabled'];
 const MIN_FREE = 512 * 1024 * 1024;
 const WIN = process.platform === 'win32';
