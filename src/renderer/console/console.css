@@ -21,7 +21,7 @@ body.panel .stage .bg,body.panel .stage .bg2{filter:blur(4px) saturate(1.1);tran
 .top{position:absolute;left:var(--pad);right:var(--pad);top:calc(26px * var(--u));z-index:5;display:flex;align-items:flex-start;justify-content:space-between;pointer-events:none}
 .top>*{pointer-events:auto}
 .tl,.tr{display:flex;align-items:center;gap:calc(8px * var(--u))}
-.brand{width:calc(40px * var(--u));height:calc(40px * var(--u));flex:none}.brand svg{width:100%;height:100%;stroke:none;display:block}
+.brand{width:calc(40px * var(--u));height:calc(40px * var(--u));flex:none}.brand img{width:100%;height:100%;display:block;border-radius:22%}
 .pill,.chip{display:flex;align-items:center;gap:calc(8px * var(--u));height:calc(40px * var(--u));padding:0 calc(14px * var(--u));border-radius:calc(12px * var(--u));background:color-mix(in srgb,var(--bg) 42%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid color-mix(in srgb,var(--text) 14%,transparent);color:var(--text);font-size:calc(13px * var(--u));font-weight:700}
 .chip{height:calc(52px * var(--u));padding:0 calc(16px * var(--u)) 0 calc(6px * var(--u));border-radius:calc(14px * var(--u));min-width:0;max-width:min(46vw,calc(420px * var(--u)));opacity:0;transition:opacity .25s}
 .chip.on{opacity:1}

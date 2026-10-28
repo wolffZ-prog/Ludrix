@@ -553,7 +553,7 @@ async function cmdAll(minVersion) {
         await cmdFull();
     await cmdSrc();
     await cmdFeed();
-    if (hot && !newestFull(version()))
+    if (hot && !newestFull(vtag()))
         die('hotfix: o feed anterior não tem nenhuma versão completa — publique uma release completa primeiro', 5);
     rmrf(path.join(OUT, 'stage'));
     rmrf(path.join(ROOT, 'dist'));

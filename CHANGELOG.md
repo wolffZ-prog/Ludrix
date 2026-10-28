@@ -1,5 +1,8 @@
 # Changelog
 
+## 4.0.19-hf1 — 2026-10-28
+- Abertura, modo console e terminal passam a usar o ícone novo.
+
 ## 4.0.19 — 2026-10-28
 
 - Ícone com mais contraste: placa azul-acinzentada com o controle preto; o modo console usa a mesma placa com o controle branco. Legível na bandeja, na barra de tarefas e dentro do Ludrix, em fundo claro ou escuro.

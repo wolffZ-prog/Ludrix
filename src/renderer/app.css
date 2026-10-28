@@ -969,7 +969,7 @@ body:not(.frameless) .rz,body.maxed .rz{display:none}
 .splash .slog div.ok::after{content:"ok";margin-left:8px;color:var(--text);opacity:.45}
 .splash .spct{position:absolute;right:34px;bottom:30px;font:500 11.5px var(--font-mono,ui-monospace,monospace);color:var(--muted);letter-spacing:.08em;font-variant-numeric:tabular-nums}
 .splash .sl{width:112px;height:112px;filter:drop-shadow(0 20px 40px color-mix(in srgb,var(--accent) 55%,transparent));animation:spl-in .9s cubic-bezier(.2,.8,.2,1) both}
-.splash .sl svg{width:100%;height:100%}
+.splash .sl img{width:100%;height:100%;display:block}
 .splash .st{margin-top:22px;white-space:nowrap;font-size:22px;font-weight:800;letter-spacing:-.4px;animation:spl-in .9s .25s cubic-bezier(.2,.8,.2,1) both}
 .splash .sb{margin-top:22px;width:220px;height:3px;border-radius:3px;background:color-mix(in srgb,var(--text) 10%,transparent);overflow:hidden;animation:spl-in .6s .45s both}
 .splash .sb i{display:block;height:100%;width:0;border-radius:3px;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#fff));box-shadow:0 0 12px color-mix(in srgb,var(--accent) 70%,transparent);transition:width .45s cubic-bezier(.2,.8,.2,1)}
@@ -1504,7 +1504,7 @@ details.exp b{color:var(--text)}
 @keyframes cprog-ind{from{margin-left:0}to{margin-left:60%}}
 .grid.lst .card .rib,.grid.lst .card .ptb{display:none}
 .splash .sl.img{width:240px;height:240px;min-height:240px;flex:none;background:center/contain no-repeat;filter:none}
-.splash .sl.img svg{display:none}
+.splash .sl.img img{display:none}
 .rail{transition:transform .3s,opacity .25s}
 html body.playing:not(.peek){--rail:0px;--navh:0px;--toph:0px}
 html body.playing:not(.peek)>#app>.rail{pointer-events:none!important}
