@@ -2279,6 +2279,7 @@ body.frameless[data-layout=top] .rail .wctl{margin:0 -14px 0 6px;align-self:stre
 body.frameless[data-layout=top] .rail .wctl button{height:100%}
 body.frameless .rail .brandrow,body.frameless header.top,body.frameless .h1,body.frameless .nowbar,body.frameless[data-layout=top] .rail{-webkit-app-region:drag}
 body.frameless :is(.rail .brandrow,header.top,.h1,.nowbar,[data-layout=top] .rail) :is(button,input,select,a,.chip,.dd,#sort,.brand,.rb,.search,.nbcov,.nbacts,h2,.qchips,.bell,.wctl){-webkit-app-region:no-drag}
+body.frameless.ctxon :is(.rail .brandrow,header.top,.h1,.nowbar,[data-layout=top] .rail,main>.wctl){-webkit-app-region:no-drag}
 
 .qfab{position:fixed;right:18px;bottom:calc(26px + 16px);width:44px;height:44px;border-radius:50%;border:0;padding:0;background:var(--card);color:var(--text);box-shadow:0 0 0 1px var(--line),0 6px 18px rgba(0,0,0,.28);z-index:320;display:grid;place-items:center;cursor:pointer;opacity:0;transform:translateY(12px) scale(.85);pointer-events:none;transition:opacity .22s,transform .3s cubic-bezier(.2,.9,.3,1.2)}
 .qfab.on{opacity:1;transform:none;pointer-events:auto}

@@ -50,7 +50,7 @@ Requirements: Windows 10 or 11, 64-bit. No account, login, WebView2 or installat
 
 ## Where Ludrix stands today
 
-The 4.0 series replaced the old Python engine with Electron + TypeScript while keeping the same data folder. The current version is **4.0.18**, and this is the state of the project:
+The 4.0 series replaced the old Python engine with Electron + TypeScript while keeping the same data folder. The current version is **4.0.19**, and this is the state of the project:
 
 - **One library.** PC games, ROMs and quick games (Flash/HTML5) sit together in an alphabetical grid with letter dividers, covers, categories and combinable filters. The selected game is featured at the top with its own background art, Play, Details and Folder.
 - **A Store fed by sources.** No catalogue is bundled. The Store only shows what the `.json` lists, web pages, archive.org collections, GitHub repositories or local folders added by the user provide. Direct download, file hosts and torrent (no DHT, UPnP or NAT-PMP).

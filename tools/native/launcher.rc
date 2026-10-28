@@ -1,8 +1,8 @@
 #include <windows.h>
 1 ICON "ICONFILE"
 1 VERSIONINFO
-FILEVERSION 4,0,18,0
-PRODUCTVERSION 4,0,18,0
+FILEVERSION 4,0,19,0
+PRODUCTVERSION 4,0,19,0
 BEGIN
   BLOCK "StringFileInfo"
   BEGIN
@@ -10,9 +10,9 @@ BEGIN
     BEGIN
       VALUE "CompanyName", "WOLFFZ"
       VALUE "FileDescription", "DESCRIPTION"
-      VALUE "FileVersion", "4.0.18"
+      VALUE "FileVersion", "4.0.19"
       VALUE "ProductName", "LudrixHub"
-      VALUE "ProductVersion", "4.0.18"
+      VALUE "ProductVersion", "4.0.19"
       VALUE "OriginalFilename", "ORIGNAME"
       VALUE "LegalCopyright", "MIT"
     END

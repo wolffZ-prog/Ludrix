@@ -50,7 +50,7 @@ Requisitos: Windows 10 ou 11, 64 bits. Sem conta, login, WebView2 ou instalaçã
 
 ## Como o Ludrix está hoje
 
-A série 4.0 trocou o motor antigo (Python) por Electron + TypeScript, mantendo a mesma pasta de dados. A versão atual é a **4.0.18**, e o estado do projeto é este:
+A série 4.0 trocou o motor antigo (Python) por Electron + TypeScript, mantendo a mesma pasta de dados. A versão atual é a **4.0.19**, e o estado do projeto é este:
 
 - **Uma biblioteca só.** Jogos de PC, ROMs e jogos rápidos (Flash/HTML5) aparecem juntos, em grade alfabética com divisórias por letra, capas, categorias e filtros combináveis. O jogo selecionado fica em destaque no topo, com a arte de fundo dele, botão Jogar, Detalhes e Pasta.
 - **Store alimentada por fontes.** Nenhum catálogo vem embutido. A Store só mostra o que as listas `.json`, páginas, coleções do archive.org, repositórios do GitHub ou pastas locais adicionadas pelo usuário oferecem. Download direto, hospedeiros e torrent (sem DHT, UPnP ou NAT-PMP).

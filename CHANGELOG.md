@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.0.19 — 2026-10-28
+
+- Ícone com mais contraste: placa azul-acinzentada com o controle preto; o modo console usa a mesma placa com o controle branco. Legível na bandeja, na barra de tarefas e dentro do Ludrix, em fundo claro ou escuro.
+- Esta atualização chega como pacote completo: troca também `Ludrix.exe`, `LudrixConsole.exe` e os executáveis auxiliares, que carregam o ícone embutido.
+- Menu de contexto: clicar em qualquer outro ponto da janela fecha o menu — inclusive no destaque do jogo, no cabeçalho e na barra de título.
+
 ## 4.0.18 — 2026-10-28
 
 - Ícone novo: controle preto sobre grafite fosco, em todos os lugares — executáveis, janela, barra de tarefas, bandeja, atalhos, modo console, atualizador e página do projeto.

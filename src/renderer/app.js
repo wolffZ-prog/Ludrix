@@ -3155,7 +3155,7 @@ function placeCtx(x, y) {
   if (r.height > H - 2 * pad) { m.style.maxHeight = (H - 2 * pad) + 'px'; top = pad; }
   m.style.left = left + 'px'; m.style.top = top + 'px';
 }
-function closeCtx() { $('#ctx').classList.remove('on'); ctxKey = null; }
+function closeCtx() { $('#ctx').classList.remove('on'); document.body.classList.remove('ctxon'); ctxKey = null; }
 document.addEventListener('contextmenu', e => {
   if (e.target.closest('input,textarea,[contenteditable]')) return;
   const card = e.target.closest('.card'); if (card) { e.preventDefault(); return ctxMenu(card.dataset.key, e.clientX, e.clientY); }
@@ -3169,6 +3169,7 @@ document.addEventListener('contextmenu', e => {
   if (e.target.closest('#view,.top')) { e.preventDefault(); return viewMenu(S.view, e.clientX, e.clientY); }
 });
 document.addEventListener('click', e => { if (!e.target.closest('#ctx')) closeCtx(); }, true);
+window.addEventListener('blur', closeCtx);
 $('#view').addEventListener('scroll', () => { if (ctxKey !== null || $('#ctx').classList.contains('on')) closeCtx(); }, { passive: true });
 async function ctxDo(key, id) {
   closeCtx();
@@ -3698,7 +3699,7 @@ function showCtxLocal(items, x, y, title, head) {
   const find = id => { const [a, b] = id.split('.'); return b === undefined ? items[+a] : items[+a].sub[+b]; };
   c.querySelectorAll('button').forEach(b => b.onclick = e => { const it = find(b.dataset.i); if (it.sub) { e.stopPropagation(); if (c.classList.contains('tall')) { b.parentElement.classList.toggle('open'); b.parentElement.scrollIntoView({ block: 'nearest' }); } return; } c.classList.remove('on'); it.fn && it.fn(); });
   c.querySelectorAll('.subw').forEach(w => w.addEventListener('mouseenter', () => { if (c.classList.contains('tall')) { c.querySelectorAll('.subw.open').forEach(o => { if (o !== w) o.classList.remove('open'); }); w.classList.add('open'); w.scrollIntoView({ block: 'nearest' }); return; } const sub = w.querySelector('.sub'); sub.classList.remove('left'); sub.style.top = ''; sub.style.maxHeight = ''; const wr = w.getBoundingClientRect(); let r = sub.getBoundingClientRect(); if (r.right > innerWidth - 8) sub.classList.add('left'); if (r.height > innerHeight - 16) { sub.style.maxHeight = (innerHeight - 16) + 'px'; sub.style.overflowY = 'auto'; r = sub.getBoundingClientRect(); } const want = Math.max(8, Math.min(wr.top - 6, innerHeight - 8 - r.height)); sub.style.top = (want - wr.top) + 'px'; }));
-  c.classList.add('on'); placeCtx(x, y);
+  c.classList.add('on'); document.body.classList.add('ctxon'); placeCtx(x, y);
   setTimeout(() => document.addEventListener('click', () => c.classList.remove('on'), { once: true }), 0);
 }
 async function addFlash(kind, hint) {
