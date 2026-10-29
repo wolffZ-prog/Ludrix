@@ -1,10 +1,10 @@
 {
   "version": "4.0.19",
   "channel": "stable",
-  "date": "2026-10-28",
+  "date": "2026-10-29",
   "name": "LudrixHub",
   "changelog": "",
   "patch_min": "4.0.19",
   "release": "hotfix",
-  "rev": 1
+  "rev": 2
 }

@@ -3451,7 +3451,7 @@
     "; \"Do Windows\" acompanha a cor de destaque em Configurações › Personalização": "; \"From Windows\" follows the accent color in Settings › Personalization",
     "Corta transições e animações de uma vez, independente da configuração de animações do sistema": "Cuts transitions and animations at once, regardless of the system animation setting",
     "Névoa de cor": "Color haze",
-    "Manchas de cor suaves, na cor de destaque, se movendo devagar atrás do conteúdo. Zero desliga": "Soft patches of the accent color drifting slowly behind the content. Zero turns it off",
+    "Névoa na cor de destaque, deslizando devagar atrás do conteúdo. Zero desliga": "Accent-colored haze drifting slowly behind the content. Zero turns it off",
     "O menu do Ludrix fica dentro da janela, com cabeçalho, ícones e submenus; o nativo é o menu padrão do Windows, sem as cores do tema": "The Ludrix menu stays inside the window, with header, icons and submenus; the native one is the standard Windows menu, without the theme colors",
     "Menu do Windows": "Windows menu",
     "Prefixos: dev:, ano:, gen:, sis:, origem:, tag:": "Prefixes: dev:, year:, gen:, sys:, origin:, tag:",

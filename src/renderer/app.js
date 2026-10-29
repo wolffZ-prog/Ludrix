@@ -2649,7 +2649,7 @@ function applyFog() {
   const v = Math.max(0, Math.min(100, Number(S.config.fog ?? 0)));
   document.body.classList.toggle('fogon', !!v && !S.config.high_contrast);
   if (!v || S.config.high_contrast) { if (f) f.remove(); return; }
-  if (!f) { f = document.createElement('div'); f.id = 'fog'; f.className = 'fog'; f.setAttribute('aria-hidden', 'true'); f.innerHTML = '<i></i><i></i><i></i>'; app.insertBefore(f, app.firstChild); }
+  if (!f) { f = document.createElement('div'); f.id = 'fog'; f.className = 'fog'; f.setAttribute('aria-hidden', 'true'); f.innerHTML = '<i></i><i></i>'; app.insertBefore(f, app.firstChild); }
   f.style.setProperty('--fog', (v / 100).toFixed(2));
 }
 function applyAnim() {

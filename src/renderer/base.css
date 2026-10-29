@@ -473,12 +473,14 @@ html body.bs[data-face] .sw::after{transition:transform .16s var(--ease),backgro
 html[data-anim="off"] body.bs[data-face] *{animation:none!important;transition:none!important}
 .fog{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;contain:strict}
 html body.bs.fogon[data-face] .rail{position:relative;background:color-mix(in srgb,var(--bg2) 55%,transparent)}
-.fog i{position:absolute;left:50%;width:95vmax;height:95vmax;border-radius:50%;opacity:calc(var(--fog,.3) * .5);will-change:transform;background:radial-gradient(60% 45% at center,var(--fc) 0%,transparent 60%);animation:fogDrift 110s linear infinite}
-.fog i:nth-child(1){--fc:var(--accent);top:22%;animation-delay:-30s}
-.fog i:nth-child(2){--fc:var(--accent2,var(--accent));top:72%;width:80vmax;height:80vmax;animation-duration:150s;animation-delay:-95s}
-.fog i:nth-child(3){--fc:color-mix(in oklch,var(--accent) 60%,#22d3ee);top:100%;width:70vmax;height:70vmax;animation-duration:130s;animation-delay:-60s}
-@keyframes fogDrift{0%{transform:translate(calc(-50% - 100vw),-50%) scale(.9)}50%{transform:translate(-50%,-56%) scale(1.08)}100%{transform:translate(calc(-50% + 100vw),-50%) scale(.9)}}
-html[data-light="1"] .fog i{mix-blend-mode:multiply;opacity:calc(var(--fog,.3) * .32)}
+.fog i{position:absolute;top:0;bottom:0;left:0;width:calc(100% + 1200px);will-change:transform;-webkit-mask-repeat:repeat;mask-repeat:repeat}
+.fog i:nth-child(1){background:color-mix(in oklch,var(--accent) 80%,#fff);-webkit-mask-image:url(/ui/fog1.svg);mask-image:url(/ui/fog1.svg);-webkit-mask-size:600px 600px;mask-size:600px 600px;opacity:calc(var(--fog,.3) * .34);animation:fogA 80s linear infinite}
+.fog i:nth-child(2){background:color-mix(in oklch,var(--accent) 55%,#22d3ee);-webkit-mask-image:url(/ui/fog2.svg);mask-image:url(/ui/fog2.svg);-webkit-mask-size:1100px 1100px;mask-size:1100px 1100px;opacity:calc(var(--fog,.3) * .26);animation:fogB 130s linear infinite}
+@keyframes fogA{to{transform:translateX(-1200px)}}
+@keyframes fogB{from{transform:translateX(-1100px)}to{transform:translateX(0)}}
+html[data-light="1"] .fog i{mix-blend-mode:multiply}
+html[data-light="1"] .fog i:nth-child(1){background:var(--accent);opacity:calc(var(--fog,.3) * .24)}
+html[data-light="1"] .fog i:nth-child(2){opacity:calc(var(--fog,.3) * .18)}
 html.mono .fog{display:none}
 html[data-anim="off"] .fog i{animation:none!important}
 html body.bs[data-face] main{background:transparent}
