@@ -1,5 +1,8 @@
 # Changelog
 
+## 4.0.19-hf3 — 2026-10-29
+- Névoa de cor mais suave: nuvens desfocadas e largas, sem o aspecto de fumaça.
+
 ## 4.0.19-hf2 — 2026-10-29
 - Névoa de cor refeita: textura de névoa de verdade, em duas camadas na cor de destaque, deslizando devagar atrás do conteúdo (tema claro e escuro). O controle em Ajustes continua o mesmo.
 
