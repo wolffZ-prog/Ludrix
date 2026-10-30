@@ -123,6 +123,8 @@ export class FlashManager {
     }
 
     coverLocal(gid: string): string | null {
+        if (!/^[A-Za-z0-9_-]+$/.test(gid))
+            return null;
         const p = path.join(COVERS, `${gid}.jpg`);
         if (isFile(p))
             return p;

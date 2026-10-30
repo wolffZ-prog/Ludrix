@@ -19,7 +19,6 @@ import { ModsManager, GameMods } from './mods';
 import { FlashManager } from './flash';
 import { SaveManager } from './saves';
 import { safeFolderName, freeBytes } from './installer';
-import { Terminal } from './terminal';
 import { CentralFront, expandVars, bedrockInstalled, BEDROCK_AUMID, BEDROCK_STORE, JAVA_STORE } from './central';
 import * as themes from './themes';
 import * as sys from './system';
@@ -75,7 +74,6 @@ class Backend {
     imp!: ImportFront;
     central!: CentralFront;
     repack!: Repack;
-    terminal!: Terminal;
     mods!: ModsManager;
     gmods!: GameMods;
     flash!: FlashManager;
@@ -88,7 +86,6 @@ class Backend {
         this.imp = new ImportFront(this);
         this.central = new CentralFront(this);
         this.repack = new Repack(this);
-        this.terminal = new Terminal(this);
         this.mods = new ModsManager(this.store, http.shared, webcache.shared);
         this.flash = new FlashManager(this.store, http.shared, webcache.shared);
         this.flash.onCover = (gid) => this.push({ type: 'flash_cover', id: gid });
@@ -921,6 +918,8 @@ class Backend {
         }
         const exeStr = String(info.exe || '');
         if (URI_RE.test(exeStr)) {
+            if (/^(file|javascript|data|blob|vbscript|about):/i.test(exeStr))
+                return { error: 'Endereço de abertura inválido', uri: exeStr };
             try {
                 await electron.shell.openExternal(exeStr);
             }

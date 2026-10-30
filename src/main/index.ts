@@ -164,11 +164,16 @@ function createWindow(url, recreate = false) {
         return { action: 'deny' };
     });
     win.webContents.on('will-navigate', (e, target) => {
-        const base = `http://127.0.0.1:${server?.port ?? 0}`;
-        if (!target.startsWith(base)) {
-            e.preventDefault();
-            void electron.shell.openExternal(target);
+        let origin = '';
+        try {
+            origin = new URL(target).origin;
         }
+        catch { }
+        if (origin === `http://127.0.0.1:${server?.port ?? 0}`)
+            return;
+        e.preventDefault();
+        if (/^https?:/i.test(target))
+            void electron.shell.openExternal(target);
     });
     win.once('ready-to-show', () => {
         if (saved?.maximized)
@@ -516,9 +521,23 @@ function legacySweep() {
     if (n)
         log.info('motor antigo (3.x) removido do backup (%d)', n);
 }
+function hardenWebContents() {
+    electron.app.on('web-contents-created', (_e, wc) => {
+        wc.on('will-attach-webview', (e) => e.preventDefault());
+        wc.setWindowOpenHandler(({ url: target }) => {
+            if (/^https?:/i.test(target))
+                void electron.shell.openExternal(target);
+            return { action: 'deny' };
+        });
+    });
+    const ALLOWED = new Set(['fullscreen', 'pointerLock', 'clipboard-sanitized-write']);
+    electron.session.defaultSession.setPermissionRequestHandler((_wc, permission, cb) => cb(ALLOWED.has(permission)));
+    electron.session.defaultSession.setPermissionCheckHandler((_wc, permission) => ALLOWED.has(permission));
+}
 async function main() {
     P.ensureDirs();
     log.initLog();
+    hardenWebContents();
     log.info('Ludrix (Electron) iniciando em %s', P.ROOT);
     if (updateGuard())
         return;
@@ -583,6 +602,10 @@ async function main() {
                 webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
             });
             w.setMenuBarVisibility(false);
+            w.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+            w.webContents.on('will-navigate', (e, target) => { if (!/^https?:/i.test(target)) e.preventDefault(); });
+            if (!/^https?:\/\//i.test(String(b.url)))
+                return { error: 'endereco invalido' };
             void w.loadURL(String(b.url));
             return { ok: true };
         },

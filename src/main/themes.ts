@@ -435,7 +435,12 @@ export function themeImportOne(file: string) {
     if (infos.length > 400 || sizes.reduce((a, b) => a + b, 0) > 160 * 1024 * 1024 || sizes.some((s) => s > 40 * 1024 * 1024))
         return { error: 'Arquivo de tema fora do limite (muitos arquivos ou grande demais)' };
     const names = infos.map((e) => e.entryName).filter((n) => !n.includes('..') && !n.startsWith('/') && !n.startsWith('\\'));
-    const read = (n: string) => z.getEntry(n)!.getData();
+    const read = (n: string) => {
+        const data = z.getEntry(n)!.getData();
+        if (data.length > 40 * 1024 * 1024)
+            throw new Error('Arquivo de tema fora do limite (muitos arquivos ou grande demais)');
+        return data;
+    };
     const tjs = names.filter((n) => n.split('/').pop()!.toLowerCase() === 'theme.json');
     if (!tjs.length)
         return { error: 'Esse arquivo não tem theme.json (esqueleto: <pasta-do-tema>/theme.json + extra.css + preview.png…)' };

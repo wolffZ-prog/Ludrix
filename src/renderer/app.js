@@ -1219,24 +1219,15 @@ qObs.observe($('#view'), { childList: true, subtree: true });
 function renderSortBtn() { }
 function focusSearch() { const m = $('#qm'); if (m && m.offsetParent) { m.parentElement.classList.add('on'); m.focus(); return; } if (topSearchVisible()) { $('#q').focus(); return; } if (!['home', 'store'].includes(S.view)) { setView(S.repos.some(r => r.enabled) ? 'store' : 'home'); return setTimeout(focusSearch, 80); } $('#q').focus(); }
 let qmt; function miniSearch(v) { S._siteQ = ''; clearTimeout(qmt); qmt = setTimeout(() => { S.q = v; S.page = 1; const i = $('#q'); if (i) i.value = v; renderLibrary(); const m = $('#qm'); if (m) { m.parentElement.classList.add('on'); m.focus(); m.setSelectionRange(v.length, v.length); } }, 160); }
-$('#q').addEventListener('keydown', e => { if (e.key === 'Escape' && e.target.value) { e.preventDefault(); e.stopPropagation(); clearSearch(); } else if (e.key === 'Escape') e.target.blur(); });
+$('#q').addEventListener('keydown', e => { if (e.key === 'Escape' && e.target.value) { e.preventDefault(); e.stopPropagation(); clearSearch(); } else if (e.key === 'Escape') e.target.blur(); else if (e.key === 'Enter' && /^\/unlock(ludrixpro)?\s+\S/.test(e.target.value)) lantern(e.target.value); });
+async function lantern(line) {
+  const code = line.replace(/^\/\S+\s+/, '').trim().toLowerCase();
+  const h = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(code)))).map(x => x.toString(16).padStart(2, '0')).join('');
+  if (h !== '230ceb43cdbcd0ed5e87395a9701bc4134ef7346ff9d8839120ca5c2d90783b1') return;
+  clearSearch();
+  modal({ title: 'A lanterna negra está acesa.', html: '<pre style="text-align:center;font-size:15px;line-height:1.25;margin:8px 0 2px">  ___\n /   \\\n|  o  |\n \\___/\n  | |\n  |_|</pre>', ok: 'Fechar', noCancel: true });
+}
 let qt; $('#q').addEventListener('input', e => { S._siteQ = ''; clearTimeout(qt); qt = setTimeout(() => { S.q = e.target.value; S.page = 1; if (S.view === 'emulation' && S.tab.emulation === 'roms') renderEmulation(); else if (FILTER_VIEWS.includes(S.view)) searchInView(); else if (!['home', 'store'].includes(S.view)) setView(S.repos.some(r => r.enabled) ? 'store' : 'home'); else renderLibrary(); }, 120); });
-async function openTerminal() {
-  const r = await api.post('/api/window', { cmd: 'terminal' });
-  if (r && r.ok) return;
-  let f = $('#termOverlay');
-  if (!f) { f = document.createElement('div'); f.id = 'termOverlay'; f.className = 'termov'; f.innerHTML = '<iframe src="/terminal" title="Terminal"></iframe>'; document.body.appendChild(f); }
-  f.classList.add('on');
-}
-function closeTerminal() { const f = $('#termOverlay'); if (f) f.classList.remove('on'); }
-window.addEventListener('message', e => { const d = e.data || {}; if (d.ludrix) applyTermUi(d.ludrix); if (d.ludrix && d.ludrix.close) closeTerminal(); });
-async function applyTermUi(ui) {
-  if (ui.config) { S.config = await api.get('/api/config'); applyTheme(); api.emit('config', {}); if (S.view === 'settings') renderSettings(); }
-  if (ui.catalog) loadCatalog(false);
-  if (ui.open_game) { const g = S.games.find(x => x.key === ui.open_game); if (g) openGame(g.key); }
-  if (ui.view) { const v = ui.view; if (v === 'sources') { S.tab.store = 'sources'; setView('store'); } else if (v === 'themes' || v === 'appearance') { S.tab.settings = 'appearance'; setView('settings'); } else setView(v); }
-}
-
 const FS = { on: false };
 function setFullscreen(on, hint) {
   if (on === FS.on) return; FS.on = on;
@@ -2449,7 +2440,6 @@ async function handleEvent(ev) {
     document.querySelectorAll(`.card[data-key="${CSS.escape(ev.key)}"] h4`).forEach(h => { h.textContent = ev.title; h.title = ev.title; });
     if (S.det && S.det.key === ev.key) { S.det.title = ev.title; S.det.title_orig = ev.old; renderDetail(); }
     toast('', 'Nome corrigido', `${ev.old} → ${ev.title}`);
-  } else if (ev.type === 'ui') { applyTermUi(ev.ui || {});
   } else if (ev.type === 'closing') { toast('', 'LudrixHub', 'Fechando o launcher…');
   } else if (ev.type === 'cancelled') { toast('', ev.paused ? 'Pausado' : 'Cancelado', ev.paused ? `${ev.title} — retome pela Fila quando quiser.` : `${ev.title} — o parcial fica em downloads\\ até a próxima limpeza.`); renderView(); }
   else if (ev.type === 'error') { toast('err', `Falha em ${ev.title}`, ev.message); loadNotifs(); renderView(); if (S.det && S.det.key === ev.key) renderDetail(); }

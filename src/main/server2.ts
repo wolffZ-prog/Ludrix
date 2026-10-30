@@ -56,8 +56,6 @@ async function routeGet2(res, p, q, be, port) {
         return server.sendJson(res, await be.consolePayload()), true;
     if (p === '/api/linux')
         return server.sendJson(res, be.linuxStatus()), true;
-    if (p === '/api/terminal/commands')
-        return server.sendJson(res, { commands: be.terminal.catalog(), history: be.terminal.history.slice(-50) }), true;
     if (p === '/api/detect')
         return server.sendJson(res, await front.detect(String(q.get('q') || ''))), true;
     if (p === '/api/disc/tool')
@@ -250,8 +248,6 @@ async function routePost2(res, p, b, be, getWindow, port) {
         return server.sendJson(res, be.linuxPrepare()), true;
     if (p === '/api/linux/prefix/remove')
         return server.sendJson(res, be.linuxPrefixRemove(b?.key || null)), true;
-    if (p === '/api/terminal')
-        return server.sendJson(res, await be.terminal.run(String(b?.line || ''), String(b?.source || 'terminal'))), true;
     if (p === '/api/repack/run')
         return server.sendJson(res, be.repack.run(String(b?.key || ''), Boolean(b?.force))), true;
     if (p === '/api/finish_repack')

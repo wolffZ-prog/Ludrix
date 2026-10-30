@@ -180,8 +180,6 @@ const DEFAULT_CONFIG = {
     pending_restart: [],
     gamepad_speed: 'normal',
     game_emulator: {},
-    terminal_enabled: false,
-    terminal_settings: {},
     custom: {},
     minecraft_auto: true,
     save_auto_backup: true,

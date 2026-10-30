@@ -34,7 +34,7 @@ async function renderSettings(fresh) {
     ['play', 'Ao jogar', 'play', ['ao_abrir', 'discord', 'linux', 'saves', 'emuladores', 'controle', 'console']],
     ['store', 'Store e downloads', 'dl', ['fontes', 'store', 'instalacao', 'torrent']],
     ['tools', 'Ferramentas', 'wrench', ['verificar', 'importar', 'exportar', 'metadados', 'dados', 'diagnostico', 'limpeza']],
-    ['system', 'Sistema', 'cpu', ['pc', 'segundo_plano', 'atualizacoes', 'avancado', 'perigo', 'sobre']],
+    ['system', 'Sistema', 'cpu', ['pc', 'segundo_plano', 'atualizacoes', 'perigo', 'sobre']],
   ];
   S._settingsTabs = TABS;
   const TAB_MAP = { updates: 'system', about: 'system', downloads: 'store' }; if (TAB_MAP[S.tab.settings]) { S._settingsJump = S._settingsJump || (S.tab.settings === 'updates' ? 'Atualizações' : S.tab.settings === 'about' ? 'Sobre' : ''); S.tab.settings = TAB_MAP[S.tab.settings]; }
@@ -199,8 +199,6 @@ async function renderSettings(fresh) {
     ${sw('bg_sites', 'Continuar varrendo fontes do tipo site', 'Fontes com muitas páginas continuam carregando as próximas em segundo plano. Desligado, entram apenas as primeiras páginas, e mais quando você atualiza a fonte')}
     ${sw('update_auto_check', 'Procurar atualização ao abrir', 'Consulta o canal de atualizações uma vez ao abrir, se houver internet. Desligado, use Ajustes › Sistema › Atualizações › Verificar')}`], { help: 'Tudo aqui vem desligado. Sem nada ligado, o Ludrix parado não faz nada: nenhuma busca, nenhum acesso à internet, nenhuma tarefa em execução. Ele só responde ao que você pede.', p: 'O que o Ludrix pode fazer sozinho enquanto está aberto. Desligado, ele só trabalha quando você solicita.' }),
     atualizacoes: () => updatesHtml(),
-    avancado: () => sec('avancado', 'Avançado', [], { adv: [`
-    ${sw('terminal_enabled', 'Habilitar o terminal', 'A tecla " (aspas) abre uma janela de comandos do Ludrix; /help lista todos. Recomendado apenas para usuários avançados')}`] }),
     perigo: () => sec('perigo', 'Zona de perigo', [`
     <p>Resetar o launcher apaga <b>tudo</b> que ele criou — jogos baixados, ROMs, emuladores, fontes, temas, configurações — e reabre como se fosse a primeira vez. Não tem volta.</p>
     <button class="btn d sm" onclick="factoryReset()">${I.trash} Resetar o Ludrix de fábrica…</button>`], { cls: 'danger', help: 'Volta o Ludrix ao estado de primeira execução. Apaga permanentemente: configurações, biblioteca, fontes, caches, metadados, temas importados, downloads e as pastas games/ e emulation/ (jogos baixados e ROMs). O que estiver fora da pasta do Ludrix não é tocado.' }),
@@ -243,7 +241,7 @@ const TAB_KEYS = {
   library: ['home_spot', 'fav_first', 'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'cover_slideshow', 'cover_slideshow_secs', 'view_mode', 'group_by', 'card_ribbons', 'card_origin', 'card_playtime', 'detail_art', 'auto_metadata', 'web_covers', 'auto_rename'],
   play: ['discord_enabled', 'after_launch', 'launch_splash', 'pause_downloads_playing', 'nav_hide_playing', 'crash_watch', 'crash_mute', 'save_auto_backup', 'emu_no_ask', 'gamepad_enabled', 'gamepad_speed', 'gamepad_wake'],
   store: ['hero_enabled', 'store_hide_installed', 'dim_not_installed', 'store_auto_refresh', 'store_notify_new', 'taskbar_progress', 'keep_archive', 'concurrent_downloads', 'dl_max_down', 'dl_schedule', 'dl_from', 'dl_to', 'shortcut_ask', 'repack_auto_open', 'torrent_max_down', 'torrent_max_up', 'torrent_seed_after'],
-  system: ['bg_warmup', 'bg_sites', 'update_auto_check', 'terminal_enabled', 'auto_backup', 'auto_backup_dir'],
+  system: ['bg_warmup', 'bg_sites', 'update_auto_check', 'auto_backup', 'auto_backup_dir'],
 };
 function settingsReset(tab) {
   const name = ((S._settingsTabs || []).find(t => t[0] === tab) || [])[1] || tab;

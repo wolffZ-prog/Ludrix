@@ -31,12 +31,11 @@ const PAGES = {
     '/index.html': 'index.html',
     '/console': 'console/console.html',
     '/console/': 'console/console.html',
-    '/terminal': 'terminal.html',
 };
 const PUBLIC_PREFIX = ['/ui/', '/thumb/', '/cover/', '/hero/', '/shot/', '/api/custom.css', '/api/custom/file/', '/flash/cover/', '/flash/ruffle/', '/flash/games/', '/flash/play/', '/api/import/cover', '/favicon.ico'];
 const CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https: http:; " +
     "img-src 'self' data: blob: https: http:; font-src 'self' data: https: http:; media-src 'self' blob: data:; connect-src 'self'; " +
-    "worker-src 'self' blob:; frame-src 'self' http://127.0.0.1:* http://localhost:* http:; object-src 'none'; base-uri 'none'; form-action 'none'";
+    "worker-src 'self' blob:; frame-src 'self' http://127.0.0.1:* http://localhost:* http:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'";
 function ctypeOf(file) {
     const ext = path.extname(file).toLowerCase();
     return CTYPES[ext] || 'application/octet-stream';
@@ -132,6 +131,8 @@ function send(res, code, body, ctype, cache: boolean | string = false) {
     }
     if (ctype.startsWith('text/html'))
         headers['Content-Security-Policy'] = CSP;
+    else if (res.req.ludrixSandbox)
+        headers['Content-Security-Policy'] = 'sandbox';
     headers['Content-Length'] = String(out.length);
     res.writeHead(code, headers);
     if (res.req.method !== 'HEAD')
@@ -150,6 +151,8 @@ function sendFile(res, file, cache: boolean | 'etag' = false) {
         if (!st.isFile())
             return send(res, 404, Buffer.alloc(0), 'text/plain');
         const ctype = ctypeOf(file);
+        if (!path.resolve(file).startsWith(path.resolve(P.UI) + path.sep))
+            res.req.ludrixSandbox = true;
         if (cache === 'etag') {
             const tag = `"${st.size.toString(36)}-${Math.trunc(st.mtimeMs).toString(36)}"`;
             if (String(res.req.headers['if-none-match'] || '') === tag) {
@@ -223,8 +226,14 @@ function allowed(req, p) {
 }
 export let lastRoute = '';
 async function handle(req, res, be, getWindow) {
-    const url = new URL(req.url || '/', `http://${req.headers.host || '127.0.0.1'}`);
-    const p = decodeURIComponent(url.pathname);
+    let url: URL, p: string;
+    try {
+        url = new URL(req.url || '/', `http://${req.headers.host || '127.0.0.1'}`);
+        p = decodeURIComponent(url.pathname);
+    }
+    catch {
+        return sendJson(res, { error: 'bad request' }, 400);
+    }
     const q = url.searchParams;
     if (p.startsWith('/api/'))
         lastRoute = `${req.method} ${p}`;
@@ -267,7 +276,7 @@ async function routeGet(req, res, p, q, be, getWindow) {
     }
     if (p.startsWith('/ui/')) {
         const target = path.resolve(P.UI, '.' + p.slice(3));
-        if (!target.startsWith(path.resolve(P.UI)))
+        if (!target.startsWith(path.resolve(P.UI) + path.sep))
             return send(res, 403, Buffer.alloc(0), 'text/plain');
         return sendFile(res, target, 'etag');
     }
@@ -574,9 +583,6 @@ async function windowCmd(b, getWindow, be) {
     switch (cmd) {
         case 'sys_accent':
             return { ok: true, hex: sysAccent() };
-        case 'notify_ui':
-            be.push({ type: 'ui', ui: b.ui || {} });
-            return { ok: true };
         case 'scheme': {
             try {
                 const nt = require('electron').nativeTheme;

@@ -1,7 +1,6 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import * as cp from 'node:child_process';
 function slug(input) {
     return String(input || '')
         .toLowerCase()
@@ -175,27 +174,6 @@ function humanTime(seconds) {
         return `${m}min`;
     return `${s}s`;
 }
-function openExternal(target) {
-    return new Promise<any>((resolve) => {
-        try {
-            if (process.platform === 'win32') {
-                const child = cp.spawn('cmd', ['/c', 'start', '', target], { detached: true, stdio: 'ignore' });
-                child.unref();
-            }
-            else if (process.platform === 'darwin') {
-                const child = cp.spawn('open', [target], { detached: true, stdio: 'ignore' });
-                child.unref();
-            }
-            else {
-                const child = cp.spawn('xdg-open', [target], { detached: true, stdio: 'ignore' });
-                child.unref();
-            }
-        }
-        catch {
-        }
-        resolve(undefined);
-    });
-}
 function exists(p) {
     if (!p)
         return false;
@@ -224,7 +202,7 @@ function safeJoin(root, rel) {
     return full;
 }
 
-export { slug, sha1, now, clamp, readJson, writeJson, recovered, humanSize, humanTime, openExternal, exists, isDir, safeJoin };
+export { slug, sha1, now, clamp, readJson, writeJson, recovered, humanSize, humanTime, exists, isDir, safeJoin };
 
 export function safeFolderName(title: string) {
     const name = String(title || '').replace(/[<>:"/\\|?*]+/g, '').replace(/^[ .]+|[ .]+$/g, '');

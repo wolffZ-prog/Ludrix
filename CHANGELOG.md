@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.0.20 — 2026-10-29
+
+- Terminal removido: o Ludrix não tem mais a janela de comandos nem o ajuste "Habilitar o terminal". Tudo o que ele fazia já existe em Ajustes e nos menus.
+- Segurança: a janela principal só navega dentro do próprio Ludrix; links externos abrem no navegador do sistema. Janelas de jogos de navegador não abrem pop-ups nem saem de https.
+- Segurança: permissões do navegador interno (câmera, microfone, localização, notificações, MIDI) negadas por padrão; só tela cheia, captura do ponteiro e copiar para a área de transferência.
+- Segurança: arquivos servidos pelo Ludrix (capas, miniaturas, temas, personalizações) passam a ser entregues em modo isolado, sem poder executar script; a interface não pode ser embutida por outras páginas.
+- Segurança: jogos cadastrados com endereço `file:`, `javascript:` ou `data:` não são abertos; a leitura de capas de jogos de navegador aceita só ids válidos; limite real de tamanho ao importar temas; endereços malformados recebem resposta 400 em vez de ficarem pendurados.
+
 ## 4.0.19-hf3 — 2026-10-29
 - Névoa de cor mais suave: nuvens desfocadas e largas, sem o aspecto de fumaça.
 
