@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.0.22 — 2026-11-12
+
+- Interface: navegação por abas no alto (Biblioteca, Store, Emuladores, Mods, Central, Rápidos) com a busca ao lado; painel lateral do jogo selecionado sem faixa de cor, botão Jogar plano, blocos menores. Grade, chips, selos e detalhes seguem compactos. Quem preferir a barra lateral de ícones troca em Ajustes › Aparência › Barra de navegação.
+- Registro de atividade (`data/ludrix.log`) passa a ser gravado em segundo plano, em lotes; o processo principal não espera mais o disco a cada linha — em HD que dormiu, isso segurava a janela.
+- Vigilância das pastas de jogos (a cada 5 min) deixa de tocar o disco de forma bloqueante.
+
 ## 4.0.21-hf1 — 2026-11-12
 - Botão Voltar dos detalhes ficava escondido atrás da barra de busca; agora fica no fluxo da página, acima da capa.
 - Fileira de etiquetas repetidas no topo dos detalhes (origem, tempo, gêneros, ano, "meta") removida — origem e fonte dos metadados passam para o quadro Informações.

@@ -464,6 +464,7 @@ function updateGuard() {
     }
     catch { }
     electron.app.relaunch();
+    log.flushSync();
     electron.app.exit(0);
     return true;
 }
@@ -707,6 +708,7 @@ async function main() {
         }
         catch {
         }
+        log.flushSync();
     });
 }
 process.on('SIGTERM', () => quitApp());

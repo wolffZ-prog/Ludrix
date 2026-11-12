@@ -367,7 +367,7 @@ function applyChrome() {
   document.body.dataset.status = S.config.status_position === 'top' ? 'top' : 'bottom';
   const lay0 = themeLay(), lay = lay0 === 'float' ? 'rail' : lay0 === 'sfloat' ? 'side' : lay0; document.body.classList.toggle('rfloat', lay0 === 'float' || lay0 === 'sfloat'); delete document.body.dataset.layout; document.body.dataset.nav = lay === 'bottom' ? 'bottom' : 'side';
   if (lay === 'top' || lay === 'rail') document.body.dataset.layout = lay;
-  const qb = $('#qbox'), sp = lay === 'side' ? 'rail' : 'top'; if (qb) { const host = sp === 'rail' ? $('#rail') : $('#brandBtn').parentElement; if (qb.parentElement !== host) { if (sp === 'rail') $('#rail .brandrow').after(qb); else $('#brandBtn').after(qb); } document.body.dataset.search = sp; } document.body.dataset.navLabels = '1';
+  const qb = $('#qbox'), sp = lay === 'side' ? 'rail' : lay === 'top' ? 'nav' : 'top'; if (qb) { const host = sp === 'top' ? $('#brandBtn').parentElement : $('#rail'); if (qb.parentElement !== host || (sp === 'nav') !== (qb.nextElementSibling === $('#railBot'))) { if (sp === 'rail') $('#rail .brandrow').after(qb); else if (sp === 'nav') $('#railBot').before(qb); else $('#brandBtn').after(qb); } document.body.dataset.search = sp; } document.body.dataset.navLabels = '1';
   placeWctl(lay);
   const b = $('#brand'); if (b && !b.innerHTML) b.innerHTML = logoSvg(); const hb = $('#brandBtn'); if (hb && !hb.innerHTML) { hb.innerHTML = logoSvg() + '<svg class="car" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>'; hb.onclick = e => { e.stopPropagation(); const r = hb.getBoundingClientRect(); if ($('#ctx').classList.contains('on')) return closeCtx(); appMenu(r.left, r.bottom + 6); }; }
   if (b) { b.onclick = e => { e.stopPropagation(); const r = b.getBoundingClientRect(); if ($('#ctx').classList.contains('on')) return closeCtx(); appMenu(r.right + 6, r.top); }; b.style.cursor = 'pointer'; b.title = 'Menu do Ludrix'; }
@@ -920,7 +920,7 @@ function fillGrid(list) {
   gridIO.observe(sent);
 }
 function listMode() { return S.config.view_mode === 'list'; }
-function muralMode() { return (S.config.view_mode || 'grid') === 'mural' && S.view === 'home'; }
+function muralMode() { return (S.config.view_mode || 'mural') === 'mural' && S.view === 'home'; }
 function setCardSize(v, save) { document.documentElement.style.setProperty('--cw', v + 'px'); S.config.card_size = +v; if (save) api.post('/api/config', { card_size: +v }); }
 function selectGame(key) {
   if (!S.byKey[key]) return;
@@ -2844,7 +2844,7 @@ function fpDelPreset() {
 function viewTweaks() {
   if (!['home', 'store'].includes(S.view)) return 0;
   const defS = S.view === 'store' ? 'fresh' : 'az', defG = S.view === 'store' ? '' : 'letter';
-  return (S.sort !== defS || S.sortRev ? 1 : 0) + (groupBy() !== defG ? 1 : 0) + ((S.config.view_mode || 'grid') !== 'grid' ? 1 : 0);
+  return (S.sort !== defS || S.sortRev ? 1 : 0) + (groupBy() !== defG ? 1 : 0) + ((S.config.view_mode || 'mural') !== 'mural' ? 1 : 0);
 }
 function filterBtn() {
   const n = fltCount() + viewTweaks();
@@ -2861,9 +2861,9 @@ function fpViewHtml() {
       <label class="fbox ${S.sortRev ? 'on' : ''}"><input type="checkbox" ${S.sortRev ? 'checked' : ''} onchange="S.sortRev=!S.sortRev;S.page=1;renderLibrary()"><span>Ordem inversa</span></label>
       ${S.view === 'home' ? `<label class="fbox ${S.config.fav_first ? 'on' : ''}"><input type="checkbox" ${S.config.fav_first ? 'checked' : ''} onchange="setCfg({fav_first:!S.config.fav_first}).then(()=>{S.page=1;renderLibrary()})"><span>Favoritos primeiro</span></label>` : ''}
       <h6>Agrupar</h6>${seg(GROUPS, g, id => `setGroupBy(${jsq(id)})`)}${g ? `<div class="gall"><button class="lnk" onclick="groupsAll(true)">Recolher todos</button><button class="lnk" onclick="groupsAll(false)">Expandir todos</button></div>` : ''}
-      <h6>Modo</h6>${seg([['mural', 'Mural'], ['grid', 'Grade'], ['list', 'Lista']], S.config.view_mode || 'grid', id => `setViewMode(${jsq(id)})`)}
+      <h6>Modo</h6>${seg([['mural', 'Mural'], ['grid', 'Grade'], ['list', 'Lista']], S.config.view_mode || 'mural', id => `setViewMode(${jsq(id)})`)}
       ${lm ? `<h6>Colunas da lista</h6><div class="seg fsort">${LIST_COLS.map(([id, l]) => `<button class="${listCols().includes(id) ? 'on' : ''}" onclick="toggleListCol(${jsq(id)})">${l}</button>`).join('')}</div>` : `<h6>Tamanho das capas</h6><label class="zoom vz"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><input type="range" min="100" max="300" step="10" value="${S.config.card_size || 136}" oninput="setCardSize(this.value,false)" onchange="setCardSize(this.value,true)"></label>`}
-      ${n ? `<button class="lnk fsmore" onclick="S.sortRev=false;setSort(${jsq(defS)});setGroupBy(${jsq(defG)}).then(()=>setCfg({view_mode:'grid'}).then(renderLibrary))">Voltar ao padrão</button>` : ''}
+      ${n ? `<button class="lnk fsmore" onclick="S.sortRev=false;setSort(${jsq(defS)});setGroupBy(${jsq(defG)}).then(()=>setCfg({view_mode:'mural'}).then(renderLibrary))">Voltar ao padrão</button>` : ''}
     </div>` : ''}</div>`;
 }
 const SYS_ALIAS = { ps1: ['ps1', 'psx', 'psone', 'playstation1', 'play1'], ps2: ['ps2', 'playstation2', 'play2'], ps3: ['ps3', 'playstation3', 'play3'], psp: ['psp'], snes: ['snes', 'supernintendo'], nes: ['nes', 'nintendinho', 'famicom'], n64: ['n64', 'nintendo64'], gc: ['gc', 'gamecube', 'ngc'], wii: ['wii'], wiiu: ['wiiu'], switch: ['switch', 'nsw'], '3ds': ['3ds'], nds: ['ds', 'nds'], gba: ['gba'], gbc: ['gbc'], gb: ['gb', 'gameboy'], dc: ['dc', 'dreamcast'], saturn: ['saturn'], genesis: ['genesis', 'megadrive', 'md'], sms: ['sms', 'mastersystem'], xbox: ['xbox'], x360: ['x360', 'xbox360'], arcade: ['arcade', 'mame', 'fliperama'], pce: ['pce', 'pcengine', 'turbografx'], dos: ['dos', 'msdos'], atari2600: ['atari', 'atari2600'], pc: ['pc', 'windows', 'computador'] };

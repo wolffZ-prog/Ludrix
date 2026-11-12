@@ -131,11 +131,11 @@ class Backend {
         setInterval(() => this.watchDirs(), 5 * 60_000);
     }
     watchers = new Map<string, { w: fs.FSWatcher; seen: Set<string>; timers: Map<string, NodeJS.Timeout> }>();
-    watchDirs() {
+    async watchDirs() {
         const want = new Set<string>();
         if (this.store.config.watch_dirs !== false) {
             for (const d of [...(this.store.config.game_dirs || []), this.store.config.games_dir || this.store.gamesDir()])
-                if (d && fs.existsSync(String(d)))
+                if (d && await fs.promises.stat(String(d)).then((st) => st.isDirectory(), () => false))
                     want.add(path.resolve(String(d)));
         }
         for (const [d, w] of this.watchers)
@@ -152,7 +152,7 @@ class Backend {
             if (this.watchers.has(d))
                 continue;
             try {
-                const seen = new Set(fs.readdirSync(d, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => e.name.toLowerCase()));
+                const seen = new Set((await fs.promises.readdir(d, { withFileTypes: true })).filter((e) => e.isDirectory()).map((e) => e.name.toLowerCase()));
                 const entry = { w: null as any, seen, timers: new Map<string, NodeJS.Timeout>() };
                 entry.w = fs.watch(d, { persistent: false }, (_ev, name) => {
                     const n = String(name || '');

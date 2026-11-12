@@ -68,7 +68,7 @@ const DEFAULT_CONFIG = {
     taskbar_progress: true,
     store_notify_new: true,
     card_size: 136,
-    view_mode: 'grid',
+    view_mode: 'mural',
     list_cols: ['year', 'genre', 'size', 'playtime', 'last', 'status'],
     game_backdrop: '',
     backdrop_blur: 10,
@@ -172,7 +172,7 @@ const DEFAULT_CONFIG = {
     gamepad_enabled: true,
     gamepad: 'auto',
     sofa_zoom: 1.15,
-    nav_layout: 'rail',
+    nav_layout: 'top',
     gamepad_wake: false,
     mods_dir: '',
     update_feed: '',
@@ -447,6 +447,10 @@ class Store {
                     this.config.card_origin = false;
                     this.config.acrylic = false;
                     this.config.detail_art = 'off';
+                }],
+            [14, () => {
+                    this.config.nav_layout = 'top';
+                    this.config.view_mode = 'mural';
                 }],
         ];
         for (const [target, fn] of (steps as any)) {

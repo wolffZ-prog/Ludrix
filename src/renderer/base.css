@@ -532,32 +532,32 @@ html body.bs[data-face][data-layout=rail] header.top .sp{flex:0 0 150px}
 html body.bs[data-face][data-layout=rail] header.top .wctl{margin-left:0}
 html body.bs[data-face] header.top .crumb{display:none}
 
-html body.bs[data-face][data-layout=rail] .view{padding:0 14px 24px}
-html body.bs[data-face][data-layout=rail] .h1{margin:0 -14px 2px;padding:5px 14px 5px;gap:6px;background:var(--bg)}
-html body.bs[data-face][data-layout=rail] .h1 h2,html body.bs[data-face][data-layout=rail] .h1 .cnt{display:none}
-html body.bs[data-face][data-layout=rail] .h1 .qchips .chip,html body.bs[data-face][data-layout=rail] .h1 .chips .chip{height:24px;padding:0 9px;border-radius:5px;font-size:12px;border:0;background:transparent;color:var(--muted)}
-html body.bs[data-face][data-layout=rail] .h1 .qchips .chip.on,html body.bs[data-face][data-layout=rail] .h1 .chips .chip.on{background:var(--bg2);color:var(--text);font-weight:500;border:1px solid var(--line)}
-html body.bs[data-face][data-layout=rail] .h1 .btn.xs,html body.bs[data-face][data-layout=rail] .h1 .dd,html body.bs[data-face][data-layout=rail] .h1 .filt>.btn{height:26px;padding:0 8px;font-size:12px;border-radius:6px}
-html body.bs[data-face][data-layout=rail] .h1 .btn.xs.ic{width:26px}
-html body.bs[data-face][data-layout=rail] .h1 .btn.xs.p{background:var(--text);border-color:var(--text);color:var(--bg);font-weight:500;padding:0 10px}
-html body.bs[data-face][data-layout=rail] .h1 .btn.xs.p svg{color:var(--bg)}
-html body.bs[data-face][data-layout=rail] .ggh{top:36px;padding:8px 0 6px;gap:10px}
-html body.bs[data-face][data-layout=rail] .grid{gap:12px 10px;padding-top:2px}
-html body.bs[data-face][data-layout=rail] .card .cov{border-radius:6px;border:1px solid var(--line);outline:0;box-shadow:none;transition:outline-color .15s}
-html body.bs[data-face][data-layout=rail] .card:hover .cov,html body.bs[data-face][data-layout=rail] .card.sel .cov,html body.bs[data-face][data-layout=rail] .card.gp-focus .cov{outline:2px solid var(--text);outline-offset:-1px}
-html body.bs[data-face][data-layout=rail] .grid .card:hover,html body.bs[data-face][data-layout=rail] .grid .card.gp-focus{transform:none;box-shadow:none;background:transparent}
-html body.bs[data-face][data-layout=rail] .grid .card:hover .cov,html body.bs[data-face][data-layout=rail] .grid .card.gp-focus .cov{transform:none;box-shadow:none}
-html body.bs[data-face][data-layout=rail] .card h4{font-size:13px;padding-top:6px}
-html body.bs[data-face][data-layout=rail] .card .sub.ci{font-size:11.5px;color:var(--muted);padding-top:1px}
-html body.bs[data-face][data-layout=rail] .card .qp{width:28px;height:28px;right:6px;bottom:6px;background:var(--text);color:var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.4);transform:none}
-html body.bs[data-face][data-layout=rail] .card .qp svg{width:13px;height:13px}
-html body.bs[data-face][data-layout=rail] .card .rib{top:6px;bottom:auto;left:6px;font:600 9.5px/1 var(--font-text);letter-spacing:.4px;padding:3px 5px;border-radius:3px;background:rgba(0,0,0,.62);color:#fff;box-shadow:none}
-html body.bs[data-face][data-layout=rail] .card .rib.today{background:rgba(0,0,0,.62)}
-html body.bs[data-face][data-layout=rail] .card .rib.upd{background:rgba(0,0,0,.62)}
-html body.bs[data-face][data-layout=rail] .status{padding:0 12px;gap:12px;font-size:11.5px}
-html body.bs[data-face][data-layout=rail] .toast{border-radius:8px;padding:9px 10px 9px 12px;min-width:260px;gap:10px}
-html body.bs[data-face][data-layout=rail] .toast .x{width:22px;height:22px}
-html body.bs[data-face][data-layout=rail] .toasts{top:calc(var(--tb,0px) + 82px);right:14px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .view{padding:0 14px 24px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1{margin:0 -14px 2px;padding:5px 14px 5px;gap:6px;background:var(--bg)}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 h2,html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .cnt{display:none}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .qchips .chip,html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .chips .chip{height:24px;padding:0 9px;border-radius:5px;font-size:12px;border:0;background:transparent;color:var(--muted)}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .qchips .chip.on,html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .chips .chip.on{background:var(--bg2);color:var(--text);font-weight:500;border:1px solid var(--line)}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .btn.xs,html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .dd,html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .filt>.btn{height:26px;padding:0 8px;font-size:12px;border-radius:6px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .btn.xs.ic{width:26px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .btn.xs.p{background:var(--text);border-color:var(--text);color:var(--bg);font-weight:500;padding:0 10px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .btn.xs.p svg{color:var(--bg)}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .ggh{top:36px;padding:8px 0 6px;gap:10px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .grid{gap:12px 10px;padding-top:2px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .card .cov{border-radius:6px;border:1px solid var(--line);outline:0;box-shadow:none;transition:outline-color .15s}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .card:hover .cov,html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .card.sel .cov,html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .card.gp-focus .cov{outline:2px solid var(--text);outline-offset:-1px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .grid .card:hover,html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .grid .card.gp-focus{transform:none;box-shadow:none;background:transparent}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .grid .card:hover .cov,html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .grid .card.gp-focus .cov{transform:none;box-shadow:none}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .card h4{font-size:13px;padding-top:6px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .card .sub.ci{font-size:11.5px;color:var(--muted);padding-top:1px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .card .qp{width:28px;height:28px;right:6px;bottom:6px;background:var(--text);color:var(--bg);box-shadow:0 2px 8px rgba(0,0,0,.4);transform:none}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .card .qp svg{width:13px;height:13px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .card .rib{top:6px;bottom:auto;left:6px;font:600 9.5px/1 var(--font-text);letter-spacing:.4px;padding:3px 5px;border-radius:3px;background:rgba(0,0,0,.62);color:#fff;box-shadow:none}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .card .rib.today{background:rgba(0,0,0,.62)}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .card .rib.upd{background:rgba(0,0,0,.62)}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .status{padding:0 12px;gap:12px;font-size:11.5px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .toast{border-radius:8px;padding:9px 10px 9px 12px;min-width:260px;gap:10px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .toast .x{width:22px;height:22px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .toasts{top:calc(var(--tb,0px) + 82px);right:14px}
 html body.bs[data-face][data-detart=off] .dhero::before{display:none}
 html body.bs[data-face][data-detart=off] .dhero .dcov{margin:14px 24px 0 36px;width:150px}
 html body.bs[data-face][data-detart=off] .dcov img,html body.bs[data-face][data-detart=off] .dcov .dph{outline:0;border:1px solid var(--line)}
@@ -567,4 +567,49 @@ html body.bs[data-face][data-detart=off] .dhead .acts>.btn.g,html body.bs[data-f
 html body.bs[data-face][data-detart=off] .dhead .acts>.btn.g,html body.bs[data-face][data-detart=off] .dhead .acts>.btn.p{padding:0 18px}
 html body.bs[data-face][data-detart=off] .dclose{position:relative;top:auto;left:auto;margin:12px 0 0 36px;background:transparent;color:var(--muted);border:1px solid var(--line);height:26px;font-size:12px}
 html body.bs[data-face][data-detart=off] .dclose:hover{color:var(--text);background:var(--bg2)}
-@media (max-width:1000px){html body.bs[data-face][data-layout=rail] .h1 .qchips{order:0;flex:1 0 100%;padding:0 0 4px;margin-bottom:2px;border-bottom:1px solid var(--line)}html body.bs[data-face][data-layout=rail] .h1 .sp{flex:1}}
+@media (max-width:1000px){html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .qchips{order:0;flex:1 0 100%;padding:0 0 4px;margin-bottom:2px;border-bottom:1px solid var(--line)}html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .sp{flex:1}}
+
+html body.bs[data-face][data-layout=top]{--toph:42px}
+html body.bs[data-face][data-layout=top] .rail{padding:0 8px 0 10px;gap:0;background:var(--bg2)}
+html body.bs[data-face][data-layout=top] .rail .brandrow{padding:0 8px 0 0;margin:0 4px 0 0}
+html body.bs[data-face][data-layout=top] .rail .brand{width:26px;height:26px;border-radius:6px}
+html body.bs[data-face][data-layout=top] .rail .brand svg,html body.bs[data-face][data-layout=top] .rail .brand img{width:16px;height:16px}
+html body.bs[data-face][data-layout=top] .rail .bname{display:none}
+html body.bs[data-face][data-layout=top] .rb,html body.bs[data-face][data-layout=top] .rail .rb{height:30px;padding:0 10px;gap:7px;border-radius:6px;font-size:12.5px}
+html body.bs[data-face][data-layout=top] .rail .rb svg{width:16px;height:16px}
+html body.bs[data-face][data-layout=top] .rail .rb.on{background:var(--bg);box-shadow:inset 0 0 0 1px var(--line)}
+html body.bs[data-face][data-layout=top] .rail .rsep{margin:0 4px}
+html body.bs[data-face][data-layout=top] .rail .search{position:relative;flex:0 1 300px;min-width:120px;margin:0 8px 0 auto;padding:0}
+html body.bs[data-face][data-layout=top] .rail .search input{height:28px;font-size:12.5px;padding-left:30px;background:var(--bg);border:1px solid var(--line);border-radius:6px;width:100%}
+html body.bs[data-face][data-layout=top] .rail .search svg{width:14px;height:14px;left:10px}
+html body.bs[data-face][data-layout=top] .rail .search kbd,html body.bs[data-face][data-layout=top] .rail .search .kb{display:none}
+html body.bs[data-face][data-layout=top] .rail .sp{flex:0 0 0}
+html body.bs[data-face][data-layout=top] .rail .rbot{gap:0;padding-left:4px}
+html body.bs[data-face][data-layout=top] .rail .rbot .bell,html body.bs[data-face][data-layout=top] .rail .rbot .rb{width:32px;height:30px;border-radius:6px}
+html body.bs[data-face][data-layout=top] .rail .rbot #profBtn .pav{width:22px;height:22px;font-size:9.5px}
+html body.bs[data-face][data-layout=top] header.top{display:none!important}
+html body.bs[data-face][data-layout=top] .ggh{top:0}
+html body.bs[data-face][data-layout=top] .h1{padding-top:8px}
+html body.bs[data-face][data-layout=top] .ggh{top:40px}
+body.frameless[data-layout=top] .rail .wctl{margin:0 -8px 0 2px}
+body.frameless[data-layout=top] .rail .wctl button{width:40px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel{border-left:1px solid var(--line);border-radius:0;background:var(--bg2)}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .gband{height:0;background:transparent!important}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .gclose{top:10px;right:10px;background:transparent;color:var(--muted);border:1px solid var(--line);width:26px;height:26px;z-index:2}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .gclose:hover{color:var(--text);background:var(--bg)}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .ghead{margin-top:14px;padding:0 16px;align-items:flex-start;gap:12px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .gcov{width:96px;outline:0;border:1px solid var(--line);border-radius:6px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .gti{padding:4px 28px 0 0}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel h1{font-size:16px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .gacts{padding:14px 16px 0}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .gacts .btn.p{height:32px;font-size:13px;background:var(--text);border-color:var(--text);color:var(--bg)}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .gacts .btn.p svg{color:var(--bg)}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .gacts .btn.s{width:32px;height:32px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .gkpi{margin:12px 16px 0;border-radius:6px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .gkpi div{padding:7px 9px;background:var(--bg)}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .gkpi b{font-size:13px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .gkv{margin:8px 16px 0;font-size:12px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .gkv div{padding:6px 0}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .pst{padding:12px 16px 0}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .glinks{padding:10px 12px}
+html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .glinks button{height:34px}
