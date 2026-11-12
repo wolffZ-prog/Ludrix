@@ -680,6 +680,31 @@ class Backend {
             void (this as any).warmUp?.();
         return this.publicConfig();
     }
+    profileAction(b: any) {
+        const op = String(b.op || '');
+        const id = String(b.id || '');
+        if (op === 'create')
+            return { ...this.store.profileCreate(String(b.name || ''), b.color), profiles: this.store.profileInfo() };
+        if (op === 'update')
+            return { ...this.store.profileUpdate(id, { name: b.name, color: b.color }), profiles: this.store.profileInfo() };
+        if (op === 'remove')
+            return { ...this.store.profileRemove(id), profiles: this.store.profileInfo() };
+        if (op === 'ask')
+            return { ...this.store.profileAsk(Boolean(b.ask)), profiles: this.store.profileInfo() };
+        if (op === 'switch') {
+            const r = this.store.profileSwitch(id);
+            if (r.error)
+                return r;
+            this.favorites = new Set(this.store.config.favorites || []);
+            if (!this.discord.enabled())
+                void this.discord.set(null);
+            else if (this.sessions.active.size)
+                void this.presenceFor([...this.sessions.active.values()][0]);
+            log.info('perfil ativo: %s', id);
+            return { ...r, profiles: this.store.profileInfo() };
+        }
+        return { ok: true, profiles: this.store.profileInfo() };
+    }
     resetConfig(keys) {
         const list = (keys || []).filter((k: any) => typeof k === 'string' && k in DEFAULT_CONFIG && !['language', 'welcome_done'].includes(k));
         if (!list.length)

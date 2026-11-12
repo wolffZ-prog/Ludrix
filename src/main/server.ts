@@ -143,11 +143,11 @@ function send(res, code, body, ctype, cache: boolean | string = false) {
 function sendJson(res, data, code = 200) {
     send(res, code, Buffer.from(JSON.stringify(data ?? null), 'utf8'), 'application/json; charset=utf-8');
 }
-function sendFile(res, file, cache: boolean | 'etag' = false) {
+async function sendFile(res, file, cache: boolean | 'etag' = false) {
     if (!file)
         return send(res, 404, Buffer.alloc(0), 'text/plain');
     try {
-        const st = fs.statSync(file);
+        const st = await fs.promises.stat(file);
         if (!st.isFile())
             return send(res, 404, Buffer.alloc(0), 'text/plain');
         const ctype = ctypeOf(file);
@@ -159,12 +159,13 @@ function sendFile(res, file, cache: boolean | 'etag' = false) {
                 res.writeHead(304, { 'ETag': tag, 'Cache-Control': 'no-cache' });
                 return res.end();
             }
-            return send(res, 200, fs.readFileSync(file), ctype, tag);
+            return send(res, 200, await fs.promises.readFile(file), ctype, tag);
         }
-        send(res, 200, fs.readFileSync(file), ctype, cache);
+        send(res, 200, await fs.promises.readFile(file), ctype, cache);
     }
     catch {
-        send(res, 404, Buffer.alloc(0), 'text/plain');
+        if (!res.headersSent)
+            send(res, 404, Buffer.alloc(0), 'text/plain');
     }
 }
 function readBody(req) {
@@ -321,6 +322,8 @@ async function routeGet(req, res, p, q, be, getWindow) {
     }
     if (p === '/api/config')
         return sendJson(res, be.publicConfig());
+    if (p === '/api/profiles')
+        return sendJson(res, be.store.profileInfo());
     if (p.startsWith('/api/theme/')) {
         const id = decodeURIComponent(p.slice(11));
         if (id.endsWith('/json'))
@@ -404,6 +407,8 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, await be.discord.test());
     if (p === '/api/config/reset')
         return sendJson(res, be.resetConfig(b?.keys || []));
+    if (p === '/api/profiles')
+        return sendJson(res, be.profileAction(b || {}));
     if (p === '/api/file_assoc')
         return sendJson(res, 'on' in b ? be.setFileAssoc(Boolean(b.on)) : be.fileAssoc());
     if (p === '/api/start_menu')

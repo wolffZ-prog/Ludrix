@@ -132,6 +132,7 @@ const I = {
   grid: '<svg viewBox="0 0 24 24"><path d="M4 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" /><path d="M14 5a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" /><path d="M4 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" /><path d="M14 15a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -4" /></svg>',
   coll: '<svg viewBox="0 0 24 24"><path d="M15 10v11l-5 -3l-5 3v-11a3 3 0 0 1 3 -3h4a3 3 0 0 1 3 3z" /><path d="M11 3h5a3 3 0 0 1 3 3v11" /></svg>',
   plus: '<svg viewBox="0 0 24 24"><path d="M12 5l0 14" /><path d="M5 12l14 0" /></svg>',
+  user: '<svg viewBox="0 0 24 24"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" /><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" /></svg>',
   dots: '<svg viewBox="0 0 24 24"><path d="M4 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M11 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M18 12a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /></svg>',
   search: '<svg viewBox="0 0 24 24"><path d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg>',
   eye: '<svg viewBox="0 0 24 24"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>',
@@ -320,7 +321,7 @@ function applyMotion() {
   document.body.classList.toggle('hc', !!S.config.high_contrast || !!(hcq && hcq.matches));
   document.body.classList.toggle('sadv', !!S.config.settings_adv);
   document.body.dataset.hover = rm ? 'none' : (S.config.card_hover || 'lift');
-  document.body.dataset.detart = S.config.detail_art || 'auto';
+  document.body.dataset.detart = S.config.detail_art || 'off';
 }
 function applyPlx() {
   const on = (S.themePlx || 0) > 0 && S.config.parallax !== false && document.documentElement.dataset.anim !== 'off';
@@ -374,7 +375,7 @@ function applyChrome() {
 let rzOn = false; document.querySelectorAll('.rz').forEach(el => el.addEventListener('mousedown', e => { if (e.button !== 0) return; e.preventDefault(); rzOn = true; api.post('/api/window', { cmd: 'resize', dir: el.dataset.rz }); }));
 const rzEnd = () => { if (!rzOn) return; rzOn = false; api.post('/api/window', { cmd: 'resize_end' }); };
 window.addEventListener('mouseup', rzEnd, true); window.addEventListener('blur', rzEnd); document.addEventListener('visibilitychange', rzEnd); window.addEventListener('pointerup', rzEnd, true); window.addEventListener('mousemove', e => { if (rzOn && !(e.buttons & 1)) rzEnd(); }, true);
-function placeWctl(lay) { const w = $('#wctl'); if (!w) return; const host = lay === 'top' ? $('#rail') : document.querySelector('main'); if (!host) return; if (lay === 'top') { if (w.parentElement !== host) host.appendChild(w); } else if (host.firstElementChild !== w) host.prepend(w); }
+function placeWctl(lay) { const w = $('#wctl'); if (!w) return; const host = lay === 'top' ? $('#rail') : lay === 'rail' ? document.querySelector('header.top') : document.querySelector('main'); if (!host) return; if (lay === 'top' || lay === 'rail') { if (w.parentElement !== host) host.appendChild(w); } else if (host.firstElementChild !== w) host.prepend(w); }
 function winState(ev) { if (ev && ev.max !== undefined) document.body.classList.toggle('maxed', !!ev.max); }
 api.post('/api/window', { cmd: 'state' }).then(winState).catch(() => { });
 let ONLINE = true;
@@ -587,6 +588,7 @@ async function loadCatalog(refresh) {
   if (!S.loaded && !S._splCfg) { S._splCfg = 1; splashStep('lendo configurações', 36); }
   const d = await api.get('/api/catalog' + (refresh ? '?refresh=1' : ''));
   S.config = d.config || S.config;
+  if (d.config && d.config.profiles) profSet(d.config.profiles);
   if (!S.loaded) { const v = $('#spv'); if (v && S.config.version) v.textContent = 'v' + S.config.version; if (d.loading) { if (!S._splScan) { S._splScan = 1; splashStep('procurando jogos', 58); } } else splashStep('biblioteca · ' + pl((d.games || []).filter(g => g.installed).length, 'jogo', 'jogos'), 72); } S.torrent = !!d.torrent_available; S.torrentEngine = d.torrent_engine || ''; S.systems = d.systems || {};
   await initLang(S.config.language);
   document.documentElement.style.setProperty('--cw', (S.config.card_size || 136) + 'px'); applyScale();
@@ -659,9 +661,11 @@ function setView(v) {
 }
 let tsvMemo = null;
 function topSearchVisible() { if (tsvMemo !== null) return tsvMemo; const el = document.querySelector('.top .search, .rail .search'); let v = false; if (el && el.offsetParent !== null) { const r = el.getBoundingClientRect(); v = r.width > 40 && r.height > 0; } tsvMemo = v; requestAnimationFrame(() => { tsvMemo = null; }); return v; }
+function setCrumb(title, n) { const el = $('#crumb'); if (!el) return; el.innerHTML = `${esc(title)}${n !== undefined ? `<small>${n} ${n === 1 ? 'jogo' : 'jogos'}</small>` : ''}`; }
 function renderView() {
   qfabSync();
   closeCtx();
+  setCrumb(S.view === 'settings' ? 'Ajustes' : S.view === 'downloads' ? 'Fila' : (NAV_ITEMS.find(x => x[0] === S.view) || [])[1] || 'Biblioteca');
   const grid = ['home', 'store'].includes(S.view) && !(S.view === 'store' && S.tab.store === 'sources');
   applyQPlaceholder();
   $('#helppop').classList.remove('on');
@@ -795,6 +799,7 @@ function renderLibrary() {
   if (S.view === 'store') h += storeTabs();
   if (S.view === 'store' && !filtersActive() && !S.q && S.hero.length && S.config.hero_enabled !== false) h += heroHtml();
   if (S.view === 'home' && !filtersActive() && !S.q) h += homeTop();
+  setCrumb(S.view === 'store' ? 'Store' : catName, list.length);
   h += `<div class="h1"><h2>${esc(catName)}</h2>${S.view === 'home' ? quickChips() : storeChips()}<span class="cnt">${list.length} ${list.length === 1 ? 'jogo' : 'jogos'}</span><span class="sp"></span>
         ${!topSearchVisible() ? `<div class="qmini ${S.q ? 'on' : ''}"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="qm" placeholder="Buscar…" value="${esc(S.q)}" autocomplete="off" spellcheck="false" oninput="miniSearch(this.value)" onfocus="this.parentElement.classList.add('on')" onblur="if(!this.value)this.parentElement.classList.remove('on')"><kbd>/</kbd></div>` : ''}
 ${filterBtn()}
@@ -887,7 +892,7 @@ function groupHead(k, n, pt) { return `<div class="ggh" onclick="groupToggle(thi
 function fillGrid(list) {
   const gen = ++gridGen, grid = $('#grid'); if (!grid) return;
   if (gridIO) { gridIO.disconnect(); gridIO = null; }
-  const CH = 120; let i = 0;
+  const CH = 60; let i = 0;
   const groups = groupedList(list); let flat = list, cur = null, curGi = -1; const gidx = [];
   if (groups) { grid.classList.remove('grid', 'lst'); grid.classList.add('ggwrap'); flat = []; groups.forEach(([, gs], k) => gs.forEach(g => { flat.push(g); gidx.push(k); })); }
   const more = () => {
@@ -915,7 +920,7 @@ function fillGrid(list) {
   gridIO.observe(sent);
 }
 function listMode() { return S.config.view_mode === 'list'; }
-function muralMode() { return (S.config.view_mode || 'mural') === 'mural' && S.view === 'home'; }
+function muralMode() { return (S.config.view_mode || 'grid') === 'mural' && S.view === 'home'; }
 function setCardSize(v, save) { document.documentElement.style.setProperty('--cw', v + 'px'); S.config.card_size = +v; if (save) api.post('/api/config', { card_size: +v }); }
 function selectGame(key) {
   if (!S.byKey[key]) return;
@@ -1130,9 +1135,11 @@ function storeSub(g) {
 function cardSub(g) {
   if (S.view === 'store' && g.repo !== 'local') return storeSub(g);
   if (S.config.card_playtime === false) { const a = g.genres && g.genres[0] ? g.genres[0] : g.kind === 'rom' && g.system ? (S.systems[g.system] || g.system) : (g.creator || g.fr || ''); return a ? `<div class="sub"><span class="g">${esc(a)}</span></div>` : ''; }
-  const t = g.playtime >= 60 ? fmtTime(g.playtime) : 'Não jogado';
-  const l2 = g.last_played ? cap(lastPlayedText(g.last_played)) : (g.genres && g.genres[0]) || (g.kind === 'rom' && g.system ? (S.systems[g.system] || g.system) : '') || (g.year ? String(g.year) : '');
-  return `<div class="sub ci"><span>${clock}${esc(t)}</span></div>${l2 ? `<div class="sub ci"><span>${g.last_played ? I.flag : I.tag}${esc(l2)}</span></div>` : ''}`;
+  const sys = g.system && g.system !== 'pc' ? (S.systems[g.system] || g.system) : 'PC';
+  const l1 = [sys, g.year ? String(g.year) : (g.genres && g.genres[0]) || ''].filter(Boolean).join(' · ');
+  const when = g.last_played ? lastPlayedText(g.last_played) : '';
+  const l2 = g.playtime >= 60 ? `<span>${esc(fmtTime(g.playtime))}</span>${when ? `<span>· </span><span>${esc(when)}</span>` : ''}` : when ? `<span>Jogado</span><span>${esc(when)}</span>` : '<span>Nunca jogado</span>';
+  return `<div class="sub ci"><span>${esc(l1)}</span></div><div class="sub ci">${l2}</div>`;
 }
 function ptHtml(sec) { if (!sec || sec < 60) return ''; const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60); return `<span class="pt">${clock}${h ? h + ' h' : m + ' min'}</span>`; }
 const TH = { ok: new Set(), err: new Set(), tries: {} };
@@ -1272,14 +1279,6 @@ function setHero(key, url) {
   const det = $('#detail'); det.classList.remove('nohero'); $('#dBg').style.backgroundImage = `url(${url})`;
   const im = new Image(); im.onerror = () => { if (S.current === key) det.classList.add('nohero'); }; im.src = url;
 }
-function vtRun(fn, tag) {
-  const off = document.documentElement.dataset.anim === 'off' || !document.startViewTransition;
-  if (off) { fn(); return Promise.resolve(); }
-  document.documentElement.dataset.vt = tag || '';
-  let t; try { t = document.startViewTransition(fn); } catch (_) { fn(); return Promise.resolve(); }
-  return t.finished.catch(() => undefined).finally(() => { delete document.documentElement.dataset.vt; });
-}
-function cardImg(key) { return document.querySelector(`.card[data-key="${CSS.escape(key)}"] img, .srow[data-key="${CSS.escape(key)}"] img`); }
 async function openGame(key) {
   uiSound('open');
   S.current = key; S.dtab = 'about'; const g = S.byKey[key] || { title: '...' };
@@ -1288,13 +1287,9 @@ async function openGame(key) {
   const d = await Promise.race([api.get('/api/game/' + enc(key)), new Promise(r => setTimeout(() => r(null), 700))]);
   if (S.current !== key) return;
   if (d && d.error) { S.current = null; toast('err', 'Não foi possível concluir', d.error); return; }
-  const src = cardImg(key); if (src) src.style.viewTransitionName = 'gcov';
-  await vtRun(() => {
-    if (src) src.style.viewTransitionName = '';
-    $('#detail').classList.add('on'); $('#detail').scrollTop = 0;
-    if (d) { S.det = d; renderDetail(); }
-    else $('#dWrap').innerHTML = `<div class="dcov"><img src="/cover/${enc(key)}" alt="${esc((g.title || '?').trim().charAt(0).toUpperCase())}" onerror="dph(this)"></div><div class="dmain"><h1>${esc(g.title)}</h1><div class="meta"><span class="pill">carregando…</span></div></div>`;
-  }, 'open');
+  $('#detail').classList.add('on'); $('#detail').scrollTop = 0;
+  if (d) { S.det = d; renderDetail(); }
+  else $('#dWrap').innerHTML = `<div class="dcov"><img src="/cover/${enc(key)}" alt="${esc((g.title || '?').trim().charAt(0).toUpperCase())}" onerror="dph(this)"></div><div class="dmain"><h1>${esc(g.title)}</h1><div class="meta"><span class="pill">carregando…</span></div></div>`;
   if (S.current !== key) return;
   let data = d;
   if (!data) {
@@ -1306,7 +1301,7 @@ async function openGame(key) {
   guide('detail');
   if (!data.meta && S.config.auto_metadata && data.kind !== 'emulator') fetchMeta(key, false, true);
 }
-function closeDetail() { if (!S.current) return closeDetailNow(); uiSound('back'); const was = S.current; const src = cardImg(was); vtRun(() => { closeDetailNow(); if (src) src.style.viewTransitionName = 'gcov'; }, 'close').then(() => { if (src) src.style.viewTransitionName = ''; }); }
+function closeDetail() { if (!S.current) return closeDetailNow(); uiSound('back'); closeDetailNow(); }
 function closeDetailNow() { const was = S.current; S.current = null; $('#detail').classList.remove('on'); $('#detail').classList.remove('bar'); if (S._dObs) { S._dObs.disconnect(); S._dObs = null; } if (was && S.config.accent_from_cover) { if (S.view === 'home' && S.stageKey) gameFocus(S.stageKey); else { S._focusKey = ''; dynAccent(null); } } }
 $('#dClose').onclick = closeDetail;
 function lightbox(u) { const l = document.createElement('div'); l.className = 'lightbox'; l.innerHTML = `<img src="${esc(u)}"><button class="dclose">${I.x}</button>`; l.onclick = () => l.remove(); document.body.appendChild(l); }
@@ -2631,7 +2626,7 @@ function sessionCard(ev, g) {
   setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, 9000);
   uiSound('done');
 }
-function toastPlain(type, title, msg) { const t = document.createElement('div'); t.className = 'toast ' + type; t.innerHTML = `<div><b>${esc(title)}</b><span>${esc(msg || '')}</span></div>`; const box = $('#toasts'); box.appendChild(t); while (box.children.length > 5) box.firstElementChild.remove(); let left = 5000, tm, t0 = Date.now(); const go = () => { t0 = Date.now(); tm = setTimeout(() => { t.style.transition = '.3s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, left); }; t.onmouseenter = () => { clearTimeout(tm); left = Math.max(1500, left - (Date.now() - t0)); }; t.onmouseleave = go; t.onclick = () => { clearTimeout(tm); t.remove(); }; go(); }
+function toastPlain(type, title, msg) { const t = document.createElement('div'); t.className = 'toast ' + type; t.innerHTML = `<div><b>${esc(title)}</b><span>${esc(msg || '')}</span></div><button class="x" title="Fechar">${I.x}</button>`; const box = $('#toasts'); box.appendChild(t); while (box.children.length > 5) box.firstElementChild.remove(); let left = 5000, tm, t0 = Date.now(); const go = () => { t0 = Date.now(); tm = setTimeout(() => { t.style.transition = '.3s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, left); }; t.onmouseenter = () => { clearTimeout(tm); left = Math.max(1500, left - (Date.now() - t0)); }; t.onmouseleave = go; t.onclick = () => { clearTimeout(tm); t.remove(); }; go(); }
 
 function applyFog() {
   const main = document.querySelector('main'), app = $('#app'); if (!main || !app) return;
@@ -2849,11 +2844,11 @@ function fpDelPreset() {
 function viewTweaks() {
   if (!['home', 'store'].includes(S.view)) return 0;
   const defS = S.view === 'store' ? 'fresh' : 'az', defG = S.view === 'store' ? '' : 'letter';
-  return (S.sort !== defS || S.sortRev ? 1 : 0) + (groupBy() !== defG ? 1 : 0) + ((S.config.view_mode || 'mural') !== 'mural' ? 1 : 0);
+  return (S.sort !== defS || S.sortRev ? 1 : 0) + (groupBy() !== defG ? 1 : 0) + ((S.config.view_mode || 'grid') !== 'grid' ? 1 : 0);
 }
 function filterBtn() {
   const n = fltCount() + viewTweaks();
-  return `<button class="btn xs ${n || fpOn() ? 'p' : 's'}" onclick="fpOpen()" title="Ordem, grupos, modo de exibição e filtros — o painel fica aberto até você fechar">${I.sliders}<span class="lb">Exibição${n ? ` (${n})` : ''}</span></button>`;
+  return `<button class="btn xs ${n || fpOn() ? 'p' : 's'}" onclick="fpOpen()" title="Ordem, grupos, modo de exibição e filtros — o painel fica aberto até você fechar">${I.sliders}<span class="lb">Filtros e exibição${n ? ` (${n})` : ''}</span></button>`;
 }
 function fpViewHtml() {
   if (!['home', 'store'].includes(S.view)) return '';
@@ -2866,9 +2861,9 @@ function fpViewHtml() {
       <label class="fbox ${S.sortRev ? 'on' : ''}"><input type="checkbox" ${S.sortRev ? 'checked' : ''} onchange="S.sortRev=!S.sortRev;S.page=1;renderLibrary()"><span>Ordem inversa</span></label>
       ${S.view === 'home' ? `<label class="fbox ${S.config.fav_first ? 'on' : ''}"><input type="checkbox" ${S.config.fav_first ? 'checked' : ''} onchange="setCfg({fav_first:!S.config.fav_first}).then(()=>{S.page=1;renderLibrary()})"><span>Favoritos primeiro</span></label>` : ''}
       <h6>Agrupar</h6>${seg(GROUPS, g, id => `setGroupBy(${jsq(id)})`)}${g ? `<div class="gall"><button class="lnk" onclick="groupsAll(true)">Recolher todos</button><button class="lnk" onclick="groupsAll(false)">Expandir todos</button></div>` : ''}
-      <h6>Modo</h6>${seg([['mural', 'Mural'], ['grid', 'Grade'], ['list', 'Lista']], S.config.view_mode || 'mural', id => `setViewMode(${jsq(id)})`)}
+      <h6>Modo</h6>${seg([['mural', 'Mural'], ['grid', 'Grade'], ['list', 'Lista']], S.config.view_mode || 'grid', id => `setViewMode(${jsq(id)})`)}
       ${lm ? `<h6>Colunas da lista</h6><div class="seg fsort">${LIST_COLS.map(([id, l]) => `<button class="${listCols().includes(id) ? 'on' : ''}" onclick="toggleListCol(${jsq(id)})">${l}</button>`).join('')}</div>` : `<h6>Tamanho das capas</h6><label class="zoom vz"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><input type="range" min="100" max="300" step="10" value="${S.config.card_size || 136}" oninput="setCardSize(this.value,false)" onchange="setCardSize(this.value,true)"></label>`}
-      ${n ? `<button class="lnk fsmore" onclick="S.sortRev=false;setSort(${jsq(defS)});setGroupBy(${jsq(defG)}).then(()=>setCfg({view_mode:'mural'}).then(renderLibrary))">Voltar ao padrão</button>` : ''}
+      ${n ? `<button class="lnk fsmore" onclick="S.sortRev=false;setSort(${jsq(defS)});setGroupBy(${jsq(defG)}).then(()=>setCfg({view_mode:'grid'}).then(renderLibrary))">Voltar ao padrão</button>` : ''}
     </div>` : ''}</div>`;
 }
 const SYS_ALIAS = { ps1: ['ps1', 'psx', 'psone', 'playstation1', 'play1'], ps2: ['ps2', 'playstation2', 'play2'], ps3: ['ps3', 'playstation3', 'play3'], psp: ['psp'], snes: ['snes', 'supernintendo'], nes: ['nes', 'nintendinho', 'famicom'], n64: ['n64', 'nintendo64'], gc: ['gc', 'gamecube', 'ngc'], wii: ['wii'], wiiu: ['wiiu'], switch: ['switch', 'nsw'], '3ds': ['3ds'], nds: ['ds', 'nds'], gba: ['gba'], gbc: ['gbc'], gb: ['gb', 'gameboy'], dc: ['dc', 'dreamcast'], saturn: ['saturn'], genesis: ['genesis', 'megadrive', 'md'], sms: ['sms', 'mastersystem'], xbox: ['xbox'], x360: ['x360', 'xbox360'], arcade: ['arcade', 'mame', 'fliperama'], pce: ['pce', 'pcengine', 'turbografx'], dos: ['dos', 'msdos'], atari2600: ['atari', 'atari2600'], pc: ['pc', 'windows', 'computador'] };
@@ -3452,7 +3447,95 @@ async function loadModsFor(key) {
     <div class="sites">${r.sites.map(s => `<button class="site ${s.specific ? 'sp' : ''}" onclick="api.post('/api/open_url',{url:${jsq(s.url)}})" title="${esc(s.desc)}">${I.ext} ${esc(s.name)}</button>`).join('')}</div>`;
 }
 
-applyAnim(); loadCatalog(false); poll();
+const PROF = { list: [], active: '', ask: true };
+function profInitials(name) { return String(name || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?'; }
+function profAvatar(p, cls = '') { return `<i class="pav ${cls}" style="--pc:${esc(p.color || '#5c6b82')}">${esc(profInitials(p.name))}</i>`; }
+function profSet(info) { if (!info || !Array.isArray(info.list)) return; PROF.list = info.list; PROF.active = info.active || ''; PROF.ask = info.ask !== false; S.config.profiles = { active: PROF.active, ask: PROF.ask, list: PROF.list }; profRail(); }
+function profActive() { return PROF.list.find(p => p.id === PROF.active) || null; }
+function profRail() {
+  const bot = $('#railBot'); if (!bot) return;
+  let b = $('#profBtn');
+  if (!PROF.list.length) { if (b) b.remove(); return; }
+  if (!b) { b = document.createElement('button'); b.className = 'bell pavbtn'; b.id = 'profBtn'; b.onclick = e => profMenu(e); bot.prepend(b); }
+  const p = profActive() || { name: '—', color: '#5c6b82' };
+  b.title = `Perfil: ${p.name}`; b.innerHTML = `${profAvatar(p)}<span class="hl">${esc(p.name)}</span>`;
+}
+function profMenu(e) {
+  if (e) e.stopPropagation();
+  const r = e && e.currentTarget ? e.currentTarget.getBoundingClientRect() : { right: 80, top: 80 };
+  const items = PROF.list.map(p => ({ label: p.name, icon: p.id === PROF.active ? 'check' : 'user', hint: p.id === PROF.active ? 'ativo' : '', fn: () => profSwitch(p.id) }));
+  items.push({ sep: true }, { label: 'Novo perfil…', icon: 'plus', fn: () => profNew() }, { label: 'Gerenciar perfis…', icon: 'cog', fn: () => { setView('settings'); S.tab.settings = 'general'; S._settingsJump = 'Perfis'; renderSettings(true); } });
+  showCtxLocal(items, r.right + 6, r.top, 'Perfis');
+}
+async function profSwitch(id) {
+  if (!id || id === PROF.active) return;
+  const r = await api.post('/api/profiles', { op: 'switch', id });
+  if (!r || r.error) return toast('err', 'Perfis', (r || {}).error || '');
+  location.reload();
+}
+function profNew(fromPicker) {
+  modal({ title: 'Novo perfil', text: 'Nome de quem vai usar este perfil. Tema, aparência e preferências ficam separados; a biblioteca é a mesma para todos.', input: '', ok: 'Criar', wait: true, onOk: async v => {
+    if (!v) return;
+    const r = await api.post('/api/profiles', { op: 'create', name: v });
+    if (!r || r.error) return toast('err', 'Perfis', (r || {}).error || '');
+    profSet(r.profiles);
+    if (fromPicker) return profPickerRender();
+    if (S.view === 'settings') renderSettings(true);
+    toast('ok', 'Perfil criado', r.profile.name, PROF.list.length > 1 ? [{ label: 'Usar agora', fn: () => profSwitch(r.profile.id) }] : null);
+  } });
+}
+function profRename(id) {
+  const p = PROF.list.find(x => x.id === id); if (!p) return;
+  modal({ title: 'Renomear perfil', input: p.name, ok: 'Salvar', wait: true, onOk: async v => {
+    if (!v) return; const r = await api.post('/api/profiles', { op: 'update', id, name: v });
+    if (!r || r.error) return toast('err', 'Perfis', (r || {}).error || ''); profSet(r.profiles); if (S.view === 'settings') renderSettings(true);
+  } });
+}
+async function profColor(id, color) { const r = await api.post('/api/profiles', { op: 'update', id, color }); if (!r || r.error) return toast('err', 'Perfis', (r || {}).error || ''); profSet(r.profiles); if (S.view === 'settings') renderSettings(true); }
+function profRemove(id) {
+  const p = PROF.list.find(x => x.id === id); if (!p) return;
+  modal({ title: 'Apagar perfil', text: `Apagar “${p.name}”? Só as preferências desse perfil somem; jogos, capas e saves continuam.`, ok: 'Apagar', danger: true, onOk: async () => {
+    const r = await api.post('/api/profiles', { op: 'remove', id });
+    if (!r || r.error) return toast('err', 'Perfis', (r || {}).error || ''); profSet(r.profiles); if (S.view === 'settings') renderSettings(true);
+  } });
+}
+async function profAsk(on) { const r = await api.post('/api/profiles', { op: 'ask', ask: !!on }); if (!r || r.error) return toast('err', 'Perfis', (r || {}).error || ''); profSet(r.profiles); if (S.view === 'settings') renderSettings(true); }
+let profPickDone = null;
+function profPickerRender() {
+  let el = $('#profpick'); if (!el) { el = document.createElement('div'); el.id = 'profpick'; el.className = 'profpick'; document.body.append(el); }
+  el.innerHTML = `<div class="pfbox"><div class="pflogo">${logoSvg()}</div><h2>Quem vai jogar?</h2><div class="pflist">${PROF.list.map(p => `<button class="pfp" data-id="${esc(p.id)}">${profAvatar(p, 'lg')}<span>${esc(p.name)}</span></button>`).join('')}</div><div class="pffoot"><button class="btn s sm" onclick="profNew(true)">+ Novo perfil</button></div></div>`;
+  el.querySelectorAll('.pfp').forEach(b => b.onclick = () => profPick(b.dataset.id));
+  const cur = el.querySelector(`.pfp[data-id="${PROF.active}"]`) || el.querySelector('.pfp'); if (cur) cur.focus();
+  requestAnimationFrame(() => el.classList.add('on'));
+}
+async function profPick(id) {
+  const el = $('#profpick'); if (!el) return;
+  if (id !== PROF.active) {
+    const r = await api.post('/api/profiles', { op: 'switch', id });
+    if (!r || r.error) return toast('err', 'Perfis', (r || {}).error || '');
+    if (L.on !== Boolean(r.language && r.language !== 'pt-BR')) return location.reload();
+    profSet(r.profiles);
+  }
+  el.classList.remove('on'); setTimeout(() => el.remove(), 350);
+  const done = profPickDone; profPickDone = null; if (done) done();
+}
+async function profileGate() {
+  let info = null; try { info = await api.get('/api/profiles'); } catch (e) { return; }
+  if (!info || info.error) return;
+  profSet(info);
+  if (info.list.length < 2 || info.ask === false) return;
+  await initLang(info.language);
+  await new Promise(resolve => { profPickDone = resolve; profPickerRender(); });
+}
+document.addEventListener('keydown', e => {
+  const el = $('#profpick'); if (!el || !el.classList.contains('on')) return;
+  const list = [...el.querySelectorAll('.pfp')]; if (!list.length) return;
+  const i = list.indexOf(document.activeElement);
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); list[(i + 1) % list.length].focus(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); list[(i - 1 + list.length) % list.length].focus(); }
+});
+
+applyAnim(); profileGate().then(() => { loadCatalog(false); poll(); });
 
 const GB = n => n ? (n / 2 ** 30).toFixed(n > 2 ** 30 * 100 ? 0 : 1) + ' GB' : '—';
 const MB = n => !n ? '—' : n >= 2 ** 30 ? (n / 2 ** 30).toFixed(1) + ' GB' : Math.round(n / 2 ** 20) + ' MB';

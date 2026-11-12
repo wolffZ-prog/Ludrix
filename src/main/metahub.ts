@@ -217,7 +217,7 @@ export class MetaHub {
         try {
             if (fs.existsSync(p) && fs.statSync(p).mtimeMs >= fs.statSync(c).mtimeMs)
                 return p;
-            return blurHero(c, p) ? p : c;
+            return (await blurHero(c, p)) ? p : c;
         }
         catch {
             return c;

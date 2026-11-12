@@ -81,15 +81,18 @@ export async function convertAsync(data: Buffer, maxH: number, quality: number):
     return dec.buf;
 }
 
-export function blurHero(src: string, dest: string): boolean {
+export async function blurHero(src: string, dest: string): Promise<boolean> {
     const NI = nativeImage();
     if (!NI)
         return false;
     try {
-        let im = NI.createFromPath(src);
+        const dec = await imgdecode.decode(await fs.promises.readFile(src), { maxW: 480, maxH: 480, fmt: 'png' });
+        if (!dec)
+            return false;
+        let im = NI.createFromBuffer(dec.buf);
         if (im.isEmpty())
             return false;
-        const w = 1280, h = 720;
+        const w = 320, h = 180;
         const sz = im.getSize();
         const k = Math.max(w / sz.width, h / sz.height);
         im = im.resize({ width: Math.max(w, Math.round(sz.width * k)), height: Math.max(h, Math.round(sz.height * k)), quality: 'good' });
@@ -97,10 +100,10 @@ export function blurHero(src: string, dest: string): boolean {
         const x = Math.floor((s2.width - w) / 2), y = Math.max(0, Math.floor((s2.height - h) / 3));
         im = im.crop({ x, y, width: w, height: h });
         im = im.resize({ width: 32, height: 18, quality: 'best' }).resize({ width: w, height: h, quality: 'best' });
-        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        await fs.promises.mkdir(path.dirname(dest), { recursive: true });
         const tmp = dest + '.tmp';
-        fs.writeFileSync(tmp, im.toJPEG(80));
-        fs.renameSync(tmp, dest);
+        await fs.promises.writeFile(tmp, im.toJPEG(80));
+        await fs.promises.rename(tmp, dest);
         return true;
     }
     catch {

@@ -1,5 +1,14 @@
 # Changelog
 
+## 4.0.21 — 2026-11-12
+
+- Interface nova: barra lateral estreita só com ícones, busca no alto, filtros numa linha, grade compacta com divisórias por letra e cada capa com sistema, ano e última vez jogada. Botão Jogar na capa, seleção por contorno, selo "Novo" discreto. Detalhes abrem direto no conteúdo, sem faixa de arte no topo (volta em Ajustes › Biblioteca › Arte nos detalhes).
+- Perfis locais: Ajustes › Geral › Perfis. Cada perfil guarda tema, aparência, exibição, sons, teclas, controle, Discord e favoritos; biblioteca, capas, saves e downloads continuam os mesmos para todos. Sem senha. Com dois ou mais perfis o Ludrix pode perguntar quem vai jogar ao abrir; a troca fica no avatar no pé da barra lateral.
+- Travamentos ao abrir detalhes e ao rolar a biblioteca corrigidos: a transição de página que segurava a tela foi removida, as capas de fundo são geradas sem bloquear e os arquivos da interface são servidos sem travar o servidor interno.
+- Avisos fecham no X. Em janela sem moldura, o X e os botões dos avisos não são mais tratados como área de arrastar.
+- Acrílico do Windows passa a ser opcional (desligado por padrão) — reduz consumo e evita engasgos em máquinas sem GPU dedicada.
+- Modo de exibição padrão passa a ser Grade; "Filtros e exibição" ganha o nome completo no botão.
+
 ## 4.0.20 — 2026-10-29
 
 - Terminal removido: o Ludrix não tem mais a janela de comandos nem o ajuste "Habilitar o terminal". Tudo o que ele fazia já existe em Ajustes e nos menus.

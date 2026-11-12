@@ -34,7 +34,7 @@ const DEFAULT_CONFIG = {
     known_repos: null,
     after_launch: 'ask',
     dim_not_installed: true,
-    home_spot: true,
+    home_spot: false,
     tray_enabled: true,
     tray_sleep: true,
     hotkey_enabled: true,
@@ -68,7 +68,7 @@ const DEFAULT_CONFIG = {
     taskbar_progress: true,
     store_notify_new: true,
     card_size: 136,
-    view_mode: 'mural',
+    view_mode: 'grid',
     list_cols: ['year', 'genre', 'size', 'playtime', 'last', 'status'],
     game_backdrop: '',
     backdrop_blur: 10,
@@ -87,12 +87,12 @@ const DEFAULT_CONFIG = {
     group_store: '',
     sort_store: 'fresh',
     launch_splash: 'short',
-    detail_art: 'auto',
+    detail_art: 'off',
     look: 0,
     card_hover: 'lift',
     reduce_motion: false,
     fog: 30,
-    acrylic: true,
+    acrylic: false,
     parallax: true,
     high_contrast: false,
     clock: 'off',
@@ -100,7 +100,7 @@ const DEFAULT_CONFIG = {
     filter_panel: false,
     filter_presets: [],
     card_playtime: true,
-    card_origin: true,
+    card_origin: false,
     warn_missing: true,
     game_dirs: [],
     watch_dirs: true,
@@ -172,7 +172,7 @@ const DEFAULT_CONFIG = {
     gamepad_enabled: true,
     gamepad: 'auto',
     sofa_zoom: 1.15,
-    nav_layout: '',
+    nav_layout: 'rail',
     gamepad_wake: false,
     mods_dir: '',
     update_feed: '',
@@ -227,27 +227,138 @@ function coerce(key, value, def) {
         return value && typeof value === 'object' && !Array.isArray(value) ? value : def;
     return value;
 }
+const PROFILE_KEYS = new Set([
+    'theme', 'theme_mode', 'face', 'accent', 'accent_from_cover', 'accent_mode', 'theme_schedule', 'theme_light_from', 'theme_light_to',
+    'look', 'glass', 'fog', 'fx_type', 'fx_intensity', 'animations', 'reduce_motion', 'parallax', 'high_contrast', 'card_hover',
+    'ui_scale', 'text_size', 'density', 'card_size', 'view_mode', 'list_cols', 'card_ribbons', 'card_playtime', 'card_origin', 'cover_slideshow', 'cover_slideshow_secs',
+    'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'detail_art', 'hero_enabled', 'home_spot', 'fav_first', 'dim_not_installed', 'store_hide_installed',
+    'group_by', 'sort_by', 'group_store', 'sort_store', 'filter_panel', 'filter_presets', 'settings_adv',
+    'layout', 'nav', 'nav_layout', 'nav_hidden', 'nav_order', 'rail_icons', 'status_position', 'clock', 'ctx_menu',
+    'language', 'popups', 'notify_sound', 'ui_sounds', 'ui_sounds_level', 'launch_splash', 'keymap', 'gamepad', 'gamepad_speed', 'sofa_zoom',
+    'discord_enabled', 'discord_app_id', 'favorites',
+    'console_theme', 'console_sound', 'console_hint', 'console_card_size', 'console_clock24', 'console_start_view', 'console_vibrate', 'console_dim_idle', 'console_confirm_quit', 'console_sort', 'console_dl_pill',
+]);
+const PROFILE_COLORS = ['#5c6b82', '#c0392b', '#d68910', '#1e8449', '#1f618d', '#7d3c98', '#117a65', '#884ea0'];
+type Profile = { id: string; name: string; color: string; created: number };
+type Profiles = { active: string; ask: boolean; list: Profile[] };
+function sanitizeConfig(raw: Record<string, any>, fixed?: string[]) {
+    const out = { ...raw };
+    for (const k of Object.keys(DEFAULT_CONFIG)) {
+        if (!(k in raw))
+            continue;
+        const v = coerce(k, raw[k], DEFAULT_CONFIG[k]);
+        if (v !== raw[k] && fixed)
+            fixed.push(k);
+        out[k] = v;
+    }
+    return out;
+}
 class Store {
     config: Record<string, any>;
+    base: Record<string, any>;
+    overlay: Record<string, any> = {};
+    profiles: Profiles = { active: '', ask: true, list: [] };
     library: Record<string, any>;
     configFixed: string[] = [];
     dirty: Set<string> = new Set();
     timer: any = null;
+    static PROFILES_FILE = () => path.join(P.DATA, 'profiles.json');
+    static profileFile = (id: string) => path.join(P.DATA, 'profiles', `${id}.json`);
     constructor() {
-        const raw = util.readJson(P.CONFIG_FILE, {});
-        const out = { ...raw };
-        for (const k of Object.keys(DEFAULT_CONFIG)) {
-            if (!(k in raw))
-                continue;
-            const v = coerce(k, raw[k], DEFAULT_CONFIG[k]);
-            if (v !== raw[k])
-                this.configFixed.push(k);
-            out[k] = v;
-        }
-        this.config = { ...DEFAULT_CONFIG, ...out };
+        this.base = { ...DEFAULT_CONFIG, ...sanitizeConfig(util.readJson(P.CONFIG_FILE, {}), this.configFixed) };
+        this.config = this.base;
         this.migrateLook();
         this.library = util.readJson(P.LIBRARY_FILE, {});
         this.migrateSchema();
+        this.loadProfiles();
+    }
+    loadProfiles() {
+        const raw = util.readJson(Store.PROFILES_FILE(), null) as any;
+        const list: Profile[] = Array.isArray(raw?.list) ? raw.list.filter((x) => x && typeof x.id === 'string' && /^[a-z0-9]{4,24}$/.test(x.id)).map((x) => ({
+            id: x.id, name: String(x.name || '').slice(0, 32) || 'Perfil', color: /^#[0-9a-f]{6}$/i.test(String(x.color)) ? String(x.color) : PROFILE_COLORS[0], created: Number(x.created) || 0,
+        })) : [];
+        this.profiles = { active: '', ask: raw ? raw.ask !== false : true, list };
+        const active = String(raw?.active || '');
+        if (list.some((x) => x.id === active))
+            this.activate(active);
+    }
+    activate(id: string) {
+        this.profiles.active = id;
+        const raw = sanitizeConfig(util.readJson(Store.profileFile(id), {}));
+        this.overlay = {};
+        for (const k of Object.keys(raw))
+            if (PROFILE_KEYS.has(k))
+                this.overlay[k] = raw[k];
+        this.config = { ...this.base, ...this.overlay };
+    }
+    profileInfo() {
+        const { active, ask, list } = this.profiles;
+        return { active, ask, language: String(this.config.language || 'pt-BR'), list: list.map((x) => ({ ...x })) };
+    }
+    saveProfiles() {
+        util.writeJson(Store.PROFILES_FILE(), this.profiles);
+    }
+    profileCreate(name: string, color?: string) {
+        name = String(name || '').trim().slice(0, 32);
+        if (!name)
+            return { error: 'Dê um nome ao perfil.' };
+        if (this.profiles.list.length >= 8)
+            return { error: 'Limite de 8 perfis.' };
+        const id = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+        const used = new Set(this.profiles.list.map((x) => x.color));
+        const pick = PROFILE_COLORS.find((c) => !used.has(c)) || PROFILE_COLORS[this.profiles.list.length % PROFILE_COLORS.length];
+        const prof: Profile = { id, name, color: /^#[0-9a-f]{6}$/i.test(String(color)) ? String(color) : pick, created: Date.now() };
+        const seed: Record<string, any> = {};
+        for (const k of PROFILE_KEYS)
+            seed[k] = JSON.parse(JSON.stringify(this.config[k] ?? DEFAULT_CONFIG[k]));
+        fs.mkdirSync(path.dirname(Store.profileFile(id)), { recursive: true });
+        util.writeJson(Store.profileFile(id), seed);
+        this.profiles.list.push(prof);
+        if (!this.profiles.active) {
+            this.flush();
+            this.activate(id);
+        }
+        this.saveProfiles();
+        return { ok: true, profile: { ...prof } };
+    }
+    profileUpdate(id: string, patch: { name?: string; color?: string }) {
+        const prof = this.profiles.list.find((x) => x.id === id);
+        if (!prof)
+            return { error: 'Perfil não encontrado.' };
+        if (typeof patch.name === 'string' && patch.name.trim())
+            prof.name = patch.name.trim().slice(0, 32);
+        if (typeof patch.color === 'string' && /^#[0-9a-f]{6}$/i.test(patch.color))
+            prof.color = patch.color;
+        this.saveProfiles();
+        return { ok: true, profile: { ...prof } };
+    }
+    profileRemove(id: string) {
+        const i = this.profiles.list.findIndex((x) => x.id === id);
+        if (i < 0)
+            return { error: 'Perfil não encontrado.' };
+        if (this.profiles.active === id)
+            return { error: 'Troque para outro perfil antes de apagar este.' };
+        this.profiles.list.splice(i, 1);
+        try {
+            fs.rmSync(Store.profileFile(id), { force: true });
+        }
+        catch { }
+        this.saveProfiles();
+        return { ok: true };
+    }
+    profileAsk(ask: boolean) {
+        this.profiles.ask = Boolean(ask);
+        this.saveProfiles();
+        return { ok: true };
+    }
+    profileSwitch(id: string) {
+        if (!this.profiles.list.some((x) => x.id === id))
+            return { error: 'Perfil não encontrado.' };
+        this.flush();
+        if (id !== this.profiles.active)
+            this.activate(id);
+        this.saveProfiles();
+        return { ok: true, active: id, language: String(this.config.language || 'pt-BR') };
     }
     static SCHEMA = 1;
     static SCHEMA_FILE = () => path.join(P.DATA, 'schema.json');
@@ -330,6 +441,13 @@ class Store {
                     for (const k of ['lights', 'home_rows', 'toolbar', 'toolbar_items'])
                         delete this.config[k];
                 }],
+            [13, () => {
+                    this.config.nav_layout = 'rail';
+                    this.config.home_spot = false;
+                    this.config.card_origin = false;
+                    this.config.acrylic = false;
+                    this.config.detail_art = 'off';
+                }],
         ];
         for (const [target, fn] of (steps as any)) {
             if (Number(this.config.look || 0) < target) {
@@ -350,6 +468,12 @@ class Store {
             const nv = coerce(k, v, DEFAULT_CONFIG[k]);
             if (JSON.stringify(this.config[k]) !== JSON.stringify(nv)) {
                 this.config[k] = nv;
+                if (this.config !== this.base) {
+                    if (PROFILE_KEYS.has(k) && this.profiles.active)
+                        this.overlay[k] = nv;
+                    else
+                        this.base[k] = nv;
+                }
                 changed.push(k);
             }
         }
@@ -433,8 +557,13 @@ class Store {
     writeNow(which) {
         if (this.frozen)
             return;
-        if (which === 'config')
-            util.writeJson(P.CONFIG_FILE, this.config);
+        if (which === 'config') {
+            util.writeJson(P.CONFIG_FILE, this.base);
+            if (this.profiles.active) {
+                fs.mkdirSync(path.dirname(Store.profileFile(this.profiles.active)), { recursive: true });
+                util.writeJson(Store.profileFile(this.profiles.active), this.overlay);
+            }
+        }
         else
             util.writeJson(P.LIBRARY_FILE, this.library);
     }
@@ -454,9 +583,10 @@ class Store {
         c.os = process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'mac' : 'linux';
         c.appimage = Boolean(process.env.APPIMAGE);
         c.frameless = RUNTIME.frameless ?? Boolean(this.config.frameless);
+        c.profiles = this.profileInfo();
         c.acrylic_on = RUNTIME.acrylic;
         return { ...c, ...extra };
     }
 }
 
-export { setRuntimeFrameless, setRuntimeAcrylic, DEFAULT_CONFIG, Store };
+export { setRuntimeFrameless, setRuntimeAcrylic, DEFAULT_CONFIG, PROFILE_KEYS, PROFILE_COLORS, Store };

@@ -56,7 +56,7 @@ function renderDetail() {
   ].filter(x => x && x[1]);
   const lbl = [d.system_name || 'PC', m.developer || d.creator, m.year || d.year].filter(Boolean).map(esc).join(' &nbsp;·&nbsp; ') + (live ? ' &nbsp;·&nbsp; <b>Jogando agora</b>' : d.missing ? ' &nbsp;·&nbsp; <b style="color:var(--amber)">Arquivo não encontrado</b>' : d.installed || isRom ? ' &nbsp;·&nbsp; <b>Instalado</b>' : (S.byKey[d.key] || {}).link_dead ? ' &nbsp;·&nbsp; <b style="color:var(--amber)" title="O link direto não respondeu no último teste da fonte">Link fora do ar</b>' : '');
   $('#detail').classList.toggle('art', !!(m.hero || m.hero_url || m.background_file));
-  const dimg = !!((S.byKey[key] || {}).hero_ok || m.hero || m.hero_url || m.background_file) && (S.config.detail_art || 'auto') !== 'off';
+  const dimg = !!((S.byKey[key] || {}).hero_ok || m.hero || m.hero_url || m.background_file) && (S.config.detail_art || 'off') !== 'off';
   $('#dWrap').innerHTML = `
     <div class="dhero${dimg ? ' himg' : ''}" id="dHero"${dimg ? ` style="--dimg:url('/hero/${enc(key)}?v=${(S.byKey[key] || {}).cv || 0}')"` : ''}><div class="dcov"><img src="/cover/${enc(key)}?v=${(S.byKey[key] || {}).cv || m.fetched_at || 0}" alt="${esc((d.title || '?').trim().charAt(0).toUpperCase())}" onload="dbandColor(this)" onerror="dph(this)"><div class="covedit"><button class="btn s xs" onclick="setCover(${jsq(key)})" title="Usar uma imagem minha como capa">${I.image} Trocar capa</button>${d.custom_cover ? `<button class="btn s xs" onclick="resetCover(${jsq(key)})" title="Voltar à capa original">${I.refresh}</button>` : ''}</div></div>
     <div class="dhead"><div class="dlbl">${lbl}</div><h1>${esc(d.title)}</h1>

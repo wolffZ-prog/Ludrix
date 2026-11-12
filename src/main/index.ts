@@ -126,7 +126,7 @@ function createWindow(url, recreate = false) {
     const frameless = Boolean(backend?.store.config.frameless ?? true) && process.platform === 'win32';
     store.setRuntimeFrameless(frameless);
     const winBuild = process.platform === 'win32' ? Number((os.release().split('.')[2] || '0')) : 0;
-    const acrylic = process.platform === 'win32' && winBuild >= 22621 && backend?.store.config.acrylic !== false;
+    const acrylic = process.platform === 'win32' && winBuild >= 22621 && Boolean(backend?.store.config.acrylic);
     store.setRuntimeAcrylic(acrylic);
     const startHidden = !recreate && process.argv.includes('--minimized') && backend?.store.config.tray_enabled !== false;
     const area = electron.screen.getPrimaryDisplay().workAreaSize;

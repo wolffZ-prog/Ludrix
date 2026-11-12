@@ -52,13 +52,14 @@ Requirements: Windows 10 or 11, 64-bit. No account, login, WebView2 or installat
 
 The 4.0 series replaced the old Python engine with Electron + TypeScript while keeping the same data folder. The current version is **4.0.20**, and this is the state of the project:
 
-- **One library.** PC games, ROMs and quick games (Flash/HTML5) sit together in an alphabetical grid with letter dividers, covers, categories and combinable filters. The selected game is featured at the top with its own background art, Play, Details and Folder.
+- **One library.** PC games, ROMs and quick games (Flash/HTML5) sit together in an alphabetical grid with letter dividers, covers, categories and combinable filters. Narrow icon bar, search at the top, filters on one line and every cover with system, year and last played. Play shows on the cover; details on double-click or right-click.
 - **A Store fed by sources.** No catalogue is bundled. The Store only shows what the `.json` lists, web pages, archive.org collections, GitHub repositories or local folders added by the user provide. Direct download, file hosts and torrent (no DHT, UPnP or NAT-PMP).
 - **Ready-to-use emulators.** 25 systems and 45 emulators catalogued, installed from the official site in one click and kept inside the Ludrix folder. ROMs join the Library with covers and open with the emulator chosen for that system.
 - **The "Base" look.** Flat interface, solid colour and thin lines, 13 px base size, Rubik typeface and Tabler icons. Two built-in themes (Dark and Light, truly black and white) plus external `.lxtheme` themes. Optional Glass (Windows 11 acrylic) with cards and popups always solid on top.
 - **Light motion.** Animations are short and independent from Windows' animation settings; "Reduce motion" turns everything off. Switching pages is instant, with no flashing or content shifting.
 - **Colour fog.** Soft accent-coloured patches drift slowly across the window background like clouds — behind the side bar too. Intensity from 0 to 100 in Settings › Appearance.
-- **The navigation bar your way.** Side with names, side with icons only, top, bottom, or **floating**: detached from the content with rounded corners — with names or as square icon tiles.
+- **Local profiles.** Each person with their own theme, appearance, display and preferences; the library, covers, saves and downloads are shared by everyone. No password: on startup Ludrix asks who is playing (optional) and switching lives in the sidebar avatar.
+- **The navigation bar your way.** Icons only (default), side with names, top, bottom, or **floating**: detached from the content with rounded corners.
 - **Fast on hard drives.** The library opens from a cold cache while the disk spins up; the integrity check runs afterwards without holding the screen. An optional script (`Ludrix-HDD.ps1`) tunes Windows for mechanical drives without touching any data.
 - **Portable and predictable.** Everything stays in the folder (`data/`, `games/`, `emulation/`, `downloads/`). Nothing is written outside it, nothing keeps running after Quit, and every update replaces the whole program while keeping only user data.
 - **Brazilian Portuguese and English**, with everything new landing in both languages at the same time.
@@ -95,8 +96,8 @@ The 4.0 series replaced the old Python engine with Electron + TypeScript while k
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/02-detalhes.jpg" alt="Game details"><br><sub>Details: background art, description, metadata, screenshots, requirements</sub></td>
-    <td><img src="docs/screenshots/03-barra-solta.jpg" alt="Floating bar"><br><sub>Floating navigation bar, square tiles</sub></td>
+    <td><img src="docs/screenshots/02-detalhes.jpg" alt="Game details"><br><sub>Details: description, metadata, screenshots, requirements</sub></td>
+    <td><img src="docs/screenshots/03-perfis.jpg" alt="Profiles"><br><sub>Local profiles: who is playing, no password</sub></td>
   </tr>
   <tr>
     <td><img src="docs/screenshots/04-claro.jpg" alt="Light theme"><br><sub>Built-in Light theme with colour fog</sub></td>
