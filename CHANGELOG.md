@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.0.21-hf1 — 2026-11-12
+- Botão Voltar dos detalhes ficava escondido atrás da barra de busca; agora fica no fluxo da página, acima da capa.
+- Fileira de etiquetas repetidas no topo dos detalhes (origem, tempo, gêneros, ano, "meta") removida — origem e fonte dos metadados passam para o quadro Informações.
+
 ## 4.0.21 — 2026-11-12
 
 - Interface nova: barra lateral estreita só com ícones, busca no alto, filtros numa linha, grade compacta com divisórias por letra e cada capa com sistema, ano e última vez jogada. Botão Jogar na capa, seleção por contorno, selo "Novo" discreto. Detalhes abrem direto no conteúdo, sem faixa de arte no topo (volta em Ajustes › Biblioteca › Arte nos detalhes).

@@ -3680,7 +3680,8 @@
     "Sistema, ano e última vez jogada embaixo da capa": "System, year and last played under the cover",
     "Duas linhas sob o título: sistema com ano ou gênero, e tempo jogado ou quando foi a última vez; sem isso aparece só o gênero ou a plataforma": "Two lines under the title: system with year or genre, and playtime or when it was last played; without it only the genre or platform shows",
     "Arte no topo dos detalhes": "Art at the top of details",
-    "Faixa com a arte de fundo do jogo acima do título. Desligada, a página de detalhes começa direto na capa e nos botões": "Band with the game's background art above the title. Off, the details page starts right at the cover and buttons"
+    "Faixa com a arte de fundo do jogo acima do título. Desligada, a página de detalhes começa direto na capa e nos botões": "Band with the game's background art above the title. Off, the details page starts right at the cover and buttons",
+    "Manual": "Manual"
   },
   "patterns": [
     [

@@ -559,12 +559,12 @@ html body.bs[data-face][data-layout=rail] .toast{border-radius:8px;padding:9px 1
 html body.bs[data-face][data-layout=rail] .toast .x{width:22px;height:22px}
 html body.bs[data-face][data-layout=rail] .toasts{top:calc(var(--tb,0px) + 82px);right:14px}
 html body.bs[data-face][data-detart=off] .dhero::before{display:none}
-html body.bs[data-face][data-detart=off] .dhero .dcov{margin:46px 24px 0 36px;width:150px}
+html body.bs[data-face][data-detart=off] .dhero .dcov{margin:14px 24px 0 36px;width:150px}
 html body.bs[data-face][data-detart=off] .dcov img,html body.bs[data-face][data-detart=off] .dcov .dph{outline:0;border:1px solid var(--line)}
-html body.bs[data-face][data-detart=off] .dhead{padding-top:48px;min-height:0;gap:10px}
+html body.bs[data-face][data-detart=off] .dhead{padding-top:16px;min-height:0;gap:10px}
 html body.bs[data-face][data-detart=off] .dhead h1{font-size:clamp(20px,2.4vw,26px)}
 html body.bs[data-face][data-detart=off] .dhead .acts>.btn.g,html body.bs[data-face][data-detart=off] .dhead .acts>.btn.p,html body.bs[data-face][data-detart=off] .dhead .acts .btn.sm{height:32px;font-size:12.5px}
 html body.bs[data-face][data-detart=off] .dhead .acts>.btn.g,html body.bs[data-face][data-detart=off] .dhead .acts>.btn.p{padding:0 18px}
-html body.bs[data-face][data-detart=off] .dclose{top:calc(var(--tb,0px) + var(--toph,0px) + 10px);left:calc(var(--side) + 14px);background:transparent;color:var(--muted);border:1px solid var(--line);height:26px;font-size:12px}
+html body.bs[data-face][data-detart=off] .dclose{position:relative;top:auto;left:auto;margin:12px 0 0 36px;background:transparent;color:var(--muted);border:1px solid var(--line);height:26px;font-size:12px}
 html body.bs[data-face][data-detart=off] .dclose:hover{color:var(--text);background:var(--bg2)}
 @media (max-width:1000px){html body.bs[data-face][data-layout=rail] .h1 .qchips{order:0;flex:1 0 100%;padding:0 0 4px;margin-bottom:2px;border-bottom:1px solid var(--line)}html body.bs[data-face][data-layout=rail] .h1 .sp{flex:1}}
