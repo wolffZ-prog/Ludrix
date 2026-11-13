@@ -289,8 +289,6 @@ function createConsoleWindow(url) {
     });
 }
 let trayTold = false;
-export let frameLast: any = {};
-export function setFrameLast(v: any) { frameLast = v; }
 function scheduleStandby() {
     clearTimeout(standbyTimer);
     standbyTimer = null;
@@ -601,7 +599,7 @@ async function main() {
     else {
         createWindow(`http://127.0.0.1:${server.port}/index.html`);
         applyHotkey();
-        trayMod.build({ be: backend, show: () => showWindow(), quit: () => quitApp(), js: (code) => { showWindow(); runJs(code); }, frameLast: () => frameLast });
+        trayMod.build({ be: backend, show: () => showWindow(), quit: () => quitApp(), js: (code) => { showWindow(); runJs(code); } });
         notifyMod.attach({ be: backend, show: () => showWindow(), openGame: (k) => { showWindow(); runJs(`openGame(${JSON.stringify(k)})`); }, play: (k) => { showWindow(); runJs(`play(${JSON.stringify(k)})`); } });
     }
     setTimeout(() => backend?.bootstrapRun(), 800);

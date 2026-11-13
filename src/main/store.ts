@@ -20,7 +20,6 @@ const DEFAULT_CONFIG = {
     auto_metadata: true,
     web_covers: true,
     bg_warmup: false,
-    bg_sites: false,
     auto_rename: true,
     title_overrides: {},
     meta_sources: {},
@@ -33,7 +32,6 @@ const DEFAULT_CONFIG = {
     disabled_repos: [],
     known_repos: null,
     after_launch: 'ask',
-    dim_not_installed: true,
     home_spot: false,
     tray_enabled: true,
     tray_sleep: true,
@@ -128,13 +126,10 @@ const DEFAULT_CONFIG = {
     import_hidden: false,
     seen_version: '',
     fav_first: false,
-    frame_mode: 'theme',
-    frame_corners: '',
     nav_hide_playing: false,
     cover_slideshow: false,
     cover_slideshow_secs: 45,
     flash_stats: {},
-    store_page_size: 25,
     nav: 'bottom',
     layout: 'side',
     game_args: {},
@@ -171,9 +166,7 @@ const DEFAULT_CONFIG = {
     fx_intensity: 10,
     rail_icons: 'solid',
     status_position: 'bottom',
-    ctx_menu: '',
     gamepad_enabled: true,
-    gamepad: 'auto',
     sofa_zoom: 1.15,
     nav_layout: 'top',
     gamepad_wake: false,
@@ -234,10 +227,10 @@ const PROFILE_KEYS = new Set([
     'theme', 'theme_mode', 'face', 'accent', 'accent_from_cover', 'accent_mode', 'theme_schedule', 'theme_light_from', 'theme_light_to',
     'look', 'glass', 'fog', 'fx_type', 'fx_intensity', 'animations', 'reduce_motion', 'parallax', 'high_contrast', 'card_hover',
     'ui_scale', 'text_size', 'density', 'card_size', 'view_mode', 'list_cols', 'card_ribbons', 'card_playtime', 'card_origin', 'cover_slideshow', 'cover_slideshow_secs',
-    'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'detail_art', 'hero_enabled', 'home_spot', 'fav_first', 'dim_not_installed', 'store_hide_installed',
+    'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'detail_art', 'hero_enabled', 'home_spot', 'fav_first', 'store_hide_installed',
     'group_by', 'sort_by', 'group_store', 'sort_store', 'filter_panel', 'filter_presets', 'settings_adv',
-    'layout', 'nav', 'nav_layout', 'nav_hidden', 'nav_order', 'rail_icons', 'status_position', 'clock', 'ctx_menu',
-    'language', 'popups', 'notify_sound', 'ui_sounds', 'ui_sounds_level', 'launch_splash', 'keymap', 'gamepad', 'gamepad_speed', 'sofa_zoom',
+    'layout', 'nav', 'nav_layout', 'nav_hidden', 'nav_order', 'rail_icons', 'status_position', 'clock',
+    'language', 'popups', 'notify_sound', 'ui_sounds', 'ui_sounds_level', 'launch_splash', 'keymap', 'gamepad_speed', 'sofa_zoom',
     'discord_enabled', 'discord_app_id', 'favorites',
     'console_theme', 'console_sound', 'console_hint', 'console_card_size', 'console_clock24', 'console_start_view', 'console_vibrate', 'console_dim_idle', 'console_confirm_quit', 'console_sort', 'console_dl_pill',
 ]);
@@ -654,6 +647,7 @@ class Store {
         c.frameless = RUNTIME.frameless ?? Boolean(this.config.frameless);
         c.profiles = this.profileInfo();
         c.acrylic_on = RUNTIME.acrylic;
+        c.win11 = process.platform === 'win32' && Number((require('node:os').release().split('.')[2] || '0')) >= 22000;
         return { ...c, ...extra };
     }
 }

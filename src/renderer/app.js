@@ -181,8 +181,8 @@ function applyTheme() {
   link.rel = 'stylesheet'; link.href = '/api/theme/' + enc(tid.split('|')[0]) + (fm ? '?s=' + fm : ''); link.id = 'themeLink';
   link.onload = () => { old.remove(); applyAccent(); applyGlass(); };
   old.id = 'themeLinkOld'; old.after(link);
-  if (isFile) api.get('/api/theme/' + enc(t) + '/json').then(j => { if (currentTheme !== tid) return; themeAccent = (j && j.accent) || ''; if (!fm) document.documentElement.dataset.light = j && j.scheme === 'light' ? '1' : '0'; S.themeFx = (j && j.fx) || null; S.themeIcons = (j && j.icons) || ''; S.themeMenu = (j && j.menu) || ''; S.themeSearch = (j && j.search) || ''; S.themeNavLabels = !!(j && j.nav_labels); S.themeId = t; if (j && j.pointer) document.body.dataset.ptr = '1'; else delete document.body.dataset.ptr; S.themePlx = j && j.parallax ? (typeof j.parallax === 'number' ? Math.max(.2, Math.min(3, j.parallax)) : 1) : 0; setLayout((j && j.layout) || ''); applyTheme(); applyChrome(); applyAnim(); applyRailIcons(); });
-  else { S.themeFx = null; S.themeId = ''; delete document.body.dataset.ptr; S.themePlx = 0; applyPlx(); if (S.themeIcons) { S.themeIcons = ''; applyRailIcons(); } if (S.themeMenu) { S.themeMenu = ''; } if (S.themeSearch || S.themeNavLabels) { S.themeSearch = ''; S.themeNavLabels = false; applyChrome(); } }
+  if (isFile) api.get('/api/theme/' + enc(t) + '/json').then(j => { if (currentTheme !== tid) return; themeAccent = (j && j.accent) || ''; if (!fm) document.documentElement.dataset.light = j && j.scheme === 'light' ? '1' : '0'; S.themeFx = (j && j.fx) || null; S.themeIcons = (j && j.icons) || ''; S.themeSearch = (j && j.search) || ''; S.themeNavLabels = !!(j && j.nav_labels); S.themeId = t; if (j && j.pointer) document.body.dataset.ptr = '1'; else delete document.body.dataset.ptr; S.themePlx = j && j.parallax ? (typeof j.parallax === 'number' ? Math.max(.2, Math.min(3, j.parallax)) : 1) : 0; setLayout((j && j.layout) || ''); applyTheme(); applyChrome(); applyAnim(); applyRailIcons(); });
+  else { S.themeFx = null; S.themeId = ''; delete document.body.dataset.ptr; S.themePlx = 0; applyPlx(); if (S.themeIcons) { S.themeIcons = ''; applyRailIcons(); } if (S.themeSearch || S.themeNavLabels) { S.themeSearch = ''; S.themeNavLabels = false; applyChrome(); } }
 }
 let themeLayout = '', themeAccent = '';
 const LAYOUT_ALIAS = { taskbar: 'bottom', dock: 'bottom' };
@@ -201,7 +201,6 @@ function applyAccent() {
   if (mode === 'system' && S.sysAccent === undefined) { S.sysAccent = ''; api.post('/api/window', { cmd: 'sys_accent' }).then(r => { S.sysAccent = (r && r.hex) || ''; if (S.sysAccent) applyAccent(); }); }
   const acc = S.dynAccent || (mode === 'system' && S.sysAccent) || (mode === 'custom' && S.config.accent) || themeAccent || (document.documentElement.dataset.light === '1' ? '#2b6be0' : '#4f8df7');
   const st = document.documentElement.style; document.documentElement.classList.remove('mono');
-  applyFrame();
   if (!acc) { st.removeProperty('--accent'); st.removeProperty('--accent2'); st.removeProperty('--on-accent'); scheduleContrast(); return; }
   const rgb = hexRgb(acc); if (!rgb) return;
   st.setProperty('--accent', acc);
@@ -213,19 +212,6 @@ function applyAccent() {
 }
 function relLum([r, g, b]) { const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); }
 function onAccent(rgb) { const L = relLum(rgb); return 1.05 / (L + .05) >= (L + .05) / .0561 ? '#fff' : '#111'; }
-let frameT = 0, frameLast = '';
-function applyFrame() {
-  if (!S.config.native || S.config.os !== 'windows') return;
-  clearTimeout(frameT);
-  frameT = setTimeout(() => {
-    const bg = cssVar('--bg'), text = cssVar('--text'), dark = document.documentElement.dataset.light !== '1', rgb = hexRgb(bg);
-    const border = rgb ? rgbToHex(shade(rgb, dark ? 30 : -30)) : bg;
-    let colors = null; try { colors = ctxColors(); } catch (e) { colors = null; }
-    const body = { cmd: 'frame', mode: S.config.frame_mode || 'theme', corners: S.config.frame_corners || '', bg, text, border, dark, colors };
-    const sig = JSON.stringify(body); if (sig === frameLast) return; frameLast = sig;
-    api.post('/api/window', body);
-  }, 300);
-}
 const CONTRAST_SEL = '.btn.p,.chip.on,.sw.on,.tag,.tabs button.on,.seg button.on,.pbtns button.on,.rb.on,.badge,.pill.on,.kbd.on';
 function cssRgb(v) { let m = /rgba?\(([\d.]+)[, ]+([\d.]+)[, ]+([\d.]+)(?:[,/ ]+([\d.]+%?))?\)/.exec(v || ''); if (m) return [+m[1], +m[2], +m[3], m[4] === undefined ? 1 : m[4].endsWith('%') ? parseFloat(m[4]) / 100 : +m[4]]; m = /color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?:\s*\/\s*([\d.]+%?))?\)/.exec(v || ''); return m ? [m[1] * 255, m[2] * 255, m[3] * 255, m[4] === undefined ? 1 : m[4].endsWith('%') ? parseFloat(m[4]) / 100 : +m[4]] : null; }
 function fixContrast() {
@@ -362,6 +348,7 @@ function bandMix(c, pct, base) {
 }
 function applyChrome() {
   document.body.classList.toggle('frameless', !!S.config.frameless);
+  document.body.classList.toggle('sqwin', !S.config.win11);
   applyGlass();
   applyRailIcons(); applyNavItems(); applyMotion(); applyClock();
   document.body.dataset.status = S.config.status_position === 'top' ? 'top' : 'bottom';
@@ -1153,7 +1140,7 @@ function thumbFail(img, key) {
 function cardHtml(g, i) {
   const job = S.jobs[g.key]; const live = S.sessions && S.sessions[g.key];
   const sys = g.system && g.system !== 'pc' ? `<span class="badge sys">${esc((S.systems[g.system] || g.system).toUpperCase().slice(0, 8))}</span>` : '';
-  const dim = S.view === 'store' && !g.installed && !g.owned && !job && S.config.dim_not_installed !== false && !/^(rom|local):/.test(g.key) ? ' dim' : '';
+  const dim = S.view === 'store' && !g.installed && !g.owned && !job && !/^(rom|local):/.test(g.key) ? ' dim' : '';
   const lst = listMode() && ['home', 'store'].includes(S.view);
   const now = Date.now() / 1000, rib = S.config.card_ribbons !== false && (g.installed || g.owned || g.fresh) && !live && !g.mc_nolauncher ? (g.owned ? '<span class="rib today">NO PC</span>' : g.fresh && !g.installed ? (S.view === 'store' ? '<span class="rib new" title="Apareceu na fonte recentemente">NOVO</span>' : '') : g.update_version ? `<span class="rib upd" title="Versão ${esc(g.update_version)} disponível na fonte (instalada: ${esc(g.version || '?')})">ATUALIZAÇÃO</span>` : g.last_played && new Date(g.last_played * 1000).toDateString() === new Date().toDateString() ? '<span class="rib today">HOJE</span>' : g.added_at && now - g.added_at < 7 * 86400 && !g.playtime ? `<span class="rib new" title="Adicionado ${daysAgo(g.added_at)} e ainda não aberto">NOVO</span>` : '') : '';
   const ptb = '';
@@ -2209,7 +2196,7 @@ function rgbToHex(v) { const m = v.match(/rgba?\((\d+)[ ,]+(\d+)[ ,]+(\d+)/); re
 function autoScale() { const r = Math.min(window.innerWidth / 1500, window.innerHeight / 860); const s = 1 + (r - 1) * 0.6; return Math.round(Math.min(1.35, Math.max(0.8, s)) * 20) / 20; }
 function applyScale() { const s = (S.config.ui_scale || autoScale()) * (document.body.classList.contains('sofa') ? (S.config.sofa_zoom || 1.15) : 1); document.documentElement.style.setProperty('--scale', s); document.documentElement.style.fontSize = ((13 + (S.config.text_size || 0)) * s) + 'px'; document.body.classList.toggle('compact', (S.config.density || 'normal') === 'compact'); document.body.classList.toggle('noglass', S.config.glass === false); }
 let rzT = 0; window.addEventListener('resize', () => { if (S.config.ui_scale) return; cancelAnimationFrame(rzT); rzT = requestAnimationFrame(() => { const s = autoScale(); if (String(s) !== document.documentElement.style.getPropertyValue('--scale')) applyScale(); }); });
-async function setCfg(patch) { const r = await api.post('/api/config', patch); if (r && !r.error) { S.config = r; api.emit('config', patch); if ('language' in patch) { location.reload(); return r; } applyTheme(); applyAnim(); applyScale(); if ('rail_icons' in patch) applyRailIcons(); if ('game_backdrop' in patch || 'accent_from_cover' in patch || 'cover_slideshow' in patch || 'cover_slideshow_secs' in patch) gameFocus(S._focusKey || S.stageKey || null); if ('frame_mode' in patch || 'frame_corners' in patch) { frameLast = ''; applyFrame(); } if ('nav_hide_playing' in patch) applyPlaying(); if ('nav_hidden' in patch || 'nav_order' in patch) applyNavItems(); if ('nav_layout' in patch) { applyChrome(); renderView(); } if ('watch_dirs' in patch) api.post('/api/dirs/watch', {}); if ('card_hover' in patch || 'reduce_motion' in patch || 'detail_art' in patch || 'high_contrast' in patch || 'settings_adv' in patch) applyMotion(); if ('clock' in patch) applyClock(); if ('group_by' in patch && ['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'settings') renderSettings(); if (['home', 'store'].includes(S.view) && ('card_size' in patch || 'face' in patch || 'theme' in patch || 'home_spot' in patch || 'view_mode' in patch)) renderLibrary(); } }
+async function setCfg(patch) { const r = await api.post('/api/config', patch); if (r && !r.error) { S.config = r; api.emit('config', patch); if ('language' in patch) { location.reload(); return r; } applyTheme(); applyAnim(); applyScale(); if ('rail_icons' in patch) applyRailIcons(); if ('game_backdrop' in patch || 'accent_from_cover' in patch || 'cover_slideshow' in patch || 'cover_slideshow_secs' in patch) gameFocus(S._focusKey || S.stageKey || null); if ('nav_hide_playing' in patch) applyPlaying(); if ('nav_hidden' in patch || 'nav_order' in patch) applyNavItems(); if ('nav_layout' in patch) { applyChrome(); renderView(); } if ('watch_dirs' in patch) api.post('/api/dirs/watch', {}); if ('card_hover' in patch || 'reduce_motion' in patch || 'detail_art' in patch || 'high_contrast' in patch || 'settings_adv' in patch) applyMotion(); if ('clock' in patch) applyClock(); if ('group_by' in patch && ['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'settings') renderSettings(); if (['home', 'store'].includes(S.view) && ('card_size' in patch || 'face' in patch || 'theme' in patch || 'home_spot' in patch || 'view_mode' in patch)) renderLibrary(); } }
 async function setStartMenu(on) { const r = await api.post('/api/start_menu', { on }); if (r.error) { if (/versão instalada/.test(r.error)) { await setCfg({ start_menu: on }); return; } return toast('err', 'Menu Iniciar', r.error); } S.config.start_menu = on; renderSettings(true); toast('ok', on ? 'LudrixHub aparece no Menu Iniciar e na barra de tarefas com nome e ícone próprios' : 'Atalho do Menu Iniciar removido'); }
 async function setFileAssoc(on) { const r = await api.post('/api/file_assoc', { on }); if (r.error) { if (/versão instalada/.test(r.error)) { await setCfg({ file_assoc: on }); return; } return toast('err', 'Associação de arquivos', r.error); } S.config.file_assoc = on; renderSettings(true); toast('ok', on ? 'Arquivos .lxtheme e .lxup abrem no Ludrix' : 'Associação removida'); }
 async function setAutostart(on) { const r = await api.post('/api/autostart', { on }); if (r.error) return toast('err', r.error); S.config.autostart = !!r.enabled; renderSettings(); toast('ok', r.enabled ? 'O Ludrix vai abrir com o Windows' : 'Não abre mais com o Windows'); }
@@ -3702,8 +3689,7 @@ let ctxNative = false, ctxMouse = { x: -99, y: -99 };
 document.addEventListener('mousedown', e => { ctxMouse = { x: e.clientX, y: e.clientY }; }, true);
 ['#qbox', '#wctl'].forEach(sel => { const el = document.querySelector(sel); if (el) el.addEventListener('mousedown', e => e.stopPropagation()); });
 document.addEventListener('contextmenu', e => { ctxMouse = { x: e.clientX, y: e.clientY }; }, true);
-function ctxMode() { return S.config.ctx_menu || S.themeMenu || 'ludrix'; }
-function ctxNativeOk() { return !!(S.config.native && S.config.frameless && ctxMode() === 'windows' && !GP.active && !ctxNative && window.screenX !== undefined); }
+function ctxNativeOk() { return !!(S.config.native && !GP.active && !ctxNative && window.screenX !== undefined); }
 const ctxIconCache = new Map();
 function ctxWarm() {
   if (!ctxNativeOk()) return;

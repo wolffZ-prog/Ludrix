@@ -399,28 +399,30 @@ class Backend {
             const cols = this.collections();
             acts.push({ id: 'colls', label: 'Coleções', icon: 'coll', sub: [...cols.map((c) => ({ id: 'coll:' + c.id, label: c.name, icon: c.keys.includes(key) ? 'check' : '' })), ...(cols.length ? [{ sep: true }] : []), { id: 'coll:new', label: 'Nova coleção…', icon: 'plus' }] });
         }
-        if (inLib)
-            acts.push({ id: 'mark_played', label: g.last_played > 0 ? 'Marcar como nunca jogado' : 'Marcar como jogado', icon: 'check' });
-        acts.push({ id: 'hide', label: hidden ? 'Mostrar na biblioteca' : 'Esconder da biblioteca', icon: 'eye' });
         acts.push({ sep: true });
-        if (installed) {
-            if (info.dir || info.exe)
-                acts.push({ id: 'open_dir', label: 'Abrir pasta', icon: 'folder' });
-            if (info.exe && !String(info.exe).includes('://'))
-                acts.push({ id: 'open_select', label: 'Mostrar arquivo', icon: 'doc' });
-            if (pc)
-                acts.push({ id: 'saves', label: 'Saves', icon: 'save' });
-            if (pc)
-                acts.push({ id: 'mods', label: 'Mods', icon: 'wrench' });
-            if (pc && process.platform === 'win32')
-                acts.push({ id: 'shortcut', label: 'Atalho na área de trabalho', icon: 'ext' });
+        if (installed && (info.dir || info.exe))
+            acts.push({ id: info.exe && !String(info.exe).includes('://') ? 'open_select' : 'open_dir', label: 'Abrir pasta', icon: 'folder' });
+        const more: any[] = [];
+        if (installed && pc) {
+            more.push({ id: 'saves', label: 'Saves', icon: 'save' });
+            more.push({ id: 'mods', label: 'Mods', icon: 'wrench' });
+            if (process.platform === 'win32')
+                more.push({ id: 'shortcut', label: 'Atalho na área de trabalho', icon: 'ext' });
         }
         if (romLike && installed)
-            acts.push({ id: 'emu', label: 'Emulador', icon: 'cog', sub: [{ id: 'play_with', label: 'Jogar com…', icon: 'play' }, { id: 'choose_emu', label: 'Trocar o emulador do console', icon: 'cog' }, { id: 'config_emu', label: 'Abrir o emulador', icon: 'ext' }, { id: 'open_emu_dir', label: 'Pasta do emulador', icon: 'folder' }] });
+            more.push({ id: 'play_with', label: 'Jogar com…', icon: 'play' }, { id: 'choose_emu', label: 'Trocar o emulador do console', icon: 'cog' }, { id: 'config_emu', label: 'Abrir o emulador', icon: 'ext' });
         if (g.page_url || entry?.page_url)
-            acts.push({ id: 'page', label: 'Página do jogo', icon: 'ext' });
-        if (acts[acts.length - 1] && !acts[acts.length - 1].sep)
-            acts.push({ sep: true });
+            more.push({ id: 'page', label: 'Página do jogo', icon: 'ext' });
+        if (more.length)
+            more.push({ sep: true });
+        if (inLib)
+            more.push({ id: 'mark_played', label: g.last_played > 0 ? 'Marcar como nunca jogado' : 'Marcar como jogado', icon: 'check' });
+        more.push({ id: 'hide', label: hidden ? 'Mostrar na biblioteca' : 'Esconder da biblioteca', icon: 'eye' });
+        more.push({ sep: true });
+        more.push({ id: 'copy_name', label: 'Copiar nome', icon: 'copy' });
+        if (info.exe || info.dir)
+            more.push({ id: 'copy_path', label: 'Copiar caminho', icon: 'copy' });
+        acts.push({ id: 'moresub', label: 'Mais', icon: 'list', sub: more });
         if (inLib) {
             const ed: any[] = [{ id: 'edit', label: 'Editar…', icon: 'edit' }, { id: 'rename', label: 'Renomear', icon: 'edit' }, { id: 'cover', label: 'Trocar capa…', icon: 'image' }];
             if (this.hub.covers.customPath(key))
@@ -436,7 +438,6 @@ class Backend {
         }
         else
             acts.push({ id: 'cover', label: 'Trocar capa…', icon: 'image' });
-        acts.push({ id: 'copysub', label: 'Copiar', icon: 'copy', sub: [{ id: 'copy_name', label: 'Nome', icon: 'copy' }, ...(info.exe || info.dir ? [{ id: 'copy_path', label: 'Caminho no PC', icon: 'copy' }] : [])] });
         if (inLib) {
             acts.push({ sep: true });
             acts.push({ id: 'uninstall', label: isRom || isLocal ? 'Remover da biblioteca' : (romLike ? 'Apagar ROM baixada' : 'Desinstalar'), icon: 'trash', danger: true });

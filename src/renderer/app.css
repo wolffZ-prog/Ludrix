@@ -418,9 +418,9 @@ body:has(.gpind.on) .top,body:has(.gpind.on)[data-layout=top] .rail{padding-righ
 .gphint b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;font-size:10px;color:#fff;margin-right:5px}
 .gphint .a{background:#3ba55c}.gphint .b{background:#d9534f}.gphint .x{background:#3b82f6}.gphint .y{background:#e5b70b;color:#222}
 
-.ctx{position:fixed;z-index:70;min-width:230px;padding:6px;border-radius:14px;background:color-mix(in srgb,var(--bg2) 88%,transparent);backdrop-filter:blur(20px);border:1px solid var(--line2);box-shadow:var(--shadow);display:none;transform-origin:top left;animation:ctxin .14s ease both}
+.ctx{position:fixed;z-index:70;min-width:230px;padding:4px;border-radius:8px;background:var(--bg2);border:1px solid var(--line2);box-shadow:var(--shadow);display:none;transform-origin:top left}
 .ctx.on{display:block}
-@keyframes ctxin{from{opacity:0;transform:translateY(-6px) scale(.96)}60%{opacity:1}to{opacity:1;transform:none}}
+@keyframes ctxin{from{opacity:0}to{opacity:1}}
 .ctx h5{font-size:11px;font-weight:700;color:var(--muted2);padding:6px 10px 4px;letter-spacing:.4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px}
 .ctx button{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:9px;font-size:13px;text-align:left}
 .ctx button svg{width:15px;height:15px;color:var(--muted)}
@@ -1718,23 +1718,20 @@ body[data-detart=auto] .detail.art .dbg{opacity:.9;filter:none}
 .modal h3{font:700 17px var(--font-disp);letter-spacing:-.01em;text-transform:none}
 .modal .mlist button{border-radius:10px}
 .ctx,.filt .pop,.bellpop,.filt .pop.wide,.ctx .sub{border-radius:16px;padding:6px;background:color-mix(in srgb,var(--bg2) 74%,transparent);backdrop-filter:blur(34px) saturate(1.6);-webkit-backdrop-filter:blur(34px) saturate(1.6);border:1px solid color-mix(in srgb,var(--text) 12%,transparent);box-shadow:0 1px 0 color-mix(in srgb,var(--text) 9%,transparent) inset,0 0 0 1px rgba(0,0,0,.18),0 30px 70px -20px rgba(0,0,0,.7),0 10px 24px -12px rgba(0,0,0,.5)}
-.ctx{min-width:264px;animation:ctxin .18s cubic-bezier(.2,.9,.3,1.2) both}
+.ctx{min-width:240px}
 .ctx button,.filt .pop label,.bellpop .bl>*{border-radius:10px;padding:8px 10px}
-.ctx button{gap:12px;padding:7px 10px;font-size:13px;font-weight:500;transition:background .12s,transform .12s}
+.ctx button{gap:10px;padding:5px 10px;font-size:13px;font-weight:500;border-radius:5px;transition:none}
 .ctx button svg{width:16px;height:16px;color:var(--muted);flex:none;transition:color .12s}
 .ctx button:hover,.ctx button.gp-focus{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--text)}
 .ctx button:hover svg{color:var(--accent)}
-.ctx button:active{transform:scale(.985)}
-.ctx button.primary{color:var(--text);font-weight:700;background:color-mix(in srgb,var(--green2) 12%,transparent);margin-bottom:4px}
-.ctx button.primary svg{width:26px;height:26px;padding:6px;box-sizing:border-box;border-radius:8px;background:var(--green2);color:#0b0d12;margin-left:-2px}
-.ctx button.primary:hover{background:color-mix(in srgb,var(--green2) 22%,transparent)}
-.ctx button.primary:hover svg{color:#0b0d12}
+.ctx button.primary{color:var(--text);font-weight:700}
+.ctx button.primary svg{color:var(--green2)}
 .ctx button.danger:hover{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
 .ctx button.danger:hover svg{color:var(--red)}
 .ctx h5{padding:8px 10px 6px;font-size:11px;letter-spacing:0;color:var(--muted2)}
-.ctx hr,.ctx .sep{margin:6px 8px;border-color:color-mix(in srgb,var(--text) 9%,transparent)}
-.ctx .ghead{display:flex;align-items:center;gap:12px;padding:8px 8px 10px;margin:0 0 4px;border-bottom:1px solid color-mix(in srgb,var(--text) 9%,transparent)}
-.ctx .ghead img{width:42px;height:56px;border-radius:8px;object-fit:cover;background:var(--card2);box-shadow:0 8px 18px -8px rgba(0,0,0,.7),0 0 0 1px color-mix(in srgb,var(--text) 10%,transparent)}
+.ctx hr,.ctx .sep{margin:4px 6px;border-color:color-mix(in srgb,var(--text) 9%,transparent)}
+.ctx .ghead{display:flex;align-items:center;gap:10px;padding:6px 8px 8px;margin:0 0 2px;border-bottom:1px solid color-mix(in srgb,var(--text) 9%,transparent)}
+.ctx .ghead img{width:30px;height:40px;border-radius:4px;object-fit:cover;background:var(--card2);box-shadow:0 8px 18px -8px rgba(0,0,0,.7),0 0 0 1px color-mix(in srgb,var(--text) 10%,transparent)}
 .ctx .ghead div{min-width:0;display:flex;flex-direction:column;gap:3px}
 .ctx .ghead b{font:700 13.5px/1.2 var(--font-text);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
 .ctx .ghead span{font-size:11px;color:var(--muted2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

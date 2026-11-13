@@ -11,7 +11,6 @@ type Host = {
     show: () => void;
     quit: () => void;
     js: (code: string) => void;
-    frameLast: () => any;
 };
 
 let tray: electron.Tray | null = null;

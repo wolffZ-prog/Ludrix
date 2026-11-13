@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.0.24 — 2026-11-13
+
+- Menu do botão direito: no Windows passa a ser sempre o menu nativo do sistema (abre fora dos limites da janela, sem animação, submenus ao passar o mouse); a versão interna fica só para controle e Linux, agora plana e sem efeitos. A escolha "Menus do botão direito" saiu de Ajustes.
+- Menu mais curto: Jogar, Jogar e…, Detalhes · Favoritar, Status, Coleções · Abrir pasta, Mais (saves, mods, atalho, emulador, página, marcar como jogado, esconder, copiar), Editar · Remover. "Abrir pasta" e "Mostrar arquivo" viraram um item só.
+- Janela sem moldura ganha borda de 2 px na cor do tema, acompanhando os cantos arredondados do Windows 11.
+- Novo ícone do Ludrix: controle plano em branco sobre o azul-acinzentado da marca, nítido de 16 a 256 px (janela, bandeja, atalhos, exe). O ícone do topo cresceu para 28 px.
+- Barra de rolagem da biblioteca começa junto da barra superior e termina na barra de status, sem vão em cima nem embaixo.
+- Ajustes em duas colunas: cada aba preenche a largura da janela; em janela estreita volta a uma coluna. Campos e listas suspensas não espremem mais o texto ao lado.
+- Opções duplicadas ou sem efeito removidas: "Procurar atualização ao abrir" (repetia "Checar ao abrir"), "Avisar quando aparecer pasta nova" + "Procurar jogos novos ao abrir" viraram uma só, "Escurecer jogos não baixados", "Tamanho das capas" (o controle está na barra de status), "Controle: ligar quando usado" (repetia "Navegar com controle"), "Moldura do Windows", "Cantos da janela", "Continuar varrendo fontes do tipo site" e "Atualizar metadados de tudo" foi para Biblioteca › Capas e informações.
+
 ## 4.0.23-hf1 — 2026-11-13
 - Travamento de 3 minutos ao abrir (e "Array buffer allocation failed" no log): o backup automático semanal montava o zip inteiro na memória, de forma bloqueante, com todas as capas e saves. Agora é gravado em fluxo direto no disco, sem segurar a janela; arquivos acima de 2 GB ficam de fora e o zip para em 4 GB.
 - Botão direito num jogo segurava a janela por até 6 s em HD adormecido: o menu montava a ficha de todos os jogos e conferia a data de cada capa no disco a cada clique. Agora monta só o jogo clicado e guarda as datas por 10 min; as pastas de miniaturas e capas personalizadas são relidas a cada 2 min em vez de a cada 2 s.

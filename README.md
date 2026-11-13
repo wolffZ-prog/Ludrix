@@ -108,8 +108,8 @@ A série 4.0 trocou o motor antigo (Python) por Electron + TypeScript, mantendo 
     <td><img src="docs/screenshots/07-central.jpg" alt="Central"><br><sub>Central: dependências, Minecraft, espaço em disco</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/09-menu.jpg" alt="Menu de contexto"><br><sub>Menu do botão direito, nas cores do tema</sub></td>
-    <td><img src="docs/screenshots/08-ajustes.jpg" alt="Ajustes"><br><sub>Ajustes: abas organizadas, efeito imediato</sub></td>
+    <td><img src="docs/screenshots/09-menu.jpg" alt="Menu de contexto"><br><sub>Menu do botão direito: no Windows é o menu nativo; aqui, a versão interna</sub></td>
+    <td><img src="docs/screenshots/08-ajustes.jpg" alt="Ajustes"><br><sub>Ajustes: abas em duas colunas, efeito imediato</sub></td>
   </tr>
 </table>
 

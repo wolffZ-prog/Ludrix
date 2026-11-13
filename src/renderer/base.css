@@ -9,8 +9,8 @@ html body.bs[data-face] header.top{display:none!important}
 
 html body.bs[data-face] .rail{width:auto;align-items:stretch;gap:1px;padding:0 10px 10px;background:var(--bg2);border-right:1px solid var(--line);backdrop-filter:none;overflow:hidden}
 html body.bs[data-face] .rail .brandrow{display:flex;align-items:center;gap:7px;height:50px;padding:0 6px;flex:none}
-html body.bs[data-face] .rail .brand{display:flex;align-items:center;justify-content:center;gap:8px;width:auto;min-width:24px;height:24px;margin:0;padding:0;flex:none;white-space:nowrap;filter:none}
-html body.bs[data-face] .rail .brand svg{width:24px;height:24px;flex:none;display:block}
+html body.bs[data-face] .rail .brand{display:flex;align-items:center;justify-content:center;gap:8px;width:auto;min-width:28px;height:28px;margin:0;padding:0;flex:none;white-space:nowrap;filter:none}
+html body.bs[data-face] .rail .brand svg{width:28px;height:28px;flex:none;display:block;border-radius:7px}
 html body.bs[data-face] .rail .bname{font:600 14px/24px var(--font-text);letter-spacing:-.2px;color:var(--text);margin:0;padding:0}
 html body.bs[data-face] .rail .search{width:auto;margin:0 0 8px;padding:0;flex:none}
 html body.bs[data-face] .rail .search input{height:32px;font-size:12.5px;border-radius:var(--r);background:var(--bg);border:1px solid var(--line);padding:0 28px 0 32px;color:var(--text)}
@@ -50,8 +50,8 @@ html[data-light="1"] body.bs[data-face] .bellpop{box-shadow:0 16px 40px -24px rg
 
 html body.bs[data-face] .view{padding:10px 22px 30px}
 html body.bs[data-face] #view::-webkit-scrollbar{width:13px}
-html body.bs[data-face] #view::-webkit-scrollbar-track{margin:14px 0;background:transparent}
-html body.bs[data-face] #view::-webkit-scrollbar-thumb{background:var(--line2);border:3px solid var(--bg);border-left-width:2px;border-radius:9px;min-height:48px}
+html body.bs[data-face] #view::-webkit-scrollbar-track{margin:0;background:transparent}
+html body.bs[data-face] #view::-webkit-scrollbar-thumb{background:var(--line2);border:3px solid var(--bg);border-left-width:2px;border-radius:9px;min-height:48px;background-clip:padding-box}
 html body.bs[data-face] #view::-webkit-scrollbar-thumb:hover{background:var(--muted2)}
 html body.bs[data-face] .h1{position:sticky;top:0;z-index:5;background:var(--bg);margin:0 -22px 14px;padding:14px 22px 12px;gap:8px;min-height:0;flex-wrap:nowrap}
 html body.bs[data-face] .h1 h2{font:600 20px/1.2 var(--font-text);letter-spacing:-.3px;margin-right:8px;white-space:nowrap}
@@ -241,10 +241,11 @@ html body.bs[data-face] .frow{display:flex;align-items:center;gap:24px;min-heigh
 html body.bs[data-face] .frow:first-child,html body.bs[data-face] :not(.frow)+.frow{border-top-width:1px;border-top-left-radius:var(--r);border-top-right-radius:var(--r)}
 html body.bs[data-face] .frow:not(:has(+.frow)){border-bottom-left-radius:var(--r);border-bottom-right-radius:var(--r)}
 html body.bs[data-face] .sec>:not(h3):not(p):not(.frow)+.frow{margin-top:12px}
-html body.bs[data-face] .frow .l{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+html body.bs[data-face] .frow .l{flex:1 1 140px;min-width:120px;display:flex;flex-direction:column;gap:2px}
+html body.bs[data-face] .frow{flex-wrap:wrap}
 html body.bs[data-face] .frow .l b{font:500 13px/1.35 var(--font-text);color:var(--text)}
 html body.bs[data-face] .frow .l span{font-size:12px;color:var(--muted2);line-height:1.45;max-width:64ch}
-html body.bs[data-face] .frow>select,html body.bs[data-face] .frow>.mi,html body.bs[data-face] .frow>select.mi{min-width:180px;max-width:260px;height:32px}
+html body.bs[data-face] .frow>select,html body.bs[data-face] .frow>.mi,html body.bs[data-face] .frow>select.mi{min-width:140px;max-width:220px;height:32px}
 html body.bs[data-face] .frow>input[type=text],html body.bs[data-face] .frow>input[type=number],html body.bs[data-face] .frow>input.inp{height:32px}
 html body.bs[data-face] .frow>.btn,html body.bs[data-face] .frow>.sw{flex:none}
 html body.bs[data-face] .frow>p{margin:0}
@@ -260,9 +261,9 @@ html body.bs[data-face] .setwrap .settings .adv .frow{background:color-mix(in sr
 html body.bs[data-face] .sec.danger .frow{border-color:color-mix(in srgb,var(--red) 35%,var(--line))}
 html body.bs[data-face] .sec.danger h3{color:var(--red)}
 html body.bs[data-face] .setwrap{grid-template-columns:200px minmax(0,1fr);gap:28px}
-html body.bs[data-face] .setwrap .settings{max-width:880px}
-html body.bs[data-face] .settings[data-tab=tools]{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:0 24px}
-html body.bs[data-face] .settings[data-tab=tools] .sec{margin:0 0 30px}
+html body.bs[data-face] .setwrap .settings{max-width:none;display:block;columns:2 380px;column-gap:24px}
+html body.bs[data-face] .setwrap .settings .sec{break-inside:avoid;margin:0 0 24px}
+html body.bs[data-face] .setwrap .settings[data-tab=custom]{columns:1}
 html body.bs[data-face] .h1.seth{margin-bottom:18px}
 html body.bs[data-face] .h1.seth span{color:var(--muted2);font-size:12px}
 html body.bs[data-face] .sw{width:36px;height:20px;border-radius:10px;background:var(--card2);border:1px solid var(--line2);box-shadow:none}
@@ -352,8 +353,8 @@ html body.bs[data-face] .gpanel{animation:panelIn .24s ease-out both}
 @keyframes panelIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:none}}
 html body.bs[data-face] .gpanel .ghead,html body.bs[data-face] .gpanel .gacts,html body.bs[data-face] .gpanel .gkpi,html body.bs[data-face] .gpanel .gkv,html body.bs[data-face] .gpanel #gpx{animation:nbIn .3s ease-out both}
 html body.bs[data-face] .gpanel .gacts{animation-delay:.04s}html body.bs[data-face] .gpanel .gkpi{animation-delay:.08s}html body.bs[data-face] .gpanel .gkv{animation-delay:.12s}html body.bs[data-face] .gpanel #gpx{animation-delay:.16s}
-html body.bs[data-face] .ctx{animation:ctxIn .14s ease-out both;transform-origin:top left}
-@keyframes ctxIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+html body.bs[data-face] .ctx{animation:none;border-radius:8px}
+@keyframes ctxIn{from{opacity:0}to{opacity:1}}
 html body.bs[data-face] #modal.on .box,html body.bs[data-face] .modal.on .box{animation:modalIn .2s ease-out both}
 @keyframes modalIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
 html body.bs[data-face] .toast{animation:toastIn .22s ease-out both}
@@ -462,7 +463,6 @@ html body.bs[data-face] .szoom button:hover{background:var(--card2);color:var(--
 html body.bs[data-face]{--ease:cubic-bezier(.2,.7,.2,1)}
 html body.bs[data-face] .gpanel,html body.bs[data-face] #modal.on .box,html body.bs[data-face] .modal.on .box,html body.bs[data-face] .toast,html body.bs[data-face] .nowbar.nbsw>*{animation-timing-function:var(--ease)}
 html body.bs[data-face] #setBody{animation:viewIn .2s var(--ease) both}
-html body.bs[data-face] .ctx .sub.open,html body.bs[data-face] .ctx .subw:hover>.sub{animation:ctxIn .12s var(--ease) both}
 html body.bs[data-face] .filt .pop,html body.bs[data-face] .bellpop,html body.bs[data-face] .helppop{animation:ctxIn .14s var(--ease) both;transform-origin:top right}
 html body.bs[data-face] .card .cov img{transition:opacity .25s ease-out}
 html body.bs[data-face] .rb,html body.bs[data-face] .tabs button,html body.bs[data-face] .stabs button{transition:background .15s,color .15s,border-color .15s}
@@ -702,3 +702,6 @@ html body.bs[data-face] .tile .tt{flex-wrap:wrap;row-gap:5px}
 html body.bs[data-face] .tile .tt b{flex:1 1 60px;min-width:60px}
 html body.bs[data-face] .tile .tt .ib{order:1}
 html body.bs[data-face] .tile .tt .pill{order:2}
+
+html body.bs[data-face].frameless:not(.maxed):not(.fs)::after{content:"";position:fixed;inset:0;z-index:1990;pointer-events:none;border:2px solid color-mix(in srgb,var(--text) 26%,var(--bg));border-radius:8px}
+html body.bs[data-face].frameless.sqwin:not(.maxed):not(.fs)::after{border-radius:0}

@@ -621,19 +621,6 @@ async function windowCmd(b, getWindow, be) {
             return { ok: true, fs: win.isFullScreen() };
         case 'frameless':
             return { ok: true, frameless: Boolean(be.store.config.frameless) && process.platform === 'win32' };
-        case 'frame': {
-            const want: any = {};
-            for (const k of ['mode', 'bg', 'text', 'border', 'dark', 'corners'])
-                want[k] = b[k];
-            const idx = require('./index');
-            const prev = idx.frameLast || {};
-            if (b.colors && typeof b.colors === 'object')
-                want.colors = b.colors;
-            else
-                want.colors = prev.colors;
-            idx.setFrameLast(want);
-            return { ok: true };
-        }
         case 'to_window':
             return be.consoleSwap('window', true);
         case 'hide':
