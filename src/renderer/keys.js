@@ -36,7 +36,14 @@ async function keyCapture(id) {
   document.addEventListener('keydown', h, true);
 }
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { if ($('#ctx').classList.contains('on')) closeCtx(); else if ($('#modal').classList.contains('on')) $('#modal').classList.remove('on'); else if (S.sel.size && !$('#detail').classList.contains('on')) msClear(); else closeDetail(); }
+  if (e.key === 'Escape') {
+    if ($('#ctx').classList.contains('on')) closeCtx();
+    else if ($('#modal').classList.contains('on')) $('#modal').classList.remove('on');
+    else if ($('#detail').classList.contains('on')) closeDetail();
+    else if (S.sel.size) msClear();
+    else if (S.panelKey && $('#gpanel')) panelClose();
+    else closeDetail();
+  }
   const combo = keyCombo(e);
   const KA = keyAction(combo, 'any');
   if (KA === 'fullscreen') { e.preventDefault(); toggleFullscreen(); return; }

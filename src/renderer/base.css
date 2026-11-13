@@ -49,10 +49,14 @@ html body.bs[data-face] .helppop{left:calc(var(--side) + 8px)}
 html[data-light="1"] body.bs[data-face] .bellpop{box-shadow:0 16px 40px -24px rgba(0,0,0,.3)}
 
 html body.bs[data-face] .view{padding:10px 22px 30px}
-html body.bs[data-face] #view::-webkit-scrollbar{width:13px}
-html body.bs[data-face] #view::-webkit-scrollbar-track{margin:0;background:transparent}
-html body.bs[data-face] #view::-webkit-scrollbar-thumb{background:var(--line2);border:3px solid var(--bg);border-left-width:2px;border-radius:9px;min-height:48px;background-clip:padding-box}
-html body.bs[data-face] #view::-webkit-scrollbar-thumb:hover{background:var(--muted2)}
+html body.bs[data-face] #view::-webkit-scrollbar{width:0;height:0}
+html body.bs[data-face] #view{scrollbar-width:none}
+html body.bs[data-face] .vsb{position:absolute;right:0;width:14px;z-index:45;opacity:0;transition:opacity .15s;pointer-events:none}
+html body.bs[data-face] .vsb.has{pointer-events:auto}
+html body.bs[data-face] .vsb.has.on,html body.bs[data-face] .vsb.has:hover{opacity:1}
+html body.bs[data-face] .vsbt{position:absolute;left:4px;right:4px;top:0;border-radius:3px;background:color-mix(in srgb,var(--text) 32%,transparent);will-change:transform}
+html body.bs[data-face] .vsb:hover .vsbt,html body.bs[data-face] .vsb.drag .vsbt{left:3px;right:3px;background:color-mix(in srgb,var(--text) 50%,transparent)}
+body.rm .vsb{transition:none}
 html body.bs[data-face] .h1{position:sticky;top:0;z-index:5;background:var(--bg);margin:0 -22px 14px;padding:14px 22px 12px;gap:8px;min-height:0;flex-wrap:nowrap}
 html body.bs[data-face] .h1 h2{font:600 20px/1.2 var(--font-text);letter-spacing:-.3px;margin-right:8px;white-space:nowrap}
 html body.bs[data-face] .h1 .cnt{font-size:12px;color:var(--muted2);white-space:nowrap}
@@ -335,7 +339,7 @@ html body.bs[data-face] .thcard{display:flex;align-items:center;gap:10px;padding
 html body.bs[data-face] .thcard:hover{background:var(--card2);border-color:var(--line2)}
 html body.bs[data-face] .thcard.on{border-color:var(--accent);cursor:default}
 html body.bs[data-face] .thcard .thsw{flex:none;width:34px;height:24px;border-radius:5px;position:relative;overflow:hidden}
-html body.bs[data-face] .thcard .thsw::after{content:'';position:absolute;left:5px;bottom:4px;width:10px;height:4px;border-radius:2px;background:var(--thacc,#4f8df7)}
+html body.bs[data-face] .thcard .thsw::after{content:'';position:absolute;left:5px;bottom:4px;width:10px;height:4px;border-radius:2px;background:var(--thacc,#6b93d6)}
 html body.bs[data-face] .thcard .tht{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
 html body.bs[data-face] .thcard .tht b{font-size:12.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 html body.bs[data-face] .thcard .tht small{font-size:11px;color:var(--muted2)}
@@ -566,23 +570,23 @@ html body.bs[data-face][data-detart=off] .dclose{position:relative;top:auto;left
 html body.bs[data-face][data-detart=off] .dclose:hover{color:var(--text);background:var(--bg2)}
 @media (max-width:1000px){html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .qchips{order:0;flex:1 0 100%;padding:0 0 4px;margin-bottom:2px;border-bottom:1px solid var(--line)}html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .sp{flex:1}}
 
-html body.bs[data-face][data-layout=top]{--toph:42px}
+html body.bs[data-face][data-layout=top]{--toph:50px}
 html body.bs[data-face][data-layout=top] .rail{padding:0 8px 0 10px;gap:0;background:var(--bg2)}
 html body.bs[data-face][data-layout=top] .rail .brandrow{padding:0 8px 0 0;margin:0 4px 0 0}
-html body.bs[data-face][data-layout=top] .rail .brand{width:26px;height:26px;border-radius:6px}
-html body.bs[data-face][data-layout=top] .rail .brand svg,html body.bs[data-face][data-layout=top] .rail .brand img{width:16px;height:16px}
+html body.bs[data-face][data-layout=top] .rail .brand{width:30px;height:30px;border-radius:7px;background:transparent}
+html body.bs[data-face][data-layout=top] .rail .brand svg,html body.bs[data-face][data-layout=top] .rail .brand img{width:30px;height:30px;border-radius:7px}
 html body.bs[data-face][data-layout=top] .rail .bname{display:none}
-html body.bs[data-face][data-layout=top] .rb,html body.bs[data-face][data-layout=top] .rail .rb{height:30px;padding:0 10px;gap:7px;border-radius:6px;font-size:12.5px}
-html body.bs[data-face][data-layout=top] .rail .rb svg{width:16px;height:16px}
+html body.bs[data-face][data-layout=top] .rb,html body.bs[data-face][data-layout=top] .rail .rb{height:36px;padding:0 13px;gap:8px;border-radius:7px;font-size:13px}
+html body.bs[data-face][data-layout=top] .rail .rb svg{width:17px;height:17px}
 html body.bs[data-face][data-layout=top] .rail .rb.on{background:var(--bg);box-shadow:inset 0 0 0 1px var(--line)}
 html body.bs[data-face][data-layout=top] .rail .rsep{margin:0 4px}
 html body.bs[data-face][data-layout=top] .rail .search{position:relative;flex:0 1 300px;min-width:120px;margin:0 8px 0 auto;padding:0}
-html body.bs[data-face][data-layout=top] .rail .search input{height:28px;font-size:12.5px;padding-left:30px;background:var(--bg);border:1px solid var(--line);border-radius:6px;width:100%}
+html body.bs[data-face][data-layout=top] .rail .search input{height:32px;font-size:13px;padding-left:30px;background:var(--bg);border:1px solid var(--line);border-radius:6px;width:100%}
 html body.bs[data-face][data-layout=top] .rail .search svg{width:14px;height:14px;left:10px}
 html body.bs[data-face][data-layout=top] .rail .search kbd,html body.bs[data-face][data-layout=top] .rail .search .kb{display:none}
 html body.bs[data-face][data-layout=top] .rail .sp{flex:0 0 0}
 html body.bs[data-face][data-layout=top] .rail .rbot{gap:0;padding-left:4px}
-html body.bs[data-face][data-layout=top] .rail .rbot .bell,html body.bs[data-face][data-layout=top] .rail .rbot .rb{width:32px;height:30px;border-radius:6px}
+html body.bs[data-face][data-layout=top] .rail .rbot .bell,html body.bs[data-face][data-layout=top] .rail .rbot .rb{width:36px;height:36px;border-radius:7px}
 html body.bs[data-face][data-layout=top] .rail .rbot #profBtn .pav{width:22px;height:22px;font-size:9.5px}
 html body.bs[data-face][data-layout=top] header.top{display:none!important}
 html body.bs[data-face][data-layout=top] .ggh{top:0}
@@ -705,3 +709,9 @@ html body.bs[data-face] .tile .tt .pill{order:2}
 
 html body.bs[data-face].frameless:not(.maxed):not(.fs)::after{content:"";position:fixed;inset:0;z-index:1990;pointer-events:none;border:2px solid color-mix(in srgb,var(--text) 26%,var(--bg));border-radius:8px}
 html body.bs[data-face].frameless.sqwin:not(.maxed):not(.fs)::after{border-radius:0}
+
+html body.bs[data-face] .fview .seg.fsort{border:0;padding:0;margin:0 2px;gap:4px;border-radius:0;background:transparent}
+html body.bs[data-face] .fview .seg.fsort button{height:26px;padding:0 10px;border-radius:6px;background:var(--card);border:1px solid var(--line);color:var(--muted2)}
+html body.bs[data-face] .fview .seg.fsort button:hover{color:var(--text);border-color:var(--line2)}
+html body.bs[data-face] .fview .seg.fsort button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+html body.bs[data-face] .fsb h6{margin:10px 4px 6px;font:600 11px var(--font-text);letter-spacing:.4px;text-transform:uppercase;color:var(--muted2)}

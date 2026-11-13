@@ -533,7 +533,7 @@ export function themePalette(cfg: Cfg) {
         try { tacc = readJsonBom(path.join(themeDir(tid.slice(5)), 'theme.json')).accent || ''; } catch { tacc = ''; }
     } else
         tacc = FACES[currentFace(cfg)].accent;
-    const accent = hexc(cfg.accent || tacc || vals.accent || '', bg) || (scheme === 'light' ? '#2b6be0' : '#4f8df7');
+    const accent = hexc(cfg.accent || tacc || vals.accent || '', bg) || (scheme === 'light' ? '#4a7bc4' : '#6b93d6');
     return { scheme, bg, bg2: hexc(vals.bg2, bg) || bg, card: hexc(vals.card, bg) || bg,
         line: hexc(vals.line2 || vals.line, bg) || text, text,
         muted: hexc(vals.muted, bg) || text, accent, red: hexc(vals.red, bg) || '#ef4444',

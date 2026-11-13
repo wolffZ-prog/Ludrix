@@ -391,6 +391,7 @@ class Backend {
         if (installed && !live && pc)
             acts.push({ id: 'play_opt', label: 'Jogar e…', icon: 'play', hint: 'fechar / bandeja' });
         acts.push({ id: 'details', label: 'Detalhes', icon: 'info' });
+        acts.push({ id: 'details_full', label: 'Detalhes+', icon: 'expand' });
         acts.push({ sep: true });
         acts.push({ id: 'fav', label: g.fav ? 'Tirar dos favoritos' : 'Favoritar', icon: 'star' });
         if (inLib)

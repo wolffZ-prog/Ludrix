@@ -82,7 +82,7 @@ const SOFA = (() => {
     const el = st.cur;
     if (el.tagName === 'SELECT') { el.focus(); return; }
     if (el.tagName === 'INPUT' && !['checkbox', 'radio', 'button', 'submit'].includes(el.type)) { el.focus(); return; }
-    if (el.classList.contains('card') && S.view === 'home' && typeof selectGame === 'function') { const k = el.dataset.key; if (S.panelKey === k && typeof openGame === 'function') openGame(k); else selectGame(k); return; }
+    if (el.classList.contains('card') && S.view === 'home' && typeof selectGame === 'function') { const k = el.dataset.key; if (S.nowKey === k && typeof openGame === 'function') openGame(k); else selectGame(k); return; }
     el.click();
   };
   const back = () => {

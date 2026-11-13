@@ -3300,7 +3300,8 @@
   "VC++ 2005 a 2013 (x86 e x64) + DirectX jun/2010 + OpenAL + PhysX Legacy. O kit pra rodar clássicos.": "VC++ 2005 to 2013 (x86 and x64) + DirectX Jun/2010 + OpenAL + PhysX Legacy. The kit for running classics.",
   "Procurar jogos novos sozinho": "Look for new games on its own",
   "Ao abrir e enquanto o Ludrix está aberto, as pastas acima são observadas; apareceu uma pasta com jogo, chega um aviso em Notificações para adicionar com um clique. Nada entra sem revisão": "On startup and while Ludrix is open, the folders above are watched; when a folder with a game shows up, a notice arrives in Notifications to add it with one click. Nothing is added without review",
-  "Mostrar na biblioteca": "Show in library"
+  "Mostrar na biblioteca": "Show in library",
+  "Detalhes+": "Details+"
  },
  "patterns": [
   [

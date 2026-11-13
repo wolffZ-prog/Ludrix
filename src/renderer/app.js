@@ -124,6 +124,7 @@ const I = {
   x: '<svg viewBox="0 0 24 24"><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>',
   check: '<svg viewBox="0 0 24 24"><path d="M5 12l5 5l10 -10" /></svg>',
   flag: '<svg viewBox="0 0 24 24"><path d="M5 5a5 5 0 0 1 7 0a5 5 0 0 0 7 0v9a5 5 0 0 1 -7 0a5 5 0 0 0 -7 0v-9z" /><path d="M5 21v-7" /></svg>',
+  expand: '<svg viewBox="0 0 24 24"><path d="M16 4l4 0l0 4" /><path d="M14 10l6 -6" /><path d="M8 20l-4 0l0 -4" /><path d="M4 20l6 -6" /><path d="M16 20l4 0l0 -4" /><path d="M14 14l6 6" /><path d="M8 4l-4 0l0 4" /><path d="M4 4l6 6" /></svg>',
   info: '<svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>',
   cal: '<svg viewBox="0 0 24 24"><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M11 15h1" /><path d="M12 15v3" /></svg>',
   bolt: '<svg viewBox="0 0 24 24"><path d="M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11" /></svg>',
@@ -199,7 +200,7 @@ setInterval(() => { if (S.config.theme_schedule && (S.config.theme || 'system') 
 function applyAccent() {
   const mode = S.config.accent_mode || 'theme';
   if (mode === 'system' && S.sysAccent === undefined) { S.sysAccent = ''; api.post('/api/window', { cmd: 'sys_accent' }).then(r => { S.sysAccent = (r && r.hex) || ''; if (S.sysAccent) applyAccent(); }); }
-  const acc = S.dynAccent || (mode === 'system' && S.sysAccent) || (mode === 'custom' && S.config.accent) || themeAccent || (document.documentElement.dataset.light === '1' ? '#2b6be0' : '#4f8df7');
+  const acc = S.dynAccent || (mode === 'system' && S.sysAccent) || (mode === 'custom' && S.config.accent) || themeAccent || (document.documentElement.dataset.light === '1' ? '#4a7bc4' : '#6b93d6');
   const st = document.documentElement.style; document.documentElement.classList.remove('mono');
   if (!acc) { st.removeProperty('--accent'); st.removeProperty('--accent2'); st.removeProperty('--on-accent'); scheduleContrast(); return; }
   const rgb = hexRgb(acc); if (!rgb) return;
@@ -915,8 +916,9 @@ function selectGame(key) {
   document.querySelectorAll(`#view .card[data-key="${CSS.escape(key)}"]`).forEach(c => c.classList.add('sel'));
   S.nowKey = key;
   S.stageKey = key; gameFocus(key);
-  if (muralMode()) panelOpen(key); else nowbarFill();
+  nowbarFill();
 }
+function showPanel(key) { if (!S.byKey[key]) return; selectGame(key); if (S.view === 'home') panelOpen(key); else openGame(key); }
 const PANEL = {};
 function panelOpen(key) {
   if (S.panelKey === key && $('#gpanel')) return;
@@ -1001,7 +1003,7 @@ function gameFocus(key) {
 }
 async function setAccentMode(v) {
   if (v === 'system' && !S.sysAccent) { const r = await api.post('/api/window', { cmd: 'sys_accent' }); S.sysAccent = (r && r.hex) || ''; if (!S.sysAccent) { toast('warn', 'Sem cor do sistema', 'Não consegui ler a cor de destaque do Windows.'); return; } }
-  const patch = { accent_mode: v }; if (v === 'custom' && !S.config.accent) patch.accent = cssVar('--accent') || '#4f8df7';
+  const patch = { accent_mode: v }; if (v === 'custom' && !S.config.accent) patch.accent = cssVar('--accent') || '#6b93d6';
   await setCfg(patch); applyAccent(); renderSettings(true);
 }
 function dynAccent(key) {
@@ -2097,7 +2099,7 @@ function themeListHtml(c) {
     ${list.length ? `<div class="thlist">${list.map(card).join('')}</div>` : `<div class="mut" style="font-size:12px">Nenhum tema importado. Os temas ficam na pasta <b style="display:inline">themes</b> do Ludrix.</div>`}</div>`;
 }
 function themeSwatch(t) {
-  const v = t.vars || {}, bg = toHex(v.bg) || (t.scheme === 'light' ? '#f4f4f6' : '#141418'), card = toHex(v.card) || toHex(v.bg2) || (t.scheme === 'light' ? '#ffffff' : '#1e1e23'), acc = toHex(v.accent) || toHex(t.accent) || '#4f8df7';
+  const v = t.vars || {}, bg = toHex(v.bg) || (t.scheme === 'light' ? '#f4f4f6' : '#141418'), card = toHex(v.card) || toHex(v.bg2) || (t.scheme === 'light' ? '#ffffff' : '#1e1e23'), acc = toHex(v.accent) || toHex(t.accent) || '#6b93d6';
   return `background:linear-gradient(90deg,${bg} 0 50%,${card} 50% 100%);box-shadow:inset 0 0 0 1px rgba(128,128,128,.25);--thacc:${acc}`;
 }
 function selHtml(opts, cur, on, cls) { return `<select class="sel ${cls || ''}" onchange="${on}">${opts.map(([v, l]) => `<option value="${esc(JSON.stringify(v))}" ${v === cur ? 'selected' : ''}>${esc(String(l))}</option>`).join('')}</select>`; }
@@ -3165,7 +3167,8 @@ async function ctxDo(key, id) {
     case 'play_with': { const d = await api.get('/api/game/' + enc(key)); const opts = d.emu?.installed_options || []; if (opts.length < 2) return toast('', 'Só um emulador', 'Vincule outro em Emuladores → ⚙ do console.'); return chooseEmulator(key, opts, d.emu.emulator); }
     case 'stop': return stopGame(key);
     case 'install': return openGame(key);
-    case 'details': return openGame(key);
+    case 'details': return showPanel(key);
+    case 'details_full': return openGame(key);
     case 'fav': return toggleFav(key);
     case 'hide': return toggleHidden(key);
     case 'open_dir': { const d = S.det && S.det.key === key ? S.det : await api.get('/api/game/' + enc(key)); return openPath(d.dir, key); }
@@ -3693,7 +3696,7 @@ function ctxNativeOk() { return !!(S.config.native && !GP.active && !ctxNative &
 const ctxIconCache = new Map();
 function ctxWarm() {
   if (!ctxNativeOk()) return;
-  const c = ctxColors(); const names = ['play', 'info', 'edit', 'folder', 'star', 'trash', 'copy', 'dl', 'x', 'refresh', 'eye', 'tag', 'disc', 'cog', 'dots', 'doc', 'image', 'spark', 'wrench', 'plus', 'check', 'ext', 'shield', 'save', 'list', 'grid', 'filter', 'sort'];
+  const c = ctxColors(); const names = ['play', 'info', 'expand', 'edit', 'folder', 'star', 'trash', 'copy', 'dl', 'x', 'refresh', 'eye', 'tag', 'disc', 'cog', 'dots', 'doc', 'image', 'spark', 'wrench', 'plus', 'check', 'ext', 'shield', 'save', 'list', 'grid', 'filter', 'sort'];
   const run = async () => { for (const n of names) { if (!I[n]) continue; ctxIcon(n, c.muted); } ctxIcon('play', c.onprimary); ctxIcon('trash', c.danger); };
   (window.requestIdleCallback || (f => setTimeout(f, 50)))(() => { run().catch(() => {}); });
 }

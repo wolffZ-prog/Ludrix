@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.0.25 — 2026-11-13
+
+- Clique simples num jogo só seleciona (contorno na capa e barra inferior). Clique duplo abre a página de detalhes. No menu do botão direito, "Detalhes" abre o painel lateral e "Detalhes+" abre a página inteira.
+- Esc fecha, nessa ordem: menu do botão direito, diálogo, página de detalhes, seleção múltipla, painel lateral.
+- Barra de rolagem da biblioteca passa a ficar por cima do conteúdo: fina, só aparece ao rolar ou ao passar o mouse na borda, pode ser arrastada; some o vão à direita acima e ao lado dela.
+- Barra superior com abas mais alta (50 px): abas, busca e botões maiores, ícone do Ludrix em 30 px.
+- Painel "Filtros e exibição": as opções de ordem e agrupamento viram botões separados, quadrados, em vez de um aglomerado redondo; rótulos das seções em maiúsculas.
+- Azul do tema mais suave (escuro #6b93d6, claro #4a7bc4); o chip "PC" acompanha a cor do tema.
+- Ícone do Ludrix volta ao desenho anterior (janela, bandeja, atalhos, exe).
+- Janela sem moldura não podia ser arrastada: as camadas invisíveis (diálogo, detalhes, boas-vindas, tela de perfis, botão da fila) ficavam com opacidade zero mas continuavam "presentes" para o cálculo da área de arraste e anulavam a barra superior. Agora ficam ocultas de verdade quando fechadas.
+
 ## 4.0.24 — 2026-11-13
 
 - Menu do botão direito: no Windows passa a ser sempre o menu nativo do sistema (abre fora dos limites da janela, sem animação, submenus ao passar o mouse); a versão interna fica só para controle e Linux, agora plana e sem efeitos. A escolha "Menus do botão direito" saiu de Ajustes.
