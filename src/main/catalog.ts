@@ -310,6 +310,15 @@ export class Catalog {
         });
     }
 
+    localGame(key: string): any | null {
+        const info = this.store.library[key];
+        if (!info || !key.startsWith('local:'))
+            return null;
+        const g = this.localRow(key, info, this.store.config.game_args || {}, this.favs);
+        g.cats = this.categoryOf(makeEntry({ key, repo: 'local', id: key, title: g.title, kind: 'local', genres: g.genres }), this.be.hub.meta.get(key));
+        return g;
+    }
+
     localGames(): any[] {
         const out: any[] = [];
         const ga = this.store.config.game_args || {};
@@ -317,9 +326,20 @@ export class Catalog {
         for (const [key, info] of Object.entries(this.store.library as Record<string, any>)) {
             if (!key.startsWith('local:'))
                 continue;
+            out.push(this.localRow(key, info, ga, favs));
+        }
+        for (const g of out) {
+            const fake = makeEntry({ key: g.key, repo: 'local', id: g.key, title: g.title, kind: 'local', genres: g.genres });
+            g.cats = this.categoryOf(fake, this.be.hub.meta.get(g.key));
+        }
+        return out;
+    }
+
+    private localRow(key: string, info: any, ga: Record<string, any>, favs: Set<string>): any {
+        {
             const m = this.be.hub.meta.get(key);
             const exe = String(info.exe || '');
-            out.push({
+            return ({
                 key, repo: 'local', title: info.title || key, kind: 'local', system: info.system || 'pc',
                 creator: (m || {}).developer || info.creator || '', year: (m || {}).year || info.year || '', size: 0,
                 genres: ((m || {}).genres || info.genres || []).slice(0, 3),
@@ -334,11 +354,6 @@ export class Catalog {
                 status: (m || {}).status || '', score: Math.trunc(Number((m || {}).score || 0)),
             });
         }
-        for (const g of out) {
-            const fake = makeEntry({ key: g.key, repo: 'local', id: g.key, title: g.title, kind: 'local', genres: g.genres });
-            g.cats = this.categoryOf(fake, this.be.hub.meta.get(g.key));
-        }
-        return out;
     }
 
     private coldFile() {

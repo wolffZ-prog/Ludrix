@@ -126,7 +126,7 @@ class Backend {
         setTimeout(() => this.startMenuSync(), 1500);
         if (this.store.schemaInfo?.newer)
             setTimeout(() => this.notify('warn', 'Dados de uma versão mais nova', `A pasta data foi gravada pelo Ludrix ${this.store.schemaInfo.app || '?'} (formato ${this.store.schemaInfo.version}). Esta versão lê o formato ${require('./store').Store.SCHEMA}. Atualize o Ludrix ou restaure um backup antes de mexer na biblioteca.`, 'schema_newer', 'updates'), 3000);
-        setTimeout(() => this.autoBackup(false), 120_000);
+        setTimeout(() => void this.autoBackup(false), 120_000);
         { const rec = util.recovered(); if (rec.length) { for (const r of rec) log.warn('dados recuperados: %s ← %s (%s)', r.file, r.from || 'nada', r.detail); setTimeout(() => this.notify(rec.every((r) => r.from) ? 'ok' : 'warn', rec.every((r) => r.from) ? 'Dados recuperados' : 'Arquivo de dados corrompido', rec.map((r) => `${r.file}: ${r.from ? 'restaurado de ' + r.from : 'sem cópia — começou vazio (o original ficou em ' + r.file + '.bad)'}`).join('\n'), 'data:recovered'), 4000); } }
         setTimeout(() => { try { if (util.now() - Number(this.store.config.img_gc_at || 0) > 7 * 86400 && !this.jobs.jobs.size) this.imageGc(true); } catch (e) { log.debug(`limpeza de imagens: ${e}`); } }, 180_000);
         setInterval(() => this.watchDirs(), 5 * 60_000);
@@ -370,7 +370,7 @@ class Backend {
         const isRom = key.startsWith('rom:'), isLocal = key.startsWith('local:');
         const info: any = this.store.lib(key) || {};
         const entry = isRom || isLocal ? null : this.cat.entry(key);
-        const g: any = (isRom || isLocal ? this.localGames().find((x) => x.key === key) : (entry ? this.cat.slim(entry) : null)) || {};
+        const g: any = (isLocal ? this.cat.localGame(key) : isRom ? null : (entry ? this.cat.slim(entry) : null)) || {};
         const installed = Boolean(g.installed) || (!isRom && !isLocal && this.store.isInstalled(key));
         const inLib = isRom || isLocal || this.store.isInstalled(key);
         const live = this.sessions.keys().includes(key);
@@ -1974,6 +1974,7 @@ class Backend {
             }
         }
         if (apply) {
+            this.hub.images.thumbs.t = 0;
             this.store.setConfig({ img_gc_at: util.now() });
             if (gone.length)
                 log.info('limpeza de imagens: %d arquivo(s), %s', gone.length, util.humanSize(bytes));
@@ -2012,6 +2013,8 @@ class Backend {
                 try { fs.writeFileSync(P.LOG_FILE, ''); } catch { }
             }
         }
+        if (what.includes('thumbs') || what.includes('covers'))
+            this.hub.images.thumbs.t = 0;
         if (what.includes('meta'))
             this.hub.meta.drop();
         if (what.includes('web') || what.includes('meta'))
@@ -2334,19 +2337,24 @@ class Backend {
     autoBackupDir(): string {
         return String(this.store.config.auto_backup_dir || '') || path.join(P.BACKUPS, 'auto');
     }
-    autoBackup(force = false) {
+    private backupBusy = false;
+    async autoBackup(force = false) {
         const c = this.store.config;
         if (!force && (c.auto_backup === false || util.now() - Number(c.auto_backup_at || 0) < 7 * 86400 || this.jobs.jobs.size))
             return { skipped: true };
+        if (this.backupBusy)
+            return { error: 'Já tem um backup em andamento.' };
         const dir = this.autoBackupDir();
+        this.backupBusy = true;
         try {
             this.store.flush();
-            const r = backup.exportData(dir, VERSION);
-            const olds = fs.readdirSync(dir).filter((n) => /^Ludrix-dados-.*\.zip$/.test(n)).sort();
+            const t0 = Date.now();
+            const r = await backup.exportData(dir, VERSION);
+            const olds = (await fs.promises.readdir(dir)).filter((n) => /^Ludrix-dados-.*\.zip$/.test(n)).sort();
             for (const f of olds.slice(0, Math.max(0, olds.length - 4)))
-                fs.rmSync(path.join(dir, f), { force: true });
+                await fs.promises.rm(path.join(dir, f), { force: true });
             this.store.setConfig({ auto_backup_at: util.now(), auto_backup_last: r.path });
-            log.info('backup automático: %s (%s)', r.path, util.humanSize(r.size));
+            log.info('backup automático: %s (%s, %d arquivos em %ss%s)', r.path, util.humanSize(r.size), r.files, ((Date.now() - t0) / 1000).toFixed(1), r.skipped ? `, ${r.skipped} grandes demais ficaram de fora` : '');
             return r;
         }
         catch (e: any) {
@@ -2356,13 +2364,16 @@ class Backend {
             this.notify('warn', 'Backup automático falhou', String(e?.message || e), 'auto_backup', 'settings:system');
             return { error: String(e?.message || e) };
         }
+        finally {
+            this.backupBusy = false;
+        }
     }
     async dataExport() {
         const dest = await dialogs.pickFolder(P.ROOT);
         if (!dest)
             return { cancel: true };
         this.store.flush();
-        return backup.exportData(String(dest), VERSION);
+        return await backup.exportData(String(dest), VERSION);
     }
     async dataInspect(file: string | null) {
         let p = file;
@@ -2375,8 +2386,8 @@ class Backend {
         r.path = p;
         return r;
     }
-    dataImport(file: string) {
-        const r = backup.importData(String(file || ''), VERSION);
+    async dataImport(file: string) {
+        const r = await backup.importData(String(file || ''), VERSION);
         if (r.ok)
             this.store.freeze();
         return r;

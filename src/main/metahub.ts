@@ -39,6 +39,7 @@ export class MetaHub {
         const s: http.Session = http.shared;
         this.images = new ImageCache(s);
         this.covers = new CoverService(s, be.store);
+        this.covers.onWrite = (p) => this.fileTouched(p);
         this.web = new WebImageSearch(s);
         this.meta = new MetadataService(s, be.store);
         this.meta.covers = this.covers;
@@ -436,16 +437,27 @@ export class MetaHub {
         return m;
     }
 
+    private mtCache = new Map<string, [number, number]>();
+    fileTouched(f: string) {
+        this.mtCache.delete(f);
+    }
     cv(key: string, m: any): number {
         const mt = (f: string | null | undefined) => {
             if (!f)
                 return 0;
+            const now = Date.now() / 1000;
+            const hit = this.mtCache.get(f);
+            if (hit && now - hit[0] < 600)
+                return hit[1];
+            let v = 0;
             try {
-                return Math.trunc(fs.statSync(f).mtimeMs / 1000);
+                v = Math.trunc(fs.statSync(f).mtimeMs / 1000);
             }
-            catch {
-                return 0;
-            }
+            catch { }
+            if (this.mtCache.size > 5000)
+                this.mtCache.clear();
+            this.mtCache.set(f, [now, v]);
+            return v;
         };
         const mm = m || {};
         return Math.trunc(Math.max(mt(this.covers.customPath(key)), mt(mm.background_file ? String(mm.background_file) : ''), this.meta.mtime(key), Number(mm.fetched_at || 0)));

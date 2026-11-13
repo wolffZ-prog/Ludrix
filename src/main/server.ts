@@ -556,14 +556,14 @@ async function routePost(req, res, p, _q, be, getWindow) {
             be.store.setConfig({ auto_backup_dir: '' });
             return sendJson(res, { ok: true, dir: be.autoBackupDir() });
         }
-        return sendJson(res, b.now ? be.autoBackup(true) : { ok: true, dir: be.autoBackupDir() });
+        return sendJson(res, b.now ? await be.autoBackup(true) : { ok: true, dir: be.autoBackupDir() });
     }
     if (p === '/api/data/export')
         return sendJson(res, await be.dataExport());
     if (p === '/api/data/inspect')
         return sendJson(res, await be.dataInspect(b?.path || null));
     if (p === '/api/data/import')
-        return sendJson(res, be.dataImport(String(b?.path || '')));
+        return sendJson(res, await be.dataImport(String(b?.path || '')));
     if (p === '/api/backup/export')
         return sendJson(res, be.backupExport(b?.dest || null));
     if (p === '/api/backup/import')

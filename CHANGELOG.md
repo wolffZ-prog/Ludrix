@@ -1,5 +1,9 @@
 # Changelog
 
+## 4.0.23-hf1 — 2026-11-13
+- Travamento de 3 minutos ao abrir (e "Array buffer allocation failed" no log): o backup automático semanal montava o zip inteiro na memória, de forma bloqueante, com todas as capas e saves. Agora é gravado em fluxo direto no disco, sem segurar a janela; arquivos acima de 2 GB ficam de fora e o zip para em 4 GB.
+- Botão direito num jogo segurava a janela por até 6 s em HD adormecido: o menu montava a ficha de todos os jogos e conferia a data de cada capa no disco a cada clique. Agora monta só o jogo clicado e guarda as datas por 10 min; as pastas de miniaturas e capas personalizadas são relidas a cada 2 min em vez de a cada 2 s.
+
 ## 4.0.23 — 2026-11-13
 
 - Perfis podem ser apagados, inclusive o que está em uso: o Ludrix reabre no próximo perfil (ou sem perfis, se era o último). Jogos, capas e saves nunca entram.

@@ -117,7 +117,7 @@ class DirSet {
     constructor(public folder: string) { }
     get(): Set<string> {
         const now = Date.now() / 1000;
-        if (now - this.t > 2.0) {
+        if (now - this.t > 120) {
             try {
                 this.names = new Set(fs.readdirSync(this.folder));
             }

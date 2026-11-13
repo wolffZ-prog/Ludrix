@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import AdmZip from 'adm-zip';
+import stream from 'node:stream';
+import zlib from 'node:zlib';
 import * as P from './paths';
 
 export const DATA_FILES = ['config.json', 'library.json', 'repos.json', 'downloads.json'];
@@ -28,12 +30,141 @@ function restorable(n: string): boolean {
     return n.startsWith('themes/') && (n.split('/').length - 1) >= 2 && !BAD_EXT.some((e) => low.endsWith(e));
 }
 
-function walk(src: string): string[] {
+const CRC_TABLE = (() => {
+    const t = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+        let c = n;
+        for (let k = 0; k < 8; k++)
+            c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+        t[n] = c >>> 0;
+    }
+    return t;
+})();
+function crcUpdate(crc: number, buf: Buffer) {
+    let c = crc ^ 0xffffffff;
+    for (let i = 0; i < buf.length; i++)
+        c = CRC_TABLE[(c ^ buf[i]) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+}
+function dosTime(d: Date) {
+    const time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1);
+    const date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+    return { time, date };
+}
+const STORE_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.zip', '.7z', '.rar', '.mp4', '.mp3', '.ogg', '.woff', '.woff2']);
+const MAX_ENTRY = 2 * 1024 ** 3;
+const MAX_ZIP = 4 * 1024 ** 3 - 64 * 1024 ** 2;
+
+class ZipWriter {
+    private out: fs.WriteStream;
+    private offset = 0;
+    private central: Buffer[] = [];
+    private centralSize = 0;
+    count = 0;
+    skipped = 0;
+    full = false;
+    constructor(public file: string) {
+        this.out = fs.createWriteStream(file);
+    }
+    private write(b: Buffer): Promise<void> {
+        this.offset += b.length;
+        if (this.out.write(b))
+            return Promise.resolve();
+        return new Promise((res) => this.out.once('drain', res));
+    }
+    async addBuffer(arc: string, data: Buffer, mtime = new Date()) {
+        await this.entry(arc, mtime, data.length, () => stream.Readable.from([data]));
+    }
+    async addFile(arc: string, src: string) {
+        let st: fs.Stats;
+        try {
+            st = await fs.promises.stat(src);
+        }
+        catch {
+            return;
+        }
+        if (!st.isFile())
+            return;
+        if (st.size > MAX_ENTRY || this.offset + st.size > MAX_ZIP) {
+            this.skipped++;
+            this.full = this.full || this.offset + st.size > MAX_ZIP;
+            return;
+        }
+        await this.entry(arc, st.mtime, st.size, () => fs.createReadStream(src, { highWaterMark: 1024 * 1024 }));
+    }
+    private async entry(arc: string, mtime: Date, size: number, open: () => NodeJS.ReadableStream) {
+        const name = Buffer.from(arc, 'utf8');
+        const deflate = !STORE_EXT.has(path.extname(arc).toLowerCase()) && size > 64;
+        const method = deflate ? 8 : 0;
+        const { time, date } = dosTime(mtime);
+        const local = this.offset;
+        const lh = Buffer.alloc(30);
+        lh.writeUInt32LE(0x04034b50, 0);
+        lh.writeUInt16LE(20, 4);
+        lh.writeUInt16LE(0x0808, 6);
+        lh.writeUInt16LE(method, 8);
+        lh.writeUInt16LE(time, 10);
+        lh.writeUInt16LE(date, 12);
+        lh.writeUInt16LE(name.length, 26);
+        await this.write(lh);
+        await this.write(name);
+        let crc = 0, raw = 0, comp = 0;
+        const counter = new stream.Transform({
+            transform: (chunk: Buffer, _e, cb) => { crc = crcUpdate(crc, chunk); raw += chunk.length; cb(null, chunk); },
+        });
+        const sink = new stream.Writable({
+            write: (chunk: Buffer, _e, cb) => { comp += chunk.length; this.write(chunk).then(() => cb(), cb); },
+        });
+        const parts: any[] = [open(), counter];
+        if (deflate)
+            parts.push(zlib.createDeflateRaw({ level: 6 }));
+        parts.push(sink);
+        await stream.promises.pipeline(parts as any);
+        const dd = Buffer.alloc(16);
+        dd.writeUInt32LE(0x08074b50, 0);
+        dd.writeUInt32LE(crc, 4);
+        dd.writeUInt32LE(comp, 8);
+        dd.writeUInt32LE(raw, 12);
+        await this.write(dd);
+        const ch = Buffer.alloc(46);
+        ch.writeUInt32LE(0x02014b50, 0);
+        ch.writeUInt16LE(20, 4);
+        ch.writeUInt16LE(20, 6);
+        ch.writeUInt16LE(0x0808, 8);
+        ch.writeUInt16LE(method, 10);
+        ch.writeUInt16LE(time, 12);
+        ch.writeUInt16LE(date, 14);
+        ch.writeUInt32LE(crc, 16);
+        ch.writeUInt32LE(comp, 20);
+        ch.writeUInt32LE(raw, 24);
+        ch.writeUInt16LE(name.length, 28);
+        ch.writeUInt32LE(local, 42);
+        this.central.push(ch, name);
+        this.centralSize += ch.length + name.length;
+        this.count++;
+    }
+    async close() {
+        const start = this.offset;
+        for (const b of this.central)
+            await this.write(b);
+        const eocd = Buffer.alloc(22);
+        eocd.writeUInt32LE(0x06054b50, 0);
+        eocd.writeUInt16LE(this.count, 8);
+        eocd.writeUInt16LE(this.count, 10);
+        eocd.writeUInt32LE(this.centralSize, 12);
+        eocd.writeUInt32LE(start, 16);
+        await this.write(eocd);
+        await new Promise<void>((res, rej) => this.out.end((e?: Error | null) => e ? rej(e) : res()));
+        return this.offset;
+    }
+}
+
+async function walk(src: string): Promise<string[]> {
     const out: string[] = [];
-    const rec = (d: string) => {
+    const rec = async (d: string) => {
         let ents: fs.Dirent[];
         try {
-            ents = fs.readdirSync(d, { withFileTypes: true });
+            ents = await fs.promises.readdir(d, { withFileTypes: true });
         }
         catch {
             return;
@@ -42,35 +173,32 @@ function walk(src: string): string[] {
             const p = path.join(d, e.name);
             if (e.isDirectory()) {
                 if (e.name !== '__pycache__')
-                    rec(p);
+                    await rec(p);
             }
             else if (e.isFile())
                 out.push(p);
         }
     };
-    rec(src);
+    await rec(src);
     return out.sort();
 }
 
-function add(z: AdmZip, src: string, arc: string): number {
+async function add(z: ZipWriter, src: string, arc: string) {
     let st: fs.Stats;
     try {
-        st = fs.statSync(src);
+        st = await fs.promises.stat(src);
     }
     catch {
-        return 0;
+        return;
     }
     if (st.isFile()) {
-        z.addFile(arc, fs.readFileSync(src));
-        return 1;
+        await z.addFile(arc, src);
+        return;
     }
-    let n = 0;
-    for (const p of walk(src)) {
+    for (const p of await walk(src)) {
         const rel = path.relative(src, p).split(path.sep).join('/');
-        z.addFile(`${arc}/${rel}`, fs.readFileSync(p));
-        n += 1;
+        await z.addFile(`${arc}/${rel}`, p);
     }
-    return n;
 }
 
 function isDir(p: string) {
@@ -90,34 +218,41 @@ function isFile(p: string) {
     }
 }
 
-export function exportData(destDir: string, version: string) {
-    fs.mkdirSync(destDir, { recursive: true });
+export async function exportData(destDir: string, version: string) {
+    await fs.promises.mkdir(destDir, { recursive: true });
     const out = path.join(destDir, `Ludrix-dados-${stamp('dash')}.zip`);
-    let count = 0;
-    const z = new AdmZip();
-    for (const f of DATA_FILES) {
-        const p = path.join(P.DATA, f);
-        if (isFile(p))
-            count += add(z, p, `data/${f}`);
-    }
-    for (const d of DATA_DIRS) {
-        const p = path.join(P.DATA, d);
-        if (isDir(p))
-            count += add(z, p, `data/${d}`);
-    }
-    if (isDir(P.THEMES)) {
-        for (const t of fs.readdirSync(P.THEMES)) {
-            const tp = path.join(P.THEMES, t);
-            if (isDir(tp))
-                count += add(z, tp, `themes/${t}`);
+    const tmp = out + '.part';
+    const z = new ZipWriter(tmp);
+    try {
+        for (const f of DATA_FILES) {
+            const p = path.join(P.DATA, f);
+            if (isFile(p))
+                await add(z, p, `data/${f}`);
         }
+        for (const d of DATA_DIRS) {
+            const p = path.join(P.DATA, d);
+            if (isDir(p))
+                await add(z, p, `data/${d}`);
+        }
+        if (isDir(P.THEMES)) {
+            for (const t of await fs.promises.readdir(P.THEMES)) {
+                const tp = path.join(P.THEMES, t);
+                if (isDir(tp))
+                    await add(z, tp, `themes/${t}`);
+            }
+        }
+        const cq = path.join(P.FLASH, 'custom.json');
+        if (isFile(cq))
+            await add(z, cq, 'games/rapidos/custom.json');
+        await z.addBuffer(MANIFEST, Buffer.from(JSON.stringify({ app: 'LudrixHub', version, at: Date.now() / 1000, files: z.count, root: P.ROOT, skipped: z.skipped }), 'utf8'));
+        const size = await z.close();
+        await fs.promises.rename(tmp, out);
+        return { ok: true, path: out, files: z.count, size, skipped: z.skipped, full: z.full };
     }
-    const cq = path.join(P.FLASH, 'custom.json');
-    if (isFile(cq))
-        count += add(z, cq, 'games/rapidos/custom.json');
-    z.addFile(MANIFEST, Buffer.from(JSON.stringify({ app: 'LudrixHub', version, at: Date.now() / 1000, files: count, root: P.ROOT }), 'utf8'));
-    z.writeZip(out);
-    return { ok: true, path: out, files: count, size: fs.statSync(out).size };
+    catch (e) {
+        await fs.promises.rm(tmp, { force: true }).catch(() => { });
+        throw e;
+    }
 }
 
 export function inspect(file: string): any {
@@ -166,11 +301,11 @@ export function inspect(file: string): any {
     }
 }
 
-export function importData(file: string, version: string): any {
+export async function importData(file: string, version: string): Promise<any> {
     const info = inspect(file);
     if (info.error)
         return info;
-    const pre = exportData(P.UPDATES, version);
+    const pre = await exportData(P.UPDATES, version);
     let olds: string[] = [];
     try {
         olds = fs.readdirSync(P.UPDATES).filter((n) => /^Ludrix-dados-.*\.zip$/.test(n)).sort();

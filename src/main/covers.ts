@@ -55,6 +55,7 @@ export class CoverService {
     private inflightSet = new Set<string>();
     private names = new Set<string>();
     private namesT = 0;
+    onWrite: ((p: string) => void) | null = null;
     invalidateNames() {
         this.namesT = 0;
     }
@@ -62,7 +63,7 @@ export class CoverService {
 
     private listing(): Set<string> {
         const now = Date.now() / 1000;
-        if (now - this.namesT > 2.0) {
+        if (now - this.namesT > 120) {
             try {
                 this.names = new Set(fs.readdirSync(this.customDir));
             }
@@ -120,14 +121,17 @@ export class CoverService {
         if (height > 1200)
             img = img.resize({ width: Math.round(width * 1200 / height), height: 1200, quality: 'good' });
         fs.writeFileSync(dest, img.toPNG());
+        this.onWrite?.(dest);
         this.namesT = 0;
         return { ok: true, path: dest };
     }
 
     removeCustom(key: string) {
         const p = this.customPath(key);
-        if (p)
+        if (p) {
             fs.rmSync(p, { force: true });
+            this.onWrite?.(p);
+        }
         this.namesT = 0;
     }
 
@@ -148,11 +152,13 @@ export class CoverService {
         if (kind === 'hero') {
             const dest = path.join(this.customDir, safeKey(key) + '_hero.jpg');
             fs.writeFileSync(dest, dec.buf);
+            this.onWrite?.(dest);
             return { ok: true, path: dest };
         }
         this.removeCustom(key);
         const dest = path.join(this.customDir, safeKey(key) + '.png');
         fs.writeFileSync(dest, dec.buf);
+        this.onWrite?.(dest);
         this.namesT = 0;
         return { ok: true, path: dest };
     }
