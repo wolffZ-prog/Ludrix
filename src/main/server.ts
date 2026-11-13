@@ -32,7 +32,7 @@ const PAGES = {
     '/console': 'console/console.html',
     '/console/': 'console/console.html',
 };
-const PUBLIC_PREFIX = ['/ui/', '/thumb/', '/cover/', '/hero/', '/shot/', '/api/custom.css', '/api/custom/file/', '/flash/cover/', '/flash/ruffle/', '/flash/games/', '/flash/play/', '/api/import/cover', '/favicon.ico'];
+const PUBLIC_PREFIX = ['/ui/', '/thumb/', '/cover/', '/hero/', '/shot/', '/api/profiles/avatar/', '/api/custom.css', '/api/custom/file/', '/flash/cover/', '/flash/ruffle/', '/flash/games/', '/flash/play/', '/api/import/cover', '/favicon.ico'];
 const CSP = "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https: http:; " +
     "img-src 'self' data: blob: https: http:; font-src 'self' data: https: http:; media-src 'self' blob: data:; connect-src 'self'; " +
     "worker-src 'self' blob:; frame-src 'self' http://127.0.0.1:* http://localhost:* http:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'";
@@ -297,6 +297,10 @@ async function routeGet(req, res, p, q, be, getWindow) {
         return sendJson(res, be.notifications());
     if (p === '/api/cache')
         return sendJson(res, await be.cacheInfo());
+    if (p === '/api/sweep') {
+        const sp = await be.sweepPlan();
+        return sendJson(res, { bytes: sp.bytes, files: sp.items.length, groups: sp.groups });
+    }
     if (p === '/api/themes' || p === '/api/themes/full')
         return sendJson(res, be.themes());
     if (p === '/api/fonts')
@@ -324,6 +328,10 @@ async function routeGet(req, res, p, q, be, getWindow) {
         return sendJson(res, be.publicConfig());
     if (p === '/api/profiles')
         return sendJson(res, be.store.profileInfo());
+    if (p.startsWith('/api/profiles/avatar/')) {
+        const id = p.slice(21);
+        return /^[a-z0-9]{4,24}$/.test(id) ? sendFile(res, require('./store').Store.avatarFile(id), true) : send(res, 404, 'não encontrado', 'text/plain; charset=utf-8');
+    }
     if (p.startsWith('/api/theme/')) {
         const id = decodeURIComponent(p.slice(11));
         if (id.endsWith('/json'))
@@ -408,7 +416,7 @@ async function routePost(req, res, p, _q, be, getWindow) {
     if (p === '/api/config/reset')
         return sendJson(res, be.resetConfig(b?.keys || []));
     if (p === '/api/profiles')
-        return sendJson(res, be.profileAction(b || {}));
+        return sendJson(res, b && b.op === 'avatar' ? await be.profileAvatarPick(String(b.id || '')) : be.profileAction(b || {}));
     if (p === '/api/file_assoc')
         return sendJson(res, 'on' in b ? be.setFileAssoc(Boolean(b.on)) : be.fileAssoc());
     if (p === '/api/start_menu')
@@ -525,6 +533,8 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, be.customUX.export(String(b?.name || ''), String(b?.dest || '')));
     if (p === '/api/cache/images_gc')
         return sendJson(res, be.imageGc(Boolean(b.apply)));
+    if (p === '/api/sweep')
+        return sendJson(res, await be.sweepApply(Array.isArray(b.groups) && b.groups.length ? b.groups : undefined));
     if (p === '/api/cache/clear')
         return sendJson(res, await be.clearCache(b.what || []));
     if (p === '/api/notifications/ack')

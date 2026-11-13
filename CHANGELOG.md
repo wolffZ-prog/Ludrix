@@ -1,5 +1,21 @@
 # Changelog
 
+## 4.0.23 — 2026-11-13
+
+- Perfis podem ser apagados, inclusive o que está em uso: o Ludrix reabre no próximo perfil (ou sem perfis, se era o último). Jogos, capas e saves nunca entram.
+- Foto no perfil, opcional: um PNG de até 64×64 escolhido do PC (Ajustes › Geral › Perfis › Foto…). Aparece na tela "Quem vai jogar?", na barra e nos ajustes; "X" volta às iniciais.
+- Limpeza da pasta: pacotes de atualização já aplicados, cópia temporária do runtime, arquivos .old/.new, backups de versão além dos 2 últimos, listas de fontes vencidas e informações de jogos que não existem mais (30+ dias) são removidos sozinhos 90 s depois de cada atualização (e no máximo uma vez por semana). Também à mão em Ajustes › Ferramentas › Limpeza › Restos de atualizações, com os tamanhos antes de confirmar. Dados do usuário, jogos, saves e capas ficam de fora.
+- Informações dos jogos (`data/cache/meta`) gravadas compactas, sem campos vazios e sem descrição duplicada; os arquivos antigos são compactados na primeira limpeza. A lista desses arquivos deixa de ser relida do disco a cada 15 s.
+- Abertura: cópia diária da biblioteca sai do caminho de inicialização; interface pronta em ~200 ms com 70 jogos no ambiente de teste.
+- Interface: controles refeitos no mesmo padrão — botões em pílula (cheio para a ação principal, contorno para as demais, redondo para ícone), interruptores com aro e bolinha na cor do tema, abas e chips em pílula, barras de progresso com contorno, seletores e campos arredondados, zoom da barra de status com − / + redondos. Tudo plano, nos dois temas.
+- Código morto removido: 19 funções do processo principal, 230 regras de CSS sem uso, 420 textos de tradução de telas que não existem mais (en.json 364 → 321 KB).
+- A limpeza semanal de imagens órfãs rodava a cada abertura: a data da última passada não era gravada.
+- Textos que apareciam em português na interface em inglês corrigidos (Importar biblioteca, Abrir com o Windows/Linux, Limpar selecionados, Conferir, botões "agora", descrições de dependências).
+
+## 4.0.22-hf1 — 2026-11-13
+- Botão direito num jogo (e a própria biblioteca) podia travar a janela: a checagem de "arquivo existe" de cada jogo era refeita no disco, de forma bloqueante, a cada 20 s. Agora a resposta vem da memória e a conferência roda em segundo plano; se algo sumiu ou voltou, a biblioteca se atualiza sozinha.
+- Quem já tinha perfil ficava com a barra lateral antiga: as preferências de cada perfil agora recebem a mesma migração de aparência (abas no alto + painel lateral).
+
 ## 4.0.22 — 2026-11-12
 
 - Interface: navegação por abas no alto (Biblioteca, Store, Emuladores, Mods, Central, Rápidos) com a busca ao lado; painel lateral do jogo selecionado sem faixa de cor, botão Jogar plano, blocos menores. Grade, chips, selos e detalhes seguem compactos. Quem preferir a barra lateral de ícones troca em Ajustes › Aparência › Barra de navegação.

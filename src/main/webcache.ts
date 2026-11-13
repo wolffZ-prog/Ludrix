@@ -48,12 +48,6 @@ export class WebCache {
             return null;
         }
     }
-
-    setLocal(key: string, data: any) {
-        const p = fileFor(key);
-        fs.mkdirSync(path.dirname(p), { recursive: true });
-        fs.writeFileSync(p, JSON.stringify(data), 'utf8');
-    }
 }
 
 export const shared = new WebCache();

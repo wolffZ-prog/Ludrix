@@ -449,17 +449,6 @@ export class FlashManager {
         return { ok: true, fav: cur.fav };
     }
 
-    async prefetchCovers() {
-        for (const g of this.presets.games) {
-            if (g.item && !isFile(path.join(COVERS, `${g.id}.jpg`))) {
-                try {
-                    await this.coverPath(g.id);
-                }
-                catch { }
-            }
-        }
-    }
-
     async installRuffle(cb: Cb, cancel: Cancel): Promise<string> {
         const repo = this.presets.ruffle_repo || 'ruffle-rs/ruffle';
         let rels = await this.cache.getJson(`gh_${repo}`, `https://api.github.com/repos/${repo}/releases?per_page=3`, 6 * 3600);

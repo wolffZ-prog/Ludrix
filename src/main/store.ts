@@ -112,6 +112,9 @@ const DEFAULT_CONFIG = {
     auto_backup: true,
     auto_backup_dir: '',
     auto_backup_at: 0,
+    img_gc_at: 0,
+    sweep_ver: '',
+    sweep_at: 0,
     auto_scan_dirs: true,
     scan_ignore_rest: false,
     linux_runner: 'auto',
@@ -239,7 +242,7 @@ const PROFILE_KEYS = new Set([
     'console_theme', 'console_sound', 'console_hint', 'console_card_size', 'console_clock24', 'console_start_view', 'console_vibrate', 'console_dim_idle', 'console_confirm_quit', 'console_sort', 'console_dl_pill',
 ]);
 const PROFILE_COLORS = ['#5c6b82', '#c0392b', '#d68910', '#1e8449', '#1f618d', '#7d3c98', '#117a65', '#884ea0'];
-type Profile = { id: string; name: string; color: string; created: number };
+type Profile = { id: string; name: string; color: string; created: number; avatar?: number };
 type Profiles = { active: string; ask: boolean; list: Profile[] };
 function sanitizeConfig(raw: Record<string, any>, fixed?: string[]) {
     const out = { ...raw };
@@ -276,6 +279,7 @@ class Store {
         const raw = util.readJson(Store.PROFILES_FILE(), null) as any;
         const list: Profile[] = Array.isArray(raw?.list) ? raw.list.filter((x) => x && typeof x.id === 'string' && /^[a-z0-9]{4,24}$/.test(x.id)).map((x) => ({
             id: x.id, name: String(x.name || '').slice(0, 32) || 'Perfil', color: /^#[0-9a-f]{6}$/i.test(String(x.color)) ? String(x.color) : PROFILE_COLORS[0], created: Number(x.created) || 0,
+            ...(Number(x.avatar) > 0 ? { avatar: Number(x.avatar) } : {}),
         })) : [];
         this.profiles = { active: '', ask: raw ? raw.ask !== false : true, list };
         const active = String(raw?.active || '');
@@ -284,12 +288,34 @@ class Store {
     }
     activate(id: string) {
         this.profiles.active = id;
-        const raw = sanitizeConfig(util.readJson(Store.profileFile(id), {}));
+        const file = util.readJson(Store.profileFile(id), {}) as any;
+        const raw = sanitizeConfig(file);
         this.overlay = {};
         for (const k of Object.keys(raw))
             if (PROFILE_KEYS.has(k))
                 this.overlay[k] = raw[k];
+        const look = Number(file && file.look || 0);
+        if (look < Store.OVERLAY_LOOK) {
+            for (const [target, patch] of Store.OVERLAY_STEPS)
+                if (look < target)
+                    for (const [k, v] of Object.entries(patch))
+                        if (PROFILE_KEYS.has(k))
+                            this.overlay[k] = v;
+            this.overlay.look = Store.OVERLAY_LOOK;
+            this.writeOverlay();
+        }
         this.config = { ...this.base, ...this.overlay };
+    }
+    static OVERLAY_STEPS: [number, Record<string, any>][] = [
+        [13, { home_spot: false, card_origin: false, detail_art: 'off' }],
+        [14, { nav_layout: 'top', view_mode: 'mural' }],
+    ];
+    static OVERLAY_LOOK = 14;
+    writeOverlay() {
+        if (!this.profiles.active)
+            return;
+        fs.mkdirSync(path.dirname(Store.profileFile(this.profiles.active)), { recursive: true });
+        util.writeJson(Store.profileFile(this.profiles.active), { ...this.overlay, look: Store.OVERLAY_LOOK });
     }
     profileInfo() {
         const { active, ask, list } = this.profiles;
@@ -336,13 +362,54 @@ class Store {
         const i = this.profiles.list.findIndex((x) => x.id === id);
         if (i < 0)
             return { error: 'Perfil não encontrado.' };
-        if (this.profiles.active === id)
-            return { error: 'Troque para outro perfil antes de apagar este.' };
+        const wasActive = this.profiles.active === id;
+        if (wasActive)
+            this.flush();
         this.profiles.list.splice(i, 1);
-        try {
-            fs.rmSync(Store.profileFile(id), { force: true });
+        for (const f of [Store.profileFile(id), Store.avatarFile(id)]) {
+            try {
+                fs.rmSync(f, { force: true });
+            }
+            catch { }
         }
-        catch { }
+        if (wasActive) {
+            const next = this.profiles.list[0];
+            if (next)
+                this.activate(next.id);
+            else {
+                this.profiles.active = '';
+                this.overlay = {};
+                this.config = this.base;
+            }
+        }
+        this.saveProfiles();
+        return { ok: true, reload: wasActive };
+    }
+    static avatarFile = (id: string) => path.join(P.DATA, 'profiles', `${id}.png`);
+    profileAvatar(id: string, png: Buffer | null) {
+        const p = this.profiles.list.find((x) => x.id === id);
+        if (!p)
+            return { error: 'Perfil não encontrado.' };
+        const file = Store.avatarFile(id);
+        if (!png) {
+            try {
+                fs.rmSync(file, { force: true });
+            }
+            catch { }
+            delete p.avatar;
+            this.saveProfiles();
+            return { ok: true };
+        }
+        if (png.length < 24 || png.readUInt32BE(0) !== 0x89504e47 || png.toString('ascii', 12, 16) !== 'IHDR')
+            return { error: 'O arquivo precisa ser um PNG.' };
+        const w = png.readUInt32BE(16), h = png.readUInt32BE(20);
+        if (w > 64 || h > 64)
+            return { error: `A imagem tem ${w}×${h}; o máximo é 64×64.` };
+        if (png.length > 256 * 1024)
+            return { error: 'PNG grande demais (máximo 256 KB).' };
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, png);
+        p.avatar = Date.now();
         this.saveProfiles();
         return { ok: true };
     }
@@ -563,10 +630,8 @@ class Store {
             return;
         if (which === 'config') {
             util.writeJson(P.CONFIG_FILE, this.base);
-            if (this.profiles.active) {
-                fs.mkdirSync(path.dirname(Store.profileFile(this.profiles.active)), { recursive: true });
-                util.writeJson(Store.profileFile(this.profiles.active), this.overlay);
-            }
+            if (this.profiles.active)
+                this.writeOverlay();
         }
         else
             util.writeJson(P.LIBRARY_FILE, this.library);

@@ -497,31 +497,6 @@ function migrateLegacy() {
     if (n)
         log.info('restos da versão 3.x removidos (%d)', n);
 }
-function legacySweep() {
-    if (fs.existsSync(P.PENDING_VERIFY))
-        return;
-    let n = 0;
-    const bdir = path.join(P.UPDATES, 'backup');
-    try {
-        for (const d of fs.existsSync(bdir) ? fs.readdirSync(bdir) : []) {
-            const full = path.join(bdir, d);
-            if (fs.existsSync(path.join(full, 'app', 'main.py')) || fs.existsSync(path.join(full, 'runtime', 'python.exe')) || fs.existsSync(path.join(full, 'runtime', 'python3.dll'))) {
-                fs.rmSync(full, { recursive: true, force: true });
-                n++;
-            }
-        }
-        for (const f of fs.existsSync(P.UPDATES) ? fs.readdirSync(P.UPDATES) : [])
-            if (/^seed-[0-3]\./.test(f) || /^ludrix-[0-3]\..*\.lxup$/.test(f)) {
-                fs.rmSync(path.join(P.UPDATES, f), { force: true });
-                n++;
-            }
-    }
-    catch (e: any) {
-        log.debug('limpeza 3.x: %s', e?.message || e);
-    }
-    if (n)
-        log.info('motor antigo (3.x) removido do backup (%d)', n);
-}
 function hardenWebContents() {
     electron.app.on('web-contents-created', (_e, wc) => {
         wc.on('will-attach-webview', (e) => e.preventDefault());
@@ -580,7 +555,7 @@ async function main() {
             }).catch((e) => log.warn('verificação de arquivos falhou: %s', e));
         }, 20000).unref();
     server = await serverMod.startServer(backend, getWindow);
-    setTimeout(legacySweep, 90000).unref();
+    setTimeout(() => void backend.sweepAuto(), 90000).unref();
     util.writeJson(P.INSTANCE_FILE, {
         mode: MODE,
         pid: process.pid,

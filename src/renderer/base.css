@@ -74,10 +74,9 @@ html body.bs[data-face] .h1 .dd.on,html body.bs[data-face] .h1 .filt>.btn.p{bord
 html body.bs[data-face] .fchips{margin:-6px 0 12px}
 
 html body.bs[data-face] .resume{margin:0 0 22px}
-html body.bs[data-face] .resume .sec,html body.bs[data-face] .sec.lite{display:flex;align-items:baseline;gap:10px;margin:0 0 10px;background:transparent;border:0;padding:0}
+html body.bs[data-face] .resume .sec{display:flex;align-items:baseline;gap:10px;margin:0 0 10px;background:transparent;border:0;padding:0}
 html body.bs[data-face] .resume .sec b{font-size:14px;font-weight:600}
 html body.bs[data-face] .resume .sec span{font-size:12px;color:var(--muted2)}
-html body.bs[data-face] .rsw{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 html body.bs[data-face] .card.wc{display:flex;gap:12px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:9px;background:var(--bg2);height:auto;aspect-ratio:auto;min-height:0;transform:none;contain:none;content-visibility:visible}
 html body.bs[data-face] .card.wc:hover{border-color:var(--line2);background:var(--bg2);transform:none}
 html body.bs[data-face] .card.wc.sel{border-color:var(--accent)}
@@ -231,7 +230,6 @@ html body.bs[data-face] .shots img,html body.bs[data-face] .dshots img{border-ra
 html body.bs[data-face] .note{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r)}
 
 html body.bs[data-face] .settings{max-width:none;gap:0}
-html body.bs[data-face] .swrap{gap:28px}
 html body.bs[data-face] .stabs button{height:34px;padding:0 10px;border-radius:var(--r);font:400 13px var(--font-text);color:var(--muted);text-transform:none;letter-spacing:0}
 html body.bs[data-face] .stabs button:hover{background:var(--card2);color:var(--text)}
 html body.bs[data-face] .stabs button.on{background:var(--card2);color:var(--text);font-weight:500}
@@ -254,7 +252,7 @@ html body.bs[data-face] .sec>.frow+:not(.frow):not(.adv){margin-top:12px}
 html body.bs[data-face] .sec>:not(h3):not(p):not(.frow):not(.adv):not(.sub):not(.updcard):not(.updbtns){margin:0}
 html body.bs[data-face] .sec>.updcard{margin:0 0 12px}
 html body.bs[data-face] .sec>.updbtns{margin:0 0 14px}
-html body.bs[data-face] .sec>.cache,html body.bs[data-face] .sec>.themes,html body.bs[data-face] .sec>.thlist,html body.bs[data-face] .sec>.hw,html body.bs[data-face] .sec>.tabsort,html body.bs[data-face] .sec>.mchk,html body.bs[data-face] .sec>.dirs,html body.bs[data-face] .sec>.radio{padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+html body.bs[data-face] .sec>.cache,html body.bs[data-face] .sec>.themes,html body.bs[data-face] .sec>.thlist,html body.bs[data-face] .sec>.hw,html body.bs[data-face] .sec>.mchk,html body.bs[data-face] .sec>.dirs,html body.bs[data-face] .sec>.radio{padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
 html body.bs[data-face] .setwrap .settings .adv{margin:0;padding:0;border:0;border-radius:0;background:transparent}
 html body.bs[data-face] .setwrap .settings .frow+.adv .frow:first-of-type,html body.bs[data-face] .setwrap .settings .adv .frow:first-of-type{border-top-width:0;border-top-left-radius:0;border-top-right-radius:0}
 html body.bs[data-face] .setwrap .settings .sec.advonly .adv .frow:first-of-type{border-top-width:1px;border-top-left-radius:var(--r);border-top-right-radius:var(--r)}
@@ -280,8 +278,7 @@ html body.bs[data-face] .tabs .tab.on{border-bottom-color:var(--accent)}
 html body.bs[data-face] .tiles .tile,html body.bs[data-face] .tile,html body.bs[data-face] .scard{background:var(--bg2);border:1px solid var(--line);border-radius:10px;box-shadow:none}
 html body.bs[data-face] .tiles .tile:hover,html body.bs[data-face] .tile:hover{border-color:var(--line2)}
 html body.bs[data-face] .pill{border-radius:5px;font:400 11px var(--font-text);letter-spacing:0;text-transform:none}
-html body.bs[data-face] .hrow .hrh h3{font:600 14px var(--font-text);text-transform:none;letter-spacing:0}
-html body.bs[data-face] .emptybox,html body.bs[data-face] .empty{background:var(--bg2);border:1px solid var(--line);border-radius:10px;box-shadow:none}
+html body.bs[data-face] .empty{background:var(--bg2);border:1px solid var(--line);border-radius:10px;box-shadow:none}
 html body.bs[data-face] ::-webkit-scrollbar{width:8px;height:8px}
 html body.bs[data-face] ::-webkit-scrollbar-thumb{background:var(--line2);border:2px solid var(--bg);border-radius:8px}
 html body.bs[data-face] ::-webkit-scrollbar-track{background:transparent}
@@ -613,3 +610,95 @@ html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .gkv di
 html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .pst{padding:12px 16px 0}
 html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .glinks{padding:10px 12px}
 html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .gpanel .glinks button{height:34px}
+
+html body.bs[data-face]{--rp:999px;--bw:1.5px;--ctl:34px;--ctl-sm:30px;--ctl-xs:26px}
+html body.bs[data-face] .btn{height:var(--ctl);padding:0 16px;border-radius:var(--rp);border:var(--bw) solid transparent;font:600 12.5px var(--font-text);letter-spacing:.1px;gap:7px;transition:background .15s,border-color .15s,color .15s,opacity .15s;transform:none}
+html body.bs[data-face] .btn svg{width:15px;height:15px}
+html body.bs[data-face] .btn.sm{height:var(--ctl-sm);padding:0 13px;font-size:12px;border-radius:var(--rp)}
+html body.bs[data-face] .btn.xs{height:var(--ctl-xs);padding:0 11px;font-size:11.5px;border-radius:var(--rp)}
+html body.bs[data-face] .btn.xs svg{width:13px;height:13px}
+html body.bs[data-face] .btn.p,html body.bs[data-face] .btn.g{background:var(--accent);border-color:var(--accent);color:var(--on-accent);box-shadow:none}
+html body.bs[data-face] .btn.p:hover,html body.bs[data-face] .btn.g:hover{filter:none;opacity:.88;transform:none}
+html body.bs[data-face] .btn.p:active,html body.bs[data-face] .btn.g:active{opacity:.78}
+html body.bs[data-face] .btn.s{background:transparent;border-color:color-mix(in srgb,var(--text) 22%,transparent);color:var(--text)}
+html body.bs[data-face] .btn.s:hover{background:transparent;border-color:var(--accent);color:var(--accent)}
+html body.bs[data-face] .btn.s:hover svg{color:var(--accent)}
+html body.bs[data-face] .btn.s:active{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+html body.bs[data-face] .btn.d{background:transparent;border-color:color-mix(in srgb,var(--red) 55%,transparent);color:var(--red)}
+html body.bs[data-face] .btn.d:hover{background:var(--red);border-color:var(--red);color:#fff}
+html body.bs[data-face] .btn.d:hover svg{color:#fff}
+html body.bs[data-face] .btn:disabled{opacity:.38;pointer-events:none}
+html body.bs[data-face] .btn.ic,html body.bs[data-face] .btn.ico{width:var(--ctl);padding:0;justify-content:center;flex:none}
+html body.bs[data-face] .btn.sm.ic,html body.bs[data-face] .btn.sm.ico{width:var(--ctl-sm)}
+html body.bs[data-face] .btn.xs.ic,html body.bs[data-face] .btn.xs.ico{width:var(--ctl-xs)}
+html body.bs[data-face] .btn.ic svg,html body.bs[data-face] .btn.ico svg{margin:0}
+html body.bs[data-face] .h1 .btn.xs,html body.bs[data-face] .h1 .dd,html body.bs[data-face] .h1 .filt>.btn{height:var(--ctl-sm);border-radius:var(--rp);padding:0 12px}
+html body.bs[data-face] .h1 .btn.xs.ic{width:var(--ctl-sm);padding:0}
+html body.bs[data-face] .h1 .btn.xs.p{padding:0 14px}
+html body.bs[data-face] .h1 .dd{border:var(--bw) solid var(--line)}
+html body.bs[data-face] .h1 .dd:hover,html body.bs[data-face] .h1 .dd.on,html body.bs[data-face] .h1 .filt>.btn.p{border-color:color-mix(in srgb,var(--text) 30%,transparent)}
+html body.bs[data-face] .gpanel .gacts .btn.p{height:36px;border-radius:var(--rp)}
+html body.bs[data-face] .gpanel .gacts .btn.s{width:36px;height:36px;border-radius:var(--rp)}
+html body.bs[data-face] .dhead .acts>.btn.g,html body.bs[data-face] .dhead .acts>.btn.p{height:36px;padding:0 22px;border-radius:var(--rp)}
+html body.bs[data-face] .dhead .acts .btn.sm{height:36px;border-radius:var(--rp)}
+html body.bs[data-face] .dhead .acts .btn.favon{border-color:#f2b84b}
+
+html body.bs[data-face] .qchips .chip,html body.bs[data-face] .chip{height:var(--ctl-sm);padding:0 13px;border-radius:var(--rp);border:var(--bw) solid transparent;background:transparent;color:var(--muted);font:500 12.5px var(--font-text)}
+html body.bs[data-face] .qchips .chip:hover,html body.bs[data-face] .chip:hover{background:transparent;border-color:color-mix(in srgb,var(--text) 22%,transparent);color:var(--text)}
+html body.bs[data-face] .qchips .chip.on,html body.bs[data-face] .chip.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);box-shadow:none}
+html body.bs[data-face] .chip.dd,html body.bs[data-face] #sort.dd{border-color:var(--line);border-radius:var(--rp)}
+html body.bs[data-face] .chip.dd.on,html body.bs[data-face] #sort.dd.on{background:transparent;border-color:color-mix(in srgb,var(--text) 30%,transparent);color:var(--text)}
+html body.bs[data-face] .seg{border-radius:var(--rp);padding:3px;gap:2px;background:transparent;border:var(--bw) solid var(--line)}
+html body.bs[data-face] .seg button{height:24px;padding:0 12px;border-radius:var(--rp);font:500 12px var(--font-text)}
+html body.bs[data-face] .seg button.on{background:var(--accent);color:var(--on-accent)}
+html body.bs[data-face] .tabs{gap:3px;border:0;margin:0 0 14px;padding:3px;background:transparent;border-radius:var(--rp);width:max-content;max-width:100%;flex-wrap:wrap;box-shadow:inset 0 0 0 var(--bw) var(--line)}
+html body.bs[data-face] .tabs button{height:28px;padding:0 13px;border-radius:var(--rp);font:500 12.5px var(--font-text);color:var(--muted)}
+html body.bs[data-face] .tabs button:hover{color:var(--text)}
+html body.bs[data-face] .tabs button.on{background:var(--accent);color:var(--on-accent)}
+html body.bs[data-face] .tabs button.on::after{display:none}
+html body.bs[data-face] .tabs.ctabs .n{background:color-mix(in srgb,var(--text) 10%,transparent);color:inherit}
+html body.bs[data-face] .tabs button.on .n{background:color-mix(in srgb,var(--on-accent) 22%,transparent);color:var(--on-accent)}
+
+html body.bs[data-face] .sw{width:40px;height:22px;border-radius:var(--rp);background:transparent;border:2px solid color-mix(in srgb,var(--text) 28%,transparent);box-shadow:none;transition:border-color .15s,background .15s}
+html body.bs[data-face] .sw::after{width:12px;height:12px;top:3px;left:3px;background:color-mix(in srgb,var(--text) 45%,transparent);box-shadow:none;transition:left .15s,background .15s,width .15s}
+html body.bs[data-face] .sw:hover{border-color:color-mix(in srgb,var(--text) 45%,transparent)}
+html body.bs[data-face] .sw.on{background:transparent;border-color:var(--accent)}
+html body.bs[data-face] .sw.on::after{left:21px;width:12px;height:12px;background:var(--accent)}
+
+html body.bs[data-face] .track{height:10px;border-radius:var(--rp);background:transparent;border:var(--bw) solid var(--line);overflow:hidden;box-sizing:border-box}
+html body.bs[data-face] .track i{border-radius:var(--rp);background:var(--accent);transition:width .4s}
+html body.bs[data-face] .track i::after{display:none}
+html body.bs[data-face] .track.ex i{background:var(--green)}
+html body.bs[data-face] .prog{border-radius:12px}
+html body.bs[data-face] .prog .h b i{box-shadow:none}
+
+html body.bs[data-face] select.sel,html body.bs[data-face] .frow select,html body.bs[data-face] select{height:32px;border-radius:var(--rp);border:var(--bw) solid var(--line);background-color:transparent;padding:0 30px 0 13px;font:500 12.5px var(--font-text);color:var(--text)}
+html body.bs[data-face] select:hover{border-color:color-mix(in srgb,var(--text) 30%,transparent)}
+html body.bs[data-face] select:focus{border-color:var(--accent);box-shadow:none}
+html body.bs[data-face] select option,html body.bs[data-face] select optgroup{background:var(--bg2)}
+html body.bs[data-face] input.inp,html body.bs[data-face] textarea.inp,html body.bs[data-face] .frow input[type=text],html body.bs[data-face] .frow input[type=password],html body.bs[data-face] .frow input[type=number]{border-radius:16px;border:var(--bw) solid var(--line);background:transparent;height:32px;padding:0 13px;font-size:12.5px}
+html body.bs[data-face] textarea.inp{height:auto;padding:10px 13px;border-radius:12px}
+html body.bs[data-face] input.inp:focus,html body.bs[data-face] textarea.inp:focus,html body.bs[data-face] .frow input:focus{border-color:var(--accent);box-shadow:none;outline:0}
+html body.bs[data-face] .rail .search input{border-radius:var(--rp);border:var(--bw) solid var(--line);background:transparent;padding:0 30px 0 34px}
+html body.bs[data-face] .rail .search input:focus{border-color:var(--accent);box-shadow:none}
+html body.bs[data-face] .rail .search svg{left:12px}
+html body.bs[data-face] .rail .search kbd{right:10px;border-radius:var(--rp);padding:2px 6px}
+
+html body.bs[data-face] .szoom{gap:8px}
+html body.bs[data-face] .szoom button{width:18px;height:18px;line-height:16px;border-radius:50%;border:var(--bw) solid color-mix(in srgb,var(--text) 28%,transparent);box-sizing:border-box;font-size:12px;font-weight:700;color:var(--muted)}
+html body.bs[data-face] .szoom button:hover{background:transparent;border-color:var(--accent);color:var(--accent)}
+html body.bs[data-face] .szoom input{height:2px}
+
+html body.bs[data-face] .rail .rbot .bell,html body.bs[data-face] .rail .rbot .rb{border-radius:50%}
+html body.bs[data-face][data-layout=top] .rb,html body.bs[data-face][data-layout=top] .rail .rb{border-radius:var(--rp);padding:0 12px}
+html body.bs[data-face][data-layout=top] .rail .rbot .bell,html body.bs[data-face][data-layout=top] .rail .rbot .rb{width:32px;height:32px;border-radius:50%;padding:0}
+html body.bs[data-face] .modal .box{border-radius:14px}
+html body.bs[data-face] .pill{border-radius:var(--rp);padding:3px 10px;border:1px solid var(--line);background:transparent}
+html body.bs[data-face] .toast .btn,html body.bs[data-face] .modal .btn{min-width:84px}
+html body.bs[data-face] .wctl button{border-radius:0}
+html body.bs[data-face] .status a{color:var(--muted);text-decoration:underline;text-underline-offset:2px;text-decoration-color:color-mix(in srgb,var(--text) 25%,transparent)}
+html body.bs[data-face] .status a:hover{color:var(--text)}
+html body.bs[data-face] .tile .tt{flex-wrap:wrap;row-gap:5px}
+html body.bs[data-face] .tile .tt b{flex:1 1 60px;min-width:60px}
+html body.bs[data-face] .tile .tt .ib{order:1}
+html body.bs[data-face] .tile .tt .pill{order:2}

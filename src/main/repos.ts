@@ -1470,10 +1470,6 @@ export class RepoRegistry {
         }
     }
 
-    stateOf(id: string): any {
-        return this.state[id] || null;
-    }
-
     touch(id: string, keys: string[], titles: Record<string, string>, fromSource: boolean): string[] {
         const now = Math.floor(Date.now() / 1000);
         const prev = this.state[id];

@@ -167,7 +167,6 @@ async function waitWindow(cb: ProgressCb, cancel: Cancel, frac: number) {
     }
 }
 export class Downloader {
-    static CHUNK = 1024 * 512;
     constructor(public session: http.Session = http.shared) { }
 
     async download(af: DlRef, dest: string, cb: ProgressCb, cancel: Cancel): Promise<string> {

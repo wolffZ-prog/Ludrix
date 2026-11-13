@@ -43,7 +43,6 @@ class Reader {
     u8() { if (this.pos >= this.b.length) throw new Error('Patch truncado'); return this.b[this.pos++]; }
     u24be() { return (this.u8() << 16) | (this.u8() << 8) | this.u8(); }
     u16be() { return (this.u8() << 8) | this.u8(); }
-    u32le(at: number) { return this.b.readUInt32LE(at); }
     varint() {
         let data = 0, shift = 1;
         for (;;) {

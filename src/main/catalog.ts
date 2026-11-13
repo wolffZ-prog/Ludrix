@@ -285,13 +285,29 @@ export class Catalog {
             return false;
         const now = Date.now() / 1000;
         const hit = this.existsCache.get(p);
-        if (hit && now - hit[0] < 20)
+        if (hit) {
+            if (now - hit[0] > 60)
+                this.reprobe(p);
             return hit[1];
+        }
         const ok = fs.existsSync(p);
         if (this.existsCache.size > 5000)
             this.existsCache.clear();
         this.existsCache.set(p, [now, ok]);
         return ok;
+    }
+    private probing = new Set<string>();
+    private reprobe(p: string) {
+        if (this.probing.has(p))
+            return;
+        this.probing.add(p);
+        fs.promises.access(p).then(() => true, () => false).then((ok) => {
+            this.probing.delete(p);
+            const prev = this.existsCache.get(p);
+            this.existsCache.set(p, [Date.now() / 1000, ok]);
+            if (prev && prev[1] !== ok)
+                this.be.push({ type: 'library_warm' });
+        });
     }
 
     localGames(): any[] {

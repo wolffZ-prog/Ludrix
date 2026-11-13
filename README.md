@@ -58,7 +58,7 @@ A série 4.0 trocou o motor antigo (Python) por Electron + TypeScript, mantendo 
 - **Aparência "Base".** Interface flat, cor sólida e linha fina, 13 px de base, fonte Rubik e ícones Tabler. Dois temas embutidos (Escuro e Claro, preto e branco de verdade) e suporte a temas externos `.lxtheme`. Glass (acrílico do Windows 11) opcional, com cartões e popups sempre sólidos por cima.
 - **Movimento leve.** As animações são curtas e independentes das configurações de animação do Windows; "Reduzir movimento" desliga tudo. Trocar de página é instantâneo, sem piscar nem deslocar o conteúdo.
 - **Névoa de cor.** Manchas suaves na cor de destaque atravessam o fundo da janela lentamente, como nuvens — inclusive atrás da barra lateral. Intensidade de 0 a 100 em Ajustes › Aparência.
-- **Perfis locais.** Cada pessoa com seu tema, aparência, exibição e preferências; a biblioteca, capas, saves e downloads são os mesmos para todos. Sem senha: ao abrir, o Ludrix pergunta quem vai jogar (opcional) e a troca fica no avatar da barra lateral.
+- **Perfis locais.** Cada pessoa com seu tema, aparência, exibição e preferências; a biblioteca, capas, saves e downloads são os mesmos para todos. Sem senha: ao abrir, o Ludrix pergunta quem vai jogar (opcional) e a troca fica no avatar da barra. Foto opcional (PNG até 64×64); perfis podem ser apagados a qualquer momento.
 - **Barra de navegação a gosto.** No alto (padrão), lateral só ícones, lateral com nomes, embaixo, ou **solta**: separada do conteúdo, com cantos arredondados.
 - **Rápido em HDD.** A biblioteca abre de um cache frio enquanto o disco acorda; a verificação de integridade roda depois, sem segurar a tela. Um script opcional (`Ludrix-HDD.ps1`) ajusta o Windows para HDs mecânicos sem tocar nos dados.
 - **Portátil e previsível.** Tudo fica na pasta (`data/`, `games/`, `emulation/`, `downloads/`). Nada é gravado fora dela, nada roda depois de Sair, e cada atualização substitui o programa inteiro mantendo só os dados do usuário.
@@ -100,7 +100,7 @@ A série 4.0 trocou o motor antigo (Python) por Electron + TypeScript, mantendo 
     <td><img src="docs/screenshots/03-perfis.jpg" alt="Perfis"><br><sub>Perfis locais: quem vai jogar, sem senha</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/04-claro.jpg" alt="Tema claro"><br><sub>Tema Claro embutido, com névoa de cor</sub></td>
+    <td><img src="docs/screenshots/04-claro.jpg" alt="Tema claro"><br><sub>Tema Claro embutido: preto e branco, plano</sub></td>
     <td><img src="docs/screenshots/05-store.jpg" alt="Store"><br><sub>Store: vazia até que uma fonte seja adicionada</sub></td>
   </tr>
   <tr>

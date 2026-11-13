@@ -22,7 +22,6 @@ body[data-face=padrao] .track i{background:var(--accent);border-radius:3px}
 body[data-face=padrao] .status #stext{color:var(--text)}
 body[data-face=padrao] .detail{background:var(--bg)}
 body[data-face=padrao] .dtabs .dtab.on,body[data-face=padrao] .tabs .tab.on{color:var(--text);border-bottom-color:var(--text)}
-body[data-face=padrao] .pager button.on{background:var(--text);color:var(--bg);border-color:transparent}
 body[data-face=padrao] #view.qf .sec.qhit,body[data-face=padrao] #view.qf .tiles.qhit{outline-color:color-mix(in srgb,var(--accent) 55%,transparent)}
 body[data-face=padrao] ::-webkit-scrollbar{width:10px}
 body[data-face=padrao] ::-webkit-scrollbar-thumb{background:var(--card2);border:3px solid var(--bg);border-radius:5px}

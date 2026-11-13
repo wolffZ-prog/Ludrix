@@ -30,6 +30,7 @@ import * as store from './store';
 import { SessionManager, humanTime as humanSession } from './sessions';
 import { EmulationManager } from './emulation';
 import * as webcache from './webcache';
+import * as sweep from './sweep';
 import * as images from './images';
 import * as exporters from './exporters';
 import * as gamepadMod from './gamepad';
@@ -81,7 +82,7 @@ class Backend {
     constructor() {
         this.events = [];
         this.store = new store.Store();
-        this.backupLibrary();
+        setTimeout(() => this.backupLibrary(), 4000);
         this.hub = new MetaHub(this);
         this.imp = new ImportFront(this);
         this.central = new CentralFront(this);
@@ -680,6 +681,19 @@ class Backend {
             void (this as any).warmUp?.();
         return this.publicConfig();
     }
+    async profileAvatarPick(id: string) {
+        const file = await dialogs.pickFile('png');
+        if (!file)
+            return { ok: false, cancelled: true, profiles: this.store.profileInfo() };
+        let buf: Buffer;
+        try {
+            buf = await fs.promises.readFile(file);
+        }
+        catch (e: any) {
+            return { error: `Não deu para ler o arquivo: ${e?.message || e}` };
+        }
+        return { ...this.store.profileAvatar(id, buf), profiles: this.store.profileInfo() };
+    }
     profileAction(b: any) {
         const op = String(b.op || '');
         const id = String(b.id || '');
@@ -687,8 +701,14 @@ class Backend {
             return { ...this.store.profileCreate(String(b.name || ''), b.color), profiles: this.store.profileInfo() };
         if (op === 'update')
             return { ...this.store.profileUpdate(id, { name: b.name, color: b.color }), profiles: this.store.profileInfo() };
-        if (op === 'remove')
-            return { ...this.store.profileRemove(id), profiles: this.store.profileInfo() };
+        if (op === 'remove') {
+            const r = this.store.profileRemove(id);
+            if (r.ok && r.reload)
+                this.favorites = new Set(this.store.config.favorites || []);
+            return { ...r, profiles: this.store.profileInfo() };
+        }
+        if (op === 'avatar_clear')
+            return { ...this.store.profileAvatar(id, null), profiles: this.store.profileInfo() };
         if (op === 'ask')
             return { ...this.store.profileAsk(Boolean(b.ask)), profiles: this.store.profileInfo() };
         if (op === 'switch') {
@@ -1680,43 +1700,6 @@ class Backend {
             this.queueMeta(key);
         return { ok: true, key, title };
     }
-    scanDirs() {
-        const dirs = [...(this.store.config.game_dirs || [])];
-        if (this.store.config.games_dir)
-            dirs.push(String(this.store.config.games_dir));
-        if (!dirs.length)
-            dirs.push(this.store.gamesDir());
-        const ignored = new Set(this.store.config.scan_ignored || []);
-        let added = 0;
-        for (const d of dirs) {
-            if (!fs.existsSync(d))
-                continue;
-            let entries;
-            try {
-                entries = fs.readdirSync(d, { withFileTypes: true });
-            }
-            catch {
-                continue;
-            }
-            for (const e of entries) {
-                const full = path.join(d, e.name);
-                if (e.isDirectory()) {
-                    const found = this.findMainExe(full);
-                    if (found && !ignored.has(found)) {
-                        this.addLocalGame(found, e.name);
-                        added++;
-                    }
-                    continue;
-                }
-                if (EXE_EXT.includes(path.extname(e.name).toLowerCase()) && !JUNK.test(e.name) && !ignored.has(full)) {
-                    this.addLocalGame(full, e.name.replace(/\.[^.]+$/, ''));
-                    added++;
-                }
-            }
-        }
-        this.store.setConfig({ last_lib_check: util.now() });
-        return { ok: true, added };
-    }
     findMainExe(dir) {
         try {
             const files = fs.readdirSync(dir, { withFileTypes: true })
@@ -1860,12 +1843,6 @@ class Backend {
         this.act('');
         return { ok: true, key, title: info.title || '' };
     }
-    coverPick(key: string, src: string | null = null) {
-        return this.hub.setCover(key, src);
-    }
-    coverReset(key: string) {
-        return this.hub.resetCover(key);
-    }
     fetchMetadata(key: string, force = false) {
         return this.hub.fetchMetadata(key, force);
     }
@@ -2003,6 +1980,21 @@ class Backend {
         }
         return { files, bytes, applied: apply };
     }
+    sweepPlan() {
+        return sweep.plan(() => this.knownKeys(), (k) => this.hub.meta.fname(k));
+    }
+    async sweepApply(only?: sweep.Group[]) {
+        const p = await this.sweepPlan();
+        const r = await sweep.apply(p, only);
+        if (!only || only.includes('web') || only.includes('meta')) {
+            this.hub.meta.drop();
+            this.cat.reload(true);
+        }
+        return r;
+    }
+    sweepAuto() {
+        return sweep.auto(this.store, () => this.knownKeys(), (k) => this.hub.meta.fname(k), () => this.jobs.jobs.size > 0 || Boolean(this.cat.state?.loading), () => this.hub.meta.compact());
+    }
     clearCache(what: string[]) {
         what = what || [];
         const map: Record<string, string> = { web: P.CACHE_WEB, thumbs: P.CACHE_THUMBS, covers: P.CACHE_COVERS, meta: P.CACHE_META, downloads: P.DOWNLOADS };
@@ -2020,6 +2012,8 @@ class Backend {
                 try { fs.writeFileSync(P.LOG_FILE, ''); } catch { }
             }
         }
+        if (what.includes('meta'))
+            this.hub.meta.drop();
         if (what.includes('web') || what.includes('meta'))
             this.cat.reload(what.includes('web'));
         return this.cacheInfo();

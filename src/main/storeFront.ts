@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import * as P from './paths';
-import * as log from './log';
 import * as hosts from './hosts';
 import * as emulation from './emulation';
 import * as updates from './updates';
@@ -10,7 +9,6 @@ import * as torrent from './torrent';
 import * as downloader from './downloader';
 import * as installer from './installer';
 import * as http from './http';
-import * as installer_types from './installer-types';
 import * as util from './util';
 function hostOf(url) {
     try {
@@ -759,20 +757,6 @@ class StoreFront {
             }
         }
         return { ok: true, freed, freed_h: installer.humanSize(freed), skipped };
-    }
-    setJob(key, title, phase = 'download', frac = -1, text = '', speed = 0, eta = 0) {
-        this.be.jobs.set(key, prog(phase, frac, text, speed, eta));
-    }
-    finishJob() { }
-    failJob(key, e) {
-        if (!(e instanceof installer_types.CancelledError))
-            log.warn('trabalho %s: %s', key, e);
-    }
-    jobPayload(key) {
-        return this.be.jobs.payload(key);
-    }
-    hasJob(key) {
-        return this.be.jobs.has(key);
     }
 }
 

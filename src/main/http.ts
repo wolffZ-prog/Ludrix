@@ -268,11 +268,6 @@ class Session {
         }
         return this.request(url, { ...opts, method: 'POST', body, headers });
     }
-    async postForm(url, data, opts: any = {}) {
-        const body = new URLSearchParams(data);
-        const r = await this.post(url, body, opts);
-        return r.json();
-    }
 }
 const shared = new Session()
 function hostOf(url) {

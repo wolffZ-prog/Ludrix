@@ -183,15 +183,8 @@ class DownloadQueue {
     constructor(concurrency = 2) {
         this.concurrency = concurrency;
     }
-    setConcurrency(n) {
-        this.concurrency = Math.max(1, Math.min(8, Number(n) || 1));
-        this.pump();
-    }
     list() {
         return [...this.items.values()];
-    }
-    historyList(limit = 40) {
-        return this.history.slice(0, limit);
     }
     get(id) {
         return this.items.get(id);

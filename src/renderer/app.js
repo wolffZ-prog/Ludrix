@@ -2229,6 +2229,16 @@ async function imgGc(btn) {
   if (!r.files) return toast('ok', 'Nada para limpar', 'Nenhuma imagem órfã com mais de 30 dias.');
   modal({ title: 'Limpar imagens órfãs?', text: `${pl(r.files, 'arquivo', 'arquivos')} · ${fmt(r.bytes)}. Se um jogo voltar a aparecer, a imagem é baixada de novo.`, ok: 'Limpar', danger: true, onOk: async () => { const x = await api.post('/api/cache/images_gc', { apply: true }); toast('ok', 'Imagens limpas', `${pl(x.files, 'arquivo', 'arquivos')} · ${fmt(x.bytes)}`); if (S.view === 'settings') renderSettings(true); } });
 }
+const SWEEP_NAMES = { updates: 'Atualizações antigas', leftovers: 'Arquivos .old/.new', web: 'Listas vencidas', meta: 'Informações órfãs', legacy: 'Restos da versão 3.x' };
+async function sweepCheck(btn) {
+  if (btn) btn.disabled = true;
+  const r = await api.get('/api/sweep');
+  if (btn) btn.disabled = false;
+  if (!r || r.error) return toast('err', 'Não deu para conferir', (r && r.error) || '');
+  if (!r.files) return toast('ok', 'Nada para limpar', 'A pasta do Ludrix está sem restos.');
+  const rows = Object.entries(r.groups).filter(([, g]) => g.files).map(([k, g]) => `<div class="frow"><div class="l"><b>${SWEEP_NAMES[k] || k}</b></div><span class="dim">${pl(g.files, 'item', 'itens')} · ${fmt(g.bytes)}</span></div>`).join('');
+  modal({ title: 'Limpar restos?', html: `${rows}<p class="dim" style="margin-top:8px">Total: ${fmt(r.bytes)}. Nada disso afeta jogos, saves, capas ou ajustes.</p>`, ok: 'Limpar', danger: true, onOk: async () => { const x = await api.post('/api/sweep', {}); if (!x || x.error) return toast('err', 'Limpeza falhou', (x && x.error) || ''); toast('ok', 'Pasta limpa', `${pl(x.removed, 'item', 'itens')} · ${fmt(x.bytes)}${x.failed ? ' · ' + pl(x.failed, 'arquivo em uso', 'arquivos em uso') : ''}`); if (S.view === 'settings') renderSettings(true); } });
+}
 async function autoBackupDir(what) { const r = await api.post('/api/data/auto_backup', { [what]: true }); if (r && !r.error) { S.config = await api.get('/api/config'); renderSettings(true); } }
 async function autoBackupNow(btn) { if (btn) btn.disabled = true; const r = await api.post('/api/data/auto_backup', { now: true }); if (btn) btn.disabled = false; if (!r || r.error) return toast('err', 'Backup não feito', (r && r.error) || ''); toast('ok', 'Backup pronto', r.path || '', r.path ? [{ label: 'Abrir pasta', fn: () => openPath(r.path) }] : undefined); S.config = await api.get('/api/config'); renderSettings(true); }
 async function clearCache() { const what = [...document.querySelectorAll('#cacheBox input:checked')].map(i => i.value); await api.post('/api/cache/clear', { what }); toast('ok', 'Limpeza concluída', what.join(', ')); renderSettings(true); if (what.includes('web')) loadCatalog(false); }
@@ -3449,7 +3459,13 @@ async function loadModsFor(key) {
 
 const PROF = { list: [], active: '', ask: true };
 function profInitials(name) { return String(name || '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?'; }
-function profAvatar(p, cls = '') { return `<i class="pav ${cls}" style="--pc:${esc(p.color || '#5c6b82')}">${esc(profInitials(p.name))}</i>`; }
+function profAvatar(p, cls = '') { return `<i class="pav ${cls}${p.avatar ? ' img' : ''}" style="--pc:${esc(p.color || '#5c6b82')}">${p.avatar ? `<img src="/api/profiles/avatar/${esc(p.id)}?v=${p.avatar}" alt="">` : esc(profInitials(p.name))}</i>`; }
+async function profPhoto(id, clear) {
+  const r = await api.post('/api/profiles', { op: clear ? 'avatar_clear' : 'avatar', id });
+  if (!r || r.error) return toast('err', 'Perfis', (r || {}).error || '');
+  if (r.cancelled) return;
+  profSet(r.profiles); profRail(); if (S.view === 'settings') renderSettings(true);
+}
 function profSet(info) { if (!info || !Array.isArray(info.list)) return; PROF.list = info.list; PROF.active = info.active || ''; PROF.ask = info.ask !== false; S.config.profiles = { active: PROF.active, ask: PROF.ask, list: PROF.list }; profRail(); }
 function profActive() { return PROF.list.find(p => p.id === PROF.active) || null; }
 function profRail() {
@@ -3494,9 +3510,11 @@ function profRename(id) {
 async function profColor(id, color) { const r = await api.post('/api/profiles', { op: 'update', id, color }); if (!r || r.error) return toast('err', 'Perfis', (r || {}).error || ''); profSet(r.profiles); if (S.view === 'settings') renderSettings(true); }
 function profRemove(id) {
   const p = PROF.list.find(x => x.id === id); if (!p) return;
-  modal({ title: 'Apagar perfil', text: `Apagar “${p.name}”? Só as preferências desse perfil somem; jogos, capas e saves continuam.`, ok: 'Apagar', danger: true, onOk: async () => {
+  modal({ title: 'Apagar perfil', text: `Apagar “${p.name}”? Só as preferências desse perfil somem; jogos, capas e saves continuam.${id === PROF.active ? ' É o perfil em uso: o Ludrix reabre ' + (PROF.list.length > 1 ? 'em outro perfil.' : 'sem perfis.') : ''}`, ok: 'Apagar', danger: true, onOk: async () => {
     const r = await api.post('/api/profiles', { op: 'remove', id });
-    if (!r || r.error) return toast('err', 'Perfis', (r || {}).error || ''); profSet(r.profiles); if (S.view === 'settings') renderSettings(true);
+    if (!r || r.error) return toast('err', 'Perfis', (r || {}).error || '');
+    if (r.reload) return location.reload();
+    profSet(r.profiles); if (S.view === 'settings') renderSettings(true);
   } });
 }
 async function profAsk(on) { const r = await api.post('/api/profiles', { op: 'ask', ask: !!on }); if (!r || r.error) return toast('err', 'Perfis', (r || {}).error || ''); profSet(r.profiles); if (S.view === 'settings') renderSettings(true); }

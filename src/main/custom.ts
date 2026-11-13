@@ -243,15 +243,6 @@ export class CustomUX {
         return null;
     }
 
-    iconPaths(): [string | null, string | null] {
-        const n = this.get().icon || '';
-        if (n && !n.includes('/') && this.file(n)) {
-            const ico = path.join(DIR, 'icon.ico');
-            return [path.join(DIR, n), fs.existsSync(ico) ? ico : null];
-        }
-        return [null, null];
-    }
-
     addFile(what: string, src: string) {
         const { nativeImage } = require('electron');
         if (!src || !fs.existsSync(src))
@@ -469,12 +460,5 @@ export class CustomUX {
         }
         z.writeZip(out);
         return { ok: true, path: out };
-    }
-
-    wipe() {
-        try {
-            fs.rmSync(DIR, { recursive: true, force: true });
-        }
-        catch { }
     }
 }

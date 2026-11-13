@@ -161,7 +161,6 @@ export class MetadataService {
     static WIKI_MIN_GAP = 0.25;
     static USER_FIELDS = ['tags', 'developer', 'publisher', 'year', 'genres', 'summary', 'series', 'modes', 'links', 'notes',
         'cover_url', 'cover_src', 'hero_url', 'background_file', 'platforms', 'status', 'score'];
-    static SOURCES = ['steam', 'gog', 'wikipedia', 'wikidata', 'libretro', 'web'];
     static WIKI_PROPS = { action: 'query', generator: 'search', gsrlimit: 6, gsrprop: 'snippet',
         prop: 'pageimages|extracts|revisions|info|pageprops', ppprop: 'wikibase_item', exintro: 1, explaintext: 1, exlimit: 'max',
         piprop: 'original', pilicense: 'any', rvprop: 'content', rvslots: 'main', rvsection: 0,
@@ -185,7 +184,7 @@ export class MetadataService {
     }
     private listing(): Record<string, number> {
         const now = Date.now() / 1000;
-        if (now - this.namesT > 15) {
+        if (now - this.namesT > 600) {
             const d: Record<string, number> = {};
             try {
                 for (const de of fs.readdirSync(P.CACHE_META, { withFileTypes: true })) {
@@ -261,7 +260,7 @@ export class MetadataService {
     clear(key: string) {
         fs.rmSync(this.path(key), { force: true });
         this.mem.delete(key);
-        this.touch();
+        delete this.names[this.fname(key)];
     }
 
     async fetch(key: string, title: string, year = '', system = 'pc', force = false, steamAppid = ''): Promise<any> {
@@ -416,10 +415,60 @@ export class MetadataService {
     }
 
     private write(key: string, meta: any) {
-        fs.mkdirSync(path.dirname(this.path(key)), { recursive: true });
-        fs.writeFileSync(this.path(key), JSON.stringify(meta, null, 1), 'utf8');
+        const p = this.path(key);
+        fs.mkdirSync(path.dirname(p), { recursive: true });
+        fs.writeFileSync(p, JSON.stringify(MetadataService.slim(meta)), 'utf8');
         this.mem.delete(key);
-        this.touch();
+        try {
+            this.names[this.fname(key)] = fs.statSync(p).mtimeMs / 1000;
+        }
+        catch {
+            this.touch();
+        }
+    }
+
+    static slim(meta: any) {
+        const out: any = {};
+        for (const [k, v] of Object.entries(meta || {})) {
+            if (v === null || v === undefined || k.endsWith('_error'))
+                continue;
+            if (k === 'summary_en' && v === meta.summary)
+                continue;
+            out[k] = v;
+        }
+        return out;
+    }
+
+    async compact(): Promise<number> {
+        let n = 0;
+        let names: string[] = [];
+        try {
+            names = (await fs.promises.readdir(P.CACHE_META)).filter((f) => f.endsWith('.json'));
+        }
+        catch {
+            return 0;
+        }
+        for (const f of names) {
+            const p = path.join(P.CACHE_META, f);
+            try {
+                const raw = await fs.promises.readFile(p, 'utf8');
+                if (!raw.startsWith('{\n'))
+                    continue;
+                const out = JSON.stringify(MetadataService.slim(JSON.parse(raw)));
+                if (out.length < raw.length) {
+                    await fs.promises.writeFile(p, out, 'utf8');
+                    n++;
+                }
+            }
+            catch { }
+            if (n % 25 === 0)
+                await new Promise((r) => setTimeout(r, 5));
+        }
+        if (n) {
+            this.drop();
+            log.info('metadados compactados: %d arquivo(s)', n);
+        }
+        return n;
     }
 
     static applyUser(meta: any, user: any) {
