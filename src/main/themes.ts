@@ -8,10 +8,11 @@ import * as sign from './crypto';
 export const THEME_VARS = ['bg', 'bg2', 'panel', 'card', 'card2', 'line', 'line2', 'text', 'muted', 'muted2', 'green', 'green2', 'red', 'amber',
     'shadow', 'glow1', 'glow2', 'glow3', 'ph-from', 'ph-to', 'img-fade'];
 
-export const FACES: Record<string, { name: string; description: string; accent: string; layout: string }> = {
-    padrao: { name: 'Padrão', description: 'Fundo preto ou branco, cor sólida e linha fina; azul só no Jogar e no que está selecionado.', accent: '', layout: 'side' },
+export const FACES: Record<string, { name: string; description: string; accent: string; layout: string; swatch: { dark: string[]; light: string[] } }> = {
+    padrao: { name: 'Padrão', description: 'Fundo preto ou branco, cor sólida e linha fina; azul só no Jogar e no que está selecionado.', accent: '', layout: 'side', swatch: { dark: ['#0e0e10', '#1b1b1e'], light: ['#ffffff', '#f5f5f6'] } },
+    grafite: { name: 'Grafite', description: 'Cinza médio no escuro, cinza claro com cartões brancos no claro.', accent: '#6c9bd2', layout: 'side', swatch: { dark: ['#1b1d21', '#272a30'], light: ['#e7e9ee', '#ffffff'] } },
 };
-export const DEFAULT_FACE = 'padrao';
+export const DEFAULT_FACE = 'grafite';
 const SLUG = /^[a-z0-9][a-z0-9._-]{0,60}$/;
 const THEME_FILES = /^(theme\.json|extra\.css|wallpaper\.(jpg|jpeg|png|webp)|preview\.(png|jpg|jpeg|webp)|thumb\.png|LEIA-?ME\.txt|README\.(txt|md)|[A-Za-z0-9_.-]+\.(woff2|woff|ttf|png|webp|svg))$/i;
 

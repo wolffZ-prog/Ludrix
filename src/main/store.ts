@@ -9,7 +9,7 @@ const DEFAULT_CONFIG = {
     native: true,
     theme: 'dark',
     theme_mode: '',
-    face: 'padrao',
+    face: 'grafite',
     accent: '',
     games_dir: '',
     shortcut_ask: true,
@@ -89,8 +89,8 @@ const DEFAULT_CONFIG = {
     look: 0,
     card_hover: 'lift',
     reduce_motion: false,
-    fog: 30,
     acrylic: false,
+    glass_alpha: 34,
     parallax: true,
     high_contrast: false,
     clock: 'off',
@@ -225,7 +225,7 @@ function coerce(key, value, def) {
 }
 const PROFILE_KEYS = new Set([
     'theme', 'theme_mode', 'face', 'accent', 'accent_from_cover', 'accent_mode', 'theme_schedule', 'theme_light_from', 'theme_light_to',
-    'look', 'glass', 'fog', 'fx_type', 'fx_intensity', 'animations', 'reduce_motion', 'parallax', 'high_contrast', 'card_hover',
+    'look', 'glass', 'glass_alpha', 'fx_type', 'fx_intensity', 'animations', 'reduce_motion', 'parallax', 'high_contrast', 'card_hover',
     'ui_scale', 'text_size', 'density', 'card_size', 'view_mode', 'list_cols', 'card_ribbons', 'card_playtime', 'card_origin', 'cover_slideshow', 'cover_slideshow_secs',
     'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'detail_art', 'hero_enabled', 'home_spot', 'fav_first', 'store_hide_installed',
     'group_by', 'sort_by', 'group_store', 'sort_store', 'filter_panel', 'filter_presets', 'settings_adv',
@@ -302,8 +302,9 @@ class Store {
     static OVERLAY_STEPS: [number, Record<string, any>][] = [
         [13, { home_spot: false, card_origin: false, detail_art: 'off' }],
         [14, { nav_layout: 'top', view_mode: 'mural' }],
+        [15, { face: 'grafite' }],
     ];
-    static OVERLAY_LOOK = 14;
+    static OVERLAY_LOOK = 15;
     writeOverlay() {
         if (!this.profiles.active)
             return;
@@ -512,6 +513,7 @@ class Store {
                     this.config.nav_layout = 'top';
                     this.config.view_mode = 'mural';
                 }],
+            [15, () => { if (this.config.face === 'padrao') this.config.face = 'grafite'; }],
         ];
         for (const [target, fn] of (steps as any)) {
             if (Number(this.config.look || 0) < target) {

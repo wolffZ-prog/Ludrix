@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.0.26 — 2026-11-16
+
+- Novo jogo de cores "Grafite", agora o padrão: cinza médio no escuro, cinza claro com cartões brancos no claro, destaque azul-aço (#6c9bd2). O "Padrão" preto/branco continua disponível em Ajustes › Aparência › Cores de fundo. Quem estava no Padrão passa para o Grafite nesta atualização.
+- Botões com volume: leve degradê vertical (claro em cima, escuro embaixo) no botão principal, nos secundários, nos seletores segmentados e nos chips ativos; ao passar o mouse clareia, ao clicar escurece.
+- Vidro fumê (antes "Vidro fosco"): nova barra "Transparência do vidro" (0–70 %) em Ajustes › Aparência, aplicada na hora. Acima de 50 % cartões, painéis e menus ficam sólidos e barras ganham desfoque, para o texto continuar legível. Windows 11 apenas.
+- Névoa de cor removida por completo (opção, arquivos e código).
+- Espaçamento revisto em toda a interface: chips de filtro ativos não encostam mais na barra de cima; cabeçalhos de grupo, grade de capas, cabeçalho de lista, painel lateral, página de detalhes (botões, abas, seções) e Ajustes (seções, linhas) ganharam respiro consistente.
+- Descrição do jogo em parágrafos separados em vez de um bloco contínuo.
+- Ajustes › Aparência: a linha "Temas instalados" tinha um vão vazio de 140 px acima do texto (linha em coluna herdava largura mínima como altura).
+
 ## 4.0.25 — 2026-11-13
 
 - Clique simples num jogo só seleciona (contorno na capa e barra inferior). Clique duplo abre a página de detalhes. No menu do botão direito, "Detalhes" abre o painel lateral e "Detalhes+" abre a página inteira.

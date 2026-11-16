@@ -610,7 +610,7 @@ class Backend {
         }
         return { game: pick };
     }
-    RESTART_KEYS: Record<string, string> = { frameless: 'Janela sem moldura', acrylic: 'Vidro fosco', tray_enabled: 'Ícone na bandeja', torrent_enabled: 'Suporte a torrent' };
+    RESTART_KEYS: Record<string, string> = { frameless: 'Janela sem moldura', acrylic: 'Vidro fumê', tray_enabled: 'Ícone na bandeja', torrent_enabled: 'Suporte a torrent' };
     safeMode = false;
     safeSaved: any = null;
     rolledBack: any = null;

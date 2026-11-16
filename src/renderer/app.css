@@ -195,7 +195,7 @@ body.compact .card .sub{display:none}
 .pill.ok{color:var(--green2);border-color:color-mix(in srgb,var(--green) 35%,transparent);background:color-mix(in srgb,var(--green) 10%,transparent)}
 .pill.ac{color:var(--accent2);border-color:color-mix(in srgb,var(--accent) 35%,transparent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
 .pill.warn{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 35%,transparent);background:color-mix(in srgb,var(--amber) 10%,transparent)}
-.desc{color:var(--muted);font-size:13.5px;line-height:1.65;white-space:pre-wrap;user-select:text;max-width:720px}
+.desc{color:var(--muted);font-size:13.5px;line-height:1.65;user-select:text;max-width:720px}
 .dtabs{margin:4px 0 0}.dtabs button .n{display:inline-block;min-width:16px;padding:0 5px;margin-left:4px;border-radius:8px;background:color-mix(in srgb,var(--accent) 22%,transparent);color:var(--text);font-size:10.5px;line-height:16px}
 .dpane{display:none}.dpane.on{display:block}
 .shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:14px;max-width:820px}

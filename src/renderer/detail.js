@@ -1,3 +1,4 @@
+function paras(t) { return String(t).split(/\n+/).map(x => x.trim()).filter(Boolean).map(x => `<p>${esc(x)}</p>`).join(''); }
 function renderDetail() {
   const d = S.det; if (!d) return; const key = d.key, job = S.jobs[key], m = d.meta || {};
   const isRom = key.startsWith('rom:'), isRecomp = d.kind === 'recomp', isLocal = d.kind === 'local', live = S.sessions && S.sessions[key];
@@ -69,7 +70,7 @@ function renderDetail() {
       ${srcs}
       ${dtabsHtml(d, m)}
       <div class="dpane ${(S.dtab || 'about') === 'about' ? 'on' : ''}" data-pane="about">
-      <div class="desc" style="margin-top:14px">${esc(m.summary || d.description || 'Sem descrição. Clique em "Buscar metadados".')}</div>
+      <div class="desc" style="margin-top:14px">${paras(m.summary || d.description || 'Sem descrição. Clique em "Buscar metadados".')}</div>
       <div class="dsec"><h3>INFORMAÇÕES</h3><div class="kv">${kv.map(([k, v]) => `<b>${k}</b><span>${['Wikipedia', 'GOG', 'Steam', 'Nome original', 'Capa', 'Link', 'Notas', 'Tamanho', 'Para você'].includes(k) ? v : esc(v)}</span>`).join('')}</div></div>
       </div>
       <div class="dpane ${S.dtab === 'files' ? 'on' : ''}" data-pane="files">${filesHtml(key, d, files)}</div>

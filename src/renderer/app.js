@@ -163,7 +163,7 @@ const I = {
 
 const mq = window.matchMedia('(prefers-color-scheme: light)');
 let currentTheme = 'dark';
-const DEFAULT_FACE = 'padrao';
+const DEFAULT_FACE = 'grafite';
 function faceInfo(id) { return (S.faces || []).find(f => f.id === id) || { id: id || DEFAULT_FACE, name: 'Ludrix', accent: '', layout: '' }; }
 function fileScheme() { const m = S.config.theme_mode || ''; return m === 'system' ? ((S.config.theme_schedule ? inLightWindow() : mq.matches) ? 'light' : 'dark') : m; }
 function applyTheme() {
@@ -340,7 +340,9 @@ function applyGlass() {
   if (S._glassLight !== want) { S._glassLight = want; api.post('/api/window', { cmd: 'scheme', light: want }); }
   if (!on) { for (const n of GLASS_VARS) { st.removeProperty('--' + n); st.removeProperty('--' + n + '-solid'); } return; }
   const cs = getComputedStyle(document.documentElement);
-  const A = light ? { bg: 64, panel: 72, 'logo-bg': 72 } : { bg: 66, panel: 74, 'logo-bg': 74 };
+  const t = Math.max(0, Math.min(70, Number(S.config.glass_alpha ?? 34))), bgA = 100 - t, pA = Math.min(100, bgA + 8), cA = Math.min(100, bgA + 18);
+  document.body.classList.toggle('acrdeep', t >= 50);
+  const A = { bg: bgA, panel: pA, 'logo-bg': pA, bg2: cA, card: cA, card2: cA };
   for (const n of GLASS_VARS) { const v = cs.getPropertyValue('--' + n).trim(); if (!v) continue; st.setProperty('--' + n + '-solid', v); if (n in A) st.setProperty('--' + n, `color-mix(in srgb, ${v} ${A[n]}%, transparent)`); else st.setProperty('--' + n, v); }
 }
 function bandMix(c, pct, base) {
@@ -2089,8 +2091,14 @@ function themesHtml(c) {
       ${cfgSel('theme', [['system', 'Sistema'], ['dark', 'Escuro'], ['light', 'Claro']], c.theme || 'system')}</div>
     ${(c.theme || 'system') === 'system' ? `<div class="frow"><div class="l"><b>Quando "Sistema"</b><span>Seguir o ${OSN()} troca junto com o modo claro/escuro dele; por horário usa as horas abaixo</span></div>
       ${cfgSel('theme_schedule', [[false, 'Seguir o ' + OSN()], [true, 'Por horário']], !!c.theme_schedule)}${c.theme_schedule ? `<span class="mut">claro das</span><input class="mi" style="width:70px" value="${esc(c.theme_light_from || '07:00')}" onchange="setCfg({theme_light_from:this.value})"><span class="mut">às</span><input class="mi" style="width:70px" value="${esc(c.theme_light_to || '19:00')}" onchange="setCfg({theme_light_to:this.value})">` : ''}</div>` : ''}
+    ${faceRowHtml(c)}
     ${themeListHtml(c)}
   </div>`;
+}
+function faceRowHtml(c) {
+  const cur = c.face || DEFAULT_FACE, light = document.documentElement.dataset.light === '1';
+  const card = f => { const sw = (f.swatch || {})[light ? 'light' : 'dark'] || ['#111', '#222']; return `<div class="thcard${cur === f.id ? ' on' : ''}" onclick="${cur === f.id ? '' : `pickFace(${jsq(f.id)})`}" title="${esc(f.description || '')}"><i class="thsw" style="${themeSwatch({ vars: { bg: sw[0], card: sw[1] }, accent: f.accent })}"></i><div class="tht"><b>${esc(f.name)}</b><small>${esc(f.description || '')}</small></div></div>`; };
+  return `<div class="frow" style="align-items:flex-start;flex-direction:column;gap:10px"><div class="l"><b>Cores de fundo</b><span>Vale para o claro e para o escuro</span></div><div class="thlist">${(S.faces || []).map(card).join('')}</div></div>`;
 }
 function themeListHtml(c) {
   const list = (S.themes || []).filter(t => t.id && t.id.startsWith('file:')), cur = c.theme || 'system', usingFile = cur.startsWith('file:');
@@ -2627,17 +2635,7 @@ function sessionCard(ev, g) {
 }
 function toastPlain(type, title, msg) { const t = document.createElement('div'); t.className = 'toast ' + type; t.innerHTML = `<div><b>${esc(title)}</b><span>${esc(msg || '')}</span></div><button class="x" title="Fechar">${I.x}</button>`; const box = $('#toasts'); box.appendChild(t); while (box.children.length > 5) box.firstElementChild.remove(); let left = 5000, tm, t0 = Date.now(); const go = () => { t0 = Date.now(); tm = setTimeout(() => { t.style.transition = '.3s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, left); }; t.onmouseenter = () => { clearTimeout(tm); left = Math.max(1500, left - (Date.now() - t0)); }; t.onmouseleave = go; t.onclick = () => { clearTimeout(tm); t.remove(); }; go(); }
 
-function applyFog() {
-  const main = document.querySelector('main'), app = $('#app'); if (!main || !app) return;
-  let f = $('#fog');
-  const v = Math.max(0, Math.min(100, Number(S.config.fog ?? 0)));
-  document.body.classList.toggle('fogon', !!v && !S.config.high_contrast);
-  if (!v || S.config.high_contrast) { if (f) f.remove(); return; }
-  if (!f) { f = document.createElement('div'); f.id = 'fog'; f.className = 'fog'; f.setAttribute('aria-hidden', 'true'); f.innerHTML = '<i></i><i></i>'; app.insertBefore(f, app.firstChild); }
-  f.style.setProperty('--fog', (v / 100).toFixed(2));
-}
 function applyAnim() {
-  applyFog();
   const mode = S.config.reduce_motion ? 'off' : (S.config.animations || 'full');
   if (document.documentElement.dataset.anim !== mode) document.documentElement.dataset.anim = mode;
   applyPlx();
