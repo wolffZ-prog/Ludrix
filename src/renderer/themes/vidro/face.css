@@ -1,0 +1,263 @@
+@font-face{font-family:"Inter";src:url(/ui/fonts/inter.woff2) format("woff2");font-weight:100 900;font-display:swap}
+:root{--r:12px}
+body[data-face=vidro]{--font-text:"Inter",system-ui,sans-serif;--font-disp:"Inter",system-ui,sans-serif;font-feature-settings:"cv11","ss01","tnum";--g:rgba(255,255,255,.07);--g2:rgba(255,255,255,.11);--gb:rgba(255,255,255,.14);--ghi:rgba(255,255,255,.1);--on:rgba(255,255,255,.16);--gs:rgba(53,54,59,.97);--veil:linear-gradient(180deg,rgba(37,38,43,.86),rgba(36,37,42,.92) 50%,rgba(34,35,40,.97));--pb:rgba(255,255,255,.18);--pbtn:#fff;--pbtn-tx:#111;--p-dim:color-mix(in srgb,var(--text) 10%,transparent);--p-ink:var(--text)}
+html[data-light="1"] body[data-face=vidro]{--g:rgba(255,255,255,.5);--g2:rgba(255,255,255,.66);--gb:rgba(255,255,255,.78);--ghi:rgba(255,255,255,.9);--on:rgba(255,255,255,.8);--gs:rgba(241,242,245,.95);--veil:linear-gradient(180deg,rgba(234,236,240,.78),rgba(234,236,240,.86) 50%,rgba(234,236,240,.94));--pb:rgba(21,23,28,.15);--pbtn:#15171c;--pbtn-tx:#fff}
+html body.bs.face[data-face=vidro]{--card:var(--g);--card2:var(--g2);--panel:var(--g);--line:var(--gb);--line2:var(--on)}
+html body.bs.face[data-face=vidro] *{font-family:var(--font-text)}
+html body.bs.face[data-face=vidro] .lbl,html body.bs.face[data-face=vidro] h1,html body.bs.face[data-face=vidro] h2,html body.bs.face[data-face=vidro] h3,html body.bs.face[data-face=vidro] h4{font-family:var(--font-text);letter-spacing:-.01em}
+
+/* fundo: arte do jogo em foco atrás de um véu grafite; nada de camadas sólidas por cima */
+html body.bs.face[data-face=vidro]{background:var(--bg)}
+html body.bs.face[data-face=vidro] #app,html body.bs.face[data-face=vidro] main,html body.bs.face[data-face=vidro] .titlebar,html body.bs.face[data-face=vidro] .rail{background:transparent}
+html body.bs.face[data-face=vidro] #fx{display:none}
+html body.bs.face[data-face=vidro] #backdrop{display:block;z-index:0;transition:opacity .9s}
+html body.bs.face[data-face=vidro] #backdrop .bl{inset:-60px;transform:scale(1.04);filter:blur(var(--bdblur,40px)) saturate(1.2)}
+html body.bs.face[data-face=vidro] #backdrop::after{background:var(--veil)}
+html body.bs.face[data-face=vidro] main.glass::before,html body.bs.face[data-face=vidro] .rail.glass::before{display:none}
+html body.bs.face[data-face=vidro] .rail{backdrop-filter:none;-webkit-backdrop-filter:none;border:0}
+
+/* barra do alto: uma pílula de abas, busca, uma pílula de ícones + janela */
+html body.bs.face[data-face=vidro][data-layout=top]{--toph:calc(60px * var(--scale))}
+html body.bs.face[data-face=vidro][data-layout=top] .rail{border-bottom:0;padding:16px 22px 0;gap:14px;height:var(--toph);overflow:visible;justify-content:space-between}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .brandrow{display:none}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .rgs{display:flex;align-items:center;height:44px;padding:5px;gap:6px;flex:none;border-radius:20px;background:var(--g);border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--ghi)}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .rg{background:transparent;border:0;box-shadow:none;padding:0;height:auto;gap:2px;margin:0}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .rg+.rg{margin:0 0 0 6px}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .rg{gap:6px}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .rsep{display:none}
+html body.bs.face[data-face=vidro][data-layout=top] .rb{height:34px;padding:0 18px;border-radius:17px;color:var(--muted);gap:9px;justify-content:center}
+html body.bs.face[data-face=vidro][data-layout=top] .rb:hover{background:var(--g);color:var(--text)}
+html body.bs.face[data-face=vidro][data-layout=top] .rb.on{background:var(--on);color:var(--text);box-shadow:inset 0 1px 0 var(--ghi)}
+html body.bs.face[data-face=vidro][data-layout=top] .rb.on::after{display:none}
+html body.bs.face[data-face=vidro][data-layout=top] .rb span{font-size:13px;font-weight:500}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .search{flex:0 1 320px;min-width:160px;margin:0 auto 0 6px}
+html body.bs.face[data-face=vidro] .rail .search input,html body.bs.face[data-face=vidro] .top .search input{height:44px;border-radius:22px;background:var(--g);border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--ghi);color:var(--text);padding:0 70px 0 40px;font-size:13px}
+html body.bs.face[data-face=vidro] .search input:focus{border-color:var(--line2);background:var(--g2);box-shadow:inset 0 1px 0 var(--ghi)}
+html body.bs.face[data-face=vidro] .search input::placeholder{color:var(--muted2)}
+html body.bs.face[data-face=vidro] .search>svg{left:15px;color:var(--muted2)}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .search kbd{display:inline-flex!important;right:12px;border:1px solid var(--gb);background:transparent;color:var(--muted2);font-size:11px;border-radius:6px;padding:1px 6px}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .sp{display:none}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .rbot{height:44px;padding:0 8px;border-radius:22px;background:var(--g);border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--ghi);gap:6px;margin:0;align-items:center;flex:none}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .rbot .bell,html body.bs.face[data-face=vidro][data-layout=top] .rail .rbot .rb{width:32px;height:32px;padding:0;border-radius:16px;color:var(--muted)}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .rbot .wctl{display:flex;align-items:center;align-self:center;gap:6px;margin:0 0 0 10px;padding-left:12px;border-left:1px solid var(--gb);height:30px}
+html body.bs.face.frameless[data-face=vidro][data-layout=top] .rail .wctl{margin:0 0 0 6px;align-self:center;height:30px}
+html body.bs.face.frameless[data-face=vidro][data-layout=top] .rail .wctl button{height:30px;width:30px}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .wctl button{width:30px;height:30px;border-radius:15px!important;color:var(--muted);display:grid;place-items:center;padding:0;margin:0}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .wctl button svg{display:block;width:10px;height:10px}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .wctl #wmax svg.r{display:none}
+html body.bs.face.maxed[data-face=vidro][data-layout=top] .rail .wctl #wmax svg.m{display:none}
+html body.bs.face.maxed[data-face=vidro][data-layout=top] .rail .wctl #wmax svg.r{display:block}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .rbot .bell:hover,html body.bs.face[data-face=vidro][data-layout=top] .rail .rbot .rb:hover,html body.bs.face[data-face=vidro][data-layout=top] .rail .wctl button:hover{background:var(--on);color:var(--text)}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .wctl button.x:hover{background:var(--red);color:#fff}
+html body.bs.face[data-face=vidro][data-layout=top] .rail .rbot .rb.on{background:var(--on);color:var(--text)}
+
+
+/* área de conteúdo */
+html body.bs.face[data-face=vidro] .top{padding:16px 22px 0}
+html body.bs.face[data-face=vidro] .view,html body.bs.face[data-face=vidro][data-layout=top] .view,html body.bs.face[data-face=vidro][data-layout=rail] .view{padding:16px 22px 0}
+html body.bs.face[data-face=vidro] #view:has(.libpanel){display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;padding:16px 12px 0 22px}
+html body.bs.face[data-face=vidro] #homeTop{flex:none}
+html body.bs.face[data-face=vidro] #view::-webkit-scrollbar{width:8px}
+html body.bs.face[data-face=vidro] #view::-webkit-scrollbar-thumb{background:transparent;border:2px solid transparent}
+html body.bs.face[data-face=vidro] #view:hover::-webkit-scrollbar-thumb{background:var(--gb);background-clip:padding-box}
+
+/* ===== barra do jogo atual (84 px): capa · título/meta/progresso · Depois · ações ===== */
+html body.bs.face[data-face=vidro] .nowg{flex:none;height:100px;margin:0 0 16px;border-radius:22px;padding:12px 14px 12px 12px;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:20px;align-items:center;background:var(--g);border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--ghi),0 16px 40px -20px rgba(0,0,0,.45)}
+html body.bs.face[data-face=vidro] .nowg .ncov{width:57px;height:76px;border-radius:12px;object-fit:cover;display:block;background:var(--g2);cursor:pointer}
+html body.bs.face[data-face=vidro] .nowg .nt{min-width:0;align-self:center}
+html body.bs.face[data-face=vidro] .nowg .nt b{display:block;font-size:16px;font-weight:650;letter-spacing:-.015em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+html body.bs.face[data-face=vidro] .nowg .nt small{display:block;color:var(--muted);margin-top:4px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body.bs.face[data-face=vidro] .nowg .pr{margin-top:10px;display:flex;align-items:center;gap:12px;font-size:12px;color:var(--muted);height:14px}
+html body.bs.face[data-face=vidro] .nowg .pr i{width:240px;max-width:40vw;height:4px;border-radius:2px;background:var(--pb);display:block;overflow:hidden}
+html body.bs.face[data-face=vidro] .nowg .pr i::after{content:"";display:block;height:100%;width:var(--v,0%);background:var(--text);border-radius:2px}
+html body.bs.face[data-face=vidro] .nowg .pr .lbl{font-size:11.5px;color:var(--muted2);font-weight:500}
+html body.bs.face[data-face=vidro] .nowg .nnext{display:flex;gap:8px;align-items:center;padding-right:8px}
+html body.bs.face[data-face=vidro] .nowg .nnext img{width:36px;height:48px;border-radius:7px;object-fit:cover;opacity:.9;cursor:pointer;transition:transform .15s}
+html body.bs.face[data-face=vidro] .nowg .nnext img:hover{transform:translateY(-2px);opacity:1}
+html body.bs.face[data-face=vidro] .nowg .nnext small{color:var(--muted2);margin-right:6px;font-size:12px}
+html body.bs.face[data-face=vidro] .nowg .nacts{display:flex;gap:8px;padding-right:0}
+html body.bs.face[data-face=vidro] .nowg .btn{height:42px;padding:0 20px;border-radius:21px;display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:13px;color:var(--text);background:var(--g);border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--ghi)}
+html body.bs.face[data-face=vidro] .nowg .btn:hover{background:var(--g2)}
+html body.bs.face[data-face=vidro] .nowg .btn.ic{width:42px;padding:0;justify-content:center}
+html body.bs.face[data-face=vidro] .nowg .btn.p{background:var(--pbtn);border-color:var(--pbtn);color:var(--pbtn-tx);box-shadow:none}
+html body.bs.face[data-face=vidro] .nowg .btn.p svg{color:var(--pbtn-tx);fill:var(--pbtn-tx)}
+html body.bs.face[data-face=vidro] .nowg .btn svg{width:16px;height:16px}
+html body.bs.face[data-face=vidro] .nowg .btn.ic svg{width:18px;height:18px}
+html body.bs.face[data-face=vidro] #homeTop .now{background:var(--g);border:1px solid var(--gb);border-radius:16px;margin-bottom:12px}
+
+/* ===== painel da biblioteca ===== */
+html body.bs.face[data-face=vidro] .libpanel{flex:none;min-height:calc(100vh - var(--tb,0px) - var(--toph,0px) - 16px);overflow:visible;background:var(--g);border:1px solid var(--gb);border-bottom:0;box-shadow:inset 0 1px 0 var(--ghi);border-radius:22px 22px 0 0;padding:0 20px 28px}
+html body.bs.face[data-face=vidro] .libwrap:has(.libpanel){flex:1;min-height:0;align-items:stretch;gap:0 12px}
+html body.bs.face[data-face=vidro] .libwrap .libmain{display:flex;flex-direction:column;min-height:0}
+html body.bs.face[data-face=vidro] .libwrap .gpanel,html body.bs.face[data-face=vidro] .libwrap .fpanel{position:static;height:auto;max-height:none;margin-top:0;align-self:stretch;border-bottom:0;border-radius:20px 20px 0 0;overflow:auto;background:var(--g);border:1px solid var(--gb)}
+html body.bs.face[data-face=vidro] .gpanel .glinks{background:var(--gs)}
+html body.bs.face[data-face=vidro] .libpanel .h1{position:sticky;top:0;z-index:5;margin:0 -20px 16px;padding:16px 20px 16px;background:var(--gs);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);gap:10px;border:0;border-radius:22px 22px 0 0;box-shadow:none;min-height:0}
+html body.bs.face[data-face=vidro] .libpanel .h1 h2,html body.bs.face[data-face=vidro] .libpanel .h1 .cnt{display:inline-flex}
+html body.bs.face[data-face=vidro] .h1 h2{font-size:16px;font-weight:650;letter-spacing:-.01em;margin-right:6px;order:-2}
+html body.bs.face[data-face=vidro] .h1 .cnt{order:-1;color:var(--muted2);font-weight:500;font-size:12.5px;margin-right:14px}
+html body.bs.face[data-face=vidro] .libpanel .ggh{position:static;background:transparent;padding:14px 0 8px}
+html body.bs.face[data-face=vidro] .libpanel .h1>.btn.xs,html body.bs.face[data-face=vidro] .libpanel .h1 .filt>.btn,html body.bs.face[data-face=vidro] .libpanel .h1 #sort,html body.bs.face[data-face=vidro] .libpanel .h1 .dd{height:32px;padding:0 14px;border-radius:16px;background:transparent;border:1px solid transparent;box-shadow:none;color:var(--muted);font-size:12.5px;font-weight:500;gap:6px}
+html body.bs.face[data-face=vidro] .libpanel .h1>.btn.xs:hover,html body.bs.face[data-face=vidro] .libpanel .h1 .filt>.btn:hover,html body.bs.face[data-face=vidro] .libpanel .h1 .dd:hover{background:var(--g);color:var(--text)}
+html body.bs.face[data-face=vidro] .libpanel .h1>.btn.xs.ic{width:32px;padding:0;border-radius:16px}
+html body.bs.face[data-face=vidro] .libpanel .h1>.btn.xs.addbtn{background:var(--pbtn);border-color:var(--pbtn);color:var(--pbtn-tx);font-weight:600}
+html body.bs.face[data-face=vidro] .libpanel .h1>.btn.xs.addbtn:hover{filter:brightness(.92)}
+html body.bs.face[data-face=vidro] .libpanel::-webkit-scrollbar{width:8px}
+html body.bs.face[data-face=vidro] .libpanel::-webkit-scrollbar-thumb{background:transparent;border:2px solid transparent}
+html body.bs.face[data-face=vidro] .libpanel:hover::-webkit-scrollbar-thumb{background:var(--gb);background-clip:padding-box}
+
+/* fileira "Continuar" (cartões horizontais de vidro) */
+html body.bs.face[data-face=vidro] .strips.vrow{display:block;margin:4px 0 24px;flex:none;gap:0}
+html body.bs.face[data-face=vidro] .vrow .rh{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:0 2px}
+html body.bs.face[data-face=vidro] .vrow .rh h3{font-size:13.5px;font-weight:650;margin:0}
+html body.bs.face[data-face=vidro] .vrow .rh small{color:var(--muted2);font-size:12px}
+html body.bs.face[data-face=vidro] .vrow .rh a{margin-left:auto;color:var(--muted);font-weight:500;font-size:12.5px;display:inline-flex;align-items:center;gap:2px;text-decoration:none}
+html body.bs.face[data-face=vidro] .vrow .rh a svg{width:12px;height:12px;transform:rotate(-90deg)}
+html body.bs.face[data-face=vidro] .vrow .rh a:hover{color:var(--text)}
+html body.bs.face[data-face=vidro] .vrow .sr{display:flex;flex-wrap:wrap;gap:14px;max-height:66px;overflow:hidden;padding:0}
+html body.bs.face[data-face=vidro] .vrow .si{flex:1 1 228px;display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px;align-items:center;height:66px;border-radius:16px;padding:0 14px 0 10px;min-width:0;width:auto;background:var(--g);border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--ghi);cursor:default}
+html body.bs.face[data-face=vidro] .vrow .si:hover{background:var(--g2)}
+html body.bs.face[data-face=vidro] .vrow .si img{width:46px;height:46px;border-radius:10px;object-fit:cover}
+html body.bs.face[data-face=vidro] .vrow .si>div{min-width:0}
+html body.bs.face[data-face=vidro] .vrow .si b{display:block;font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body.bs.face[data-face=vidro] .vrow .si small{display:block;color:var(--muted2);font-size:11.5px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ===== outras telas: um painel de vidro por tela, cabeçalho (título + abas) fixo ===== */
+html body.bs.face[data-face=vidro] .vpanel{display:flex;flex-direction:column;min-height:calc(100vh - var(--tb,0px) - var(--toph,0px) - 16px);border-radius:22px 22px 0 0;background:var(--g);border:1px solid var(--gb);border-bottom:0;box-shadow:inset 0 1px 0 var(--ghi);padding:0 20px 28px}
+html body.bs.face[data-face=vidro] .vhead{position:sticky;top:0;z-index:5;margin:0 -20px 20px;padding:16px 20px 0;background:var(--gs);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:20px 20px 0 0}
+html body.bs.face[data-face=vidro] .vhead .h1{position:static;margin:0;padding:0 0 14px;background:transparent;border:0;border-radius:0;box-shadow:none;backdrop-filter:none;flex-wrap:wrap;gap:10px 12px;min-height:0;align-items:center}
+html body.bs.face[data-face=vidro] .vhead .h1 h2{font-size:16px;font-weight:650;letter-spacing:-.01em;margin:0 6px 0 0;display:inline-flex}
+html body.bs.face[data-face=vidro] .vhead .h1>span:not(.sp):not(.cnt){color:var(--muted2);font-size:12.5px;font-weight:500}
+html body.bs.face[data-face=vidro] .vhead .h1 .cnt{display:inline-flex}
+html body.bs.face[data-face=vidro] .vhead .h1>.btn.xs,html body.bs.face[data-face=vidro] .vhead .h1 .acts>.btn{height:34px;padding:0 16px;border-radius:17px;background:var(--g);border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--ghi);color:var(--text);font-size:12.5px;font-weight:600;gap:6px}
+html body.bs.face[data-face=vidro] .vhead .h1>.btn.xs:hover,html body.bs.face[data-face=vidro] .vhead .h1 .acts>.btn:hover{background:var(--g2)}
+html body.bs.face[data-face=vidro] .vhead .h1>.btn.p,html body.bs.face[data-face=vidro] .vhead .h1 .acts>.btn.p{background:var(--pbtn);border-color:var(--pbtn);color:var(--pbtn-tx);box-shadow:none}
+html body.bs.face[data-face=vidro] .vhead .h1 .acts>.btn.p svg{color:var(--pbtn-tx)}
+html body.bs.face[data-face=vidro] .vhead .h1>.btn.ic,html body.bs.face[data-face=vidro] .vhead .h1 .acts>.btn.ic{width:34px;padding:0}
+html body.bs.face[data-face=vidro] .vhead .h1 .acts{gap:10px;margin-left:auto}
+html body.bs.face[data-face=vidro] .vhead .tabs{margin:0;padding:0 0 16px;gap:6px;border:0;border-radius:0;background:transparent;box-shadow:none;width:auto;flex-wrap:wrap;align-self:auto}
+html body.bs.face[data-face=vidro] .vhead .tabs button{height:32px;padding:0 14px;border-radius:16px;font-size:12.5px;font-weight:500;color:var(--muted);border:1px solid transparent}
+html body.bs.face[data-face=vidro] .vhead .tabs button:hover{background:var(--g);color:var(--text)}
+html body.bs.face[data-face=vidro] .vhead .tabs button.on{background:var(--on);color:var(--text);border-color:var(--gb);box-shadow:none}
+html body.bs.face[data-face=vidro] .vhead .tabs button .n{background:transparent;color:var(--muted2);font-weight:500;padding:0;margin-left:2px}
+html body.bs.face[data-face=vidro] .vhead .tabs+.h1{padding-top:0}
+html body.bs.face[data-face=vidro] #view .vhead .h1.seth{margin:0;padding:0 0 16px;align-items:center}
+html body.bs.face[data-face=vidro] #view .vhead .h1.seth h2{font-size:15px;letter-spacing:-.01em}
+html body.bs.face[data-face=vidro] #view .vhead .h1.seth .path,html body.bs.face[data-face=vidro] #view .vhead .h1.seth small{font-size:12px;color:var(--muted2)}
+html body.bs.face[data-face=vidro] .libpanel .vhead{margin-bottom:0;padding-top:12px}
+html body.bs.face[data-face=vidro] .libpanel .vhead .h1{position:static;margin:0;padding:0 0 12px;background:transparent;backdrop-filter:none;border-radius:0}
+html body.bs.face[data-face=vidro] .vbody{flex:1}
+html body.bs.face[data-face=vidro] .vbody>h3,html body.bs.face[data-face=vidro] .vbody .sect>h3,html body.bs.face[data-face=vidro] .vbody .gh h3{font-size:13.5px;font-weight:650;margin:0}
+html body.bs.face[data-face=vidro] .vbody .gh{display:flex;align-items:center;gap:8px;margin:24px 0 14px;padding:0 2px;border:0}
+html body.bs.face[data-face=vidro] .vbody .gh h3 em{font-style:normal;color:var(--muted2);font-weight:500;margin-left:6px;font-size:12px}
+html body.bs.face[data-face=vidro] .vbody .gh>span{color:var(--muted2);font-size:12px}
+html body.bs.face[data-face=vidro] .vbody>p,html body.bs.face[data-face=vidro] .vbody .hint{color:var(--muted);font-size:12.5px;line-height:1.8;background:transparent;border:0;padding:0 2px;margin:0 0 18px}
+html body.bs.face[data-face=vidro] .vbody .hint .code{background:var(--g2);border:1px solid var(--gb);border-radius:6px;padding:1px 6px}
+html body.bs.face[data-face=vidro] .tabs button{height:32px;padding:0 14px;border-radius:16px;font-size:13px;font-weight:500;color:var(--muted)}
+html body.bs.face[data-face=vidro] .tabs button:hover{background:var(--g);color:var(--text)}
+html body.bs.face[data-face=vidro] .tabs button.on{background:var(--on);color:var(--text);box-shadow:inset 0 1px 0 var(--ghi)}
+html body.bs.face[data-face=vidro] .tabs button.on::after{display:none}
+html body.bs.face[data-face=vidro] .steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0 0 20px}
+html body.bs.face[data-face=vidro] .steps>div{background:var(--g);border:1px solid var(--gb);border-radius:16px;padding:16px 18px;box-shadow:inset 0 1px 0 var(--ghi)}
+html body.bs.face[data-face=vidro] .steps i{background:var(--pbtn);color:var(--pbtn-tx);border:0}
+
+/* ===== Emuladores: cartões de console em vidro ===== */
+html body.bs.face[data-face=vidro] .tiles{grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+html body.bs.face[data-face=vidro] .vtile{display:flex;flex-direction:column;gap:16px;padding:18px 18px 16px;border-radius:18px;background:var(--g);border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--ghi);min-width:0;transition:background .15s}
+html body.bs.face[data-face=vidro] .vtile:hover{background:var(--g2)}
+html body.bs.face[data-face=vidro] .vtile .vt-top{display:flex;align-items:center;gap:14px;min-width:0}
+html body.bs.face[data-face=vidro] .vtile .sysic{width:44px;height:44px;border-radius:12px;margin:0;background:var(--g2);border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--ghi)}
+html body.bs.face[data-face=vidro] .vtile .sysic svg{width:30px;height:22px}
+html body.bs.face[data-face=vidro] .vtile .vt-t{flex:1;min-width:0}
+html body.bs.face[data-face=vidro] .vtile .vt-t b{display:block;font-size:14px;font-weight:650;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body.bs.face[data-face=vidro] .vtile .vt-t small{display:block;color:var(--muted2);font-size:12px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body.bs.face[data-face=vidro] .vtile .vt-t small a.warnlnk{color:var(--amber)}
+html body.bs.face[data-face=vidro] .vchip{flex:none;height:26px;padding:0 11px;border-radius:13px;display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;letter-spacing:.01em;color:var(--muted);border:1px solid var(--gb);background:transparent}
+html body.bs.face[data-face=vidro] .vchip.ok{background:var(--pbtn);color:var(--pbtn-tx);border-color:transparent}
+html body.bs.face[data-face=vidro] .vchip.warn{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 45%,transparent)}
+html body.bs.face[data-face=vidro] .vtile .vt-acts{display:flex;align-items:center;gap:8px}
+html body.bs.face[data-face=vidro] .vtile .vt-acts .btn{height:36px;padding:0 16px;border-radius:18px;font-size:12.5px;font-weight:600;gap:6px;background:var(--g);border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--ghi);color:var(--text)}
+html body.bs.face[data-face=vidro] .vtile .vt-acts .btn:hover{background:var(--on)}
+html body.bs.face[data-face=vidro] .vtile .vt-acts .btn.p{background:var(--pbtn);border-color:var(--pbtn);color:var(--pbtn-tx);box-shadow:none}
+html body.bs.face[data-face=vidro] .vtile .vt-acts .btn.p svg{color:var(--pbtn-tx)}
+html body.bs.face[data-face=vidro] .vtile .vt-acts .btn.ic{width:36px;padding:0;justify-content:center}
+html body.bs.face[data-face=vidro] .vtile .vt-acts .btn svg{width:15px;height:15px}
+html body.bs.face[data-face=vidro] .vtile .vt-acts .prog{flex:1}
+
+/* ===== chips, botões, segmentos ===== */
+html body.bs.face[data-face=vidro] .chip,html body.bs.face[data-face=vidro] .qchips .chip,html body.bs.face[data-face=vidro] .h1 .qchips .chip,html body.bs.face[data-face=vidro] .h1 .chips .chip{height:32px;padding:0 14px;border-radius:16px;border:1px solid transparent;background:transparent;color:var(--muted);font-weight:500;font-size:12.5px;gap:6px}
+html body.bs.face[data-face=vidro] .chip:hover{background:var(--g);color:var(--text)}
+html body.bs.face[data-face=vidro] .chip.on,html body.bs.face[data-face=vidro] .qchips .chip.on,html body.bs.face[data-face=vidro] .h1 .qchips .chip.on,html body.bs.face[data-face=vidro] .h1 .chips .chip.on{background:var(--on);border-color:var(--gb);color:var(--text);box-shadow:none}
+html body.bs.face[data-face=vidro] .chip .n{background:transparent;color:var(--muted2);padding:0;font-weight:500}
+html body.bs.face[data-face=vidro] .h1 .qchips{gap:4px}
+html body.bs.face[data-face=vidro] .btn{border-radius:999px}
+html body.bs.face[data-face=vidro] .btn.p,html body.bs.face[data-face=vidro] .btn.g,html body.bs.face[data-face=vidro] .h1 .btn.xs.p{background:var(--pbtn);background-image:none;border-color:var(--pbtn);color:var(--pbtn-tx);box-shadow:none}
+html body.bs.face[data-face=vidro] .btn.p:hover,html body.bs.face[data-face=vidro] .btn.g:hover{filter:brightness(.92)}
+html body.bs.face[data-face=vidro] .btn.p svg,html body.bs.face[data-face=vidro] .btn.g svg{color:var(--pbtn-tx)}
+html body.bs.face[data-face=vidro] .btn.s,html body.bs.face[data-face=vidro] .h1 .btn.xs,html body.bs.face[data-face=vidro] .h1 .filt>.btn,html body.bs.face[data-face=vidro] .h1 #sort,html body.bs.face[data-face=vidro] .h1 .dd,html body.bs.face[data-face=vidro] .h1 .acts .btn{background:var(--g);background-image:none;border:1px solid var(--gb);box-shadow:inset 0 1px 0 var(--ghi);color:var(--text)}
+html body.bs.face[data-face=vidro] .btn.s:hover,html body.bs.face[data-face=vidro] .h1 .btn.xs:hover{background:var(--g2)}
+html body.bs.face[data-face=vidro] .h1 .btn.xs,html body.bs.face[data-face=vidro] .h1 .filt>.btn,html body.bs.face[data-face=vidro] .h1 #sort,html body.bs.face[data-face=vidro] .h1 .dd,html body.bs.face[data-face=vidro] .h1 .acts .btn{height:32px;padding:0 14px;border-radius:16px;font-size:12.5px;font-weight:500}
+html body.bs.face[data-face=vidro] .h1 .btn.xs.ic{width:32px;padding:0}
+html body.bs.face[data-face=vidro] .h1 .acts{gap:8px}
+html body.bs.face[data-face=vidro] .seg{padding:3px;border-radius:14px;border:1px solid var(--gb);background:transparent;gap:2px}
+html body.bs.face[data-face=vidro] .seg button{background:transparent;background-image:none;border:0;border-radius:11px;color:var(--muted2);height:22px;min-width:30px}
+html body.bs.face[data-face=vidro] .seg button.on{background:var(--on);background-image:none;color:var(--text);box-shadow:none}
+
+/* ===== capas ===== */
+html body.bs.face[data-face=vidro] .grid{gap:22px 16px}
+html body.bs.face[data-face=vidro] .card{background:transparent;border:0;padding:0}
+html body.bs.face[data-face=vidro] .card .cov{border-radius:10px;border:0;outline:0;box-shadow:inset 0 1px 0 var(--ghi),0 10px 24px -14px rgba(0,0,0,.6);transition:outline-color .15s}
+html body.bs.face[data-face=vidro] .card:hover .cov{outline:2px solid var(--gb);outline-offset:2px}
+html body.bs.face[data-face=vidro] .card.sel .cov,html body.bs.face[data-face=vidro] .card.gp-focus .cov{outline:2px solid var(--text);outline-offset:2px}
+html body.bs.face[data-face=vidro] .card h4{padding:9px 0 0;font-size:12.5px;font-weight:600;line-height:1.3}
+html body.bs.face[data-face=vidro] .card .sub,html body.bs.face[data-face=vidro] .card .sub.ci{font-size:11.5px;color:var(--muted2);padding:2px 0 0}
+html body.bs.face[data-face=vidro] .card .sub.ci+.sub.ci{display:none}
+html body.bs.face[data-face=vidro] .card .rib,html body.bs.face[data-face=vidro] .card .badge,html body.bs.face[data-face=vidro] .card .live{top:6px;left:6px;height:20px;padding:0 7px;border-radius:10px;font-size:10.5px;font-weight:600;letter-spacing:.02em;text-transform:none;background:rgba(0,0,0,.55);color:#fff;border:1px solid rgba(255,255,255,.18);display:inline-flex;align-items:center;gap:4px}
+html body.bs.face[data-face=vidro] .card .rib{top:6px;bottom:auto;left:6px;line-height:1;box-shadow:none}
+html body.bs.face[data-face=vidro] .card .rib.today{background:#fff;color:#111;border-color:transparent}
+html body.bs.face[data-face=vidro] .card .ptb{display:none}
+html body.bs.face[data-face=vidro] .grid.mural .card:hover .ptb{display:inline-flex;opacity:1}
+html body.bs.face[data-face=vidro] .grid.lst .card{border-radius:12px}
+html body.bs.face[data-face=vidro] .grid.lst .card:hover,html body.bs.face[data-face=vidro] .grid.lst .card.sel{background:var(--g)}
+html body.bs.face[data-face=vidro] .azbar{display:none}
+
+/* ===== ajustes, listas, cartões genéricos ===== */
+html body.bs.face[data-face=vidro] .updcard,html body.bs.face[data-face=vidro] .stat,html body.bs.face[data-face=vidro] .kcol,html body.bs.face[data-face=vidro] .reqcol,html body.bs.face[data-face=vidro] .empty,html body.bs.face[data-face=vidro] .frow,html body.bs.face[data-face=vidro] .sec>.cache,html body.bs.face[data-face=vidro] .sec>.themes,html body.bs.face[data-face=vidro] .sec>.thlist,html body.bs.face[data-face=vidro] .sec>.hw,html body.bs.face[data-face=vidro] .sec>.mchk,html body.bs.face[data-face=vidro] .sec>.dirs,html body.bs.face[data-face=vidro] .sec>.radio{background:var(--g);border-color:var(--gb)}
+html body.bs.face[data-face=vidro] .empty{border-radius:16px;box-shadow:inset 0 1px 0 var(--ghi)}
+html body.bs.face[data-face=vidro] .sec h3,html body.bs.face[data-face=vidro] .settings .sec h3{font-size:13.5px;font-weight:650}
+html body.bs.face[data-face=vidro] .stabs button.on,html body.bs.face[data-face=vidro] .stabs button:hover{background:var(--on)}
+html body.bs.face[data-face=vidro] .stabs button.on svg{color:var(--text)}
+html body.bs.face[data-face=vidro] .sw{background:var(--pb)}
+html body.bs.face[data-face=vidro] .sw.on{background:var(--pbtn);border-color:var(--pbtn)}
+html body.bs.face[data-face=vidro] .sw.on::after{background:var(--pbtn-tx)}
+html body.bs.face[data-face=vidro] select,html body.bs.face[data-face=vidro] input[type=text],html body.bs.face[data-face=vidro] input[type=number],html body.bs.face[data-face=vidro] .inp{background:var(--g);border:1px solid var(--gb);border-radius:10px;color:var(--text)}
+html body.bs.face[data-face=vidro] .track{background:var(--pb);height:4px;border-radius:2px}
+html body.bs.face[data-face=vidro] .track i{background:var(--text);border-radius:2px}
+html body.bs.face[data-face=vidro] .dtabs .dtab.on,html body.bs.face[data-face=vidro] .tabs .tab.on{color:var(--text);border-bottom-color:var(--text)}
+html body.bs.face[data-face=vidro] a,html body.bs.face[data-face=vidro] .lnk{color:var(--text)}
+
+/* ===== rodapé, detalhes, menus ===== */
+html body.bs.face[data-face=vidro] .status{background:transparent;border-top:0;height:30px;padding:0 22px;font-size:11.5px;color:var(--muted2)}
+html body.bs.face[data-face=vidro] .status:not(:has(.sdot.busy)){display:none}
+html body.bs.face[data-face=vidro]:has(.detail.on) .status{background:var(--gs);border-top:1px solid var(--gb)}
+html body.bs.face[data-face=vidro] .detail{background:color-mix(in srgb,var(--bg) 70%,transparent)}
+html body.bs.face[data-face=vidro]:has(.detail.on:not(.bar)) #view{visibility:hidden}
+html body.bs.face[data-face=vidro] .ctx,html body.bs.face[data-face=vidro] .bellpop,html body.bs.face[data-face=vidro] .helppop,html body.bs.face[data-face=vidro] .modal .box,html body.bs.face[data-face=vidro] .filt .pop,html body.bs.face[data-face=vidro] .pal{background:var(--gs);border:1px solid var(--gb);border-radius:16px;box-shadow:inset 0 1px 0 var(--ghi),0 24px 60px -24px rgba(0,0,0,.6);backdrop-filter:blur(24px) saturate(1.3);-webkit-backdrop-filter:blur(24px) saturate(1.3)}
+html body.bs.face[data-face=vidro] ::-webkit-scrollbar{width:10px}
+html body.bs.face[data-face=vidro] ::-webkit-scrollbar-thumb{background:var(--gb);border:3px solid transparent;background-clip:padding-box;border-radius:5px}
+html body.bs.face[data-face=vidro] ::-webkit-scrollbar-thumb:hover{background:var(--on);background-clip:padding-box}
+@media (max-width:1120px){html body.bs.face[data-face=vidro][data-layout=top] .rail .rg+.rg .rb:not(.on) span{display:none!important}html body.bs.face[data-face=vidro][data-layout=top] .rail .rg+.rg .rb:not(.on){width:34px;padding:0;justify-content:center}}
+@media (max-width:1060px){html body.bs.face[data-face=vidro] .nowg .nnext{display:none}html body.bs.face[data-face=vidro] .nowg .btn:not(.p):not(.ic) span{display:none}}
+
+html body.bs.face[data-face=vidro] .ctx,html body.bs.face[data-face=vidro] .ctx.on{border-radius:14px;padding:6px}
+
+html body.bs.face[data-face=vidro] .vbody .hint{max-width:110ch}
+html body.bs.face[data-face=vidro] .vbody .hint .code{white-space:nowrap}
+html body.bs.face[data-face=vidro] .ctx .ci,html body.bs.face[data-face=vidro] .ctx>div[onclick]{min-height:34px}
+/* detalhes: mais respiro no topo e nas laterais */
+html body.bs.face[data-face=vidro] .dclose{top:calc(var(--tb,0px) + var(--toph,0px) + 22px);left:calc(var(--side) + 40px);height:34px;padding:0 14px 0 10px;border-radius:17px;background:var(--g);border:1px solid var(--gb);color:var(--text);font-weight:600;gap:6px}
+html body.bs.face[data-face=vidro] .dhero{padding-top:28px}
+html body.bs.face[data-face=vidro] .dhero .dcov{margin-left:40px}
+html body.bs.face[data-face=vidro] .dhero .dhead{padding-top:26px;padding-right:40px;gap:16px}
+html body.bs.face[data-face=vidro] .dmain{margin:40px 40px 0}
+html body.bs.face[data-face=vidro] .dtabs,html body.bs.face[data-face=vidro] .dmain .tabs{margin-bottom:22px}
+

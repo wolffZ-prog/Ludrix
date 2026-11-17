@@ -163,7 +163,7 @@ const I = {
 
 const mq = window.matchMedia('(prefers-color-scheme: light)');
 let currentTheme = 'dark';
-const DEFAULT_FACE = 'grafite';
+const DEFAULT_FACE = 'vidro';
 function faceInfo(id) { return (S.faces || []).find(f => f.id === id) || { id: id || DEFAULT_FACE, name: 'Ludrix', accent: '', layout: '' }; }
 function fileScheme() { const m = S.config.theme_mode || ''; return m === 'system' ? ((S.config.theme_schedule ? inLightWindow() : mq.matches) ? 'light' : 'dark') : m; }
 function applyTheme() {
@@ -365,7 +365,7 @@ function applyChrome() {
 let rzOn = false; document.querySelectorAll('.rz').forEach(el => el.addEventListener('mousedown', e => { if (e.button !== 0) return; e.preventDefault(); rzOn = true; api.post('/api/window', { cmd: 'resize', dir: el.dataset.rz }); }));
 const rzEnd = () => { if (!rzOn) return; rzOn = false; api.post('/api/window', { cmd: 'resize_end' }); };
 window.addEventListener('mouseup', rzEnd, true); window.addEventListener('blur', rzEnd); document.addEventListener('visibilitychange', rzEnd); window.addEventListener('pointerup', rzEnd, true); window.addEventListener('mousemove', e => { if (rzOn && !(e.buttons & 1)) rzEnd(); }, true);
-function placeWctl(lay) { const w = $('#wctl'); if (!w) return; const host = lay === 'top' ? $('#rail') : lay === 'rail' ? document.querySelector('header.top') : document.querySelector('main'); if (!host) return; if (lay === 'top' || lay === 'rail') { if (w.parentElement !== host) host.appendChild(w); } else if (host.firstElementChild !== w) host.prepend(w); }
+function placeWctl(lay) { const w = $('#wctl'); if (!w) return; const host = lay === 'top' ? ($('#railBot') || $('#rail')) : lay === 'rail' ? document.querySelector('header.top') : document.querySelector('main'); if (!host) return; if (lay === 'top' || lay === 'rail') { if (w.parentElement !== host) host.appendChild(w); } else if (host.firstElementChild !== w) host.prepend(w); }
 function winState(ev) { if (ev && ev.max !== undefined) document.body.classList.toggle('maxed', !!ev.max); }
 api.post('/api/window', { cmd: 'state' }).then(winState).catch(() => { });
 let ONLINE = true;
@@ -641,9 +641,9 @@ function setView(v) {
   if (v === S.view && !S.current && !$('#modal').classList.contains('on')) { $('#view').scrollTop = 0; return; }
   if (S._metaDirty && ['home', 'store'].includes(v)) { S._metaDirty = false; api.get('/api/catalog').then(d => { if (d && !d.loading) { setGames(d.games || []); if (['home', 'store'].includes(S.view)) renderLibrary(); if (S.view === 'home') refreshHome(); } }); }
   S.page = 1;
-  if (v !== 'home') gameFocus(null);
   if (['home', 'store'].includes(v) && v !== S.view) { S.sort = sortForView(v); S.sortRev = false; }
   S.view = v; closeDetail();
+  if (v !== 'home') gameFocus(null);
   document.querySelectorAll('.rb').forEach(b => b.classList.toggle('on', b.dataset.view === v));
   $('#view').scrollTop = 0; guideDismiss();
   renderView();
@@ -800,7 +800,8 @@ ${filterBtn()}
   else if (!list.length && noSrc && !S.q && !filtersActive()) h += `${emptyHtml('sources', S.repos.length ? 'Nenhuma fonte ligada' : 'Nenhuma fonte adicionada', `A Store mostra o que as suas fontes de jogos de PC oferecem${S.repos.some(r => r.enabled && r.kind === 'rom') ? ' — as fontes de ROM ficam na aba <b>Emuladores</b>' : ''}. ${S.repos.length ? 'Ligue uma em' : 'Adicione uma em'} <b>Fontes</b>: site de download, coleção do archive.org, GitHub ou lista .json.`, [['Abrir Fontes', "S.tab.store='sources';renderView()", 1], ['Adicionar jogo que já tenho', 'addLocal()']])}`;
   else if (!list.length) h += `${S.view === 'home' ? (S.q || filtersActive() ? (S.flt.flags.has('fav') && !S.q && S.flt.flags.size === 1 ? emptyHtml('stars', 'Nenhum favorito ainda', 'Clique na estrela de um jogo para ele aparecer aqui.', [['Ver todos', 'clearFlt()', 1]]) : emptyHtml(I.search, 'Nenhum jogo com esse filtro', /\b(dev|ano|gen|sis|origem|src):/.test(S.q) ? 'Prefixos aceitos: dev: (desenvolvedora), ano: (ano ou década, ex. 2010s), gen: (gênero), sis: (sistema), origem: (Steam, Epic, ROM…).' : 'Tente outro termo ou limpe os filtros.', [['Limpar busca e filtros', 'clearSearch();clearFlt()', 1]])) : emptyHtml(I.home, 'Sua biblioteca está vazia', 'Baixe algo na Store ou adicione um jogo que você já tem — um .exe, um atalho ou uma ROM.', [['Abrir Store', "setView('store')", 1], ['Adicionar jogo', 'addLocal()'], ['Importar de outro launcher', 'importWizard()']])) : emptyHtml(I.search, 'Nenhum resultado', 'Tente outro termo ou categoria.', [['Limpar busca e filtros', 'clearSearch();clearFlt()', 1]])}`;
   if (S.view === 'store' && list.length && q.length >= 3 && S.repos.some(r => r.enabled && /^site-/.test(r.id)) && !S._siteQ) h += `<div class="sitehint">Não achou? <button class="lnk" onclick="siteSearch()">Buscar "${esc(S.q.trim())}" direto nos sites ligados</button></div>`;
-  else h += `${listHead()}${azBar(list)}<div class="grid${listMode() ? ' lst' : muralMode() ? ' mural' : ''}" id="grid" style="--lmw:${lmWidth()}px"></div>`;
+  else h += `${listHead()}${azBar(list)}${vidroFace() ? homeStrips() : ''}<div class="grid${listMode() ? ' lst' : muralMode() ? ' mural' : ''}" id="grid" style="--lmw:${lmWidth()}px"></div>${vidroFace() ? '' : homeStrips()}`;
+  const ht = h.indexOf('<div class="h1">'); if (ht >= 0) h = h.slice(0, ht) + '<div class="libpanel">' + h.slice(ht) + '</div>';
   const pin = fpOn(), oldP = $('#fpanel'), pst = oldP ? oldP.scrollTop : 0;
   const pk = S.view === 'home' && S.panelKey && S.byKey[S.panelKey] ? S.panelKey : '';
   if (!pk) S.panelKey = '';
@@ -809,7 +810,7 @@ ${filterBtn()}
   if (pin && pst) { const np = $('#fpanel'); if (np) np.scrollTop = pst; }
   if (list.length) fillGrid(list);
   if (S.hero.length && $('#hero')) showHero(S.heroIdx);
-  if (S.view === 'home' && S._focusKey) gameFocus(null);
+  if (S.view === 'home' && (S._focusKey || vidroFace())) gameFocus(null);
   if (S.view === 'home' && S.config.cover_slideshow && !ssT && !(S._focusKey && S.config.game_backdrop)) slideshowStart();
 }
 let gridGen = 0, gridIO = null, gridMore = null;
@@ -867,7 +868,7 @@ function groupSort(by, a, b) {
   if (by === 'genre' || by === 'dev') return a.startsWith('Sem ') ? 1 : b.startsWith('Sem ') ? -1 : a.localeCompare(b, 'pt');
   return a.localeCompare(b, 'pt');
 }
-function groupBy() { return S.view === 'store' ? (S.config.group_store ?? '') : (S.config.group_by ?? 'letter'); }
+function groupBy() { return S.view === 'store' ? (S.config.group_store ?? '') : (S.config.group_by ?? ''); }
 function setGroupBy(id) { return setCfg(S.view === 'store' ? { group_store: id } : { group_by: id }); }
 function gcolKey(k) { return `${S.view}|${k}`; }
 function groupsAll(col) { document.querySelectorAll('#view .ggrp').forEach(w => { w.classList.toggle('col', col); if (col) S._gcol.add(gcolKey(w.dataset.g)); else S._gcol.delete(gcolKey(w.dataset.g)); }); try { localStorage.setItem('lx_gcol', JSON.stringify([...S._gcol])); } catch (_) {} }
@@ -985,23 +986,29 @@ function azGo(l) {
 }
 let bdLayer = 0;
 const ACC_CACHE = {};
+const vidroFace = () => document.body.dataset.face === 'vidro';
 function gameFocus(key) {
   S._focusKey = key || '';
-  const hz = S.view === 'home' && stageOn() && !filtersActive() && !S.q;
-  const bd = $('#backdrop'), mode = hz ? 'hero' : (S.config.game_backdrop || '');
+  const vd = vidroFace();
+  if (vd && !key) key = nowKey()[0] || '';
+  const hz = !vd && S.view === 'home' && stageOn() && !filtersActive() && !S.q;
+  const g = S.byKey[key] || {};
+  const bd = $('#backdrop'), mode = vd ? (g.hero_ok ? 'hero' : 'cover') : hz ? 'hero' : (S.config.game_backdrop || '');
   if (bd) {
     bd.classList.toggle('hz', hz);
-    if (!key || !mode || S.view !== 'home') { bd.classList.remove('on'); if (S.config.cover_slideshow && S.view === 'home') slideshowStart(); else slideshowStop(); }
+    if (!key || !mode || (S.view !== 'home' && !vd)) { S._bdKey = ''; bd.classList.remove('on'); if (S.config.cover_slideshow && S.view === 'home') slideshowStart(); else slideshowStop(); }
     else {
       slideshowStop();
-      bd.style.setProperty('--bdblur', hz ? '0px' : (S.config.backdrop_blur ?? 10) + 'px'); bd.style.setProperty('--bddim', hz ? '0' : String((S.config.backdrop_dim ?? 42) / 100));
-      const url = (mode === 'hero' ? '/hero/' : '/cover/') + enc(key) + '?v=' + ((S.byKey[key] || {}).cv || 0);
+      bd.style.setProperty('--bdblur', vd ? '28px' : hz ? '0px' : (S.config.backdrop_blur ?? 10) + 'px'); bd.style.setProperty('--bddim', hz || vd ? '0' : String((S.config.backdrop_dim ?? 42) / 100));
+      const url = (mode === 'hero' ? '/hero/' : '/cover/') + enc(key) + '?v=' + (g.cv || 0);
+      if (S._bdKey === url) { bd.classList.add('on'); return dynAccent(S._focusKey && S.config.accent_from_cover && S.view === 'home' ? S._focusKey : null); }
+      S._bdKey = url;
       const img = new Image();
-      img.onload = () => { if (S._focusKey !== key) return; const ls = bd.querySelectorAll('.bl'); bdLayer ^= 1; ls[bdLayer].style.backgroundImage = `url("${url}")`; ls[bdLayer].classList.add('on'); ls[bdLayer ^ 1].classList.remove('on'); bd.classList.add('on'); };
+      img.onload = () => { if (S._bdKey !== url) return; const ls = bd.querySelectorAll('.bl'); bdLayer ^= 1; ls[bdLayer].style.backgroundImage = `url("${url}")`; ls[bdLayer].classList.add('on'); ls[bdLayer ^ 1].classList.remove('on'); bd.classList.add('on'); };
       img.src = url;
     }
   }
-  dynAccent(key && S.config.accent_from_cover && S.view === 'home' ? key : null);
+  dynAccent(S._focusKey && S.config.accent_from_cover && S.view === 'home' ? S._focusKey : null);
 }
 async function setAccentMode(v) {
   if (v === 'system' && !S.sysAccent) { const r = await api.post('/api/window', { cmd: 'sys_accent' }); S.sysAccent = (r && r.hex) || ''; if (!S.sysAccent) { toast('warn', 'Sem cor do sistema', 'Não consegui ler a cor de destaque do Windows.'); return; } }
@@ -1146,7 +1153,7 @@ function cardHtml(g, i) {
   const sys = g.system && g.system !== 'pc' ? `<span class="badge sys">${esc((S.systems[g.system] || g.system).toUpperCase().slice(0, 8))}</span>` : '';
   const dim = S.view === 'store' && !g.installed && !g.owned && !job && !/^(rom|local):/.test(g.key) ? ' dim' : '';
   const lst = listMode() && ['home', 'store'].includes(S.view);
-  const now = Date.now() / 1000, rib = S.config.card_ribbons !== false && (g.installed || g.owned || g.fresh) && !live && !g.mc_nolauncher ? (g.owned ? '<span class="rib today">NO PC</span>' : g.fresh && !g.installed ? (S.view === 'store' ? '<span class="rib new" title="Apareceu na fonte recentemente">NOVO</span>' : '') : g.update_version ? `<span class="rib upd" title="Versão ${esc(g.update_version)} disponível na fonte (instalada: ${esc(g.version || '?')})">ATUALIZAÇÃO</span>` : g.last_played && new Date(g.last_played * 1000).toDateString() === new Date().toDateString() ? '<span class="rib today">HOJE</span>' : g.added_at && now - g.added_at < 7 * 86400 && !g.playtime ? `<span class="rib new" title="Adicionado ${daysAgo(g.added_at)} e ainda não aberto">NOVO</span>` : '') : '';
+  const now = Date.now() / 1000, rib = S.config.card_ribbons !== false && (g.installed || g.owned || g.fresh) && !live && !g.mc_nolauncher ? (g.owned ? '<span class="rib today">NO PC</span>' : g.fresh && !g.installed ? (S.view === 'store' ? '<span class="rib new" title="Apareceu na fonte recentemente">NOVO</span>' : '') : g.update_version ? `<span class="rib upd" title="Versão ${esc(g.update_version)} disponível na fonte (instalada: ${esc(g.version || '?')})">ATUALIZAÇÃO</span>` : g.last_played && new Date(g.last_played * 1000).toDateString() === new Date().toDateString() ? '<span class="rib today">HOJE</span>' : g.added_at && now - g.added_at < 7 * 86400 && !g.playtime && !newSpam() ? `<span class="rib new" title="Adicionado ${daysAgo(g.added_at)} e ainda não aberto">NOVO</span>` : '') : '';
   const ptb = '';
   const prog = job ? `<div class="cprog${job.fraction < 0 ? ' ind' : ''}"><i style="width:${job.fraction >= 0 ? Math.round(job.fraction * 100) : 40}%"></i></div>` : '';
   const favB = `<button class="fav ${g.fav ? 'on' : ''}" data-fav="${esc(g.key)}" title="Favorito">${I.star}</button>`;
@@ -1214,6 +1221,27 @@ function searchInView() {
 function applyQPlaceholder() { const i = $('#q'); if (!i) return; const n = S.view === 'home' ? S.games.filter(g => g.installed).length : 0; i.title = n ? 'Prefixos: dev:, ano:, gen:, sis:, origem:, tag:' : ''; i.placeholder = n ? `Buscar em ${n} jogos…  (/)` : (Q_PLACEHOLDER[S.view] || Q_PLACEHOLDER.home); }
 const qObs = new MutationObserver(() => { if (S.q && FILTER_VIEWS.includes(S.view) && !S._qfBusy) { S._qfBusy = true; requestAnimationFrame(() => { S._qfBusy = false; viewFilter(); }); } });
 qObs.observe($('#view'), { childList: true, subtree: true });
+/* Vidro: cada tela vira um painel de vidro com cabeçalho (título + abas) fixo, como a Biblioteca. */
+function vidroWrap() {
+  if (!vidroFace() || S._vwBusy) return;
+  const view = $('#view'); if (!view) return;
+  const kids = [...view.children];
+  if (!kids.length || view.querySelector(':scope>.vpanel') || view.querySelector(':scope>#homeTop') || view.querySelector(':scope>.libwrap')) return;
+  const lp = view.querySelector(':scope>.libpanel');
+  S._vwBusy = true;
+  try {
+    if (lp) { const tabs = view.querySelector(':scope>.tabs'); if (tabs) { let head = lp.querySelector(':scope>.vhead'); if (!head) { head = document.createElement('div'); head.className = 'vhead'; lp.prepend(head); } head.prepend(tabs); const h1 = lp.querySelector(':scope>.h1'); if (h1) head.appendChild(h1); } return; }
+    const isHead = e => e.matches('.h1,.tabs');
+    let i = 0; while (i < kids.length && isHead(kids[i])) i++;
+    if (!i && !kids.some(isHead)) return;
+    const head = kids.slice(0, i), body = kids.slice(i);
+    const panel = document.createElement('div'); panel.className = 'vpanel';
+    const vh = document.createElement('div'); vh.className = 'vhead'; head.forEach(e => vh.appendChild(e));
+    const vb = document.createElement('div'); vb.className = 'vbody'; body.forEach(e => vb.appendChild(e));
+    panel.appendChild(vh); panel.appendChild(vb); view.appendChild(panel);
+  } finally { S._vwBusy = false; }
+}
+new MutationObserver(() => vidroWrap()).observe($('#view'), { childList: true });
 function renderSortBtn() { }
 function focusSearch() { const m = $('#qm'); if (m && m.offsetParent) { m.parentElement.classList.add('on'); m.focus(); return; } if (topSearchVisible()) { $('#q').focus(); return; } if (!['home', 'store'].includes(S.view)) { setView(S.repos.some(r => r.enabled) ? 'store' : 'home'); return setTimeout(focusSearch, 80); } $('#q').focus(); }
 let qmt; function miniSearch(v) { S._siteQ = ''; clearTimeout(qmt); qmt = setTimeout(() => { S.q = v; S.page = 1; const i = $('#q'); if (i) i.value = v; renderLibrary(); const m = $('#qm'); if (m) { m.parentElement.classList.add('on'); m.focus(); m.setSelectionRange(v.length, v.length); } }, 160); }
@@ -1274,6 +1302,7 @@ async function openGame(key) {
   uiSound('open');
   S.current = key; S.dtab = 'about'; const g = S.byKey[key] || { title: '...' };
   if (S.config.accent_from_cover) { S._focusKey = key; dynAccent(key); }
+  if (vidroFace()) gameFocus(key);
   setHero(key, `/hero/${enc(key)}`);
   const d = await Promise.race([api.get('/api/game/' + enc(key)), new Promise(r => setTimeout(() => r(null), 700))]);
   if (S.current !== key) return;
@@ -1293,7 +1322,7 @@ async function openGame(key) {
   if (!data.meta && S.config.auto_metadata && data.kind !== 'emulator') fetchMeta(key, false, true);
 }
 function closeDetail() { if (!S.current) return closeDetailNow(); uiSound('back'); closeDetailNow(); }
-function closeDetailNow() { const was = S.current; S.current = null; $('#detail').classList.remove('on'); $('#detail').classList.remove('bar'); if (S._dObs) { S._dObs.disconnect(); S._dObs = null; } if (was && S.config.accent_from_cover) { if (S.view === 'home' && S.stageKey) gameFocus(S.stageKey); else { S._focusKey = ''; dynAccent(null); } } }
+function closeDetailNow() { const was = S.current; S.current = null; $('#detail').classList.remove('on'); $('#detail').classList.remove('bar'); if (S._dObs) { S._dObs.disconnect(); S._dObs = null; } if (was && vidroFace()) gameFocus(S.nowKey && S.byKey[S.nowKey] ? S.nowKey : null); else if (was && S.config.accent_from_cover) { if (S.view === 'home' && S.stageKey) gameFocus(S.stageKey); else { S._focusKey = ''; dynAccent(null); } } }
 $('#dClose').onclick = closeDetail;
 function lightbox(u) { const l = document.createElement('div'); l.className = 'lightbox'; l.innerHTML = `<img src="${esc(u)}"><button class="dclose">${I.x}</button>`; l.onclick = () => l.remove(); document.body.appendChild(l); }
 async function fetchMeta(key, force, silent) {
@@ -1856,7 +1885,26 @@ async function renderEmulation() {
   const mine = sys.filter(x => x.installed || x.rom_count > 0 || (x.extra_dirs || []).length);
   const rest = sys.filter(x => !mine.includes(x)).sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
   if (!mine.length) h += `<div class="steps"><div><i>1</i><b>Escolha o console</b><span>e instale o emulador com um clique — ou aponte o que você já tem em "Já tenho".</span></div><div><i>2</i><b>Traga as ROMs</b><span>copie para a pasta do console ou use "+ pasta de ROMs" para apontar a sua.</span></div><div><i>3</i><b>Jogue pela Biblioteca</b><span>cada ROM vira um jogo com capa; o console configurado sobe para "Meus consoles".</span></div></div>`;
+  const vtile = (s, quiet) => {
+    const job = S.jobs['emu:' + s.emulator];
+    const em = e.emulators[s.emulator] || {}, isCustom = !!em.custom, nInst = (s.installed_options || []).length;
+    const miss = s.installed && !s.setup_ok;
+    const status = s.installed ? (miss ? `<span class="vchip warn">falta ${(s.setup_missing || []).length === 1 ? esc(s.setup_missing[0].replace(/\s*\(.*$/, '').replace(/ e .*$/, '')) : 'configurar'}</span>` : `<span class="vchip ok">Pronto${nInst > 1 ? ` · ${nInst}` : ''}</span>`) : '<span class="vchip">Sem emulador</span>';
+    const nb = S.games.filter(g => g.system === s.id && g.kind === 'rom' && g.repo === 'local' && !g.installed).length;
+    const sub = [esc(s.emulator_title || ''), `${s.rom_count} ${s.rom_count === 1 ? 'jogo' : 'jogos'}`, nb ? `<a href="#" class="warnlnk" onclick="closeDetail();setView('home');setTimeout(()=>{clearFlt();S.flt.sys.add('${s.id}');S.flt.flags.add('broken');renderLibrary()},80);return false">${pl(nb, 'não encontrada', 'não encontradas')}</a>` : ''].filter(Boolean).join(' · ');
+    let acts;
+    if (job) acts = progHtml(job, 'emu:' + s.emulator);
+    else if (s.installed) acts = `${em.update && !isCustom && !em.pointed ? `<button class="btn p" onclick="updateEmu('${s.emulator}')">${I.dl} Atualizar</button>` : `<button class="btn p" title="Abrir o emulador sem jogo, para configurar controles/BIOS" onclick="api.post('/api/emulator/open',{id:'${s.emulator}'})">${I.cog} Abrir</button>`}<button class="btn" title="Abrir a pasta de ROMs" onclick="openPath(${jsq(s.games_dir)})">${I.folder} ROMs</button>`;
+    else if (isCustom) acts = `<span class="vchip warn">exe não encontrado</span>`;
+    else if (em.source === 'manual') acts = `<button class="btn p" onclick="api.post('/api/open_url',{url:${jsq(em.homepage || '')}})">${I.ext} Baixar no site</button><button class="btn" onclick="pointEmuExe('${s.emulator}')">Já tenho</button>`;
+    else acts = `<button class="btn p" onclick="installEmu('${s.emulator}')">${I.dl} Instalar</button><button class="btn" title="Se você já tem esse emulador instalado, só aponte o .exe" onclick="pointEmuExe('${s.emulator}')">Já tenho</button>`;
+    return `<div class="vtile ${s.installed ? 'ok' : ''}" data-sys="${s.id}">
+      <div class="vt-top">${sysIcon(s.id)}<div class="vt-t"><b title="${esc(s.name)}">${esc(s.name)}</b><small>${sub}</small></div>${status}</div>
+      <div class="vt-acts">${acts}<span class="sp"></span><button class="btn ic" title="Mais opções" onclick="emuMore('${s.id}',this)">${I.dots}</button></div>
+    </div>`;
+  };
   const tile = (s, quiet) => {
+    if (vidroFace()) return vtile(s, quiet);
     const job = S.jobs['emu:' + s.emulator];
     const opts = s.options.map(id => e.emulators[id]).filter(Boolean);
     const em = e.emulators[s.emulator] || {};
@@ -1873,6 +1921,26 @@ async function renderEmulation() {
   if (mine.length) h += `<div class="gh"><h3>Meus consoles <em>${mine.length}</em></h3><span>com emulador pronto ou ROMs na pasta</span></div><div class="tiles">${mine.map(x => tile(x, false)).join('')}</div>`;
   if (rest.length) h += `<div class="gh"><h3>${mine.length ? 'Outros consoles' : 'Consoles'} <em>${rest.length}</em></h3><span>${mine.length ? 'instale um emulador ou coloque ROMs e ele sobe para Meus consoles' : 'os mais usados primeiro'}</span></div><div class="tiles">${rest.map((x, i) => tile(x, mine.length > 0 || i >= 6)).join('')}</div>`;
   $('#view').innerHTML = h;
+}
+function emuMore(sid, btn) {
+  const e = S.emu || {}, s = (e.systems || {})[sid]; if (!s) return;
+  const em = (e.emulators || {})[s.emulator] || {}, opts = (s.options || []).map(id => e.emulators[id]).filter(Boolean);
+  const items = [];
+  if (s.guide) items.push({ label: 'Guia de configuração', icon: 'doc', fn: () => emuGuide(sid) });
+  items.push({ label: 'Emuladores deste console e extensões', icon: 'cog', fn: () => sysEmus(sid) });
+  if (opts.length > 1) { items.push({ sep: true }); for (const o of opts) items.push({ label: `${o.title}${o.custom ? ' (meu)' : ''}`, icon: o.id === s.emulator ? 'check' : '', fn: () => api.post('/api/emulator/select', { system: sid, id: o.id }).then(renderEmulation) }); }
+  items.push({ sep: true });
+  items.push({ label: 'Abrir pasta de ROMs', icon: 'folder', fn: () => openPath(s.games_dir) });
+  items.push({ label: '+ pasta de ROMs', icon: 'plus', fn: () => addRomDir(sid) });
+  items.push({ label: 'Baixar ROMs em…', icon: 'dl', fn: () => romDestMenu(btn, sid) });
+  if (s.installed) {
+    items.push({ sep: true });
+    items.push({ label: 'Pasta do emulador', icon: 'folder', fn: () => openPath((em.exe_path || '').replace(/[\\/][^\\/]+$/, '')) });
+    if (em.custom) items.push({ label: 'Remover este emulador', icon: 'trash', danger: true, fn: () => removeCustomEmu(s.emulator) });
+    else if (em.pointed) items.push({ label: 'Esquecer o .exe apontado', icon: 'x', danger: true, fn: () => api.post('/api/emulator/exe', { id: s.emulator, exe: null }).then(renderEmulation) });
+    else items.push({ label: 'Remover emulador', icon: 'trash', danger: true, fn: () => removeEmu(s.emulator) });
+  }
+  const r = btn.getBoundingClientRect(); showCtx(items, r.left, r.bottom + 6, s.name);
 }
 function emuStoreList() { const q = S.q.trim().toLowerCase(); return sortedAZ().filter(g => inEmu(g) && (!q || g._q.includes(q))); }
 async function renderRomStore() {
@@ -2726,7 +2794,7 @@ function homeOrder(list) {
   const score = g => { let s = 0; if (g.fav) s += 1e12; if (g.last_played) s += g.last_played; s += (g.added_at || 0) / 10; s += Math.min(g.playtime || 0, 1e6); return s; };
   return [...list].sort((a, b) => score(b) - score(a) || a.title.localeCompare(b.title, 'pt'));
 }
-async function refreshHome() { if (S.view !== 'home') return; try { S.home = await api.get('/api/home'); } catch (e) { return; } if (S.view === 'home' && !filtersActive() && !S.q) { const el = $('#homeTop'); if (el) el.outerHTML = homeTop(); } }
+async function refreshHome() { if (S.view !== 'home') return; try { S.home = await api.get('/api/home'); } catch (e) { return; } if (S.view === 'home' && !filtersActive() && !S.q) { const el = $('#homeTop'); if (el) el.outerHTML = homeTop(); syncStrips(); } }
 const SORTS = [['az', 'A–Z'], ['year', 'Ano'], ['size', 'Tamanho'], ['recent', 'Recentes'], ['most', 'Mais jogados'], ['count', 'Vezes jogado'], ['added', 'Adicionados'], ['dev', 'Desenvolvedora'], ['score', 'Sua nota'], ['fresh', 'Novos nas fontes']];
 const WEEK = 7 * 86400;
 const FLAG_TEST = {
@@ -2840,7 +2908,7 @@ function fpDelPreset() {
 }
 function viewTweaks() {
   if (!['home', 'store'].includes(S.view)) return 0;
-  const defS = S.view === 'store' ? 'fresh' : 'az', defG = S.view === 'store' ? '' : 'letter';
+  const defS = S.view === 'store' ? 'fresh' : 'az', defG = '';
   return (S.sort !== defS || S.sortRev ? 1 : 0) + (groupBy() !== defG ? 1 : 0) + ((S.config.view_mode || 'mural') !== 'mural' ? 1 : 0);
 }
 function filterBtn() {
@@ -2849,7 +2917,7 @@ function filterBtn() {
 }
 function fpViewHtml() {
   if (!['home', 'store'].includes(S.view)) return '';
-  const g = groupBy(), defS = S.view === 'store' ? 'fresh' : 'az', defG = S.view === 'store' ? '' : 'letter', lm = listMode(), n = viewTweaks();
+  const g = groupBy(), defS = S.view === 'store' ? 'fresh' : 'az', defG = '', lm = listMode(), n = viewTweaks();
   const open = S._fopen.view !== undefined ? S._fopen.view : true;
   const seg = (items, cur, fn) => `<div class="seg fsort">${items.map(([id, l]) => `<button class="${cur === id ? 'on' : ''}" onclick="${fn(id)}">${l}</button>`).join('')}</div>`;
   return `<div class="fsc fview${open ? ' open' : ''}"><button class="fsh" onclick="fpToggle('view')"><b>Exibição</b>${n ? `<i>${n}</i>` : ''}<svg class="car" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
@@ -2919,18 +2987,70 @@ function nowKey(hm) {
   const any = S.games.find(g => g.installed && !g.hidden);
   return any ? [any.key, 'Da biblioteca'] : ['', ''];
 }
+function newSpam() { if (S._nsG !== S.games) { S._nsG = S.games; const now = Date.now() / 1000; S._nsV = (S.games || []).filter(g => g.added_at && now - g.added_at < 7 * 86400 && !g.playtime).length > 12; } return S._nsV; }
+function stageInner(key, label) {
+  const g = S.byKey[key]; if (!g) return '';
+  const live = S.sessions && S.sessions[key], sys = g.system && g.system !== 'pc' ? (S.systems[g.system] || g.system) : 'PC';
+  const lp = g.last_played ? new Date(g.last_played * 1000) : null;
+  const sess = live ? 'jogando agora' : lp ? `última sessão ${lastPlayedText(g.last_played)}, ${String(lp.getHours()).padStart(2, '0')}:${String(lp.getMinutes()).padStart(2, '0')}` : 'nunca jogado';
+  const meta = [sys, g.playtime >= 60 ? fmtTime(g.playtime) : '', sess].filter(Boolean).join(' · ');
+  const total = ((S.home || {}).stats || {}).playtime || 0, pct = total && g.playtime ? Math.max(1, Math.round(g.playtime / total * 100)) : 0;
+  const primary = !g.installed && g.avail ? `<button class="btn p" onclick="openGame(${jsq(g.avail)})">${I.dl} Baixar da Loja</button>` : `<button class="btn p" onclick="play(${jsq(key)})">${live ? I.x + ' Encerrar' : g.missing ? I.search + ' Localizar' : I.play + (g.last_played ? ' Continuar' : ' Jogar')}</button>`;
+  const next = (((S.home || {}).sections || {}).recent || []).filter(k => k !== key && S.byKey[k] && S.byKey[k].installed).slice(0, 3);
+  return `<img class="ncov" src="/thumb/${enc(key)}?v=${g.cv || 0}" alt="" decoding="async" onclick="openGame(${jsq(key)})" onerror="this.style.visibility='hidden'">
+    <div class="nt"><b title="${esc(g.title)}" onclick="openGame(${jsq(key)})">${esc(g.title)}</b><small>${esc(meta)}</small>${pct ? `<div class="pr"><i style="--v:${pct}%"></i><span>${pct} %</span></div>` : `<div class="pr"><span class="lbl">${esc(label || '')}</span></div>`}</div>
+    ${next.length ? `<div class="nnext"><small>Depois</small>${next.map(k => { const n = S.byKey[k]; return `<img src="/thumb/${enc(k)}?v=${n.cv || 0}" alt="" title="${esc(n.title)}" decoding="async" onclick="selectGame(${jsq(k)})" ondblclick="openGame(${jsq(k)})" onerror="this.remove()">`; }).join('')}</div>` : '<span></span>'}
+    <div class="nacts"><button class="btn ic" title="Mais" onclick="ctxMenu(${jsq(key)},event.clientX,event.clientY)">${I.dots}</button><button class="btn" onclick="openGame(${jsq(key)})">${I.info}<span>Detalhes</span></button>${primary}</div>`;
+}
+function stageStrip() {
+  const hm = S.home; if (!hm) return '';
+  const seen = new Set(), ks = [];
+  for (const id of ['recent', 'added', 'most']) for (const k of (hm.sections[id] || [])) if (!seen.has(k) && S.byKey[k]) { seen.add(k); ks.push(k); }
+  for (const g of S.games) { if (ks.length >= 14) break; if (!seen.has(g.key) && !g.hidden) { seen.add(g.key); ks.push(g.key); } }
+  if (!ks.length) return '';
+  const rest = Math.max(0, (S.games || []).filter(g => !g.hidden).length - ks.slice(0, 14).length);
+  return `<div class="hstrip" id="hstrip">${ks.slice(0, 14).map(k => { const g = S.byKey[k]; return `<div class="hsc${k === S._focusKey ? ' on' : ''}" data-key="${esc(k)}" data-ctx="game" title="${esc(g.title)}" onclick="selectGame(${jsq(k)})" ondblclick="openGame(${jsq(k)})"><img src="/thumb/${enc(k)}?v=${g.cv || 0}" alt="" decoding="async" onerror="this.remove()"></div>`; }).join('')}<button class="hsc more" onclick="gotoGrid()" title="Ver todos os jogos">+${rest}</button></div>`;
+}
 function nowbarInner(key, label) {
+  if (vidroFace()) return stageInner(key, label);
   const g = S.byKey[key]; if (!g) return '';
   const live = S.sessions && S.sessions[key], sys = g.system && g.system !== 'pc' ? (S.systems[g.system] || g.system) : 'PC';
   const sub = [g.last_played ? cap(lastPlayedText(g.last_played)) : 'Nunca jogado', g.playtime >= 60 ? fmtTime(g.playtime) : '', sys, g.year || ''].filter(Boolean).join(' · ');
   return `<div class="nbcov" onclick="openGame(${jsq(key)})"><div class="ph">${esc(g.title)}</div><img src="/thumb/${enc(key)}?v=${g.cv || 0}" alt="" decoding="async" onload="this.classList.add('ld')" onerror="this.remove()"></div>
     <div class="nbtxt"><small class="nbl">${label}</small><h2 onclick="openGame(${jsq(key)})" title="${esc(g.title)}">${esc(g.title)}</h2><div class="nbsub">${esc(sub)}</div>
-      <div class="nbacts">${!g.installed && g.avail ? `<button class="btn p xs" onclick="openGame(${jsq(g.avail)})">${I.dl} Baixar da Loja</button>` : `<button class="btn p xs" onclick="play(${jsq(key)})">${live ? I.x + ' Encerrar' : playLbl(key)}</button>`}<button class="btn s xs" onclick="openGame(${jsq(key)})">${I.info}<span>Detalhes</span></button><button class="btn s xs" onclick="openPath(${jsq(g.dir || '')},${jsq(key)})">${I.folder}<span>Pasta</span></button><button class="btn s xs ic ${g.fav ? 'on' : ''}" title="Favorito" onclick="toggleFav(${jsq(key)});this.classList.toggle('on')">${I.star}</button></div></div>`;
+      <div class="nbacts">${!g.installed && g.avail ? `<button class="btn p xs" onclick="openGame(${jsq(g.avail)})">${I.dl} Baixar da Loja</button>` : `<button class="btn p xs" onclick="play(${jsq(key)})">${live ? I.x + ' Encerrar' : playLbl(key)}</button>`}<button class="btn s xs" onclick="openGame(${jsq(key)})">${I.info}<span>Detalhes</span></button><button class="btn s xs" onclick="openPath(${jsq(g.dir || '')},${jsq(key)})">${I.folder}<span>Pasta</span></button><button class="btn s xs ic ${g.fav ? 'on' : ''}" title="Favorito" onclick="toggleFav(${jsq(key)});this.classList.toggle('on')">${I.star}</button></div></div>${nbNext(key)}`;
+}
+function nbNext(key) {
+  const ks = (((S.home || {}).sections || {}).recent || []).filter(k => k !== key && S.byKey[k] && S.byKey[k].installed).slice(0, 3);
+  if (!ks.length) return '';
+  return `<div class="nbnext"><small>Depois</small>${ks.map(k => { const g = S.byKey[k]; return `<img src="/thumb/${enc(k)}?v=${g.cv || 0}" alt="" title="${esc(g.title)}" decoding="async" onclick="selectGame(${jsq(k)})" ondblclick="openGame(${jsq(k)})" onerror="this.remove()">`; }).join('')}</div>`;
+}
+const STRIPS = [['recent', 'Continuar', g => g.last_played ? cap(lastPlayedText(g.last_played)) : ''], ['added', 'Novos na biblioteca', g => g.system && g.system !== 'pc' ? (S.systems[g.system] || g.system) : (g.year || 'PC')], ['most', 'Mais jogados', g => g.playtime >= 60 ? fmtTime(g.playtime) : '']];
+function syncStrips() {
+  const lp = $('#view .libpanel'); if (!lp) return;
+  const old = lp.querySelector('.strips'), html = homeStrips();
+  if (old) old.outerHTML = html; else if (html) { const gr = vidroFace() ? lp.querySelector('#grid') : null; if (gr) gr.insertAdjacentHTML('beforebegin', html); else lp.insertAdjacentHTML('beforeend', html); }
+}
+function homeStrips() {
+  const hm = S.home; if (!hm || S.view !== 'home' || filtersActive() || S.q) return '';
+  const [now] = nowKey(hm);
+  if (vidroFace()) {
+    const ks = (hm.sections.recent || []).filter(k => k !== now && S.byKey[k] && !S.byKey[k].hidden).slice(0, 5);
+    if (ks.length < 2) return '';
+    return `<div class="strips vrow"><div class="rh"><h3>Continuar</h3><small>${ks.length}</small><a href="#" onclick="clearFlt();S.sort='recent';renderSortBtn();renderLibrary();gotoGrid();return false">Ver todos ${I.chev}</a></div><div class="sr">${ks.map(k => { const g = S.byKey[k]; const pt = g.playtime >= 60 ? fmtTime(g.playtime) : ''; return `<div class="si" data-key="${esc(k)}" data-ctx="game" onclick="selectGame(${jsq(k)})" ondblclick="openGame(${jsq(k)})"><img src="/thumb/${enc(k)}?v=${g.cv || 0}" alt="" decoding="async" onerror="this.remove()"><div><b>${esc(g.title)}</b><small>${esc([g.last_played ? lastPlayedText(g.last_played) : '', pt].filter(Boolean).join(' · '))}</small></div></div>`; }).join('')}</div></div>`;
+  }
+  const rows = STRIPS.map(([id, title, sub]) => {
+    const ks = (hm.sections[id] || []).filter(k => k !== now && S.byKey[k] && !S.byKey[k].hidden).slice(0, 8);
+    if (ks.length < 2) return '';
+    return `<div class="strip" data-s="${id}"><div class="sh"><h3>${title}</h3><small>${ks.length}</small></div><div class="sr">${ks.map(k => { const g = S.byKey[k]; return `<div class="si" data-key="${esc(k)}" data-ctx="game" onclick="selectGame(${jsq(k)})" ondblclick="openGame(${jsq(k)})"><img src="/thumb/${enc(k)}?v=${g.cv || 0}" alt="" decoding="async" onerror="this.remove()"><div><b>${esc(g.title)}</b><small>${esc(sub(g) || '')}</small></div></div>`; }).join('')}</div></div>`;
+  }).filter(Boolean);
+  return rows.length ? `<div class="strips">${rows.join('')}</div>` : '';
 }
 function nbHero(key) { const g = S.byKey[key]; return g && g.hero_ok ? `--nbimg:url('/hero/${enc(key)}?v=${g.cv || 0}')` : ''; }
 function stageBase(hm) {
   const [key, label] = nowKey(hm); if (!key) return '';
   const h = nbHero(key);
+  if (vidroFace()) return `<section class="nowg" id="nowbar" data-key="${esc(key)}" data-ctx="game">${stageInner(key, label)}</section>`;
   return `<div class="nowbar${h ? ' hb' : ''}" id="nowbar" data-key="${esc(key)}" data-ctx="game" style="${h}">${nowbarInner(key, label)}</div>`;
 }
 function nowbarFill() {

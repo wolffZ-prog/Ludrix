@@ -55,9 +55,8 @@ The 4.0 series replaced the old Python engine with Electron + TypeScript while k
 - **One library.** PC games, ROMs and quick games (Flash/HTML5) sit together in an alphabetical grid with letter dividers, covers, categories and combinable filters. Tabs at the top (Library, Store, Emulators…), search beside them, filters on one line and every cover with system, year and last played. One click on a cover opens the side pane with Play, playtime, folder and genres; double-click opens the details.
 - **A Store fed by sources.** No catalogue is bundled. The Store only shows what the `.json` lists, web pages, archive.org collections, GitHub repositories or local folders added by the user provide. Direct download, file hosts and torrent (no DHT, UPnP or NAT-PMP).
 - **Ready-to-use emulators.** 25 systems and 45 emulators catalogued, installed from the official site in one click and kept inside the Ludrix folder. ROMs join the Library with covers and open with the emulator chosen for that system.
-- **The "Base" look.** Flat interface, solid colour and thin lines, 13 px base size, Rubik typeface and Tabler icons. Two built-in themes (Dark and Light, truly black and white) plus external `.lxtheme` themes. Optional Glass (Windows 11 acrylic) with cards and popups always solid on top.
+- **The "Glass" look.** The focused game's art sits blurred in the background and the interface floats in translucent panels on top: current-game bar, library panel with every game, and "Continue", "New in library" and "Most played" strips below the grid. Dark (smoked) and Light (milky) get the same care; "Default" and "Graphite" remain available in Settings › Appearance. 13 px base size, Rubik typeface, Tabler icons, external `.lxtheme` themes.
 - **Light motion.** Animations are short and independent from Windows' animation settings; "Reduce motion" turns everything off. Switching pages is instant, with no flashing or content shifting.
-- **Colour fog.** Soft accent-coloured patches drift slowly across the window background like clouds — behind the side bar too. Intensity from 0 to 100 in Settings › Appearance.
 - **Local profiles.** Each person with their own theme, appearance, display and preferences; the library, covers, saves and downloads are shared by everyone. No password: on startup Ludrix asks who is playing (optional) and switching lives in the sidebar avatar.
 - **The navigation bar your way.** Top (default), side with icons only, side with names, bottom, or **floating**: detached from the content with rounded corners.
 - **Fast on hard drives.** The library opens from a cold cache while the disk spins up; the integrity check runs afterwards without holding the screen. An optional script (`Ludrix-HDD.ps1`) tunes Windows for mechanical drives without touching any data.
@@ -100,7 +99,7 @@ The 4.0 series replaced the old Python engine with Electron + TypeScript while k
     <td><img src="docs/screenshots/03-perfis.jpg" alt="Profiles"><br><sub>Local profiles: who is playing, no password</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/04-claro.jpg" alt="Light theme"><br><sub>Built-in Light theme with colour fog</sub></td>
+    <td><img src="docs/screenshots/04-claro.jpg" alt="Light theme"><br><sub>Light theme: the same glass, milky over the game art</sub></td>
     <td><img src="docs/screenshots/05-store.jpg" alt="Store"><br><sub>Store: empty until a source is added</sub></td>
   </tr>
   <tr>
@@ -171,7 +170,7 @@ Layout:
 ```
 src/main/        main process (TypeScript): local server, library, Store, emulators, updater, tray
 src/main/assets/ catalogues (emulators, dependencies, categories), icons, native executables
-src/renderer/    interface (HTML/CSS/JS), Base look, console mode, translations
+src/renderer/    interface (HTML/CSS/JS), looks (themes/), console mode, translations
 tools/build.js   build, packaging, signing, update feed, publishing
 tools/check.js   code integrity checks
 tools/native/    Ludrix.exe, LudrixConsole.exe and ludrix-gamepad.exe (C, mingw)

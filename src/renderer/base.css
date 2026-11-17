@@ -459,8 +459,10 @@ html body.bs[data-face] .frow>input[type=number],html body.bs[data-face] .frow>i
 html body.bs[data-face] .frow>input[type=text],html body.bs[data-face] .frow>input.inp{width:220px;min-width:0}
 html body.bs[data-face] .frow>input[type=range]{width:160px}
 html body.bs[data-face] .card .sub.ci{display:flex;align-items:center;gap:5px;padding:2px 0 0;font-size:11px;color:var(--muted2);line-height:1.3}
-html body.bs[data-face] .card .sub.ci span{display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-html body.bs[data-face] .card .sub.ci svg{width:12px;height:12px;flex:none;opacity:.8}
+html body.bs[data-face] .card .sub.ci span{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body.bs[data-face] .card .sub.ci span:first-child{flex:none;max-width:100%}
+@container (max-width:150px){html body.bs[data-face] .card .sub.ci span+span{display:none}}
+html body.bs[data-face] .card .sub.ci svg{width:12px;height:12px;vertical-align:-2px;margin-right:4px;opacity:.8}
 html body.bs[data-face] .szoom{display:inline-flex;align-items:center;gap:6px;margin-left:14px}
 html body.bs[data-face] .szoom input{width:92px;height:3px;accent-color:var(--accent);cursor:pointer}
 html body.bs[data-face] .szoom button{all:unset;cursor:pointer;width:16px;height:16px;line-height:16px;text-align:center;border-radius:4px;color:var(--muted);font-size:13px}
@@ -748,3 +750,20 @@ html body.bs[data-face] .btn.p:hover,html body.bs[data-face] .btn.g:hover{filter
 html body.bs[data-face] .btn.s:hover,html body.bs[data-face] .seg button:hover,html body.bs[data-face] .h1 .btn.xs:hover,html body.bs[data-face] .h1 .filt>.btn:hover{filter:brightness(1.12)}
 html body.bs[data-face] .btn:active,html body.bs[data-face] .seg button:active{filter:brightness(.94)}
 html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .h1 .btn.xs.p{background:linear-gradient(180deg,color-mix(in srgb,var(--text) 86%,var(--bg)),var(--text) 55%,color-mix(in srgb,var(--text) 82%,#000))}
+
+html body.bs[data-face] .nowbar .nbnext{display:flex;align-items:center;gap:6px;flex:none;padding:0 6px}
+html body.bs[data-face] .nowbar .nbnext small{font:500 10.5px/1 var(--font-text);letter-spacing:.6px;text-transform:uppercase;color:var(--muted2);margin-right:4px}
+html body.bs[data-face] .nowbar .nbnext img{width:36px;height:48px;border-radius:6px;object-fit:cover;cursor:pointer;border:1px solid var(--line);transition:transform .15s}
+html body.bs[data-face] .nowbar .nbnext img:hover{transform:translateY(-2px)}
+html body.bs[data-face] .strips{display:flex;flex-direction:column;gap:16px;margin:22px 0 10px}
+html body.bs[data-face] .strip .sh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+html body.bs[data-face] .strip .sh h3{font:600 13.5px/1.2 var(--font-text);letter-spacing:-.1px;margin:0}
+html body.bs[data-face] .strip .sh small{color:var(--muted2);font-size:12px}
+html body.bs[data-face] .strip .sr{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(150px,1fr);gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+html body.bs[data-face] .strip .sr::-webkit-scrollbar{display:none}
+html body.bs[data-face] .strip .si{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;align-items:center;height:60px;border-radius:12px;padding:0 10px 0 8px;background:var(--card);border:1px solid var(--line);cursor:pointer;min-width:0}
+html body.bs[data-face] .strip .si:hover{background:var(--card2)}
+html body.bs[data-face] .strip .si img{width:44px;height:44px;border-radius:8px;object-fit:cover;display:block;background:var(--card2)}
+html body.bs[data-face] .strip .si b{display:block;font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body.bs[data-face] .strip .si small{display:block;color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:1000px){html body.bs[data-face] .nowbar .nbnext{display:none}}

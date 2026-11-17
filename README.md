@@ -55,9 +55,8 @@ A série 4.0 trocou o motor antigo (Python) por Electron + TypeScript, mantendo 
 - **Uma biblioteca só.** Jogos de PC, ROMs e jogos rápidos (Flash/HTML5) aparecem juntos, em grade alfabética com divisórias por letra, capas, categorias e filtros combináveis. Abas no alto (Biblioteca, Store, Emuladores…), busca ao lado, filtros em uma linha e cada capa com sistema, ano e última vez jogada. Um clique na capa abre o painel lateral com Jogar, tempo, pasta e gêneros; duplo clique abre os detalhes.
 - **Store alimentada por fontes.** Nenhum catálogo vem embutido. A Store só mostra o que as listas `.json`, páginas, coleções do archive.org, repositórios do GitHub ou pastas locais adicionadas pelo usuário oferecem. Download direto, hospedeiros e torrent (sem DHT, UPnP ou NAT-PMP).
 - **Emuladores prontos.** 25 sistemas e 45 emuladores catalogados, instalados do site oficial com um clique e guardados dentro da pasta do Ludrix. As ROMs entram na Biblioteca com capa e são abertas pelo emulador escolhido para aquele sistema.
-- **Aparência "Base".** Interface flat, cor sólida e linha fina, 13 px de base, fonte Rubik e ícones Tabler. Dois temas embutidos (Escuro e Claro, preto e branco de verdade) e suporte a temas externos `.lxtheme`. Glass (acrílico do Windows 11) opcional, com cartões e popups sempre sólidos por cima.
+- **Aparência "Vidro".** A arte do jogo em foco fica desfocada ao fundo e a interface vem em painéis translúcidos por cima: barra do jogo atual, painel da biblioteca com todos os jogos, faixas "Continuar", "Novos na biblioteca" e "Mais jogados" abaixo da grade. Escuro (fumê) e Claro (leitoso) com o mesmo cuidado; "Padrão" e "Grafite" continuam disponíveis em Ajustes › Aparência. 13 px de base, fonte Rubik, ícones Tabler, temas externos `.lxtheme`.
 - **Movimento leve.** As animações são curtas e independentes das configurações de animação do Windows; "Reduzir movimento" desliga tudo. Trocar de página é instantâneo, sem piscar nem deslocar o conteúdo.
-- **Névoa de cor.** Manchas suaves na cor de destaque atravessam o fundo da janela lentamente, como nuvens — inclusive atrás da barra lateral. Intensidade de 0 a 100 em Ajustes › Aparência.
 - **Perfis locais.** Cada pessoa com seu tema, aparência, exibição e preferências; a biblioteca, capas, saves e downloads são os mesmos para todos. Sem senha: ao abrir, o Ludrix pergunta quem vai jogar (opcional) e a troca fica no avatar da barra. Foto opcional (PNG até 64×64); perfis podem ser apagados a qualquer momento.
 - **Barra de navegação a gosto.** No alto (padrão), lateral só ícones, lateral com nomes, embaixo, ou **solta**: separada do conteúdo, com cantos arredondados.
 - **Rápido em HDD.** A biblioteca abre de um cache frio enquanto o disco acorda; a verificação de integridade roda depois, sem segurar a tela. Um script opcional (`Ludrix-HDD.ps1`) ajusta o Windows para HDs mecânicos sem tocar nos dados.
@@ -100,7 +99,7 @@ A série 4.0 trocou o motor antigo (Python) por Electron + TypeScript, mantendo 
     <td><img src="docs/screenshots/03-perfis.jpg" alt="Perfis"><br><sub>Perfis locais: quem vai jogar, sem senha</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/screenshots/04-claro.jpg" alt="Tema claro"><br><sub>Tema Claro embutido: preto e branco, plano</sub></td>
+    <td><img src="docs/screenshots/04-claro.jpg" alt="Tema claro"><br><sub>Tema Claro: o mesmo vidro, leitoso sobre a arte do jogo</sub></td>
     <td><img src="docs/screenshots/05-store.jpg" alt="Store"><br><sub>Store: vazia até que uma fonte seja adicionada</sub></td>
   </tr>
   <tr>
@@ -171,7 +170,7 @@ Estrutura:
 ```
 src/main/        processo principal (TypeScript): servidor local, biblioteca, Store, emuladores, atualizador, bandeja
 src/main/assets/ catálogos (emuladores, dependências, categorias), ícones, executáveis nativos
-src/renderer/    interface (HTML/CSS/JS), aparência Base, modo console, traduções
+src/renderer/    interface (HTML/CSS/JS), aparências (themes/), modo console, traduções
 tools/build.js   build, empacotamento, assinatura, feed de atualização, publicação
 tools/check.js   verificações de integridade do código
 tools/native/    Ludrix.exe, LudrixConsole.exe e ludrix-gamepad.exe (C, mingw)

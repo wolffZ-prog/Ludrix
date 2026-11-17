@@ -9,7 +9,7 @@ const DEFAULT_CONFIG = {
     native: true,
     theme: 'dark',
     theme_mode: '',
-    face: 'grafite',
+    face: 'vidro',
     accent: '',
     games_dir: '',
     shortcut_ask: true,
@@ -32,7 +32,7 @@ const DEFAULT_CONFIG = {
     disabled_repos: [],
     known_repos: null,
     after_launch: 'ask',
-    home_spot: false,
+    home_spot: true,
     tray_enabled: true,
     tray_sleep: true,
     hotkey_enabled: true,
@@ -80,7 +80,7 @@ const DEFAULT_CONFIG = {
     card_ribbons: true,
     nav_hidden: [],
     nav_order: [],
-    group_by: 'letter',
+    group_by: '',
     sort_by: 'az',
     group_store: '',
     sort_store: 'fresh',
@@ -303,8 +303,9 @@ class Store {
         [13, { home_spot: false, card_origin: false, detail_art: 'off' }],
         [14, { nav_layout: 'top', view_mode: 'mural' }],
         [15, { face: 'grafite' }],
+        [16, { face: 'vidro', home_spot: true, nav_layout: 'top', group_by: '' }],
     ];
-    static OVERLAY_LOOK = 15;
+    static OVERLAY_LOOK = 16;
     writeOverlay() {
         if (!this.profiles.active)
             return;
@@ -514,6 +515,7 @@ class Store {
                     this.config.view_mode = 'mural';
                 }],
             [15, () => { if (this.config.face === 'padrao') this.config.face = 'grafite'; }],
+            [16, () => { this.config.face = 'vidro'; this.config.home_spot = true; this.config.nav_layout = 'top'; this.config.group_by = ''; }],
         ];
         for (const [target, fn] of (steps as any)) {
             if (Number(this.config.look || 0) < target) {

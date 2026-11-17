@@ -1,5 +1,22 @@
 # Changelog
 
+## 4.1.0 — 2026-11-17
+
+- Nova aparência "Vidro", agora a padrão: a arte do jogo em foco (hero ou capa) fica desfocada ao fundo e a interface vem em painéis translúcidos por cima. Escuro fumê e Claro leitoso com o mesmo tratamento. "Padrão" e "Grafite" continuam em Ajustes › Aparência.
+- Barra do jogo atual compacta (84 px): capa pequena, título, última sessão, tempo, plataforma e ano; Jogar, Detalhes, Pasta, favorito e três miniaturas dos jogos recentes ("Depois"). Ao clicar num jogo da grade, a barra e o fundo acompanham.
+- Biblioteca num painel só, com todos os jogos: chips rápidos e filtros fixos no topo, grade de capas 3:4 com título e duas linhas (plataforma · ano; tempo ou "Nunca jogado"). Em janela estreita, os botões da barra viram ícones e as abas secundárias encolhem.
+- Biblioteca sem divisórias por letra por padrão (grade contínua com todos os jogos, como antes do agrupamento); "Agrupar por" continua em Filtros e exibição para quem quiser.
+- Faixas abaixo da grade: "Continuar" (últimos jogados), "Novos na biblioteca" e "Mais jogados" — 8 jogos cada, clique seleciona, duplo clique abre.
+- Vidro refeito do zero no formato do conceito "Liquid Glass": tipografia Inter (com números tabulares), fundo grafite (#232428) com a arte do jogo em foco atrás de um véu, e todas as superfícies em vidro cinza claro translúcido (`rgba(255,255,255,.07)` + borda `.14`) — nada de preto. Controles da janela (– □ ×) centrados na pílula, exatamente como na 4.0.26.
+- Início em uma página só: barra do jogo atual de 84 px (capa, título, meta, barra de progresso com %, "Depois" com 3 capinhas, ··· / Detalhes / Continuar em branco sólido) e logo abaixo o painel "Biblioteca" com chips em pílula, fileira "Continuar" (6 cartões horizontais de vidro, "Ver todos ›") e a grade de capas completa (raio 10, legenda título + plataforma, anel branco no selecionado).
+- Emuladores refeita: cartões de console em vidro (ícone em caixa, nome, emulador · jogos, chip "Pronto"/"Sem emulador", botões Instalar/Já tenho ou Abrir/ROMs em pílula e menu ··· com guia, emuladores do console, pastas, destino de download e remoção). Store, Mods, Central, Rápidos e Ajustes no mesmo formato: painel de vidro com cabeçalho fixo, abas em chips e botões em pílula.
+- Respiro em tudo: barra do alto com 16 px de margem e pílulas de 44 px (abas com 18 px de folga, ícones e – □ × espaçados), 16 px entre a barra, o jogo atual (100 px) e o painel; cabeçalho da Biblioteca com 16 px de padding e chips de 32 px; fileira "Continuar" com cartões de 66 px que se ajustam à largura; grade com 22×16 px entre capas; cartões de console com 18 px internos; Detalhes com o cabeçalho afastado do topo e das laterais.
+- Barra superior em pílulas: uma pílula com todas as abas, busca redonda e, à direita, ajuda, avisos, ajustes e controles da janela em outra pílula; tudo solto sobre o fundo, sem barra opaca.
+- Tela inicial igual ao conceito: sem logotipo na barra, sem barra de status (só aparece enquanto há tarefa rodando), sem índice A–Z; cartões com título e uma linha (plataforma · ano); barra do jogo atual com capa, título, "Depois" e, à direita, favorito, Detalhes e Jogar. O selo NOVO some quando mais de 12 jogos seriam "novos" ao mesmo tempo (primeira varredura).
+- Paleta neutra: nada de azul no fundo nem nos cartões — cinza grafite/branco com bordas de luz; botão principal branco no escuro e preto no claro, como no conceito. Painéis de Ajustes, Store, Emuladores, Central e Mods também viram vidro; página de detalhes, painel lateral e menus semitransparentes sobre a mesma arte.
+- Terceira linha dos cartões cortava o texto sem reticências ("7 h 10 mi"); agora corta com reticências e, em cartões estreitos, mostra só o tempo jogado.
+- Migração: perfis e configuração existentes passam para Vidro, barra do jogo atual ligada e abas no alto. Quem preferir volta ao Grafite em Ajustes › Aparência.
+
 ## 4.0.26 — 2026-11-16
 
 - Novo jogo de cores "Grafite", agora o padrão: cinza médio no escuro, cinza claro com cartões brancos no claro, destaque azul-aço (#6c9bd2). O "Padrão" preto/branco continua disponível em Ajustes › Aparência › Cores de fundo. Quem estava no Padrão passa para o Grafite nesta atualização.

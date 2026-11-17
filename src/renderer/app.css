@@ -12,6 +12,7 @@ svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
 .sp{flex:1}
 
 .rail{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 6px 12px;background:var(--panel);backdrop-filter:blur(20px);border-right:1px solid var(--line)}
+.rail .rgs{display:contents}
 .rail .rg{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;flex:none}
 .rail .rsep{display:block;width:26px;height:1px;background:var(--line2);margin:7px 0;flex:none}
 .brand{width:40px;height:40px;margin-bottom:12px;filter:drop-shadow(0 8px 18px color-mix(in srgb,var(--accent) 55%,transparent))}
