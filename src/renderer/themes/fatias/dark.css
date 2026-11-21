@@ -1,0 +1,28 @@
+:root{
+  --bg:#2a1206;
+  --bg2:#351e12;
+  --panel:#331b10;
+  --card:#3b251a;
+  --card2:#442e24;
+  --line:rgba(255,255,255,.1);
+  --line2:rgba(255,255,255,.22);
+  --text:#ffe6c6;
+  --muted:#cab196;
+  --muted2:#947c66;
+  --green:#8fd3a0;
+  --green2:#8fd3a0;
+  --red:#ff7a6e;
+  --amber:#ffb347;
+  --shadow:0 24px 60px -30px rgba(0,0,0,.8);
+  --glow1:transparent;
+  --glow2:transparent;
+  --glow3:transparent;
+  --ph-from:#3b251a;
+  --ph-to:#442e24;
+  --img-fade:#2a1206;
+  --logo-bg:#ffe6c6;
+  --mono:#ffe6c6;
+  --mono2:#cab196;
+  color-scheme:dark;
+  --arq-deco:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1280 800%22 preserveAspectRatio=%22xMidYMid slice%22%3E%3Cdefs%3E%3C/defs%3E%3Cpath d=%22M0 0H1280V120L0 420z%22 fill=%22%23ff7a2a%22 opacity=%22.12%22/%3E%3C/svg%3E");
+}

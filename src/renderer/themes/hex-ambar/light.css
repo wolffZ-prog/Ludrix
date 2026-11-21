@@ -1,0 +1,28 @@
+:root{
+  --bg:#dde1e7;
+  --bg2:#eef0f3;
+  --panel:#f1f3f5;
+  --card:#ffffff;
+  --card2:#d4d8de;
+  --line:rgba(21,24,29,.12);
+  --line2:rgba(21,24,29,.26);
+  --text:#0c0e11;
+  --muted:#4b4d51;
+  --muted2:#7f8287;
+  --green:#1f8a52;
+  --green2:#1f8a52;
+  --red:#c8382c;
+  --amber:#9a6200;
+  --shadow:0 24px 60px -30px rgba(0,0,0,.35);
+  --glow1:transparent;
+  --glow2:transparent;
+  --glow3:transparent;
+  --ph-from:#ffffff;
+  --ph-to:#d4d8de;
+  --img-fade:#dde1e7;
+  --logo-bg:#0c0e11;
+  --mono:#0c0e11;
+  --mono2:#4b4d51;
+  color-scheme:light;
+  --arq-deco:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1280 800%22 preserveAspectRatio=%22xMidYMid slice%22%3E%3Cdefs%3E%3Cpattern id=%22hx%22 width=%2238.11%22 height=%2266.00%22 patternUnits=%22userSpaceOnUse%22%3E%3Cpolygon points=%2238.1,33.0 19.1,44.0 -0.0,33.0 0.0,11.0 19.1,0.0 38.1,11.0%22 fill=%22none%22 stroke=%22%2330353d%22 stroke-width=%221%22/%3E%3Cpolygon points=%2219.1,66.0 0.0,77.0 -19.1,66.0 -19.1,44.0 -0.0,33.0 19.1,44.0%22 fill=%22none%22 stroke=%22%2330353d%22 stroke-width=%221%22/%3E%3Cpolygon points=%2257.2,66.0 38.1,77.0 19.1,66.0 19.1,44.0 38.1,33.0 57.2,44.0%22 fill=%22none%22 stroke=%22%2330353d%22 stroke-width=%221%22/%3E%3C/pattern%3E%3C/defs%3E%3Crect width=%221280%22 height=%22800%22 fill=%22url(%23hx)%22 opacity=%220.14%22/%3E%3Crect x=%220%22 y=%220%22 width=%221280%22 height=%223%22 fill=%22%23c77a10%22 opacity=%22.9%22/%3E%3C/svg%3E");
+}

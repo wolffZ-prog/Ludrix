@@ -24,12 +24,17 @@ jobs:
           cache: npm
       - name: Versão
         id: v
-        run: echo "ver=$(node -p "require('./version.json').version")" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "ver=$(node -p "require('./version.json').version")" >> "$GITHUB_OUTPUT"
+          echo "kind=$(node -p "require('./version.json').release || 'full'")" >> "$GITHUB_OUTPUT"
       - name: Dependências
+        if: steps.v.outputs.kind != 'hotfix'
         run: npm ci --no-audit --no-fund
       - name: Build
+        if: steps.v.outputs.kind != 'hotfix'
         run: npm run dist:linux
       - name: Esperar a release v${{ steps.v.outputs.ver }}
+        if: steps.v.outputs.kind != 'hotfix'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -39,11 +44,12 @@ jobs:
           done
           echo "release v${{ steps.v.outputs.ver }} não apareceu em 30 min"; exit 1
       - name: Anexar à release
+        if: steps.v.outputs.kind != 'hotfix'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "v${{ steps.v.outputs.ver }}" release/LudrixHub-${{ steps.v.outputs.ver }}-x86_64.AppImage -R "$GITHUB_REPOSITORY" --clobber
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && steps.v.outputs.kind != 'hotfix'
         with:
           name: LudrixHub-${{ steps.v.outputs.ver }}-AppImage
           path: release/LudrixHub-*.AppImage

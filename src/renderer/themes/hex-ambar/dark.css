@@ -1,0 +1,28 @@
+:root{
+  --bg:#0c0e11;
+  --bg2:#181a1d;
+  --panel:#16181b;
+  --card:#1f2124;
+  --card2:#292b2e;
+  --line:rgba(255,255,255,.1);
+  --line2:rgba(255,255,255,.22);
+  --text:#dde1e7;
+  --muted:#a9acb2;
+  --muted2:#74787c;
+  --green:#8fd3a0;
+  --green2:#8fd3a0;
+  --red:#ff7a6e;
+  --amber:#ffb347;
+  --shadow:0 24px 60px -30px rgba(0,0,0,.8);
+  --glow1:transparent;
+  --glow2:transparent;
+  --glow3:transparent;
+  --ph-from:#1f2124;
+  --ph-to:#292b2e;
+  --img-fade:#0c0e11;
+  --logo-bg:#dde1e7;
+  --mono:#dde1e7;
+  --mono2:#a9acb2;
+  color-scheme:dark;
+  --arq-deco:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1280 800%22 preserveAspectRatio=%22xMidYMid slice%22%3E%3Cdefs%3E%3Cpattern id=%22hx%22 width=%2238.11%22 height=%2266.00%22 patternUnits=%22userSpaceOnUse%22%3E%3Cpolygon points=%2238.1,33.0 19.1,44.0 -0.0,33.0 0.0,11.0 19.1,0.0 38.1,11.0%22 fill=%22none%22 stroke=%22%236b7280%22 stroke-width=%221%22/%3E%3Cpolygon points=%2219.1,66.0 0.0,77.0 -19.1,66.0 -19.1,44.0 -0.0,33.0 19.1,44.0%22 fill=%22none%22 stroke=%22%236b7280%22 stroke-width=%221%22/%3E%3Cpolygon points=%2257.2,66.0 38.1,77.0 19.1,66.0 19.1,44.0 38.1,33.0 57.2,44.0%22 fill=%22none%22 stroke=%22%236b7280%22 stroke-width=%221%22/%3E%3C/pattern%3E%3Cpattern id=%22hb%22 width=%2220%22 height=%2220%22 patternUnits=%22userSpaceOnUse%22%3E%3Cpath d=%22M0 0L10.0 10.0L0 20M20 0L10.0 10.0L20 20%22 fill=%22none%22 stroke=%22%23ffb347%22 stroke-width=%221%22/%3E%3C/pattern%3E%3C/defs%3E%3Crect width=%221280%22 height=%22800%22 fill=%22url(%23hx)%22 opacity=%220.18%22/%3E%3Crect width=%221280%22 height=%22800%22 fill=%22url(%23hb)%22 opacity=%220.08%22/%3E%3Crect x=%220%22 y=%220%22 width=%221280%22 height=%223%22 fill=%22%23ffb347%22 opacity=%22.9%22/%3E%3C/svg%3E");
+}

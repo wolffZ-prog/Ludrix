@@ -1,0 +1,28 @@
+:root{
+  --bg:#dfe3ea;
+  --bg2:#eff1f4;
+  --panel:#f2f4f7;
+  --card:#ffffff;
+  --card2:#d6dae1;
+  --line:rgba(21,24,29,.12);
+  --line2:rgba(21,24,29,.26);
+  --text:#111317;
+  --muted:#4f5156;
+  --muted2:#82858b;
+  --green:#1f8a52;
+  --green2:#1f8a52;
+  --red:#c8382c;
+  --amber:#9a6200;
+  --shadow:0 24px 60px -30px rgba(0,0,0,.35);
+  --glow1:transparent;
+  --glow2:transparent;
+  --glow3:transparent;
+  --ph-from:#ffffff;
+  --ph-to:#d6dae1;
+  --img-fade:#dfe3ea;
+  --logo-bg:#111317;
+  --mono:#111317;
+  --mono2:#4f5156;
+  color-scheme:light;
+  --arq-deco:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1280 800%22 preserveAspectRatio=%22xMidYMid slice%22%3E%3Cdefs%3E%3C/defs%3E%3Cg fill=%22none%22 stroke=%22%232c3038%22 opacity=%22.14%22 stroke-width=%221%22%3E%3Ccircle cx=%221100%22 cy=%22240%22 r=%2260%22/%3E%3Ccircle cx=%221100%22 cy=%22240%22 r=%22106%22/%3E%3Ccircle cx=%221100%22 cy=%22240%22 r=%22152%22/%3E%3Ccircle cx=%221100%22 cy=%22240%22 r=%22198%22/%3E%3Ccircle cx=%221100%22 cy=%22240%22 r=%22244%22/%3E%3Ccircle cx=%221100%22 cy=%22240%22 r=%22290%22/%3E%3Ccircle cx=%221100%22 cy=%22240%22 r=%22336%22/%3E%3Ccircle cx=%221100%22 cy=%22240%22 r=%22382%22/%3E%3Ccircle cx=%221100%22 cy=%22240%22 r=%22428%22/%3E%3Ccircle cx=%221100%22 cy=%22240%22 r=%22474%22/%3E%3C/g%3E%3C/svg%3E");
+}

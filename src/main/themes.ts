@@ -9,11 +9,40 @@ export const THEME_VARS = ['bg', 'bg2', 'panel', 'card', 'card2', 'line', 'line2
     'shadow', 'glow1', 'glow2', 'glow3', 'ph-from', 'ph-to', 'img-fade'];
 
 export const FACES: Record<string, { name: string; description: string; accent: string; layout: string; swatch: { dark: string[]; light: string[] } }> = {
-    padrao: { name: 'Padrão', description: 'Fundo preto ou branco, cor sólida e linha fina; azul só no Jogar e no que está selecionado.', accent: '', layout: 'side', swatch: { dark: ['#0e0e10', '#1b1b1e'], light: ['#ffffff', '#f5f5f6'] } },
-    grafite: { name: 'Grafite', description: 'Cinza médio no escuro, cinza claro com cartões brancos no claro.', accent: '#6c9bd2', layout: 'side', swatch: { dark: ['#1b1d21', '#272a30'], light: ['#e7e9ee', '#ffffff'] } },
-    vidro: { name: 'Vidro', description: 'Arte do jogo em foco desfocada ao fundo e painéis translúcidos por cima; fumê no escuro, leitoso no claro.', accent: '#9a9ca3', layout: 'top', swatch: { dark: ['#1f1f23', '#3d3d45'], light: ['#ececee', '#ffffff'] } },
+    'arquivo': { name: "Arquivo", description: "Editorial: fundo iridescente laranja e azul desfocado, linhas finas, painéis de vidro e tipografia leve com rótulos monoespaçados. Grafite no escuro, papel no claro.", accent: '#ff7a3c', layout: 'rail', swatch: { dark: ["#1a1d22", "#ff7a3c"], light: ["#e9e6e1", "#5aaac8"] } },
+    'metal-verde': { name: "Metal Verde", description: "Chapa de aço escura com rebites, HUD em verde terminal e rótulos monoespaçados; claro em alumínio escovado.", accent: '#3ddc84', layout: 'rail', swatch: { dark: ["#0b0d0f", "#3ddc84"], light: ["#dfe6ea", "#1f9d63"] } },
+    'circuito-pb': { name: "Circuito P&B", description: "Papel branco com traços de circuito em preto, molduras finas e tipografia preta e pesada; no escuro, placa preta com traços brancos.", accent: '#111111', layout: 'rail', swatch: { dark: ["#0e0e0e", "#ffffff"], light: ["#f2f2f0", "#0e0e0e"] } },
+    'hex-azul': { name: "Hex Azul", description: "Malha hexagonal e azul elétrico sobre fundo marinho; painéis escuros com brilho azul; claro em azul-gelo.", accent: '#5aa0ff', layout: 'rail', swatch: { dark: ["#0b1a3a", "#5aa0ff"], light: ["#dbe7ff", "#1d4aa0"] } },
+    'sampler': { name: "Sampler", description: "Painel de sampler: preto fosco, pads quadrados, LEDs laranja-queimado e rótulos serigrafados.", accent: '#e8552a', layout: 'rail', swatch: { dark: ["#141517", "#e8552a"], light: ["#d6d6d6", "#c2401c"] } },
+    'hud-preto': { name: "HUD Preto", description: "Preto absoluto com linhas brancas finas, cantos de mira e dados monoespaçados; claro em cinza-chumbo invertido.", accent: '#ffffff', layout: 'rail', swatch: { dark: ["#050505", "#ffffff"], light: ["#e6e6e6", "#0a0a0a"] } },
+    'mecha-amarelo': { name: "Mecha Amarelo", description: "Amarelo industrial e preto: painéis chapados, listras de perigo, botões grandes e rótulos estampados.", accent: '#f5b400', layout: 'rail', swatch: { dark: ["#111216", "#f5b400"], light: ["#f5b400", "#111216"] } },
+    'oliva-2044': { name: "Oliva 2044", description: "Verde-oliva profundo com lima ácido, painéis translúcidos e cantos chanfrados; claro em creme-oliva.", accent: '#e6f08a', layout: 'rail', swatch: { dark: ["#2b3318", "#e6f08a"], light: ["#e8ecc8", "#4b5a1e"] } },
+    'topografia-lima': { name: "Topografia Lima", description: "Curvas de nível sobre preto, lima neon nos destaques e painéis sutis; claro em papel-mapa.", accent: '#c6ff00', layout: 'rail', swatch: { dark: ["#060606", "#c6ff00"], light: ["#f1f3ea", "#5f7a00"] } },
+    'circuito-lilas': { name: "Circuito Lilás", description: "Lilás com moldura preta arredondada, traços de circuito e detalhes em pêssego; claro em lilás-claro.", accent: '#7b63c8', layout: 'rail', swatch: { dark: ["#0a0a0a", "#7b63c8"], light: ["#cdb8f0", "#4a3a94"] } },
+    'fatias': { name: "Fatias", description: "Fatias diagonais de laranja vivo sobre marrom profundo, cantos redondos e tipografia amigável; claro em creme-laranja.", accent: '#ff7a2a', layout: 'rail', swatch: { dark: ["#2a1206", "#ff7a2a"], light: ["#ffe6c6", "#d85f14"] } },
+    'placa-neptune': { name: "Placa Neptune", description: "Placa-mãe escura em roxo com trilhas, magenta e amarelo nos destaques e rótulos mono; claro em cinza-lavanda.", accent: '#e03fa0', layout: 'rail', swatch: { dark: ["#07070a", "#e03fa0"], light: ["#e9e4f2", "#b0167a"] } },
+    'titanio-vermelho': { name: "Titânio Vermelho", description: "Titânio escovado em cinza-azulado com um vermelho-laranja vivo nos controles; claro em titânio claro.", accent: '#ff4a1a', layout: 'rail', swatch: { dark: ["#2e323a", "#ff4a1a"], light: ["#dcdfe4", "#e03a0c"] } },
+    'apex': { name: "Apex", description: "Preto com amarelo ácido, listras diagonais e tipografia display pesada em itálico; claro em cinza-claro com o mesmo amarelo.", accent: '#f4e81e', layout: 'rail', swatch: { dark: ["#070707", "#f4e81e"], light: ["#e8e8e8", "#070707"] } },
+    'emulate-azul': { name: "Emulate Azul", description: "Azul-aço com cartões claros e tipografia limpa, inspirado nos frontends de emulação; claro em azul-névoa.", accent: '#7d99b4', layout: 'rail', swatch: { dark: ["#141a21", "#8fa6bd"], light: ["#d6e2ee", "#2e3f52"] } },
+    'radio-militar': { name: "Rádio Militar", description: "Rádio de campanha: bege-oliva fosco, telinha de fósforo verde, botões laranja e rótulos gravados.", accent: '#ff6a3a', layout: 'rail', swatch: { dark: ["#3a3830", "#ff6a3a"], light: ["#d9d2c0", "#d8501f"] } },
+    'emulate-amarelo': { name: "Emulate Amarelo", description: "Amarelo-gema com moldura grafite e toques de azul-céu; cartões claros e numeração grande; escuro em grafite com o mesmo amarelo.", accent: '#f7d117', layout: 'rail', swatch: { dark: ["#1d1d1b", "#f7d117"], light: ["#f7d117", "#1d1d1b"] } },
+    'pegboard-vidro': { name: "Pegboard Vidro", description: "Painel perfurado com vidro fosco por cima, cantos arredondados e azul nos destaques; creme no claro, grafite no escuro.", accent: '#4f8cff', layout: 'rail', swatch: { dark: ["#2b2d31", "#4f8cff"], light: ["#efe5cf", "#2f6df6"] } },
+    'garan': { name: "Garan", description: "Grafite técnico com laranja de sinalização, códigos de peça e cantos cortados; claro em cinza-cimento.", accent: '#ff6a13', layout: 'rail', swatch: { dark: ["#1a1c20", "#ff6a13"], light: ["#d8d9d6", "#e05a00"] } },
+    'new-horizons': { name: "New Horizons", description: "Laranja-vermelho sólido com blocos pretos, aspas gigantes e listras de perigo; claro em laranja-claro.", accent: '#ff4f14', layout: 'rail', swatch: { dark: ["#ff4f14", "#06070a"], light: ["#ffb89a", "#2a1a10"] } },
+    'underglow': { name: "Underglow", description: "Grafite com painéis flutuantes e um brilho azul-acinzentado por baixo, cantos arredondados; claro em cinza-pérola.", accent: '#6f7a86', layout: 'rail', swatch: { dark: ["#0f1114", "#8fb0d6"], light: ["#e4e7eb", "#3f5a78"] } },
+    'radian': { name: "Radian", description: "Grafite com arcos e escalas circulares gravadas, painéis cinza-aço e tipografia técnica; claro em cinza-pérola.", accent: '#9aa0aa', layout: 'rail', swatch: { dark: ["#111317", "#dfe3ea"], light: ["#dfe3ea", "#2c3038"] } },
+    'ondas': { name: "Ondas", description: "Preto profundo com ondas finas desenhadas, coral nos botões e verde nos estados; claro em cinza-névoa.", accent: '#ff5a2a', layout: 'rail', swatch: { dark: ["#050607", "#ff5a2a"], light: ["#e8eaee", "#e0431a"] } },
+    'corrente': { name: "Corrente", description: "Preto com elos de corrente nas bordas, verde-limão neon e rótulos mono; claro em cinza-aço.", accent: '#39ff5a', layout: 'rail', swatch: { dark: ["#070808", "#39ff5a"], light: ["#dfe3e6", "#0f8a2a"] } },
+    'neon-menta': { name: "Neon Menta", description: "Grafite esverdeado com uma linha neon menta que atravessa a tela e brilha nos destaques; claro em menta-gelo.", accent: '#17ffb0', layout: 'rail', swatch: { dark: ["#0c0e10", "#17ffb0"], light: ["#e6f2ee", "#0f8a68"] } },
+    'aco-escovado': { name: "Aço Escovado", description: "Aço escovado azulado, linhas horizontais finas e azul-gelo nos destaques; claro em aço claro.", accent: '#9fd8ff', layout: 'rail', swatch: { dark: ["#0d1014", "#9fd8ff"], light: ["#c9d4e0", "#1f6fa8"] } },
+    'nkh-areia': { name: "NKH Areia", description: "Areia e cinza quente em blocos retos, cantos vivos e rótulos monoespaçados; escuro em carvão.", accent: '#a89a8f', layout: 'rail', swatch: { dark: ["#1a1917", "#a89a8f"], light: ["#d9d0c4", "#6a5f55"] } },
+    'duna': { name: "Duna", description: "Dunas suaves em areia e azul-petróleo, cantos redondos e tipografia leve; escuro em noite-petróleo.", accent: '#8fb2b0', layout: 'rail', swatch: { dark: ["#1c2630", "#8fb2b0"], light: ["#efe6d2", "#3f6a68"] } },
+    'halftone-cobre': { name: "Halftone Cobre", description: "Verde-petróleo escuro com retícula de meio-tom e cobre quente nos destaques; claro em papel-creme.", accent: '#d9834a', layout: 'rail', swatch: { dark: ["#13201f", "#d9834a"], light: ["#efe6da", "#b0602a"] } },
+    'toyotas': { name: "Toyotas", description: "Laranja sólido com placa grafite, botão giratório e katakana ビブリオテカ; claro em laranja-claro com grafite.", accent: '#f26a1b', layout: 'rail', swatch: { dark: ["#1b1b1e", "#f26a1b"], light: ["#f26a1b", "#1b1b1e"] } },
+    'hex-ambar': { name: "Hex Âmbar", description: "Grafite com hexágonos e espinha-de-peixe, painéis octogonais rebitados e frestas de luz âmbar; claro em cinza-quente.", accent: '#ffb347', layout: 'rail', swatch: { dark: ["#0c0e11", "#ffb347"], light: ["#dde1e7", "#c77a10"] } },
+    grafite: { name: 'Grafite (Legacy)', description: 'A cara clássica do Ludrix: cinza médio no escuro, cinza claro com cartões brancos no claro. Mantida para quem prefere a interface antiga.', accent: '#6c9bd2', layout: 'side', swatch: { dark: ['#1b1d21', '#272a30'], light: ['#e7e9ee', '#ffffff'] } },
 };
-export const DEFAULT_FACE = 'vidro';
+export const DEFAULT_FACE = 'arquivo';
 const SLUG = /^[a-z0-9][a-z0-9._-]{0,60}$/;
 const THEME_FILES = /^(theme\.json|extra\.css|wallpaper\.(jpg|jpeg|png|webp)|preview\.(png|jpg|jpeg|webp)|thumb\.png|LEIA-?ME\.txt|README\.(txt|md)|[A-Za-z0-9_.-]+\.(woff2|woff|ttf|png|webp|svg))$/i;
 
@@ -41,7 +70,7 @@ export function faceOf(themeId: string, cfg: Cfg): [string, string | null] | nul
         return [currentFace(cfg), themeId === 'dark' ? 'dark' : themeId === 'light' ? 'light' : null];
     if (themeId in FACES)
         return [themeId, null];
-    const m = /^([a-z]+)-(dark|light)$/.exec(themeId || '');
+    const m = /^([a-z0-9-]+?)-(dark|light)$/.exec(themeId || '');
     if (m && m[1] in FACES)
         return [m[1], m[2]];
     return null;
@@ -263,8 +292,8 @@ export function themeCss(themeId: string, scheme: string, cfg: Cfg) {
         try { t = readJsonBom(tj); } catch { return ''; }
         const own = t.scheme === 'light' ? 'light' : 'dark';
         const eff = scheme === 'light' || scheme === 'dark' ? scheme : own;
-        const fcss = path.join(P.UI, 'themes', 'padrao', 'face.css');
-        const base = faceVarsCss('padrao', eff) + (exists(fcss) ? '\n' + fs.readFileSync(fcss, 'utf8') : '');
+        const fcss = path.join(P.UI, 'themes', 'grafite', 'face.css');
+        const base = faceVarsCss('grafite', eff) + (exists(fcss) ? '\n' + fs.readFileSync(fcss, 'utf8') : '');
         let v: Record<string, any> = t.vars || {};
         if (eff !== own)
             v = t['vars_' + eff] || flipVars(v, own, eff);

@@ -1,0 +1,28 @@
+:root{
+  --bg:#070808;
+  --bg2:#131414;
+  --panel:#111212;
+  --card:#1b1c1c;
+  --card2:#252626;
+  --line:rgba(255,255,255,.1);
+  --line2:rgba(255,255,255,.22);
+  --text:#e9ebee;
+  --muted:#b0b2b4;
+  --muted2:#787a7b;
+  --green:#8fd3a0;
+  --green2:#8fd3a0;
+  --red:#ff7a6e;
+  --amber:#ffb347;
+  --shadow:0 24px 60px -30px rgba(0,0,0,.8);
+  --glow1:transparent;
+  --glow2:transparent;
+  --glow3:transparent;
+  --ph-from:#1b1c1c;
+  --ph-to:#252626;
+  --img-fade:#070808;
+  --logo-bg:#e9ebee;
+  --mono:#e9ebee;
+  --mono2:#b0b2b4;
+  color-scheme:dark;
+  --arq-deco:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1280 800%22 preserveAspectRatio=%22xMidYMid slice%22%3E%3Cdefs%3E%3C/defs%3E%3Cg opacity=%220.5%22%3E%3Crect x=%221140%22 y=%2240%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%221140%22 y=%22120%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%221140%22 y=%22200%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%221140%22 y=%22280%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%221140%22 y=%22360%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%221140%22 y=%22440%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%221140%22 y=%22520%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%221140%22 y=%22600%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%221140%22 y=%22680%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3C/g%3E%3Cg opacity=%220.5%22%3E%3Crect x=%2230%22 y=%2240%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%2230%22 y=%22120%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%2230%22 y=%22200%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%2230%22 y=%22280%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%2230%22 y=%22360%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%2230%22 y=%22440%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%2230%22 y=%22520%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%2230%22 y=%22600%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3Crect x=%2230%22 y=%22680%22 width=%2234%22 height=%2260%22 rx=%2217%22 fill=%22none%22 stroke=%22%239aa0aa%22 stroke-width=%225%22/%3E%3C/g%3E%3Cg fill=%22none%22 stroke=%22%2339ff5a%22 stroke-width=%222%22 opacity=%220.7%22%3E%3Cpath d=%22M12 48V12H48%22/%3E%3Cpath d=%22M1232 12H1268V48%22/%3E%3Cpath d=%22M12 752V788H48%22/%3E%3Cpath d=%22M1232 788H1268V752%22/%3E%3C/g%3E%3C/svg%3E");
+}

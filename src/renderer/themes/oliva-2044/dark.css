@@ -1,0 +1,28 @@
+:root{
+  --bg:#2b3318;
+  --bg2:#363d24;
+  --panel:#333b21;
+  --card:#3c432a;
+  --card2:#444b34;
+  --line:rgba(255,255,255,.1);
+  --line2:rgba(255,255,255,.22);
+  --text:#f2f6d0;
+  --muted:#c0c5a2;
+  --muted2:#8e9474;
+  --green:#8fd3a0;
+  --green2:#8fd3a0;
+  --red:#ff7a6e;
+  --amber:#ffb347;
+  --shadow:0 24px 60px -30px rgba(0,0,0,.8);
+  --glow1:transparent;
+  --glow2:transparent;
+  --glow3:transparent;
+  --ph-from:#3c432a;
+  --ph-to:#444b34;
+  --img-fade:#2b3318;
+  --logo-bg:#f2f6d0;
+  --mono:#f2f6d0;
+  --mono2:#c0c5a2;
+  color-scheme:dark;
+  --arq-deco:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1280 800%22 preserveAspectRatio=%22xMidYMid slice%22%3E%3Cdefs%3E%3Cfilter id=%22tp%22 x=%22-20%%22 y=%22-20%%22 width=%22140%%22 height=%22140%%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%22.006%22 numOctaves=%223%22 seed=%223%22/%3E%3CfeDisplacementMap in=%22SourceGraphic%22 scale=%22120%22/%3E%3C/filter%3E%3C/defs%3E%3Cg filter=%22url(%23tp)%22 opacity=%220.14%22 stroke=%22%23e6f08a%22 stroke-width=%221%22 fill=%22none%22%3E%3Cellipse cx=%22900%22 cy=%22560%22 rx=%2280%22 ry=%2250%22/%3E%3Cellipse cx=%22900%22 cy=%22560%22 rx=%22140%22 ry=%2292%22/%3E%3Cellipse cx=%22900%22 cy=%22560%22 rx=%22200%22 ry=%22134%22/%3E%3Cellipse cx=%22900%22 cy=%22560%22 rx=%22260%22 ry=%22176%22/%3E%3Cellipse cx=%22900%22 cy=%22560%22 rx=%22320%22 ry=%22218%22/%3E%3Cellipse cx=%22900%22 cy=%22560%22 rx=%22380%22 ry=%22260%22/%3E%3Cellipse cx=%22900%22 cy=%22560%22 rx=%22440%22 ry=%22302%22/%3E%3Cellipse cx=%22900%22 cy=%22560%22 rx=%22500%22 ry=%22344%22/%3E%3Cellipse cx=%22900%22 cy=%22560%22 rx=%22560%22 ry=%22386%22/%3E%3Cellipse cx=%22900%22 cy=%22560%22 rx=%22620%22 ry=%22428%22/%3E%3Cellipse cx=%22900%22 cy=%22560%22 rx=%22680%22 ry=%22470%22/%3E%3Cellipse cx=%22900%22 cy=%22560%22 rx=%22740%22 ry=%22512%22/%3E%3Cellipse cx=%22900%22 cy=%22560%22 rx=%22800%22 ry=%22554%22/%3E%3Cellipse cx=%22900%22 cy=%22560%22 rx=%22860%22 ry=%22596%22/%3E%3C/g%3E%3Cg fill=%22none%22 stroke=%22%23e6f08a%22 stroke-width=%222%22 opacity=%220.5%22%3E%3Cpath d=%22M16 66V16H66%22/%3E%3Cpath d=%22M1214 16H1264V66%22/%3E%3Cpath d=%22M16 734V784H66%22/%3E%3Cpath d=%22M1214 784H1264V734%22/%3E%3C/g%3E%3C/svg%3E");
+}

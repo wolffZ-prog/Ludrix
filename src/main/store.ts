@@ -9,7 +9,7 @@ const DEFAULT_CONFIG = {
     native: true,
     theme: 'dark',
     theme_mode: '',
-    face: 'vidro',
+    face: 'arquivo',
     accent: '',
     games_dir: '',
     shortcut_ask: true,
@@ -147,6 +147,7 @@ const DEFAULT_CONFIG = {
     console_confirm_quit: true,
     console_sort: 'title',
     console_dl_pill: true,
+    console_layout: 'console',
     emu_no_ask: false,
     ui_scale: 0,
     density: 'normal',
@@ -232,7 +233,7 @@ const PROFILE_KEYS = new Set([
     'layout', 'nav', 'nav_layout', 'nav_hidden', 'nav_order', 'rail_icons', 'status_position', 'clock',
     'language', 'popups', 'notify_sound', 'ui_sounds', 'ui_sounds_level', 'launch_splash', 'keymap', 'gamepad_speed', 'sofa_zoom',
     'discord_enabled', 'discord_app_id', 'favorites',
-    'console_theme', 'console_sound', 'console_hint', 'console_card_size', 'console_clock24', 'console_start_view', 'console_vibrate', 'console_dim_idle', 'console_confirm_quit', 'console_sort', 'console_dl_pill',
+    'console_theme', 'console_sound', 'console_hint', 'console_card_size', 'console_layout', 'console_clock24', 'console_start_view', 'console_vibrate', 'console_dim_idle', 'console_confirm_quit', 'console_sort', 'console_dl_pill',
 ]);
 const PROFILE_COLORS = ['#5c6b82', '#c0392b', '#d68910', '#1e8449', '#1f618d', '#7d3c98', '#117a65', '#884ea0'];
 type Profile = { id: string; name: string; color: string; created: number; avatar?: number };
@@ -294,6 +295,8 @@ class Store {
                     for (const [k, v] of Object.entries(patch))
                         if (PROFILE_KEYS.has(k))
                             this.overlay[k] = v;
+            if (['padrao', 'vidro'].includes(String(this.overlay.face || '')))
+                this.overlay.face = 'arquivo';
             this.overlay.look = Store.OVERLAY_LOOK;
             this.writeOverlay();
         }
@@ -304,8 +307,11 @@ class Store {
         [14, { nav_layout: 'top', view_mode: 'mural' }],
         [15, { face: 'grafite' }],
         [16, { face: 'vidro', home_spot: true, nav_layout: 'top', group_by: '' }],
+        [17, { face: 'padrao', nav_layout: '' }],
+        [18, { face: 'arquivo', nav_layout: '' }],
+        [19, {}],
     ];
-    static OVERLAY_LOOK = 16;
+    static OVERLAY_LOOK = 19;
     writeOverlay() {
         if (!this.profiles.active)
             return;
@@ -516,6 +522,9 @@ class Store {
                 }],
             [15, () => { if (this.config.face === 'padrao') this.config.face = 'grafite'; }],
             [16, () => { this.config.face = 'vidro'; this.config.home_spot = true; this.config.nav_layout = 'top'; this.config.group_by = ''; }],
+            [17, () => { this.config.face = 'padrao'; this.config.nav_layout = ''; }],
+            [18, () => { this.config.face = 'arquivo'; this.config.nav_layout = ''; }],
+            [19, () => { if (['padrao', 'vidro'].includes(String(this.config.face))) this.config.face = 'arquivo'; }],
         ];
         for (const [target, fn] of (steps as any)) {
             if (Number(this.config.look || 0) < target) {

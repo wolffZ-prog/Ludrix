@@ -1,0 +1,28 @@
+:root{
+  --bg:#111216;
+  --bg2:#1d1e22;
+  --panel:#1b1b1f;
+  --card:#242529;
+  --card2:#2e2e32;
+  --line:rgba(255,255,255,.1);
+  --line2:rgba(255,255,255,.22);
+  --text:#f3f3f0;
+  --muted:#babbba;
+  --muted2:#828283;
+  --green:#8fd3a0;
+  --green2:#8fd3a0;
+  --red:#ff7a6e;
+  --amber:#ffb347;
+  --shadow:0 24px 60px -30px rgba(0,0,0,.8);
+  --glow1:transparent;
+  --glow2:transparent;
+  --glow3:transparent;
+  --ph-from:#242529;
+  --ph-to:#2e2e32;
+  --img-fade:#111216;
+  --logo-bg:#f3f3f0;
+  --mono:#f3f3f0;
+  --mono2:#babbba;
+  color-scheme:dark;
+  --arq-deco:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1280 800%22 preserveAspectRatio=%22xMidYMid slice%22%3E%3Cdefs%3E%3Cpattern id=%22dt%22 width=%2228%22 height=%2228%22 patternUnits=%22userSpaceOnUse%22%3E%3Ccircle cx=%2214.0%22 cy=%2214.0%22 r=%221.5%22 fill=%22%23f5b400%22/%3E%3C/pattern%3E%3C/defs%3E%3Cg opacity=%221%22%3E%3Crect x=%220%22 y=%22784%22 width=%221280%22 height=%2216%22 fill=%22%23f5b400%22/%3E%3Cpath d=%22M0 784l-16 16h8.0l16 -16zM32 784l-16 16h8.0l16 -16zM64 784l-16 16h8.0l16 -16zM96 784l-16 16h8.0l16 -16zM128 784l-16 16h8.0l16 -16zM160 784l-16 16h8.0l16 -16zM192 784l-16 16h8.0l16 -16zM224 784l-16 16h8.0l16 -16zM256 784l-16 16h8.0l16 -16zM288 784l-16 16h8.0l16 -16zM320 784l-16 16h8.0l16 -16zM352 784l-16 16h8.0l16 -16zM384 784l-16 16h8.0l16 -16zM416 784l-16 16h8.0l16 -16zM448 784l-16 16h8.0l16 -16zM480 784l-16 16h8.0l16 -16zM512 784l-16 16h8.0l16 -16zM544 784l-16 16h8.0l16 -16zM576 784l-16 16h8.0l16 -16zM608 784l-16 16h8.0l16 -16zM640 784l-16 16h8.0l16 -16zM672 784l-16 16h8.0l16 -16zM704 784l-16 16h8.0l16 -16zM736 784l-16 16h8.0l16 -16zM768 784l-16 16h8.0l16 -16zM800 784l-16 16h8.0l16 -16zM832 784l-16 16h8.0l16 -16zM864 784l-16 16h8.0l16 -16zM896 784l-16 16h8.0l16 -16zM928 784l-16 16h8.0l16 -16zM960 784l-16 16h8.0l16 -16zM992 784l-16 16h8.0l16 -16zM1024 784l-16 16h8.0l16 -16zM1056 784l-16 16h8.0l16 -16zM1088 784l-16 16h8.0l16 -16zM1120 784l-16 16h8.0l16 -16zM1152 784l-16 16h8.0l16 -16zM1184 784l-16 16h8.0l16 -16zM1216 784l-16 16h8.0l16 -16zM1248 784l-16 16h8.0l16 -16zM1280 784l-16 16h8.0l16 -16z%22 fill=%22%23111216%22/%3E%3C/g%3E%3Cg opacity=%221%22%3E%3Crect x=%220%22 y=%220%22 width=%221280%22 height=%226%22 fill=%22%23f5b400%22/%3E%3Cpath d=%22M0 0l-6 6h3.0l6 -6zM12 0l-6 6h3.0l6 -6zM24 0l-6 6h3.0l6 -6zM36 0l-6 6h3.0l6 -6zM48 0l-6 6h3.0l6 -6zM60 0l-6 6h3.0l6 -6zM72 0l-6 6h3.0l6 -6zM84 0l-6 6h3.0l6 -6zM96 0l-6 6h3.0l6 -6zM108 0l-6 6h3.0l6 -6zM120 0l-6 6h3.0l6 -6zM132 0l-6 6h3.0l6 -6zM144 0l-6 6h3.0l6 -6zM156 0l-6 6h3.0l6 -6zM168 0l-6 6h3.0l6 -6zM180 0l-6 6h3.0l6 -6zM192 0l-6 6h3.0l6 -6zM204 0l-6 6h3.0l6 -6zM216 0l-6 6h3.0l6 -6zM228 0l-6 6h3.0l6 -6zM240 0l-6 6h3.0l6 -6zM252 0l-6 6h3.0l6 -6zM264 0l-6 6h3.0l6 -6zM276 0l-6 6h3.0l6 -6zM288 0l-6 6h3.0l6 -6zM300 0l-6 6h3.0l6 -6zM312 0l-6 6h3.0l6 -6zM324 0l-6 6h3.0l6 -6zM336 0l-6 6h3.0l6 -6zM348 0l-6 6h3.0l6 -6zM360 0l-6 6h3.0l6 -6zM372 0l-6 6h3.0l6 -6zM384 0l-6 6h3.0l6 -6zM396 0l-6 6h3.0l6 -6zM408 0l-6 6h3.0l6 -6zM420 0l-6 6h3.0l6 -6zM432 0l-6 6h3.0l6 -6zM444 0l-6 6h3.0l6 -6zM456 0l-6 6h3.0l6 -6zM468 0l-6 6h3.0l6 -6zM480 0l-6 6h3.0l6 -6zM492 0l-6 6h3.0l6 -6zM504 0l-6 6h3.0l6 -6zM516 0l-6 6h3.0l6 -6zM528 0l-6 6h3.0l6 -6zM540 0l-6 6h3.0l6 -6zM552 0l-6 6h3.0l6 -6zM564 0l-6 6h3.0l6 -6zM576 0l-6 6h3.0l6 -6zM588 0l-6 6h3.0l6 -6zM600 0l-6 6h3.0l6 -6zM612 0l-6 6h3.0l6 -6zM624 0l-6 6h3.0l6 -6zM636 0l-6 6h3.0l6 -6zM648 0l-6 6h3.0l6 -6zM660 0l-6 6h3.0l6 -6zM672 0l-6 6h3.0l6 -6zM684 0l-6 6h3.0l6 -6zM696 0l-6 6h3.0l6 -6zM708 0l-6 6h3.0l6 -6zM720 0l-6 6h3.0l6 -6zM732 0l-6 6h3.0l6 -6zM744 0l-6 6h3.0l6 -6zM756 0l-6 6h3.0l6 -6zM768 0l-6 6h3.0l6 -6zM780 0l-6 6h3.0l6 -6zM792 0l-6 6h3.0l6 -6zM804 0l-6 6h3.0l6 -6zM816 0l-6 6h3.0l6 -6zM828 0l-6 6h3.0l6 -6zM840 0l-6 6h3.0l6 -6zM852 0l-6 6h3.0l6 -6zM864 0l-6 6h3.0l6 -6zM876 0l-6 6h3.0l6 -6zM888 0l-6 6h3.0l6 -6zM900 0l-6 6h3.0l6 -6zM912 0l-6 6h3.0l6 -6zM924 0l-6 6h3.0l6 -6zM936 0l-6 6h3.0l6 -6zM948 0l-6 6h3.0l6 -6zM960 0l-6 6h3.0l6 -6zM972 0l-6 6h3.0l6 -6zM984 0l-6 6h3.0l6 -6zM996 0l-6 6h3.0l6 -6zM1008 0l-6 6h3.0l6 -6zM1020 0l-6 6h3.0l6 -6zM1032 0l-6 6h3.0l6 -6zM1044 0l-6 6h3.0l6 -6zM1056 0l-6 6h3.0l6 -6zM1068 0l-6 6h3.0l6 -6zM1080 0l-6 6h3.0l6 -6zM1092 0l-6 6h3.0l6 -6zM1104 0l-6 6h3.0l6 -6zM1116 0l-6 6h3.0l6 -6zM1128 0l-6 6h3.0l6 -6zM1140 0l-6 6h3.0l6 -6zM1152 0l-6 6h3.0l6 -6zM1164 0l-6 6h3.0l6 -6zM1176 0l-6 6h3.0l6 -6zM1188 0l-6 6h3.0l6 -6zM1200 0l-6 6h3.0l6 -6zM1212 0l-6 6h3.0l6 -6zM1224 0l-6 6h3.0l6 -6zM1236 0l-6 6h3.0l6 -6zM1248 0l-6 6h3.0l6 -6zM1260 0l-6 6h3.0l6 -6zM1272 0l-6 6h3.0l6 -6zM1284 0l-6 6h3.0l6 -6z%22 fill=%22%23111216%22/%3E%3C/g%3E%3Crect width=%221280%22 height=%22800%22 fill=%22url(%23dt)%22 opacity=%220.15%22/%3E%3C/svg%3E");
+}

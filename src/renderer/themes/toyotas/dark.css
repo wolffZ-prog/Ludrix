@@ -1,0 +1,28 @@
+:root{
+  --bg:#1b1b1e;
+  --bg2:#262629;
+  --panel:#242427;
+  --card:#2d2d30;
+  --card2:#363639;
+  --line:rgba(255,255,255,.1);
+  --line2:rgba(255,255,255,.22);
+  --text:#ececec;
+  --muted:#b8b8b8;
+  --muted2:#848485;
+  --green:#8fd3a0;
+  --green2:#8fd3a0;
+  --red:#ff7a6e;
+  --amber:#ffb347;
+  --shadow:0 24px 60px -30px rgba(0,0,0,.8);
+  --glow1:transparent;
+  --glow2:transparent;
+  --glow3:transparent;
+  --ph-from:#2d2d30;
+  --ph-to:#363639;
+  --img-fade:#1b1b1e;
+  --logo-bg:#ececec;
+  --mono:#ececec;
+  --mono2:#b8b8b8;
+  color-scheme:dark;
+  --arq-deco:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1280 800%22 preserveAspectRatio=%22xMidYMid slice%22%3E%3Cdefs%3E%3C/defs%3E%3Ctext x=%2240%22 y=%22770%22 font-family=%22Noto Sans CJK JP,Meiryo,sans-serif%22 font-weight=%22700%22 font-size=%2234%22 fill=%22%231b1b1e%22 opacity=%22.55%22%3E%E3%83%93%E3%83%96%E3%83%AA%E3%82%AA%E3%83%86%E3%82%AB%3C/text%3E%3Ccircle cx=%22114%22 cy=%22420%22 r=%2248%22 fill=%22none%22 stroke=%22%231b1b1e%22 stroke-width=%228%22 opacity=%22.5%22/%3E%3C/svg%3E");
+}

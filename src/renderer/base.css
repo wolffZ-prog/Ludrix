@@ -121,7 +121,7 @@ html body.bs[data-face] .card .qp.live{transform:none;opacity:1}
 html body.bs[data-face] .card:hover .ptb{opacity:0}
 html body.bs[data-face] .card .ptb{transition:opacity .15s}
 html body.bs[data-face] .card .fav{top:6px;right:6px;width:22px;height:22px;background:transparent;border:0;box-shadow:none}
-html body.bs[data-face] .card .fav.on svg{fill:#f2b84b;stroke:#f2b84b}
+html body.bs[data-face] .card .fav.on svg{fill:#f2b84b;stroke:#f2b84b;color:#f2b84b}
 html body.bs[data-face] .card .ptb{left:auto;right:6px;bottom:6px;top:auto;font:500 10px/1 var(--font-text);background:rgba(0,0,0,.6);color:#fff;padding:3px 5px;border-radius:4px;border:0}
 html body.bs[data-face] .card .rib{top:auto;bottom:6px;left:6px;font:600 9px/1 var(--font-text);padding:3px 5px;border-radius:3px;letter-spacing:.4px}
 html body.bs[data-face] .card .badge{border-radius:3px;font-size:9px}
@@ -153,7 +153,7 @@ html body.bs[data-face] .gpanel .gacts .btn.p{flex:1;height:36px;justify-content
 html body.bs[data-face] .gpanel .gacts .btn.s{width:36px;height:36px;padding:0;justify-content:center;flex:none;border-radius:var(--r);background:var(--bg2);border:1px solid var(--line);color:var(--muted)}
 html body.bs[data-face] .gpanel .gacts .btn.s:hover{color:var(--text);border-color:var(--line2)}
 html body.bs[data-face] .gpanel .gacts .btn.s.on{color:#f2b84b}
-html body.bs[data-face] .gpanel .gacts .btn.s.on svg{fill:#f2b84b;stroke:#f2b84b}
+html body.bs[data-face] .gpanel .gacts .btn.s.on svg{fill:#f2b84b;stroke:#f2b84b;color:#f2b84b}
 html body.bs[data-face] .gpanel .gkpi{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;margin:16px 18px 0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--line)}
 html body.bs[data-face] .gpanel .gkpi div{background:var(--bg2);padding:9px 10px;min-width:0}
 html body.bs[data-face] .gpanel .gkpi small{display:block;font:400 10px var(--font-text);letter-spacing:.8px;text-transform:uppercase;color:var(--muted2)}
@@ -215,7 +215,7 @@ html body.bs[data-face] .dhead .meta .pill.ac{color:var(--text)}
 html body.bs[data-face] .dhead .acts>.btn.g,html body.bs[data-face] .dhead .acts>.btn.p{height:38px;padding:0 24px;font-size:13.5px;border-radius:var(--r)}
 html body.bs[data-face] .dhead .acts .btn.sm{height:38px;padding:0 14px;font-size:12.5px;border-radius:var(--r)}
 html body.bs[data-face] .dhead .acts .btn.favon{color:#f2b84b;background:transparent;border-color:var(--line2)}
-html body.bs[data-face] .dhead .acts .btn.favon svg{fill:#f2b84b;stroke:#f2b84b}
+html body.bs[data-face] .dhead .acts .btn.favon svg{fill:#f2b84b;stroke:#f2b84b;color:#f2b84b}
 html body.bs[data-face] .dmain{clear:both;margin:28px 40px 0 36px}
 html body.bs[data-face] .dmain .dtabs{margin:0 0 18px;border-bottom:1px solid var(--line)}
 html body.bs[data-face] .dtabs .dtab,html body.bs[data-face] .dtabs button{font:500 13px var(--font-text);letter-spacing:0;text-transform:none;height:36px;border-radius:0}
@@ -767,3 +767,8 @@ html body.bs[data-face] .strip .si img{width:44px;height:44px;border-radius:8px;
 html body.bs[data-face] .strip .si b{display:block;font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 html body.bs[data-face] .strip .si small{display:block;color:var(--muted);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:1000px){html body.bs[data-face] .nowbar .nbnext{display:none}}
+
+/* detalhes nunca deixam a biblioteca transparecer (em qualquer cara); menus de contexto foscos na cor do tema */
+html body.bs[data-face]:has(.detail.on) #view{visibility:hidden}
+html body.bs[data-face] .detail{background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px)}
+html body.bs[data-face] .ctx{background:color-mix(in srgb,var(--panel) 86%,transparent);backdrop-filter:blur(22px) saturate(1.2);-webkit-backdrop-filter:blur(22px) saturate(1.2)}

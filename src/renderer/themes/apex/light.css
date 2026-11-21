@@ -1,0 +1,28 @@
+:root{
+  --bg:#e8e8e8;
+  --bg2:#f4f4f4;
+  --panel:#f6f6f6;
+  --card:#ffffff;
+  --card2:#dfdfdf;
+  --line:rgba(21,24,29,.12);
+  --line2:rgba(21,24,29,.26);
+  --text:#070707;
+  --muted:#4a4a4a;
+  --muted2:#838383;
+  --green:#1f8a52;
+  --green2:#1f8a52;
+  --red:#c8382c;
+  --amber:#9a6200;
+  --shadow:0 24px 60px -30px rgba(0,0,0,.35);
+  --glow1:transparent;
+  --glow2:transparent;
+  --glow3:transparent;
+  --ph-from:#ffffff;
+  --ph-to:#dfdfdf;
+  --img-fade:#e8e8e8;
+  --logo-bg:#070707;
+  --mono:#070707;
+  --mono2:#4a4a4a;
+  color-scheme:light;
+  --arq-deco:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1280 800%22 preserveAspectRatio=%22xMidYMid slice%22%3E%3Cdefs%3E%3Cpattern id=%22st%22 width=%2222%22 height=%2222%22 patternUnits=%22userSpaceOnUse%22%3E%3Cpath d=%22M0 22L22 0M-11.0 11.0L11.0 -11.0M11.0 33.0L33.0 11.0%22 stroke=%22%23070707%22 stroke-width=%227.333333333333333%22/%3E%3C/pattern%3E%3C/defs%3E%3Cg fill=%22%23070707%22%3E%3Cpath d=%22M0 0h14v800H0z%22/%3E%3Cpath d=%22M40 20h30l-24 40h-30z%22/%3E%3Cpath d=%22M74 20h30l-24 40h-30z%22/%3E%3Cpath d=%22M108 20h30l-24 40h-30z%22/%3E%3C/g%3E%3Crect width=%221280%22 height=%22800%22 fill=%22url(%23st)%22 opacity=%220.05%22/%3E%3C/svg%3E");
+}

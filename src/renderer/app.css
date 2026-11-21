@@ -531,7 +531,7 @@ body:has(.gpind.on) .top,body:has(.gpind.on)[data-layout=top] .rail{padding-righ
 .filt .pop{z-index:80}
 .grid{position:relative;z-index:1}
 .card .qp{position:absolute;right:10px;bottom:10px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--on-accent);box-shadow:0 6px 18px -4px color-mix(in srgb,var(--accent) 80%,transparent);opacity:0;transform:translateY(6px) scale(.9);transition:opacity .2s,transform .2s,background .2s;z-index:3}
-.card .qp svg{width:16px;height:16px;fill:var(--on-accent);stroke:none}
+.card .qp svg{width:16px;height:16px;fill:var(--on-accent);stroke:none;color:var(--on-accent)}
 .card .qp.live{background:var(--red);opacity:1;transform:none}
 .card .qp.live svg{fill:none;stroke:var(--on-accent);stroke-width:2.4}
 .card:hover .qp,.card.gp-focus .qp{opacity:1;transform:none}
@@ -617,7 +617,7 @@ body.fs.frameless{--tb:0px}
   background:radial-gradient(120% 100% at 15% 0%,hsl(var(--h) 70% 55% / .55),transparent 60%),radial-gradient(120% 120% at 100% 100%,hsl(calc(var(--h) + 60) 70% 50% / .45),transparent 60%),var(--bg2)}
 .fart span{font-size:40px;font-weight:800;letter-spacing:-2px;color:#fff;opacity:.9;text-shadow:0 6px 30px rgba(0,0,0,.5)}
 .fart .fp{position:absolute;right:10px;bottom:10px;width:34px;height:34px;border-radius:50%;background:var(--accent);display:grid;place-items:center;opacity:0;transition:.2s;transform:scale(.8)}
-.fart .fp svg{width:16px;height:16px;fill:#fff;stroke:none}
+.fart .fp svg{width:16px;height:16px;fill:#fff;stroke:none;color:#fff}
 .fcard:hover .fart .fp{opacity:1;transform:none}
 .fcard b{font-size:14px}
 .fcard small{color:var(--muted2);font-size:11.5px;margin-top:2px}
@@ -713,7 +713,7 @@ main{position:relative}
 .fart .ffav{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:rgba(0,0,0,.45);color:#fff;opacity:0;transition:.15s}
 .fart .ffav svg{width:14px;height:14px}
 .fcard:hover .ffav,.fart .ffav.on{opacity:1}
-.fart .ffav.on svg{fill:#fbbf24;stroke:#fbbf24}
+.fart .ffav.on svg{fill:#fbbf24;stroke:#fbbf24;color:#fbbf24}
 .fart em{position:absolute;left:10px;bottom:8px;font:600 11px system-ui;color:#fff;opacity:.85;font-style:normal}
 .fart{height:130px}
 .fedit{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
@@ -1041,7 +1041,7 @@ body:not([data-layout])[data-nav=side] .rb.on::after{content:"";position:absolut
 .card h4{text-align:left;padding:9px 2px 0;font-size:12.5px;font-weight:700}
 .card .sub{justify-content:flex-start;padding:2px 2px 10px;color:var(--muted2)}
 .card .qp{border-radius:4px;width:32px;height:32px;background:var(--accent);color:var(--on-accent);box-shadow:none}
-.card .qp svg{fill:var(--on-accent)}
+.card .qp svg{fill:var(--on-accent);color:var(--on-accent)}
 .badge{border-radius:3px;background:rgba(0,0,0,.72);letter-spacing:1px}
 .badge.ok{background:#fff;color:#000}
 .fav{border-radius:4px}

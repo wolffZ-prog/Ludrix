@@ -4,29 +4,33 @@ const TOKEN = (m => { const t = m?.content || ''; m?.remove(); return t; })(docu
 const api = (p, body) => fetch(p, body ? {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Ludrix-Token': TOKEN}, body: JSON.stringify(body)} : {headers: {'X-Ludrix-Token': TOKEN}}).then(r => r.json());
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const LOGO = '<img src="/ui/console/icon.png" alt="">';
+const brandHtml = pr => !pr ? LOGO : `<span class="av" style="--c:${esc(pr.color || '#5c6b82')}">${pr.avatar ? `<img src="/api/profiles/avatar/${esc(pr.id)}?v=${pr.avatar}" alt="" onerror="this.remove()">` : ''}<i>${esc((pr.name || '?').trim().charAt(0).toUpperCase())}</i></span><b class="pn">${esc(pr.name || '')}</b>`;
 const IC = {
-  coll: '<svg viewBox="0 0 24 24"><path d="M15 10v11l-5 -3l-5 3v-11a3 3 0 0 1 3 -3h4a3 3 0 0 1 3 3z"/><path d="M11 3h5a3 3 0 0 1 3 3v11"/></svg>',
-  down: '<svg viewBox="0 0 24 24"><path d="M12 4v12m0 0 5-5m-5 5-5-5M4 20h16"/></svg>',
-  x: '<svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>', pause: '<svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>', refresh: '<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></svg>',
-  sort: '<svg viewBox="0 0 24 24"><path d="M3 9l4-4 4 4M7 5v14M21 15l-4 4-4-4M17 19V5"/></svg>',
-  check: '<svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>',
-  play: '<svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg>', stop: '<svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>',
-  star: '<svg viewBox="0 0 24 24"><path d="m12 17.75-6.17 3.25 1.18-6.88L2 9.25l6.9-1L12 2l3.1 6.25 6.9 1-5 4.87 1.18 6.88z"/></svg>',
-  info: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>',
-  back: '<svg viewBox="0 0 24 24"><path d="M5 12h14M5 12l6 6M5 12l6-6"/></svg>',
-  win: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg>',
-  power: '<svg viewBox="0 0 24 24"><path d="M7 6a7.75 7.75 0 1 0 10 0M12 4v8"/></svg>',
-  bolt: '<svg viewBox="0 0 24 24"><path d="M13 3v7h6l-8 11v-7H5z"/></svg>',
-  search: '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
-  grid: '<svg viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>',
-  dice: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1"/><circle cx="15.5" cy="15.5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="15.5" cy="8.5" r="1"/><circle cx="8.5" cy="15.5" r="1"/></svg>',
+  coll: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M17 18.781v2.238c-.043.98-.917 1.726-1.902 1.447a1.5 1.5 0 0 1-.48-.235L10.5 19.236l-4.118 2.995c-.296.197-.617.31-.976.286c-.808-.053-1.372-.714-1.406-1.498V8c.046-1.356.866-2.526 2.202-2.893c.347-.095.44-.083.798-.107c.024-.358.012-.451.107-.798C7.474 2.866 8.644 2.046 10 2h7c.933.031 1.796.418 2.375 1.167c.413.535.603 1.163.625 1.833v13.019c-.043.98-.917 1.726-1.902 1.447c-.411-.117-.77-.446-1.098-.685M9 5h5c1.708.057 2.943 1.292 3 3v8.309l1 .727V5a1.04 1.04 0 0 0-.22-.625c-.197-.246-.473-.357-.78-.375h-7c-.615.035-.932.413-1 1"/></g></svg>',
+  down: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M5.5 19.5h13V16c.054-.956.855-1.686 1.834-1.462c.703.16 1.127.767 1.166 1.462v4a2.6 2.6 0 0 1-.659 1.686c-.469.524-1.147.794-1.841.814H5c-.44-.013-.86-.12-1.245-.336c-.782-.438-1.23-1.282-1.255-2.164v-4c.039-.695.463-1.302 1.166-1.462c.979-.224 1.78.506 1.834 1.462Zm5-7.464V3c.047-.83.634-1.5 1.5-1.5s1.453.67 1.5 1.5v9.036l1.682-1.682c.259-.232.542-.391.893-.43c1.239-.14 2.101 1.232 1.438 2.288l-.21.263l-4.242 4.243c-.259.231-.542.39-.893.429c-.47.053-.884-.122-1.229-.429l-4.242-4.243l-.21-.263c-.663-1.056.199-2.428 1.438-2.288c.351.039.634.198.893.43Z"/></g></svg>',
+  x: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="m12 9.879l5.303-5.303c.606-.548 1.522-.6 2.122 0s.548 1.515 0 2.121l-5.304 5.304l5.304 5.303c.548.606.6 1.521 0 2.121s-1.516.548-2.122 0L12 14.122l-5.303 5.303c-.607.549-1.522.6-2.122 0s-.548-1.515 0-2.121l5.304-5.303l-5.304-5.304c-.548-.606-.6-1.521 0-2.121s1.515-.548 2.122 0Z"/></g></svg>',
+  pause: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M9.229 3.026c.466.109.745.514.771.974v16c-.033.568-.432.967-1 1H7l-.229-.026C6.305 20.865 6.026 20.46 6 20V4c.033-.568.432-.967 1-1h2Zm8 0c.466.109.745.514.771.974v16c-.033.568-.432.967-1 1h-2l-.229-.026c-.466-.109-.745-.514-.771-.974V4c.033-.568.432-.967 1-1h2Z"/></g></svg>',
+  refresh: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M5.322 15.416c.409.724.856 1.388 1.457 1.971c2.467 2.395 6.294 2.791 9.204.969a7.5 7.5 0 0 0 1.814-1.593l.369-.489c.296-.426.483-.882.972-1.121c1.049-.512 2.292.371 2.148 1.531c-.057.454-.352.855-.598 1.217a10.5 10.5 0 0 1-3.269 3.093c-5.369 3.235-12.376 1.059-14.976-4.642a10.5 10.5 0 0 1-.918-3.586c-.016-.225-.051-.694-.004-.975c.119-.711.73-1.251 1.443-1.312c.373-.032.711.074 1.026.267l2.678 1.805c.232.17.426.36.556.621c.422.848-.055 1.962-.96 2.242c-.319.099-.621.065-.942.002m13.355-6.831c-.408-.724-.856-1.388-1.456-1.971c-2.467-2.395-6.294-2.791-9.204-.968a7.5 7.5 0 0 0-1.814 1.593l-.37.489c-.295.427-.483.882-.971 1.12c-1.049.512-2.292-.372-2.147-1.532c.056-.453.352-.854.598-1.216a10.5 10.5 0 0 1 3.269-3.093C11.951-.228 18.957 1.948 21.556 7.65c.515 1.129.828 2.348.918 3.586c.017.225.052.694.005.975a1.606 1.606 0 0 1-1.444 1.312c-.373.031-.71-.075-1.025-.268l-2.678-1.804c-.232-.17-.427-.36-.556-.621c-.422-.848.055-1.962.96-2.242c.319-.099.62-.064.941-.003"/></g></svg>',
+  sort: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M3.666 20.462c-1.371-.313-1.584-2.203-.317-2.813c.233-.113.396-.135.651-.149h8c.695.039 1.302.463 1.462 1.166c.224.979-.506 1.78-1.462 1.834H4ZM16.5 7.793c-.254.254-.485.501-.833.623c-1.178.412-2.323-.734-1.911-1.911c.085-.244.185-.375.355-.565l2.828-2.829c.259-.231.542-.39.893-.43c.47-.053.884.122 1.229.43l2.828 2.829c.17.19.27.321.355.565c.412 1.177-.733 2.323-1.911 1.911c-.348-.122-.579-.369-.833-.623V19c-.047.83-.634 1.5-1.5 1.5s-1.453-.67-1.5-1.5ZM3.666 13.462c-1.371-.313-1.584-2.203-.317-2.813c.233-.113.396-.135.651-.149h8c.695.039 1.302.463 1.462 1.166c.224.979-.506 1.78-1.462 1.834H4Zm0-7c-1.371-.313-1.584-2.203-.317-2.813c.233-.113.396-.135.651-.149h6c.695.039 1.302.463 1.462 1.166c.224.979-.506 1.78-1.462 1.834H4Z"/></g></svg>',
+  check: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M9.171 15.365L19.424 5.112c.703-.635 1.769-.588 2.314.235c.403.609.281 1.363-.192 1.886L10.232 18.547c-.17.154-.283.243-.496.33c-.574.233-1.178.074-1.625-.33L2.454 12.89c-.474-.524-.595-1.277-.192-1.886c.544-.823 1.611-.87 2.313-.235Z"/></g></svg>',
+  play: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M7.436 3.495c.337.073.668.257.979.397l1.495.701a68 68 0 0 1 8.355 4.823l1.354.945c.544.392 1.131.755 1.205 1.486c.02.195.001.395-.057.583c-.176.567-.686.867-1.141 1.195l-.842.594a68 68 0 0 1-5.43 3.374a65 65 0 0 1-4.508 2.309c-.473.219-1.158.614-1.687.626a1.47 1.47 0 0 1-.766-.196c-.721-.417-.734-1.125-.809-1.864l-.095-1.032a67 67 0 0 1-.047-10.27l.142-1.642c.085-.833.133-1.649 1.05-1.977a1.47 1.47 0 0 1 .802-.052"/></g></svg>',
+  stop: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M18.324 4.026C19.308 4.186 19.961 5.031 20 6v12c-.046 1.146-.854 1.954-2 2H6c-.535-.022-1.03-.202-1.414-.586S4.022 18.535 4 18V6c.046-1.146.854-1.954 2-2h12Z"/></g></svg>',
+  star: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="m15.875 7.17l5.428 1.175l.241.077c.807.351.954 1.326.426 1.977l-3.7 4.142l.56 5.525v.253c-.084.876-.965 1.317-1.748 1.016L12 19.096l-5.082 2.239c-.782.301-1.664-.14-1.748-1.016l.001-.253l.559-5.525l-3.7-4.142c-.527-.651-.381-1.626.426-1.977l.241-.077L8.125 7.17l2.795-4.799c.455-.692 1.405-.866 1.996-.224l.164.224Z"/></g></svg>',
+  info: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M12.746 2.027a10 10 0 0 1 4.699 1.584c5.563 3.618 6.124 11.579 1.116 15.936a10 10 0 0 1-2.998 1.8a10.1 10.1 0 0 1-4.309.626a10 10 0 0 1-4.699-1.584C.992 16.771.431 8.81 5.439 4.453a10 10 0 0 1 2.998-1.8a10.1 10.1 0 0 1 4.309-.626M11 12v5c.013.233.071.441.22.625c.197.246.473.357.78.375c.295.017.66.035.94-.102a1.01 1.01 0 0 0 .365-1.491c-.109-.147-.158-.166-.305-.272V11c-.033-.568-.432-.967-1-1h-1a1.04 1.04 0 0 0-.625.22c-.562.45-.462 1.362.185 1.678c.184.09.24.079.44.102m1-5c-1.432.163-1.225 2.001.002 2c1.049-.001 1.382-1.438.44-1.898c-.111-.055-.317-.116-.442-.102"/></g></svg>',
+  back: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="m7.965 13.5l3.096 3.096c.553.62.612 1.509 0 2.121a1.5 1.5 0 0 1-1.859.21l-.263-.21l-5.656-5.656c-.308-.345-.483-.759-.43-1.229c.039-.351.198-.634.43-.893l5.656-5.657l.263-.209a1.505 1.505 0 0 1 1.859.209c.612.613.553 1.502 0 2.122L7.965 10.5H20c.83.047 1.5.634 1.5 1.5s-.67 1.453-1.5 1.5Z"/></g></svg>',
+  win: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M15 18v1h1c.233.013.441.071.625.22c.76.609.298 1.727-.625 1.78H8c-.923-.053-1.385-1.171-.625-1.78A1.04 1.04 0 0 1 8 19h1v-1H5c-1.146-.046-1.954-.854-2-2V5c.026-.641.293-1.229.819-1.614C4.17 3.129 4.57 3.017 5 3h14c.245.01.399.024.632.102C20.465 3.378 20.966 4.144 21 5v11c-.046 1.146-.854 1.954-2 2Zm-4 0v1h2v-1Z"/></g></svg>',
+  power: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M17.256 3.026c.437.083.802.386 1.142.648q.575.443 1.085.96a10.58 10.58 0 0 1 2.913 8.852c-1.055 7.454-9.483 11.412-15.897 7.459c-4.733-2.916-6.39-9.1-3.712-13.985a10.55 10.55 0 0 1 2.815-3.286c.432-.332.862-.678 1.431-.674c1.046.007 1.775 1.105 1.377 2.071c-.205.499-.642.715-1.047 1.034q-.477.376-.887.822a7.55 7.55 0 0 0-1.867 6.352c.864 5.038 6.517 7.761 10.999 5.297c3.605-1.981 4.953-6.561 2.974-10.174a7.6 7.6 0 0 0-1.484-1.904l-.461-.393c-.405-.319-.842-.535-1.047-1.034c-.445-1.08.517-2.263 1.666-2.045M12.27 1.524c.728.132 1.198.759 1.23 1.476v10c-.037.816-.655 1.5-1.5 1.5s-1.463-.684-1.5-1.5V3c.042-.933.817-1.648 1.77-1.476"/></g></svg>',
+  bolt: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M14.29 9H20c.869.046 1.289.943.768 1.64l-10 12c-.684.737-1.81.263-1.763-.741L9.711 15H4c-.869-.046-1.289-.943-.768-1.64l10-12c.684-.736 1.811-.262 1.763.742Z"/></g></svg>',
+  search: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M14.133 16.254c-1.197.828-2.683 1.248-4.133 1.248c-5.278 0-8.921-5.349-6.977-10.263A7.5 7.5 0 0 1 4.462 4.94c3.533-3.866 9.867-2.997 12.233 1.673A7.5 7.5 0 0 1 17.502 10c0 1.45-.42 2.936-1.248 4.133l4.807 4.806c.553.62.612 1.509 0 2.122c-.613.612-1.502.553-2.122 0ZM9.565 5.522a4.5 4.5 0 0 0-2.599 1.156c-3.179 2.906-.813 8.208 3.469 7.8a4.5 4.5 0 0 0 2.599-1.156c3.179-2.906.813-8.208-3.469-7.8"/></g></svg>',
+  grid: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M9.324 13.026c.984.16 1.637 1.005 1.676 1.974v4c-.017.43-.129.83-.386 1.181c-.385.526-.973.793-1.614.819H5c-.43-.017-.83-.129-1.181-.386c-.526-.385-.793-.973-.819-1.614v-4c.046-1.146.854-1.954 2-2h4Zm10 0c.984.16 1.637 1.005 1.676 1.974v4c-.017.43-.129.83-.386 1.181c-.385.526-.973.793-1.614.819h-4c-.43-.017-.83-.129-1.181-.386c-.526-.385-.793-.973-.819-1.614v-4c.046-1.146.854-1.954 2-2h4Zm-10-10C10.308 3.186 10.961 4.031 11 5v4c-.017.43-.129.83-.386 1.181c-.385.526-.973.793-1.614.819H5c-.43-.017-.83-.129-1.181-.386C3.293 10.229 3.026 9.641 3 9V5c.046-1.146.854-1.954 2-2h4Zm10 0C20.308 3.186 20.961 4.031 21 5v4c-.017.43-.129.83-.386 1.181c-.385.526-.973.793-1.614.819h-4c-.43-.017-.83-.129-1.181-.386c-.526-.385-.793-.973-.819-1.614V5c.046-1.146.854-1.954 2-2h4Z"/></g></svg>',
+  dice: '<svg viewBox="0 0 24 24"><g fill="currentColor" stroke="none"><path d="M13.407 8.027C14.931 8.233 15.95 9.498 16 11v8c-.023.669-.212 1.298-.625 1.833c-.579.749-1.442 1.136-2.375 1.167H5c-.669-.022-1.298-.212-1.833-.625C2.418 20.796 2.031 19.933 2 19v-8c.057-1.708 1.292-2.943 3-3h8ZM6.73 15.524a1.516 1.516 0 0 0-1.206 1.746a1.516 1.516 0 0 0 1.746 1.206a1.516 1.516 0 0 0 1.206-1.746a1.516 1.516 0 0 0-1.746-1.206m4-4a1.516 1.516 0 0 0-1.206 1.746a1.516 1.516 0 0 0 1.746 1.206a1.516 1.516 0 0 0 1.206-1.746a1.516 1.516 0 0 0-1.746-1.206M18 15.899V11c-.06-2.387-1.615-4.413-3.992-4.898A5 5 0 0 0 13 6H8.102l2.777-2.777c.43-.4.917-.691 1.497-.814c1.013-.215 1.999.12 2.745.814l5.657 5.656c1.167 1.256 1.167 2.988 0 4.243Z"/></g></svg>',
 };
 const S = {data: null, games: [], byKey: {}, view: 'library', sel: 0, sys: '', coll: '', q: '', focus: 'strip', fx: 0, fi: 0, list: [], busy: {}, layer: null, lastPing: 0, more: false, sig: ''};
 const ZONES = ['top', 'head', 'acts', 'strip'];
 function zoneEls(z) {
   if (z === 'acts') return $$('#sttxt .btn');
   if (z === 'head') return $$('#main .head .tab, #main .head .sys button');
-  if (z === 'top') return $$('#chip.on, #dlpill:not([hidden]), #exitBtn');
+  if (z === 'top') return $$('#chip.on, #dlpill:not([hidden]), #exitBtn').filter(e => e.offsetParent !== null);
   return [];
 }
 function setFocus(z, i, step) {
@@ -76,11 +80,12 @@ async function load(first) {
   document.body.classList.toggle('nolegend', !d.config.console_hint);
   document.body.classList.toggle('rm', !!d.config.reduce_motion || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches));
   document.body.dataset.cards = d.config.console_card_size || 'normal';
+  document.body.dataset.layout = d.config.console_layout === 'cinema' ? 'cinema' : 'console';
   clock(); idleArm();
   const pad = $('#padInd'); pad.classList.toggle('on', d.gamepad.connected > 0); $('#padN').textContent = d.gamepad.connected;
   if (first) {
     if (VIEWS.includes(d.config.console_start_view) && d.config.console_start_view !== 'library') S.view = d.config.console_start_view;
-    $('#brand').innerHTML = LOGO;
+    $('#brand').innerHTML = brandHtml(d.profile);
     $('#brand').onclick = () => confirmQuit();
     legend(d.gamepad.connected > 0);
     render();
@@ -146,7 +151,7 @@ function render(keep) {
   const sysBar = systems.length > 1 ? `<div class="sys"><button class="${S.sys ? '' : 'on'}" data-sys="">Todos</button>${systems.map(s => `<button class="${S.sys === s ? 'on' : ''}" data-sys="${esc(s)}">${esc(SYSN(s))}</button>`).join('')}</div>` : '';
   m.innerHTML = `
     <div class="txt" id="sttxt"></div>
-    <div class="head">${tabsHtml()}<span class="n">${S.games.length} ${S.games.length === 1 ? 'jogo' : 'jogos'}${S.q ? ` · busca “${esc(S.q)}”` : ''}${S.coll ? ` · coleção “${esc(collName(S.coll))}”` : ''}</span><div class="sp"></div>${sysBar}<div class="sys tools">${S.view === 'store' ? '' : `<button data-tool="sort" title="Ordenar">${IC.sort || ''}${esc(SORTN[S.data.config.console_sort] || 'A–Z')}</button>`}<button data-tool="grid" title="Ver todos em grade">${IC.grid}Grade</button></div></div>
+    <div class="head">${tabsHtml()}<span class="n">${S.games.length} ${S.games.length === 1 ? 'jogo' : 'jogos'}${S.q ? ` · busca “${esc(S.q)}”` : ''}${S.coll ? ` · coleção “${esc(collName(S.coll))}”` : ''}</span><div class="sp"></div><div class="hr">${sysBar}<div class="sys tools">${S.view === 'store' ? '' : `<button data-tool="sort" title="Ordenar">${IC.sort || ''}${esc(SORTN[S.data.config.console_sort] || 'A–Z')}</button>`}<button data-tool="grid" title="Ver todos em grade">${IC.grid}Grade</button></div></div></div>
     <div class="strip" id="strip">${S.games.map((g, i) => card(g, i)).join('')}${more ? `<div class="card more" data-i="${S.games.length}">${IC.grid}Todos os jogos<small>+${S.data.games.length - S.games.length}</small></div>` : ''}</div>`;
   fitCards();
   if (S.lastView !== S.view) { S.lastView = S.view; const st = $('#strip'); st.classList.add('swap'); st.addEventListener('animationend', () => st.classList.remove('swap'), {once: true}); }
@@ -170,9 +175,10 @@ function fitCards() {
   const h = m.clientHeight, w = m.clientWidth;
   const u = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
   const cs = document.body.dataset.cards || 'normal', f = cs === 'small' ? 0.78 : cs === 'large' ? 1.3 : 1;
-  let th = Math.round(Math.min(Math.max(h * 0.135, 76), 150) * Math.max(0.9, Math.min(u, 1.4)) * f);
-  let tw = Math.round(th * 1.6);
-  tw = Math.min(tw, Math.floor((w - 80 * u) / (cs === 'small' ? 8 : cs === 'large' ? 4.6 : 6.2))); th = Math.round(tw / 1.6);
+  const sq = document.body.dataset.layout !== 'cinema', ar = sq ? 1 : 1.6;
+  let th = Math.round(Math.min(Math.max(h * (sq ? 0.19 : 0.135), 76), sq ? 190 : 150) * Math.max(0.9, Math.min(u, 1.4)) * f);
+  let tw = Math.round(th * ar);
+  tw = Math.min(tw, Math.floor((w - 80 * u) / (cs === 'small' ? (sq ? 10 : 8) : cs === 'large' ? (sq ? 6 : 4.6) : (sq ? 7.6 : 6.2)))); th = Math.round(tw / ar);
   document.documentElement.style.setProperty('--tw', tw + 'px');
   document.documentElement.style.setProperty('--th', th + 'px');
 }
@@ -219,11 +225,18 @@ function stage(g, keep) {
   txt.innerHTML = `<span class="tag">${st ? (g.job ? 'Na fila' : 'Loja · ' + (g.torrent && !g.direct ? 'torrent' : 'download')) : live ? 'Em andamento' : g.fav ? 'Favorito' : (g.last_played ? 'Jogado ' + ago(g.last_played) : 'Instalado')}</span>
     <h1>${esc(g.title)}</h1>
     <div class="meta">${meta.map(esc).join('<i>·</i>')}</div>
+    ${statsHtml(g)}
     <div class="acts">${st ? (g.job ? `<button class="btn" data-act="queue">${IC.grid}Ver fila</button>` : `<button class="btn p" data-act="install">${IC.down}Baixar</button>`) : live ? `<button class="btn d" data-act="stop">${IC.stop}Encerrar</button>` : `<button class="btn p" data-act="play">${IC.play}Jogar</button>`}<button class="btn" data-act="detail">${IC.info}Detalhes</button><button class="btn" data-act="menu">Opções</button></div>`;
   $$('#sttxt .btn').forEach(b => b.onclick = () => act(b.dataset.act));
   if (STG.txt !== g.key) { STG.txt = g.key; txt.classList.remove('in'); void txt.offsetWidth; txt.classList.add('in'); }
   chip(g);
   if (wasActs >= 0) setFocus('acts', wasActs);
+}
+function statsHtml(g) {
+  const st = isStore(g), live = S.data.sessions[g.key];
+  const rows = st ? [['Tamanho', fmtSize(g.size) || '—'], ['Fonte', g.repo || '—'], ['Entrega', g.torrent && !g.direct ? 'Torrent' : 'Direto'], g.year ? ['Ano', g.year] : null]
+    : [['Tempo jogado', g.playtime ? human(g.playtime) : '—'], ['Última sessão', live ? 'agora' : g.last_played ? ago(g.last_played) : 'nunca'], ['Vezes jogado', g.play_count ? String(g.play_count) : '—'], ['Sistema', SYSN(g.system || 'pc') + (g.year ? ' · ' + g.year : '')]];
+  return `<div class="stats">${rows.filter(Boolean).map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('')}</div>`;
 }
 function chip(g) {
   const c = $('#chip'); if (!c) return;
@@ -355,6 +368,7 @@ const SEGS = {
   console_start_view: [['library', 'Biblioteca'], ['recent', 'Recentes'], ['favorites', 'Favoritos']],
   console_dim_idle: [[0, 'Nunca'], [5, '5 min'], [15, '15 min'], [30, '30 min']],
   console_sort: [['title', 'A–Z'], ['recent', 'Últimos'], ['playtime', 'Mais jogados'], ['count', 'Mais vezes'], ['added', 'Novos']],
+  console_layout: [['console', 'Console'], ['cinema', 'Cinema']],
   launch_splash: [['off', 'Não'], ['short', 'Curta'], ['long', 'Até abrir']],
 };
 const cfgKey = k => k === 'gamepad_speed' ? 'console_gamepad_speed' : k;
@@ -380,6 +394,7 @@ function renderSettings() {
     ${segRow('console_volume', 'Volume dos sons', 'Quão alto são os toques de navegação.')}
     ${swRow('console_hint', 'Legenda dos botões', 'Mostra no rodapé o que cada botão do controle (ou tecla) faz.')}
     <h2>Tela</h2>
+    ${segRow('console_layout', 'Disposição da tela', 'Console: abas no alto, capas no meio e o título com as horas jogadas embaixo, como nos consoles atuais. Cinema: capas no rodapé e o título por cima da arte.')}
     ${swRow('console_clock24', 'Relógio em 24 horas', 'Desligado, mostra 12 horas com AM/PM.')}
     ${swRow('console_dl_pill', 'Download no topo', 'Enquanto algo baixa ou instala, a porcentagem aparece ao lado do relógio em qualquer aba. Toque nela para abrir a Fila.')}
     ${segRow('console_dim_idle', 'Escurecer quando parado', 'Sem ninguém mexer por esse tempo, a tela escurece para poupar a TV. Qualquer botão acende de novo.')}
@@ -420,6 +435,7 @@ async function rowAct(r, v) {
     await api('/api/config', {[k]: nv});
     if (k === 'gamepad_speed') GP.speed = nv;
     if (k === 'console_card_size') { document.body.dataset.cards = nv; fitCards(); }
+    if (k === 'console_layout') { document.body.dataset.layout = nv === 'cinema' ? 'cinema' : 'console'; S.sig = ''; }
     if (k === 'console_sort') S.sig = '';
     if (k === 'console_dim_idle') idleArm();
     if (k === 'console_volume') { setTimeout(tick, 80); }

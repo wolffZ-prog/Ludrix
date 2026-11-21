@@ -1,0 +1,28 @@
+:root{
+  --bg:#d9d0c4;
+  --bg2:#ece8e2;
+  --panel:#f0ece7;
+  --card:#ffffff;
+  --card2:#d0c8bc;
+  --line:rgba(21,24,29,.12);
+  --line2:rgba(21,24,29,.26);
+  --text:#1a1917;
+  --muted:#53504b;
+  --muted2:#837e76;
+  --green:#1f8a52;
+  --green2:#1f8a52;
+  --red:#c8382c;
+  --amber:#9a6200;
+  --shadow:0 24px 60px -30px rgba(0,0,0,.35);
+  --glow1:transparent;
+  --glow2:transparent;
+  --glow3:transparent;
+  --ph-from:#ffffff;
+  --ph-to:#d0c8bc;
+  --img-fade:#d9d0c4;
+  --logo-bg:#1a1917;
+  --mono:#1a1917;
+  --mono2:#53504b;
+  color-scheme:light;
+  --arq-deco:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 1280 800%22 preserveAspectRatio=%22xMidYMid slice%22%3E%3Cdefs%3E%3Cpattern id=%22gr%22 width=%2260%22 height=%2260%22 patternUnits=%22userSpaceOnUse%22%3E%3Cpath d=%22M60 0H0V60%22 fill=%22none%22 stroke=%22%231a1917%22 stroke-width=%221%22/%3E%3C/pattern%3E%3C/defs%3E%3Cg fill=%22%236a5f55%22 opacity=%22.16%22%3E%3Crect x=%221120%22 y=%2240%22 width=%22120%22 height=%22120%22/%3E%3Crect x=%221180%22 y=%22200%22 width=%2260%22 height=%2260%22/%3E%3Crect x=%2240%22 y=%22700%22 width=%22200%22 height=%2260%22/%3E%3C/g%3E%3Crect width=%221280%22 height=%22800%22 fill=%22url(%23gr)%22 opacity=%220.05%22/%3E%3C/svg%3E");
+}
