@@ -55,7 +55,7 @@ A série 4.0 trocou o motor antigo (Python) por Electron + TypeScript, mantendo 
 - **Uma biblioteca só.** Jogos de PC, ROMs e jogos rápidos (Flash/HTML5) aparecem juntos, em grade alfabética com divisórias por letra, capas, categorias e filtros combináveis. Abas no alto (Biblioteca, Store, Emuladores…), busca ao lado, filtros em uma linha e cada capa com sistema, ano e última vez jogada. Um clique na capa abre o painel lateral com Jogar, tempo, pasta e gêneros; duplo clique abre os detalhes.
 - **Store alimentada por fontes.** Nenhum catálogo vem embutido. A Store só mostra o que as listas `.json`, páginas, coleções do archive.org, repositórios do GitHub ou pastas locais adicionadas pelo usuário oferecem. Download direto, hospedeiros e torrent (sem DHT, UPnP ou NAT-PMP).
 - **Emuladores prontos.** 25 sistemas e 45 emuladores catalogados, instalados do site oficial com um clique e guardados dentro da pasta do Ludrix. As ROMs entram na Biblioteca com capa e são abertas pelo emulador escolhido para aquele sistema.
-- **31 caras, escuro e claro.** A padrão é a **Arquivo**: fundo grafite com uma parede iridescente desfocada, painéis de vidro fumê (ou leitoso, no claro), cabeçalho editorial, lateral numerada e rótulos monoespaçados. Em Ajustes › Aparência há mais 30 caras no mesmo motor — Metal Verde, Hex Azul, Apex, Pegboard Vidro, Rádio Militar, Duna, Halftone Cobre e outras — cada uma com paleta, fonte, cantos e decoração próprias, além da "Grafite (Legacy)". Temas externos `.lxtheme` continuam funcionando por cima de qualquer cara. Veja as pranchas em [`docs/screenshots/temas/`](docs/screenshots/temas/).
+- **Uma cara embutida, a Padrão, e 30 caras como pacotes.** O Ludrix vem só com a **Padrão** (escuro e claro): fundo grafite com uma parede iridescente desfocada, painéis de vidro fumê (ou leitoso, no claro), cabeçalho editorial, lateral numerada e rótulos monoespaçados — mais a "Grafite (Legacy)" para quem prefere a antiga. As outras 30 caras (Apex, Sampler, Fatias, Circuito P&B, Hex Azul, Rádio Militar, Pegboard Vidro, Metal Verde…) não ficam dentro do programa: cada uma é um pacote `.lxtheme` assinado, com o seu próprio front end (lateral, barra em painel, dock de pads, fatias…), escuro e claro, que você importa em Ajustes › Aparência › Temas instalados (ou soltando o arquivo na janela). As fontes dos pacotes ficam em `temas/`; prontos, eles são distribuídos no `Ludrix-Temas-<versão>.zip`, separado do programa. Temas externos `.lxtheme` de terceiros continuam funcionando por cima da Padrão.
 - **Movimento leve.** As animações são curtas e independentes das configurações de animação do Windows; "Reduzir movimento" desliga tudo. Trocar de página é instantâneo, sem piscar nem deslocar o conteúdo.
 - **Perfis locais.** Cada pessoa com seu tema, aparência, exibição e preferências; a biblioteca, capas, saves e downloads são os mesmos para todos. Sem senha: ao abrir, o Ludrix pergunta quem vai jogar (opcional) e a troca fica no avatar da barra. Foto opcional (PNG até 64×64); perfis podem ser apagados a qualquer momento.
 - **Barra de navegação a gosto.** No alto (padrão), lateral só ícones, lateral com nomes, embaixo, ou **solta**: separada do conteúdo, com cantos arredondados.
@@ -114,30 +114,21 @@ A série 4.0 trocou o motor antigo (Python) por Electron + TypeScript, mantendo 
 
 ## Temas
 
-Um tema é uma pasta com `theme.json` (cores, destaque, layout da barra, ícones) e, se quiser, um `extra.css`, papéis de parede e fontes — ou essa pasta zipada como `.lxtheme`. Importa-se em **Ajustes › Aparência › Importar tema**; tema do sistema e agenda claro/escuro também estão lá. Formato completo em [docs/TEMAS.md](docs/TEMAS.md).
+O Ludrix vem com duas caras embutidas — **Padrão** (escuro e claro) e **Grafite (Legacy)**. Todo o resto é tema importado, de dois tipos:
 
-Além dos dois embutidos, existe um pacote de **temas experimentais**, feitos para testar até onde o formato vai: fundos em camadas com parallax, barras no alto ou embaixo, tipografia própria, releituras do Windows XP. Alguns deles:
+- **Pacote de cara** (`.lxtheme` com `theme.json{"face": "<cara>"}` + `face.css` + `dark.css` + `light.css` + `preview.png`): um front end completo, com a própria disposição (lateral, barra em painel, dock, fatias…), escuro e claro. As **30 caras oficiais** saem assim, uma por arquivo ou todas em `Ludrix-Caras-30.lxtheme`, assinadas, no `Ludrix-Temas-<versão>.zip` (separado do programa). Fontes em `temas/`, geradas por `tools/faces/gen.py` e empacotadas por `tools/faces/pack.py`.
+- **Tema de cores** (`theme.json` com `vars`, destaque, layout da barra, ícones e, se quiser, `extra.css`, papéis de parede e fontes): o formato clássico, por cima da Padrão. Formato completo em [docs/TEMAS.md](docs/TEMAS.md).
+
+Importa-se em **Ajustes › Aparência › Temas instalados › Importar** (ou soltando o arquivo na janela); tema do sistema e agenda claro/escuro também estão lá.
 
 <table>
   <tr>
-    <td><img src="docs/screenshots/temas/magma.jpg" alt="Magma"><br><sub><b>Magma</b> — rocha vulcânica e lava em camadas com parallax</sub></td>
-    <td><img src="docs/screenshots/temas/nevasca.jpg" alt="Nevasca"><br><sub><b>Nevasca</b> — neve em profundidade, barra lateral translúcida</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/temas/circuito.jpg" alt="Circuito"><br><sub><b>Circuito</b> — placa de circuito, barra inferior de pinos</sub></td>
-    <td><img src="docs/screenshots/temas/laser.jpg" alt="Laser"><br><sub><b>Laser</b> — preto e branco absoluto, feixes em parallax</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/temas/prisma.jpg" alt="Prisma"><br><sub><b>Prisma</b> — gradiente escuro e destaque magenta</sub></td>
-    <td><img src="docs/screenshots/temas/bliss.jpg" alt="Bliss"><br><sub><b>Bliss</b> — releitura clara do Windows XP, barra verde embaixo</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/screenshots/temas/luna-nova.jpg" alt="Luna Nova"><br><sub><b>Luna Nova</b> — azul Luna, barra lateral clássica</sub></td>
-    <td><img src="docs/screenshots/temas/royale-noir.jpg" alt="Royale Noir"><br><sub><b>Royale Noir</b> — o Royale escuro, com botão Iniciar</sub></td>
+    <td><img src="docs/screenshots/temas/todas-escuro.jpg" alt="As 31 caras no escuro"><br><sub>Padrão + 30 pacotes, escuro</sub></td>
+    <td><img src="docs/screenshots/temas/todas-claro.jpg" alt="As 31 caras no claro"><br><sub>As mesmas, claro</sub></td>
   </tr>
 </table>
 
-Temas experimentais podem mudar ou sair entre versões; os dois embutidos são o padrão de referência.
+Pranchas em tamanho de leitura: `docs/screenshots/temas/prancha-{escuro,claro}-1..4.jpg`.
 
 ## Fontes de jogos
 

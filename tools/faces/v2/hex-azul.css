@@ -1,0 +1,94 @@
+  /* HEX AZUL — azul elétrico; coluna estreita só de ícones (quadrados chanfrados) com a marca no topo, painel de vidro azul-escuro com o jogo em destaque compacto, abas e grade; faixa lateral direita com o título em destaque vertical */
+  --sidew:72px;--hdr:92px;--gap:18px;
+  --blu:var(--arq-acc);--onblu:#06142e;
+  --glass:color-mix(in srgb,#06142e 72%,transparent);
+  --hex:polygon(25% 3%,75% 3%,97% 50%,75% 97%,25% 97%,3% 50%);
+
+  & *{font-family:var(--font-text)}
+  & .nowg .nt b,& .h1 h2,& .vhead h2,& header.top .crumb{font-family:var(--font-disp)}
+  & .lbl,& .dsec h3,& .reqcol h3,& .kcol h4,& .hw .k,& .ctx h5,& .bellpop .bh b,& .nowg .nt small,& footer.status,& .card .sub,& header.top .crumb small{font-family:var(--arq-mono);letter-spacing:1.5px;text-transform:uppercase}
+
+  /* coluna de ícones */
+  & #app>.rail{margin:0;padding:12px 0 12px;border:0;border-right:1px solid var(--arq-line);background:color-mix(in srgb,var(--blu) 14%,var(--arq-bgc));position:relative}
+  & #app>.rail::before{display:block;position:absolute;content:"";left:0;top:0;bottom:0;width:3px;background:var(--blu);box-shadow:0 0 14px var(--blu)}
+  & .rail .brand{width:32px;height:32px;border-radius:0;clip-path:var(--hex);background:var(--blu);color:var(--onblu);display:grid;place-items:center}
+  & .rail .brand svg,& .rail .brand img{width:16px;height:16px;color:var(--onblu)}
+  & .rail .rb{width:44px;height:44px;border-radius:6px;color:var(--arq-ink3);background:transparent}
+  & .rail .rb svg{width:18px;height:18px}
+  & .rail .rb:hover{background:color-mix(in srgb,var(--blu) 18%,transparent);color:var(--arq-ink)}
+  & .rail .rb.on{background:var(--blu);color:var(--onblu);box-shadow:0 0 18px -4px var(--blu)}
+  & .rail .rbot .pav{border-radius:50%;background:var(--blu);color:var(--onblu);border:0}
+
+  /* cabeçalho: título da tela + busca */
+  & header.top{padding:0 24px 0 var(--gap)!important;grid-template-rows:var(--tbh) 44px 16px;background:transparent!important}
+  & header.top .crumb{font:800 22px/1 var(--font-disp);letter-spacing:-.01em;text-transform:none;color:var(--arq-ink);gap:12px}
+  & header.top .crumb small{font:500 8.5px var(--arq-mono);letter-spacing:2px;color:var(--arq-ink3);padding:0;align-self:center}
+  & header.top .crumb small::before{content:"HX-02 · "}
+  & header.top .search{width:280px}
+  & header.top .search input{height:34px;border-radius:8px;border:1px solid var(--arq-line);background:rgba(6,20,46,.6);font:500 11px var(--font-text);letter-spacing:0;text-transform:none;padding-left:36px}
+  & header.top .search input::placeholder{text-transform:none;letter-spacing:0}
+  & header.top .search input:focus{border-color:var(--blu);box-shadow:0 0 0 3px color-mix(in srgb,var(--blu) 25%,transparent)}
+  & header.top .search svg{left:12px;color:var(--blu)}
+  & header.top .search kbd{border:0;background:var(--blu);color:var(--onblu);border-radius:4px;font-weight:700}
+  & header.top .bell{border-radius:8px;border:1px solid var(--arq-line)}
+  & header.top::before,& header.top::after{display:none}
+  & header.top .chips{display:none!important}
+
+  /* painel de vidro */
+  & .view,&[data-layout=rail] .view{padding:0 24px 0 var(--gap)}
+  & #homeTop,& .libpanel{background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--arq-line);border-radius:14px}
+  & #homeTop{padding:14px 18px 0;border-bottom:0;border-radius:14px 14px 0 0;margin-bottom:0}
+  & #view:has(#homeTop .nowg) .libpanel{border-top:0;border-radius:0 0 14px 14px}
+  & .libpanel{padding:4px 18px 18px;min-height:0}
+  & .nowg{margin:0 0 10px;padding:12px 14px;min-height:0;border:1px solid var(--arq-line);border-radius:10px;background:rgba(6,20,46,.5);grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto;grid-template-areas:"cov t acts";gap:0 16px;align-items:center}
+  & .nowg::after{display:none}
+  & .nowg .ncov{width:54px;height:72px;border-radius:6px;outline:0;align-self:center}
+  & .nowg .nt{gap:2px}
+  & .nowg .nt small{font:500 8px var(--arq-mono);letter-spacing:1.5px;color:var(--blu)}
+  & .nowg .nt small::before{content:"CONTINUAR · "}
+  & .nowg .nt b{font:800 20px/1.05 var(--font-disp);letter-spacing:-.01em;text-transform:none}
+  & .nowg .pr i{height:4px;border-radius:2px;background:rgba(255,255,255,.1);max-width:220px}
+  & .nowg .pr i::after{background:var(--blu);box-shadow:0 0 8px var(--blu)}
+  & .nowg .nacts{grid-area:acts;margin:0;align-self:center;gap:6px}
+  & .nowg .nacts .btn{height:32px;border-radius:8px;border:1px solid var(--arq-line);background:rgba(255,255,255,.06);color:var(--arq-ink);font:700 11px var(--font-text);letter-spacing:0;text-transform:none}
+  & .nowg .nacts .btn.p,& .nowg .nacts .btn.p:hover{background:var(--blu);color:var(--onblu);border-color:var(--blu);box-shadow:0 8px 20px -8px var(--blu)}
+  & .nowg .nacts .btn.p svg{color:var(--onblu);fill:var(--onblu)}
+  & .nowg>span{display:none}
+  & .h1 h2,& .h1 .cnt{display:none}
+  & .h1 .qchips .chip{height:26px;border-radius:7px;border:1px solid transparent;background:rgba(255,255,255,.05);color:var(--arq-ink2)!important;font:600 10.5px var(--font-text);letter-spacing:0;text-transform:none}
+  & .h1 .qchips .chip.on{background:var(--blu)!important;color:var(--onblu)!important}
+  & .h1>.btn.xs,& .h1 .filt>.btn,& .h1 #sort,& .h1 .dd{border-radius:7px;border:1px solid var(--arq-line);background:rgba(255,255,255,.05)}
+  & .h1>.btn.xs.addbtn{background:var(--blu);color:var(--onblu);border-color:var(--blu)}
+  & .azbar{display:none}
+  & .grid:not(.lst){grid-template-columns:repeat(auto-fill,minmax(112px,1fr))!important;gap:14px 10px}
+  & .card .cov{border-radius:8px;outline:0}
+  & .card:hover .cov{box-shadow:0 0 0 1px var(--arq-line)}
+  & .card.sel .cov{box-shadow:0 0 0 2px var(--blu),0 0 20px -4px var(--blu)}
+  & .card h4{font:700 10.5px/1.3 var(--font-text);letter-spacing:0;text-transform:none}
+  & .card .sub{font:400 8px var(--arq-mono);letter-spacing:1px;color:var(--arq-ink3)!important}
+  & .card .qp{border-radius:50%;background:var(--blu);color:var(--onblu)}
+  & .card .qp svg{fill:var(--onblu);color:var(--onblu)}
+
+  /* faixa à direita: destaque vertical */
+  & #app::after{content:"EM DESTAQUE";position:absolute;right:0;top:calc(var(--tb,0px) + var(--tbh) + 10px);bottom:40px;width:14px;writing-mode:vertical-rl;transform:rotate(180deg);font:700 8px var(--arq-mono);letter-spacing:4px;color:var(--arq-ink3);text-align:center;border-left:1px solid var(--arq-line);padding:0 2px;pointer-events:none;background:linear-gradient(0deg,transparent,color-mix(in srgb,var(--blu) 25%,transparent) 50%,transparent)}
+  & .view,&[data-layout=rail] .view{padding-right:30px}
+  & header.top{padding-right:30px!important}
+
+  /* genérico */
+  & .btn{border-radius:8px;border:1px solid var(--arq-line);background:rgba(255,255,255,.06);color:var(--arq-ink);font:700 11px var(--font-text);letter-spacing:0;text-transform:none}
+  & .btn.p,& .btn.p:hover{background:var(--blu);color:var(--onblu);border-color:var(--blu)}
+  & .btn.p svg{color:var(--onblu);fill:var(--onblu)}
+  & .vpanel,& .libwrap .gpanel,& .libwrap .fpanel{border-radius:14px;border:1px solid var(--arq-line);background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  & .vhead{border-radius:14px 14px 0 0;border-bottom:1px solid var(--arq-line)}
+  & .vhead h2{font:800 20px/1 var(--font-disp);letter-spacing:-.01em;text-transform:none}
+  & .vtile,& .ccard,& .mcard,& .sec,& .frow{border-radius:10px;border:1px solid var(--arq-line);background:rgba(255,255,255,.04)}
+  & .vtile:hover,& .ccard:hover{border-color:var(--blu)}
+  & .vtile .sysic{border-radius:8px;clip-path:var(--hex);border:0;background:var(--blu);color:var(--onblu)}
+  & .chip,& .vchip,& .seg button{border-radius:7px;border:1px solid var(--arq-line);font:600 10px var(--font-text);letter-spacing:0;text-transform:none}
+  & .chip.on,& .vchip.on{background:var(--blu);color:var(--onblu);border-color:var(--blu)}
+  & .modal .box,& .ctx,& .bellpop,& .palbox{border-radius:14px;border:1px solid var(--arq-line);background:#0a1a3a}
+  & footer.status{font-size:8.5px;letter-spacing:1.5px}
+  & footer.status .sdot{border-radius:50%;background:var(--blu);box-shadow:0 0 8px var(--blu)}
+  html[data-light="1"] &{--glass:rgba(255,255,255,.6)}
+  html[data-light="1"] & .nowg{background:rgba(255,255,255,.5)}
+  html[data-light="1"] & header.top .search input{background:rgba(255,255,255,.7)}

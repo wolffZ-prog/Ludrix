@@ -1,0 +1,51 @@
+  /* ESQUELETO DOCK — navegação num dock embaixo (estilo console), cabeçalho curto, herói alto, "Continuar" em cartazes largos */
+  --navh:70px;--hdr:100px;--sidew:0px;
+  & #app{grid-template-columns:minmax(0,1fr);grid-template-rows:var(--tb,0px) var(--hdr) minmax(0,1fr) 28px var(--navh)}
+  & .tbrow{display:none}
+@include _wctl
+  & header.top{grid-row:2;grid-column:1;grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-rows:var(--tbh) 44px 24px;padding:0 20px!important}
+  & header.top .wctl{display:none}
+  & .view,&[data-layout=rail] .view,&[data-layout=top] .view{grid-row:3;grid-column:1;padding:0 20px}
+  & footer.status{grid-row:4;grid-column:1}
+  & #app>.rail{grid-row:5;grid-column:1;width:auto;height:var(--navh);min-height:0;margin:0;padding:0 20px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:6px;border:0;border-top:1px solid var(--arq-line);border-radius:0;background:var(--arq-pnl);backdrop-filter:blur(var(--arq-blur));-webkit-backdrop-filter:blur(var(--arq-blur));overflow:visible;box-shadow:none;position:relative}
+@include _hbar
+  & #app>.rail .brandrow{position:absolute;left:20px;top:0;bottom:0}
+  & #app>.rail .rgs{gap:6px}
+  & #app>.rail .rg{gap:6px}
+  & #app>.rail .rb{width:auto;min-width:86px;height:52px;padding:0 14px;flex-direction:column;justify-content:center;gap:5px;border:1px solid transparent;border-radius:var(--arq-r);background:transparent;font:400 8.5px var(--arq-mono);letter-spacing:calc(1.5px * var(--arq-lsk));text-transform:var(--arq-ltt);color:var(--arq-ink2)}
+  & #app>.rail .rb svg{display:block;width:18px;height:18px;flex:none}
+  & #app>.rail .rb>span{display:inline!important;flex:none;font:inherit;letter-spacing:inherit;text-transform:inherit;text-align:center;max-width:none}
+  & #app>.rail .rb:hover{background:var(--arq-pnl2);color:var(--arq-ink)}
+  & #app>.rail .rb.on{background:var(--arq-fill);color:var(--arq-onfill);border-color:var(--arq-fill)}
+  & #app>.rail .rsep{display:block;width:1px;height:28px;margin:0 6px;background:var(--arq-line);flex:none}
+  & #app>.rail .sp{display:none!important}
+  & #app>.rail .rbot{position:absolute;right:20px;top:0;bottom:0}
+  & #app>.rail .search{display:none!important}
+  & .libpanel,& .vpanel{min-height:calc(100vh - var(--tb,0px) - var(--hdr) - var(--navh) - 70px)}
+  & #view:has(#homeTop .nowg) .libpanel{min-height:calc(100vh - var(--tb,0px) - var(--hdr) - var(--navh) - 340px)}
+  & .libwrap .gpanel,& .libwrap .fpanel{max-height:calc(100vh - var(--tb,0px) - var(--hdr) - var(--navh) - 40px)}
+  & .bellpop,& .helppop{top:auto;bottom:calc(var(--navh) + 8px);right:20px;left:auto}
+  & .toasts{top:auto;bottom:calc(var(--navh) + 40px)}
+  /* herói alto: capa grande à esquerda, título gigante, brilho da cor do tema */
+  & .nowg{min-height:260px;padding:26px 30px;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr);grid-template-areas:"cov t next" "cov t acts";gap:0 28px;align-items:center;overflow:hidden;position:relative;isolation:isolate}
+  & .nowg::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 60% 120% at 12% 50%,color-mix(in srgb,var(--arq-acc) 22%,transparent),transparent 60%);z-index:-1;pointer-events:none}
+  & .nowg .ncov{width:144px;height:200px;box-shadow:0 24px 44px -22px rgba(0,0,0,.85)}
+  & .nowg .nt{grid-area:t;gap:8px}
+  & .nowg .nt b{font-size:clamp(34px,4vw,60px)}
+  & .nowg .nnext{grid-area:next;justify-self:end;align-self:start;margin:0}
+  & .nowg .nacts{grid-area:acts;align-self:end;margin:0}
+  & .nowg>span{display:none}
+  /* "Continuar": cartazes largos em vez de linhas */
+  & .vrow .sr{gap:12px}
+  & .vrow .si{flex-direction:column;align-items:stretch;padding:0;border:0;background:transparent;border-radius:0}
+  & .vrow .si:hover{background:transparent}
+  & .vrow .si img{width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;object-position:50% 20%;border-radius:var(--arq-r);box-shadow:0 10px 24px -14px rgba(0,0,0,.8)}
+  & .vrow .si:hover img{outline:1px solid var(--arq-ink)}
+  & .vrow .si>div{padding:8px 2px 0}
+  & .vrow .si:nth-child(n+5){display:flex}
+  & .vrow .si:nth-child(n+6){display:none}
+  /* grade: azulejos largos */
+  & .grid:not(.lst){grid-template-columns:repeat(auto-fill,minmax(208px,1fr))!important;gap:14px}
+  & .grid:not(.lst) .card .cov{aspect-ratio:16/10!important;height:auto!important}
+  & .grid:not(.lst) .card .cov img{object-fit:cover;object-position:50% 20%}
+  @media (max-width:1100px){& .rail .rb{min-width:64px;padding:0 8px}& .rail .brandrow .bname{display:none!important}}

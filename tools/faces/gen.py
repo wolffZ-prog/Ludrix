@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-"""Motor de faces do Ludrix 4.3 — gera src/renderer/themes/<slug>/{face.css,dark.css,light.css}
-a partir de template.css + specs (paleta escuro/claro, tipografia, raio, parede, decoração SVG, textos do
-cabeçalho e variante de layout). Também reescreve o bloco FACES em src/main/themes.ts e a lista de temas
-do Modo Console. Uso: python3 tools/faces/gen.py [slug ...]"""
+"""Motor de caras do Ludrix — gera a cara embutida (Padrão = arquivo) em src/renderer/themes/arquivo/ e TODAS as
+outras como PACOTES importáveis em temas/<slug>/ {theme.json,face.css,dark.css,light.css[,preview.png]}
+(a partir de template.css + esqueleto + pele v2). Só a Padrão (e a Grafite legada) ficam dentro do app; o bloco
+FACES de src/main/themes.ts é reescrito só com elas. Depois: python3 tools/faces/pack.py empacota temas/*
+em entrega/temas/*.lxtheme assinados. Uso: python3 tools/faces/gen.py [slug ...]"""
 import pathlib, re, json, urllib.parse, sys, math, random
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 TPL = (ROOT / 'tools/faces/template.css').read_text(encoding='utf8')
 OUT = ROOT / 'src/renderer/themes'
+PACKS = ROOT / 'temas'
+BUILTIN = {'arquivo'}
+VERSION = json.loads((ROOT / 'version.json').read_text(encoding='utf8')).get('version', '4.2.0') if (ROOT / 'version.json').exists() else '4.2.0'
 
 INTER = '"Inter",system-ui,sans-serif'
 RUBIK = '"Rubik","Segoe UI",system-ui,sans-serif'
@@ -170,7 +174,7 @@ W = 'rgba(255,255,255,'
 K = 'rgba(0,0,0,'
 
 # 29 ARQUIVO (padrão)
-face('arquivo', 'Arquivo', 'Editorial: fundo iridescente laranja e azul desfocado, linhas finas, painéis de vidro e tipografia leve com rótulos monoespaçados. Grafite no escuro, papel no claro.', '#ff7a3c', 'editorial', EDITORIAL,
+face('arquivo', 'Padrão', 'Editorial: fundo iridescente laranja e azul desfocado, linhas finas, painéis de vidro e tipografia leve com rótulos monoespaçados. Grafite no escuro, papel no claro.', '#ff7a3c', 'editorial', EDITORIAL,
      dict(bg='#1a1d22', pal=dark_pal('#1a1d22', '#ff7a3c', wall_css=wall(rg('ellipse 40% 30%', 30, 25, 'rgba(255,120,60,.55)'), rg('ellipse 50% 40%', 20, 40, 'rgba(90,170,200,.55)', 65), rg('ellipse 30% 50%', 55, 30, 'rgba(255,90,30,.45)'), rg('ellipse 60% 40%', 70, 80, 'rgba(120,190,220,.45)', 65), rg('ellipse 40% 30%', 30, 85, 'rgba(255,140,80,.35)'), 'linear-gradient(180deg,#3a3f47,#15181d)'))),
      dict(bg='#e9e6e1', pal=light_pal('#e9e6e1', '#ff7a3c', wall_css=wall(rg('ellipse 40% 30%', 30, 25, 'rgba(255,110,50,.62)'), rg('ellipse 50% 40%', 20, 40, 'rgba(70,160,200,.6)', 65), rg('ellipse 30% 50%', 55, 30, 'rgba(255,90,30,.5)'), rg('ellipse 60% 40%', 70, 80, 'rgba(100,180,220,.55)', 65), rg('ellipse 40% 30%', 30, 85, 'rgba(255,140,80,.42)'), 'linear-gradient(180deg,#f3f0ea,#dad6cf)'))),
      lambda: svg([hairlines('#dfe3e8', .16)[1], scan(W + '.07)', 1)[1], diag_bars('#5a5f66', .85)], defs=hairlines('#dfe3e8', .16)[0] + scan(W + '.07)', 1)[0]),
@@ -277,8 +281,8 @@ face('titanio-vermelho', 'Titânio Vermelho', 'Titânio escovado em cinza-azulad
 face('apex', 'Apex', 'Preto com amarelo ácido, listras diagonais e tipografia display pesada em itálico; claro em cinza-claro com o mesmo amarelo.', '#f4e81e', 'editorial', typ(DISPLAY, title_w=900, title_ls='-.02em', h_w=900, h_ls='0'),
      dict(bg='#070707', pal=dark_pal('#070707', '#f4e81e', ink='#e8e8e8', ink2='#b8b8b8', ink3='#8a8a8a', pnl='rgba(16,16,16,.78)', pnlh='rgba(16,16,16,.95)', fill='#f4e81e', onfill='#111', line='rgba(232,232,232,.2)', hair='rgba(232,232,232,.09)', br='rgba(244,232,30,.8)', blur=8)),
      dict(bg='#e8e8e8', pal=light_pal('#e8e8e8', '#8a8000', ink='#070707', ink2='#3a3a3a', ink3='#6a6a6a', pnl='rgba(255,255,255,.65)', pnlh='rgba(255,255,255,.95)', fill='#070707', onfill='#f4e81e', blur=8)),
-     lambda: svg([f'<g fill="#f4e81e"><path d="M0 0h14v800H0z"/><path d="M40 20h30l-24 40h-30z"/><path d="M74 20h30l-24 40h-30z"/><path d="M108 20h30l-24 40h-30z"/></g>', stripes('#f4e81e', .06, 22)[1]], defs=stripes('#f4e81e', .06, 22)[0]),
-     lambda: svg([f'<g fill="#070707"><path d="M0 0h14v800H0z"/><path d="M40 20h30l-24 40h-30z"/><path d="M74 20h30l-24 40h-30z"/><path d="M108 20h30l-24 40h-30z"/></g>', stripes('#070707', .05, 22)[1]], defs=stripes('#070707', .05, 22)[0]),
+     lambda: svg([f'<g fill="#f4e81e"><path d="M0 0h14v800H0z"/></g>', stripes('#f4e81e', .06, 22)[1]], defs=stripes('#f4e81e', .06, 22)[0]),
+     lambda: svg([f'<g fill="#070707"><path d="M0 0h14v800H0z"/></g>', stripes('#070707', .05, 22)[1]], defs=stripes('#070707', .05, 22)[0]),
      brand='LUDRIX', sub='APEX SERIES\\A LX/04 · RACE LAUNCHER', year='LX/04', stamp='LAP 13 · P1\\00a0\\00a0///', swatch=(['#070707', '#f4e81e'], ['#e8e8e8', '#070707']))
 
 # 14 EMULATE AZUL — azul-aço, cartões claros, limpo
@@ -301,8 +305,8 @@ face('radio-militar', 'Rádio Militar', 'Rádio de campanha: bege-oliva fosco, t
 face('emulate-amarelo', 'Emulate Amarelo', 'Amarelo-gema com moldura grafite e toques de azul-céu; cartões claros e numeração grande; escuro em grafite com o mesmo amarelo.', '#f7d117', 'panel', typ(TECH, title_w=800, title_tt='none', title_ls='-.02em', h_tt='none', h_ls='0', h_w=800, ltt='none', lsk=.3),
      dict(bg='#1d1d1b', pal=dark_pal('#1d1d1b', '#f7d117', ink='#f2f2ee', ink2='#c2c2be', ink3='#8a8a86', pnl='rgba(40,40,38,.72)', pnlh='rgba(40,40,38,.94)', fill='#f7d117', onfill='#1d1d1b', line='rgba(247,209,23,.35)', hair='rgba(242,242,238,.1)', br='rgba(247,209,23,.8)', wall_css=wall('linear-gradient(180deg,#f7d117 0,#f7d117 8px,#1d1d1b 8px)'))),
      dict(bg='#f7d117', pal=light_pal('#f7d117', '#1d1d1b', ink='#1d1d1b', ink2='#3a3a38', ink3='#6a6a66', pnl='rgba(255,255,255,.62)', pnlh='rgba(255,255,255,.94)', fill='#1d1d1b', onfill='#f7d117', line='rgba(29,29,27,.3)', hair='rgba(29,29,27,.12)', br='#1d1d1b', wall_css=wall('linear-gradient(180deg,#ffdc2e,#f0c800)'))),
-     lambda: svg([f'<text x="1180" y="770" font-family="Inter,sans-serif" font-weight="800" font-size="120" fill="#f7d117" opacity=".18" text-anchor="end">16</text>', f'<rect x="1210" y="30" width="40" height="40" fill="#5bb8ff" opacity=".8"/>']),
-     lambda: svg([f'<text x="1180" y="770" font-family="Inter,sans-serif" font-weight="800" font-size="120" fill="#1d1d1b" opacity=".12" text-anchor="end">16</text>', f'<rect x="1210" y="30" width="40" height="40" fill="#5bb8ff" opacity=".9"/>']),
+     lambda: svg([f'<text x="1180" y="770" font-family="Inter,sans-serif" font-weight="800" font-size="120" fill="#f7d117" opacity=".18" text-anchor="end">16</text>']),
+     lambda: svg([f'<text x="1180" y="770" font-family="Inter,sans-serif" font-weight="800" font-size="120" fill="#1d1d1b" opacity=".12" text-anchor="end">16</text>']),
      brand='Ludrix', sub='EMULATE · YELLOW', year='16', stamp='EMU/16', swatch=(['#1d1d1b', '#f7d117'], ['#f7d117', '#1d1d1b']))
 
 # 17 PEGBOARD VIDRO — painel perfurado + vidro fosco, azul
@@ -439,6 +443,20 @@ SQUARE = '& #app *:not(svg):not(path):not(circle),& .modal *:not(svg),& .ctx *,&
 def esc_css(s):
     return s.replace('"', '\\"')
 
+# ---------------------------------------------------------- esqueletos (front-ends)
+# rail = lateral à esquerda (Arquivo) · topbar = barra de navegação no topo · dock = dock embaixo
+# split = coluna alta do jogo à esquerda + lateral só de ícones · rrail = lateral à direita
+# list = gerenciador: busca na lateral, biblioteca em lista · icons = coluna só de ícones
+SKEL = {
+    'hud-preto': 'side', 'hex-ambar': 'side', 'hex-azul': 'icons', 'circuito-pb': 'side', 'sampler': 'dock', 'placa-neptune': 'panelbar', 'oliva-2044': 'band', 'topografia-lima': 'dock',
+    'circuito-lilas': 'topbar', 'fatias': 'topbar', 'underglow': 'icons',
+    'metal-verde': 'panelbar', 'aco-escovado': 'topbar', 'titanio-vermelho': 'panelbar',
+    'apex': 'side', 'emulate-azul': 'panelbar', 'radio-militar': 'panelbar',
+    'emulate-amarelo': 'panelbar', 'pegboard-vidro': 'band', 'garan': 'list', 'new-horizons': 'split',
+    'radian': 'icons', 'ondas': 'topbar',
+}
+SKEL_LAYOUT = {'topbar': 'top', 'dock': 'bottom'}
+
 def build(f):
     t = f['t']; slug = f['slug']
     r = t['r']; rp = t['rp']; rs = t['rs']
@@ -463,32 +481,51 @@ def build(f):
     # painéis com brilho (underglow/neon)
     if 'arq-glow' in f['dark']['pal']:
         css += f'\nhtml body.bs.face.face[data-face={slug}] :is(.libpanel,.vpanel,.nowg,.rail){{box-shadow:var(--arq-glow)}}\n'
-    d = OUT / slug; d.mkdir(parents=True, exist_ok=True)
+    d = (OUT if slug in BUILTIN else PACKS) / slug; d.mkdir(parents=True, exist_ok=True)
+    # esqueleto (estrutura do front-end) + cara própria
+    sk = SKEL.get(slug, 'rail')
+    for label, path in (('esqueleto ' + sk, ROOT / 'tools' / 'faces' / 'skel' / f'{sk}.css'), ('v2: cara própria', ROOT / 'tools' / 'faces' / 'v2' / f'{slug}.css')):
+        if path.exists():
+            extra = path.read_text(encoding='utf8')
+            extra = re.sub(r'^\s*@include (\S+)\s*$', lambda m: (ROOT / 'tools' / 'faces' / 'skel' / (m.group(1) + '.txt')).read_text(encoding='utf8'), extra, flags=re.M)
+            for _ in range(2):
+                for k, v in rep.items(): extra = extra.replace(k, v)
+            css += '\n\n/* ===== ' + label + ' ===== */\nhtml body.bs.face.face[data-face=' + slug + ']{\n' + extra + '\n}\n'
     (d / 'face.css').write_text(css, encoding='utf8')
     (d / 'dark.css').write_text(dark_scheme(f['dark']['bg'], f['acc'], re.search(r'--arq-ink:(#[0-9a-f]{6})', f['dark']['pal']).group(1), f['dd']()), encoding='utf8')
     (d / 'light.css').write_text(light_scheme(f['light']['bg'], f['acc'], re.search(r'--arq-ink:(#[0-9a-f]{6})', f['light']['pal']).group(1), f['ld']()), encoding='utf8')
     return d
+
+def pack_json(f):
+    sw = f['swatch'] or ([f['dark']['bg'], f['acc']], [f['light']['bg'], f['acc']])
+    return {'name': f['name'], 'description': f['desc'], 'author': 'Ludrix', 'version': VERSION, 'scheme': 'dark', 'schemes': ['dark', 'light'],
+            'accent': f['acc'], 'layout': SKEL_LAYOUT.get(SKEL.get(f['slug'], 'rail'), 'rail'), 'face': f['slug'], 'category': 'Caras', 'tags': 'cara, escuro, claro',
+            'swatch': {'dark': sw[0], 'light': sw[1]}, 'requires': '4.2.0'}
 
 def write_faces_ts():
     p = ROOT / 'src/main/themes.ts'; s = p.read_text(encoding='utf8')
     a = s.index('export const FACES'); b = s.index('};', a) + 2
     lines = ['export const FACES: Record<string, { name: string; description: string; accent: string; layout: string; swatch: { dark: string[]; light: string[] } }> = {']
     for f in F:
+        if f['slug'] not in BUILTIN: continue
         sw = f['swatch'] or ([f['dark']['bg'], f['acc']], [f['light']['bg'], f['acc']])
-        lines.append(f"    '{f['slug']}': {{ name: {json.dumps(f['name'], ensure_ascii=False)}, description: {json.dumps(f['desc'], ensure_ascii=False)}, accent: '{f['acc']}', layout: 'rail', swatch: {{ dark: {json.dumps(sw[0])}, light: {json.dumps(sw[1])} }} }},")
+        lines.append(f"    '{f['slug']}': {{ name: {json.dumps(f['name'], ensure_ascii=False)}, description: {json.dumps(f['desc'], ensure_ascii=False)}, accent: '{f['acc']}', layout: '{SKEL_LAYOUT.get(SKEL.get(f['slug'],'rail'),'rail')}', swatch: {{ dark: {json.dumps(sw[0])}, light: {json.dumps(sw[1])} }} }},")
     lines.append("    grafite: { name: 'Grafite (Legacy)', description: 'A cara clássica do Ludrix: cinza médio no escuro, cinza claro com cartões brancos no claro. Mantida para quem prefere a interface antiga.', accent: '#6c9bd2', layout: 'side', swatch: { dark: ['#1b1d21', '#272a30'], light: ['#e7e9ee', '#ffffff'] } },")
     lines.append('};')
     s = s[:a] + '\n'.join(lines) + s[b:]
     p.write_text(s, encoding='utf8')
 
 def write_face_list_js():
-    (ROOT / 'src/renderer/faces.json').write_text(json.dumps([f['slug'] for f in F], ensure_ascii=False), encoding='utf8')
+    (ROOT / 'src/renderer/faces.json').write_text(json.dumps([f['slug'] for f in F if f['slug'] in BUILTIN], ensure_ascii=False), encoding='utf8')
 
 if __name__ == '__main__':
     only = set(sys.argv[1:])
     for f in F:
         if only and f['slug'] not in only: continue
-        print('face', build(f))
+        d = build(f)
+        if f['slug'] not in BUILTIN:
+            (d / 'theme.json').write_text(json.dumps(pack_json(f), ensure_ascii=False, indent=1), encoding='utf8')
+        print('face' if f['slug'] in BUILTIN else 'pacote', d)
     if not only:
         write_faces_ts()
-    print(len(F), 'faces')
+    print(len(F), 'faces:', len(BUILTIN), 'embutida(s) +', len(F) - len(BUILTIN), 'pacotes')

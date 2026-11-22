@@ -1,0 +1,19 @@
+  /* ESQUELETO SIDE — lateral à esquerda em altura inteira com a marca no topo; cabeçalho (aba · busca · sino) só sobre o conteúdo */
+  & .rail{grid-row:2/4;grid-column:1;margin-top:var(--tbh);border-right:1px solid var(--arq-line)}
+  & .rail .brandrow{display:flex!important;align-items:center;gap:10px;height:auto;width:auto;margin:0 0 12px;padding:6px 10px 0}
+  & .rail .brand{display:block;width:26px;height:26px;flex:none;filter:none}
+  & .rail .brand svg,& .rail .brand img{width:26px;height:26px;display:block}
+  & .rail .bname{display:block!important;font:$BRAND_W$ 15px/1 var(--font-disp);letter-spacing:$BRAND_LS$;color:var(--arq-ink);white-space:nowrap;opacity:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  & header.top{grid-column:2;grid-template-columns:minmax(0,1fr) auto auto;grid-template-rows:var(--tbh) 44px 24px;padding:0 20px 0 var(--gap)!important}
+  & header.top .brandbtn{display:none!important}
+  & header.top .crumb{grid-column:1;justify-content:flex-start}
+  & header.top .search{grid-column:2}
+  & header.top .bell{grid-column:3}
+  & header.top::before{grid-row:3;grid-column:1}
+  & header.top .chips{grid-row:3;grid-column:2/3;justify-self:end}
+  & header.top::after{grid-row:3;grid-column:3;justify-self:end}
+  & header.top .wctl,&.frameless header.top .wctl{position:fixed;top:var(--tb,0px);right:0;margin:0!important;z-index:80}
+  & .view,&[data-layout=rail] .view,&[data-layout=top] .view{grid-column:2;padding:var(--gap) 20px 0 var(--gap)}
+  & footer.status{grid-column:2}
+  & .bellpop,& .helppop{right:20px}
+  @media (max-width:1100px){& header.top .search{width:180px}}

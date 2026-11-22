@@ -1,0 +1,126 @@
+  /* APEX — preto, faixa diagonal amarela, contornos de HUD, display pesado em itálico; navegação na faixa do topo */
+  --navh:60px;--hdr:44px;
+  --yel:var(--arq-acc);--onyel:#15130a;
+  --skew:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%);
+  --hz:repeating-linear-gradient(-45deg,var(--yel) 0 6px,transparent 6px 12px);
+
+  & *{font-family:var(--font-text)}
+  & .nowg .nt b,& .h1 h2,& .vhead h2,& .rail .rb,& .tabs button,& header.top .crumb,& .rail .bname{font-family:var(--font-disp)}
+
+  /* painéis: contorno de HUD (só linhas e cantos) */
+  & .libpanel,& .vpanel,& .libwrap .gpanel,& .libwrap .fpanel{border-radius:0;border:1px solid var(--arq-line);background:var(--arq-pnl);position:relative}
+  & .libpanel::before,& .vpanel::before{content:"";position:absolute;left:-1px;top:-1px;width:120px;height:3px;background:var(--yel);z-index:4;pointer-events:none;clip-path:polygon(0 0,100% 0,calc(100% - 3px) 100%,0 100%)}
+  & .libpanel::after,& .vpanel::after{content:"";position:absolute;right:-1px;bottom:-1px;width:16px;height:16px;border-right:3px solid var(--yel);border-bottom:3px solid var(--yel);z-index:4;pointer-events:none}
+  & .vhead{border-radius:0;border-bottom:1px solid var(--arq-line);background:var(--arq-pnlh);padding-top:18px}
+  & .h1 h2,& .vhead h2{font:900 italic 18px/1 var(--font-disp);letter-spacing:-.02em;text-transform:uppercase}
+  & .vtile,& .ccard,& .mcard,& .sec,& .frow{border-radius:0;border:1px solid var(--arq-line)}
+  & .vtile:hover,& .ccard:hover{border-color:var(--yel)}
+  & .vtile .sysic{border-radius:0;border:1px solid var(--arq-line);background:transparent}
+
+  /* botões inclinados */
+  & .btn{border-radius:0;border:1px solid var(--arq-line);background:transparent;color:var(--arq-ink);font:900 italic 10.5px var(--font-disp);letter-spacing:0;text-transform:uppercase;clip-path:var(--skew);padding:0 20px}
+  & .btn:hover{border-color:var(--arq-ink)}
+  & .btn.p,& .btn.p:hover{background:var(--yel);color:var(--onyel);border-color:var(--yel)}
+  & .btn.p svg{color:var(--onyel);fill:var(--onyel)}
+  & .btn.ic{padding:0;width:40px}
+  & .tabs{gap:0}
+  & .tabs button,& .chip,& .vchip,& .seg button{border-radius:0;border:1px solid transparent;font:900 italic 11px var(--font-disp);letter-spacing:0;text-transform:uppercase;padding:0 16px;clip-path:var(--skew);margin-left:-6px}
+  & .tabs button:first-child{margin-left:0}
+  & .tabs button.on,& .chip.on,& .vchip.on{background:var(--yel);color:var(--onyel);border-color:var(--yel)}
+  & .chip{margin-left:0;font:700 8px var(--arq-mono)}
+  & .h1>.btn.xs,& .h1 .filt>.btn,& .h1 #sort,& .h1 .dd{border-radius:0;clip-path:var(--skew);padding:0 14px}
+  & .h1>.btn.xs.addbtn{background:var(--yel);color:var(--onyel);border-color:var(--yel)}
+  & .azbar{font-weight:700}
+
+  /* capas com canto amarelo */
+  & .card .cov{border-radius:0;outline:1px solid var(--arq-line);outline-offset:-1px}
+  & .card::before{content:"";position:absolute;left:0;top:0;width:0;height:3px;background:var(--yel);z-index:3;transition:width .18s}
+  & .card:hover::before,& .card.sel::before{width:60%}
+  & .card.sel .cov,& .card.msel .cov{outline:1.5px solid var(--yel)}
+  & .card h4{font:800 italic 11px/1.3 var(--font-disp);letter-spacing:0;text-transform:uppercase}
+  & .card .sub{font:700 8.5px var(--arq-mono);letter-spacing:1px;text-transform:uppercase}
+  & .card .qp{border-radius:0;background:var(--yel);color:var(--onyel);clip-path:var(--skew)}
+  & .card .qp svg{fill:var(--onyel);color:var(--onyel)}
+
+  & footer.status{letter-spacing:1.5px;font-size:8px;font-weight:700}
+  & footer.status .sdot{border-radius:0;background:var(--yel);transform:skewX(-20deg);width:8px;height:8px}
+  & .modal .box,& .ctx,& .bellpop,& .palbox{border-radius:0;border:1px solid var(--arq-line)}
+  & .modal .box::before{content:"";position:absolute;left:0;top:0;width:140px;height:3px;background:var(--yel)}
+  & header.top .crumb{white-space:nowrap;height:auto;align-items:center}
+  & header.top .crumb small{align-self:center;padding:0}
+
+
+  /* estrutura side: banda amarela vertical à esquerda (LUDRIX //04, barras ///, menu numerado, LX//04 gigante, APEX RACING vertical), conteúdo preto com moldura de HUD; herói com barra amarela; marcador "FIND THE LIMIT" */
+  --sidew:156px;--hdr:96px;--gap:30px;--navh:0px;
+  &[data-layout=rail]{--sidew:156px}
+  --frame:polygon(0 0,100% 0,100% 100%,0 100%);
+  & #app{grid-template-columns:var(--sidew) minmax(0,1fr)}
+  & #app>.rail,&[data-layout=rail] #app>.rail{width:auto!important;min-width:0}
+  & #app>.rail{grid-row:1/5;margin:0;padding:22px 0 20px 18px;border:0;border-right:12px solid #000;border-radius:0;background:var(--yel);color:var(--onyel);clip-path:none;position:relative;height:auto;overflow:hidden}
+  & #app>.rail::before{content:"";display:block;position:static;width:46px;height:22px;margin:38px 0 36px;background:var(--hz);background:repeating-linear-gradient(-60deg,transparent 0 6px,#000 6px 14px);clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
+  & #app>.rail::after{content:"LX//04";position:absolute;left:12px;bottom:118px;font:900 italic 34px/1 var(--font-disp);letter-spacing:-.04em;color:#000;white-space:nowrap}
+  & .rail .brandrow{order:-1;display:flex!important;flex-direction:column;align-items:flex-start;gap:2px;padding:0 6px;margin:0}
+  & .rail .brand{display:none!important}
+  & .rail .bname{display:block!important;font:900 italic 16px/1 var(--font-disp);letter-spacing:-.02em;color:#000;text-transform:uppercase}
+  & .rail .bname::after{content:"//04";display:block;font:600 8px var(--arq-mono);letter-spacing:1.5px;color:#000;opacity:.7;margin-top:2px;font-style:normal}
+  & .rail .rgs{counter-reset:nav;gap:0}
+  & .rail .rg{gap:0}
+  & .rail .rb{height:30px;padding:0 6px;border:0;border-radius:0;background:transparent;font:800 italic 8.5px var(--arq-mono);letter-spacing:1px;text-transform:uppercase;color:#000;gap:8px;justify-content:flex-start;flex-direction:row;width:100%}
+  & .rail .rg .rb::before,& .rail .rg .rb.on::before{counter-increment:nav;content:counter(nav,decimal-leading-zero);position:static;display:inline;font:600 7px var(--arq-mono);letter-spacing:0;color:#000;opacity:.7;width:auto;height:auto;background:none;border-radius:0;margin:0}
+  & .rail .rb>svg{display:none}
+  & .rail .rb>span{display:inline!important;flex:1 1 auto;width:auto!important;min-width:0;text-align:left;font:inherit;max-width:none;overflow:visible;text-overflow:clip}
+  & .rail .rb .n{font:800 7.5px var(--arq-mono);color:var(--yel);background:#000;padding:1px 4px;border-radius:0}
+  & .rail .rb:hover{background:rgba(0,0,0,.08)}
+  & .rail .rb.on{background:#000;color:var(--yel);clip-path:polygon(0 0,100% 0,calc(100% - 8px) 100%,0 100%);margin-right:-8px}
+  & .rail .rb.on::before{color:var(--yel);opacity:.8}
+  & .rail .rb.on .n{background:var(--yel);color:#000}
+  & .rail .rsep,& .rail .rxh,& .rail .rb.sm{display:none!important}
+  & .rail .rx{display:none!important}
+  & .rail .rbot{border-top:0;padding:0 6px 0 0;margin-top:auto;position:relative}
+  & .rail .rbot::before{content:"APEX RACING // 32";position:absolute;right:-6px;bottom:150px;transform:rotate(-90deg);transform-origin:100% 100%;font:700 8px var(--arq-mono);letter-spacing:3px;color:#000;white-space:nowrap}
+  & .rail .rbot .bell,& .rail .rbot .rb{display:none!important}
+  & .rail .rbot .pavbtn{padding:0;height:auto;background:transparent;border:0;justify-content:flex-start}
+  & .rail .rbot .pav{border-radius:0;background:#000;color:var(--yel);border:0;font:800 10px var(--arq-mono)}
+  & .rail .rbot .pavbtn span{display:block!important;font:800 8px var(--arq-mono);letter-spacing:1.5px;color:#000;text-transform:uppercase}
+  & header.top{padding:0 30px 0 var(--gap)!important;grid-template-rows:var(--tbh) 44px 20px;background:transparent!important}
+  & header.top .crumb{font:900 22px/1 var(--font-disp);letter-spacing:.14em;text-transform:uppercase;color:var(--arq-ink);gap:14px}
+  & header.top .crumb small{font:500 8.5px var(--arq-mono);letter-spacing:2px;color:var(--arq-ink3);padding:0;align-self:center}
+  & header.top .crumb small::before{content:"· "}
+  & header.top::before{content:"FIND THE LIMIT";grid-row:2;grid-column:1;justify-self:end;align-self:center;margin-right:26px;font:700 8.5px var(--arq-mono);letter-spacing:3px;color:var(--arq-ink2)}
+  & header.top .search{width:270px}
+  & header.top .search input{height:30px;border-radius:0;border:1px solid var(--arq-line);background:transparent;font:600 9px var(--arq-mono);letter-spacing:1.5px;text-transform:uppercase}
+  & header.top .search input:focus{border-color:var(--yel);box-shadow:none}
+  & header.top .search kbd{border:0;background:var(--yel);color:#000;border-radius:0;font-weight:800}
+  & header.top .bell{border-radius:0;border:1px solid var(--arq-line)}
+  & header.top .chips{display:none!important}
+  & header.top::after{content:"LEWIS_F 032_RT";grid-row:3;grid-column:3;justify-self:end;font:600 8px var(--arq-mono);letter-spacing:2px;color:var(--arq-ink2)}
+  & #app::before{content:"";position:absolute;left:calc(var(--sidew) + 40px);right:30px;top:calc(var(--tb,0px) + var(--tbh) + 30px);bottom:46px;border:1px solid var(--arq-ink3);pointer-events:none;z-index:0;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+  & #app::after{content:"";position:absolute;left:calc(var(--sidew) + 36px);top:calc(var(--tb,0px) + var(--tbh) + 26px);width:9px;height:9px;border:1px solid var(--arq-ink2);background:var(--arq-bgc);pointer-events:none;z-index:1}
+  & .view,&[data-layout=rail] .view{padding:0 44px 0 var(--gap)}
+  & .nowg{border:0;border-left:4px solid var(--yel);background:var(--arq-pnl);padding:20px 24px 20px 20px;min-height:170px;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;grid-template-areas:"cov t t" "cov acts acts";gap:0 22px;align-items:center;margin-bottom:16px}
+  & .nowg::before{content:"P1";position:absolute;left:14px;top:12px;font:800 8px/1 var(--arq-mono);background:var(--yel);color:#000;padding:3px 5px;z-index:3}
+  & .nowg::after{display:none}
+  & .nowg .ncov{width:92px;height:124px;border-radius:0;outline:0;align-self:center}
+  & .nowg .nt{grid-area:t;align-self:end;gap:4px}
+  & .nowg .nt small{font:600 8.5px var(--arq-mono);letter-spacing:2px;color:var(--arq-ink2);text-transform:uppercase}
+  & .nowg .nt small::before{content:"// CONTINUAR · "}
+  & .nowg .nt b{font:900 clamp(30px,3.4vw,48px)/1 var(--font-disp);letter-spacing:.02em;text-transform:uppercase}
+  & .nowg .pr i{height:3px;border-radius:0;background:var(--arq-pnl3);max-width:280px}
+  & .nowg .pr i::after{background:var(--yel)}
+  & .nowg .nacts{grid-area:acts;align-self:start;justify-self:end;margin:8px 0 0}
+  & .nowg .nacts .btn{height:34px;border-radius:0;clip-path:var(--skew);font:800 9px var(--arq-mono);letter-spacing:2px;text-transform:uppercase;border:1px solid var(--arq-line);background:transparent;padding:0 20px}
+  & .nowg .nacts .btn.p{background:var(--yel);color:#000;border-color:var(--yel)}
+  & .nowg>span{display:none}
+  & .libpanel{border:0;background:transparent;padding-left:0;padding-right:0}
+  & .libpanel::before,& .libpanel::after{display:none}
+  & .h1 h2,& .h1 .cnt{display:none}
+  & .h1 .qchips .chip{height:24px;border-radius:0;border:1px solid var(--arq-line);background:transparent;color:var(--arq-ink2);font:700 8.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+  & .h1 .qchips .chip.on{border-color:var(--yel);color:var(--yel);background:transparent}
+  & .card .cov{border-radius:0;outline:0;box-shadow:-4px 0 0 -1px var(--arq-ink3)}
+  & .card.sel .cov{box-shadow:0 0 0 2px var(--yel)}
+  & .card.sel h4{color:var(--yel)}
+  & .card h4{font:800 9.5px/1.3 var(--arq-mono);letter-spacing:1px;text-transform:uppercase}
+  & .card .sub{font:500 8px var(--arq-mono);letter-spacing:1px;text-transform:uppercase;color:var(--arq-ink3)!important}
+  & footer.status{padding:0 44px 0 calc(var(--sidew) + 44px);font:600 8px var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+  & footer.status::after{content:"SECTOR 7 · LAP 03 / 12 · Δ +0.312";margin-left:auto;color:var(--arq-ink3)}
+  & footer.status .sdot{border-radius:0;background:var(--yel)}

@@ -1,0 +1,10 @@
+  /* controles da janela fixos no canto superior direito (fora do cabeçalho) */
+  & .wctl,& .rail .rbot .wctl,& main>.wctl,&.frameless .wctl{position:fixed;top:var(--tb,0px);right:0;left:auto;bottom:auto;z-index:80;display:flex;align-items:stretch;height:var(--tbh);width:auto;margin:0;padding:0;gap:0;background:transparent;border:0;grid-area:auto}
+  & .wctl button{width:46px;height:var(--tbh);border-radius:0!important;border:0;background:transparent;color:var(--arq-ink2);display:grid;place-items:center;margin:0;padding:0}
+  & .wctl button:hover{background:var(--arq-pnl3);color:var(--arq-ink)}
+  & .wctl button.x:hover{background:var(--red);color:#fff}
+  & .wctl button svg{width:10px;height:10px;display:block}
+  & .wctl #wmax svg.r{display:none}
+  &.maxed .wctl #wmax svg.m{display:none}
+  &.maxed .wctl #wmax svg.r{display:block}
+  & .tbrow{display:block;grid-column:1/-1;-webkit-app-region:drag;pointer-events:auto}

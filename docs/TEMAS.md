@@ -92,6 +92,21 @@ Antes de distribuir um tema, veja estas telas com ele aplicado: Biblioteca com c
 
 `.lxtheme` assinados pelo projeto aparecem como **oficial**. Um tema sem assinatura funciona igual; só não ganha a marca. Nenhum tema executa código: é só JSON e CSS filtrado.
 
+## Pacotes de cara
+
+Além do tema de cores, um `.lxtheme` pode trazer uma **cara inteira** — o mesmo tipo de front end da Padrão, com outra disposição e outro desenho. É assim que as 30 caras oficiais são distribuídas (`entrega/temas/`, fontes em `temas/<cara>/`).
+
+```
+minha-cara/
+  theme.json     "face": "minha-cara"  (slug: letras minúsculas, números e hífen)
+  face.css       regras escopadas em  html body.bs.face.face[data-face=minha-cara]{ … }
+  dark.css       :root{ --bg … --arq-* … color-scheme:dark }
+  light.css      idem para o claro
+  preview.png    miniatura (690×440) mostrada em Ajustes
+```
+
+`theme.json` aceita os mesmos campos do tema de cores (`name`, `description`, `author`, `accent`, `layout`, `swatch`, `tags`, `category`). Com `"face"` presente e `face.css` ao lado, o Ludrix serve `dark.css`/`light.css` + `face.css` em vez de `vars`+`extra.css`, e marca `body[data-face]` com o slug. Claro e escuro seguem o ajuste normal de tema. O jeito prático de produzir um pacote é escrever uma pele em `tools/faces/v2/<cara>.css` (sobre um esqueleto de `tools/faces/skel/`), registrar em `tools/faces/gen.py` e rodar `gen.py` + `pack.py`.
+
 ## Temas experimentais
 
 Fora dos dois embutidos, o projeto mantém um pacote de temas experimentais usado para testar o formato até o limite: fundos em camadas com parallax (`wallpaper` em várias imagens), barra no alto ou embaixo, fontes próprias e releituras do Windows XP. Capturas de alguns deles ficam em [screenshots/temas/](screenshots/temas/); o README mostra oito. São temas de laboratório: podem mudar ou sair entre versões, e nenhum deles altera a aparência Base nem os embutidos.

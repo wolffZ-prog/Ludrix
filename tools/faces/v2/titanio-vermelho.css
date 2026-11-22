@@ -1,0 +1,78 @@
+  /* TITÂNIO VERMELHO — placas de titânio com parafusos, cortes diagonais e um "X" vermelho aceso; dock de console embaixo */
+  --navh:74px;--hdr:100px;
+  --red:var(--arq-acc);--onred:#1a0602;
+  --glow:0 0 14px color-mix(in srgb,var(--red) 80%,transparent),0 0 2px var(--red);
+  --cut:polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,0 100%);
+  --cut-s:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%);
+  --scr:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--arq-ink) 35%,transparent) 0 1.4px,color-mix(in srgb,#000 45%,transparent) 2px,transparent 2.8px);
+  --brush:repeating-linear-gradient(90deg,color-mix(in srgb,var(--arq-ink) 3%,transparent) 0 1px,transparent 1px 4px);
+
+  & *{font-family:var(--font-text)}
+  & .nowg .nt b,& .h1 h2,& .vhead h2,& header.top .crumb{font-family:var(--font-disp)}
+
+  /* estrutura panelbar: placas de titânio com parafusos; X vermelho aceso na placa do herói */
+  --navh:0px;
+  & header.top,& #app>.rail,& .nowg,& .libpanel{border-radius:0;background-image:var(--brush);clip-path:var(--cut)}
+  & header.top .brandbtn::before{content:"✕";font:900 16px/1 var(--font-disp);color:var(--red);text-shadow:var(--glow)}
+  & header.top .brandbtn::after{font:800 13px/1 var(--font-disp);letter-spacing:.2em;text-transform:uppercase}
+  & header.top .crumb{font:600 8.5px var(--arq-mono);letter-spacing:2.5px;text-transform:uppercase}
+  & header.top .crumb::before{content:"TITANIUM SERIES · MK IV · "}
+  & header.top::before{content:"TEMP 41° · PLATE OK"}
+  & header.top .search input{border-radius:0;clip-path:var(--cut-s);font:600 9px var(--arq-mono);letter-spacing:1.5px;text-transform:uppercase}
+  & header.top .search input:focus{border-color:var(--red);box-shadow:none}
+  & header.top .search kbd{border-radius:0;border:1px solid var(--arq-line)}
+  & header.top .bell{border-radius:0;clip-path:var(--cut-s)}
+  & #app>.rail::before{content:"PLATE 01\A MODULE";color:var(--red);font-weight:800}
+  & .rail .rb{border-radius:0;font:700 9.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+  & .rail .rb.on{border-color:var(--red);box-shadow:inset 3px 0 0 var(--red);clip-path:var(--cut-s)}
+  & .rail .rb.on::before{background:var(--red);box-shadow:var(--glow)}
+  & .rail .rb.on>svg{color:var(--red)}
+  & .rail .rb.on .n{background:var(--red);color:var(--onred);border-radius:0}
+  & .rail .rbot .pav{border-radius:0;clip-path:var(--cut-s);border:0;background:var(--red);color:var(--onred)}
+  & .rail .rbot::after{content:"SERIAL TI-6AL-4V · PLATE"}
+  & .nowg::after{content:"✕";right:26px;top:auto;bottom:10px;font:900 72px/1 var(--font-disp);color:var(--red);opacity:.9;text-shadow:var(--glow);letter-spacing:0}
+  & .nowg .ncov{border-radius:0;outline:1px solid var(--arq-line);clip-path:var(--cut-s)}
+  & .nowg .nt small{font:600 8.5px var(--arq-mono);letter-spacing:2.5px;text-transform:uppercase;color:var(--red)}
+  & .nowg .nt b{font:800 clamp(30px,3.6vw,52px)/1 var(--font-disp);letter-spacing:.04em;text-transform:uppercase}
+  & .nowg .pr i{height:3px;border-radius:0;background:var(--arq-pnl3)}
+  & .nowg .pr i::after{background:var(--red);border-radius:0;box-shadow:var(--glow)}
+  & .h1 h2{color:var(--arq-ink)}
+  & .grid:not(.lst) .card .cov{aspect-ratio:3/4!important;height:auto!important}
+
+  /* placas com parafusos nos cantos e corte diagonal */
+  & .libpanel,& .vpanel,& .nowg,& #homeTop>.now,& .libwrap .gpanel,& .libwrap .fpanel{border-radius:0;border:1px solid var(--arq-line);background:var(--arq-pnl);background-image:var(--brush);clip-path:var(--cut)}
+  & .libpanel::before,& .vpanel::before,& .nowg::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:4;background-image:radial-gradient(circle at 9px 9px,color-mix(in srgb,var(--arq-ink) 35%,transparent) 0 1.4px,transparent 2.4px),radial-gradient(circle at 9px calc(100% - 9px),color-mix(in srgb,var(--arq-ink) 35%,transparent) 0 1.4px,transparent 2.4px),radial-gradient(circle at calc(100% - 9px) calc(100% - 9px),color-mix(in srgb,var(--arq-ink) 35%,transparent) 0 1.4px,transparent 2.4px)}
+  & .vhead{border-radius:0;border-bottom:1px solid var(--arq-line);background:var(--arq-pnlh);padding-top:18px}
+  & .h1 h2,& .vhead h2{font:800 16px/1 var(--font-disp);letter-spacing:.08em;text-transform:uppercase}
+  & .vtile,& .ccard,& .mcard,& .sec,& .frow{border-radius:0;border:1px solid var(--arq-line);clip-path:var(--cut-s)}
+  & .vtile:hover,& .ccard:hover{border-color:var(--red)}
+  & .vtile .sysic{border-radius:0;border:1px solid var(--arq-line);background:transparent;clip-path:var(--cut-s)}
+
+  /* botões e abas */
+  & .btn{border-radius:0;border:1px solid var(--arq-line);background:linear-gradient(180deg,color-mix(in srgb,var(--arq-ink) 6%,transparent),transparent);color:var(--arq-ink);font:700 9px var(--arq-mono);letter-spacing:2px;text-transform:uppercase;clip-path:var(--cut-s)}
+  & .btn:hover{border-color:var(--arq-ink2)}
+  & .btn.p,& .btn.p:hover{background:var(--red);color:var(--onred);border-color:var(--red);box-shadow:var(--glow)}
+  & .btn.p svg{color:var(--onred);fill:var(--onred)}
+  & .tabs button,& .chip,& .vchip,& .seg button{border-radius:0;border:1px solid transparent;font:700 8.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+  & .tabs button.on,& .chip.on,& .vchip.on{background:transparent;color:var(--arq-ink);border-color:var(--arq-line);box-shadow:inset 0 -2px 0 var(--red);clip-path:var(--cut-s)}
+  & .h1>.btn.xs,& .h1 .filt>.btn,& .h1 #sort,& .h1 .dd{border-radius:0;clip-path:var(--cut-s)}
+  & .h1>.btn.xs.addbtn{background:var(--red);color:var(--onred);border-color:var(--red)}
+
+  /* azulejos largos com moldura de titânio */
+  & .card .cov{border-radius:0;outline:1px solid var(--arq-line);outline-offset:-1px;clip-path:var(--cut-s)}
+  & .card:hover .cov{outline-color:var(--arq-ink2)}
+  & .card.sel .cov,& .card.msel .cov{outline:1.5px solid var(--red);box-shadow:var(--glow)}
+  & .card h4{font:700 10.5px/1.3 var(--font-text);letter-spacing:.04em;text-transform:uppercase}
+  & .card .sub{font:600 8.5px var(--arq-mono);letter-spacing:1px;text-transform:uppercase}
+  & .card .qp{border-radius:0;background:var(--red);color:var(--onred);clip-path:var(--cut-s);box-shadow:var(--glow)}
+  & .card .qp svg{fill:var(--onred);color:var(--onred)}
+  & .vrow .si img{border-radius:0;clip-path:var(--cut-s);outline:1px solid var(--arq-line)}
+  & .vrow .si:hover img{outline-color:var(--red)}
+
+  & footer.status{letter-spacing:2px;font-size:8px}
+  & footer.status .sdot{border-radius:0;background:var(--red);box-shadow:var(--glow);width:7px;height:7px}
+  & .modal .box,& .ctx,& .bellpop,& .palbox{border-radius:0;border:1px solid var(--arq-line);clip-path:var(--cut)}
+  & .ctx{clip-path:var(--cut-s)}
+  &.rm .btn.p,&.rm .card .qp,&.rm .nowg .pr i::after{box-shadow:none}
+  & header.top .crumb{white-space:nowrap;height:auto;align-items:center}
+  & header.top .crumb small{align-self:center;padding:0}

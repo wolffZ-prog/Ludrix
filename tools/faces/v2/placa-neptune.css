@@ -1,0 +1,81 @@
+  /* PLACA NEPTUNE — placa-mãe: trilhas finas em gradiente roxo→laranja, chips, pads dourados; coluna do jogo como um chip grande */
+  --hdr:116px;--gap:18px;
+  --mag:var(--arq-acc);--onmag:#1a0612;
+  --trk:color-mix(in srgb,var(--arq-ink) 22%,transparent);
+  --grad:linear-gradient(135deg,#7b3fe4,var(--mag) 55%,#ff7a3d);
+  --pad:radial-gradient(circle,#e8b44a 0 2px,transparent 2.5px);
+
+  & *{font-family:var(--font-text)}
+  & .nowg .nt b,& .h1 h2,& .vhead h2{font-family:var(--arq-mono)}
+
+  /* estrutura vem do esqueleto panelbar; aqui só a serigrafia da placa */
+  --orange:#ff8a3d;
+  & header.top .brandbtn::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--trk);box-shadow:0 0 0 2px var(--arq-pnl),0 0 0 3px var(--trk)}
+  & header.top .brandbtn::after{color:var(--mag);letter-spacing:4px}
+  & header.top .crumb::before{content:"MAIN CONTROLLER · REV 4.3.0 · "}
+  & header.top::before{content:"CORE 41° · LINK OK"}
+  & header.top .search input{font:400 9px var(--arq-mono);letter-spacing:1.5px}
+  & header.top .search input:focus{border-color:var(--mag);box-shadow:0 0 0 3px color-mix(in srgb,var(--mag) 18%,transparent)}
+  & header.top .search svg{color:var(--mag)}
+  & header.top .search kbd{border:0;background:var(--orange);color:#1a0a00;border-radius:2px;font-weight:700}
+  & #app>.rail::before{content:"DATA LINK\A MODULE [V2]";color:var(--orange)}
+  & #app>.rail::after{content:"";position:absolute;left:8px;top:8px;width:6px;height:6px;border-radius:50%;border:1px solid var(--trk)}
+  & .rail .rb.on{box-shadow:0 0 14px -4px var(--mag)}
+  & .rail .rb.on::before{box-shadow:0 0 8px var(--mag)}
+  & .rail .rb.on>svg{color:var(--orange)}
+  & .rail .rb.on .n{background:var(--grad);color:#fff}
+  & .rail .rbot .pav{border-radius:4px;border:0;background:var(--grad);color:#fff}
+  & .rail .rbot::after{content:"SERIAL 0A-2F-71 · QUADRO"}
+  & .nowg::before{content:"";position:absolute;left:8px;top:8px;width:6px;height:6px;border-radius:50%;border:1px solid var(--trk);background:none}
+  & .nowg::after{content:"NEPTUNE AI PROCESSOR";color:var(--orange)}
+  & .nowg .ncov{border-radius:3px;outline:1px solid var(--trk);box-shadow:0 0 0 6px var(--arq-pnl2),0 0 0 7px var(--trk)}
+  & .nowg .nt small{color:var(--orange)}
+  & .nowg .nt b{font-family:var(--font-disp);font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#a855f7}
+  & .nowg .pr i{background:var(--trk)}
+  & .nowg .pr i::after{background:var(--grad)}
+  & .nowg .nacts .btn{font:500 9.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase;border-radius:3px;border:1px solid var(--trk);background:var(--arq-pnl2)}
+  & .nowg .nacts .btn.p{background:var(--grad);color:#fff;border-color:transparent;padding:0 22px}
+  & .h1 h2{font:700 12px/1 var(--arq-mono);letter-spacing:4px;text-transform:uppercase;color:var(--orange)}
+  & .h1 .cnt{font:400 8.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase;color:var(--arq-ink3)}
+  & .card{border:1px solid var(--trk);border-radius:4px;padding:6px;background:var(--arq-pnl2);position:relative}
+  & .card::after{content:"";position:absolute;right:6px;bottom:6px;width:5px;height:5px;border-radius:50%;background:var(--trk)}
+  & .card:hover{border-color:var(--arq-ink2)}
+  & .card.sel,& .card.msel{border-color:var(--mag);box-shadow:0 0 16px -4px var(--mag)}
+  & .card.sel::after{background:var(--mag);box-shadow:0 0 6px var(--mag)}
+  & .card.sel h4{color:var(--orange)}
+  & .card .cov{outline:0!important;border-radius:2px}
+  @media (max-width:1100px){& header.top .crumb::before{content:""}}
+
+  /* painéis: placas com trilhas no contorno */
+  & .libpanel,& .vpanel,& .nowg,& #homeTop>.now,& .libwrap .gpanel,& .libwrap .fpanel{border-radius:4px;border:1px solid var(--trk);background:var(--arq-pnl)}
+  & .libpanel::before,& .vpanel::before{content:"";position:absolute;left:12px;right:12px;top:-1px;height:2px;background:var(--grad);border-radius:2px;z-index:4;pointer-events:none}
+  & .vhead{border-radius:4px 4px 0 0;border-bottom:1px solid var(--trk);background:var(--arq-pnlh)}
+  & .h1 h2,& .vhead h2{font:700 14px/1 var(--arq-mono);letter-spacing:3px;text-transform:uppercase}
+  & .vtile,& .ccard,& .mcard,& .sec,& .frow{border-radius:4px;border:1px solid var(--trk)}
+  & .vtile:hover,& .ccard:hover{border-color:var(--mag)}
+  & .vtile .sysic{border-radius:3px;border:1px solid var(--trk);background:#1b1b22}
+
+  /* botões / abas: componentes SMD */
+  & .btn{border-radius:3px;border:1px solid var(--trk);background:var(--arq-pnl2);color:var(--arq-ink);font:500 9px var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+  & .btn:hover{border-color:var(--arq-ink2)}
+  & .btn.p,& .btn.p:hover{background:var(--grad);color:#fff;border-color:transparent}
+  & .btn.p svg{color:#fff;fill:#fff}
+  & .tabs button,& .h1 .qchips .chip,& .chip,& .vchip,& .seg button{border-radius:3px;border:1px solid transparent;font:500 8.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+  & .tabs button.on,& .h1 .qchips .chip.on,& .chip.on,& .vchip.on{background:transparent;color:var(--arq-ink);border-color:var(--mag);box-shadow:inset 0 -2px 0 var(--mag)}
+  & .h1>.btn.xs,& .h1 .filt>.btn,& .h1 #sort,& .h1 .dd{border-radius:3px}
+  & .h1>.btn.xs.addbtn{background:var(--grad);color:#fff;border-color:transparent}
+
+  /* capas: chips com borda de trilha */
+  & .card .cov{border-radius:3px;outline:1px solid var(--trk);outline-offset:-1px}
+  & .card:hover .cov{outline-color:var(--mag)}
+  & .card.sel .cov,& .card.msel .cov{outline:2px solid var(--mag)}
+  & .card h4{font:500 10.5px/1.3 var(--arq-mono);letter-spacing:.5px}
+  & .card .sub{font:400 8.5px var(--arq-mono);letter-spacing:1px;text-transform:uppercase}
+  & .card .qp{border-radius:3px;background:var(--grad);color:#fff}
+  & .card .qp svg{fill:#fff;color:#fff}
+
+  & footer.status{letter-spacing:2px;font-size:8px}
+  & footer.status .sdot{border-radius:50%;background:#e8b44a}
+  & .modal .box,& .ctx,& .bellpop,& .palbox{border-radius:4px;border:1px solid var(--trk)}
+  & header.top .crumb{white-space:nowrap;height:auto;align-items:center}
+  & header.top .crumb small{align-self:center;padding:0}

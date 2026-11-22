@@ -1,0 +1,90 @@
+  /* EMULATE AZUL — chapa azul-aço com rebites e visor, cartões claros; dock de frontend de emulação embaixo */
+  --navh:72px;--hdr:100px;
+  --blu:var(--arq-acc);--onblu:#0b1420;
+  --pale:color-mix(in srgb,var(--arq-ink) 7%,transparent);
+  --scr:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--arq-ink) 30%,transparent) 0 1.4px,color-mix(in srgb,#000 35%,transparent) 2px,transparent 2.8px);
+
+  & *{font-family:var(--font-text)}
+  & .lbl,& .dsec h3,& .reqcol h3,& .kcol h4,& .hw .k,& .ctx h5,& .bellpop .bh b,& .rail .rxh,& .nowg .nt small,& .nowg .pr,& .nowg .nnext small,& .vrow .rh a,& footer.status,& .card .sub,& header.top .crumb small,& header.top .chip{font-family:var(--font-text);letter-spacing:0;text-transform:none}
+
+  /* estrutura panelbar: chapa azul-aço com rebites; barra do topo, "MENU PRINCIPAL" à esquerda, herói com visor e FILA, biblioteca em cartões claros */
+  --navh:0px;--gap:14px;
+  & header.top,& #app>.rail,& .nowg,& .libpanel{border-radius:10px;box-shadow:inset 0 1px 0 color-mix(in srgb,#fff 8%,transparent)}
+  & header.top::after{display:block;content:"";position:absolute;inset:0;background:var(--scr) 0 0/100% 100% no-repeat;pointer-events:none;opacity:.8}
+  & header.top .brandbtn::before{content:"LX";font:800 9px/1 var(--arq-mono);letter-spacing:1px;color:var(--onblu);background:var(--blu);padding:5px 6px;border-radius:4px}
+  & header.top .brandbtn::after{font:700 13px/1 var(--font-disp);letter-spacing:.18em;text-transform:uppercase}
+  & header.top .crumb{font:500 8.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase;color:var(--arq-ink3)}
+  & header.top .crumb::before{content:"GAME EMULATE · STEEL BLUE INTERFACE · "}
+  & header.top::before{content:"CPU 41° · GPU 58° · RAM 6.2G"}
+  & header.top .search input{border-radius:999px;background:var(--pale);font:600 10.5px var(--font-text);letter-spacing:0;text-transform:none}
+  & header.top .search input::placeholder{text-transform:none;letter-spacing:0}
+  & header.top .search input:focus{border-color:var(--blu)}
+  & header.top .search kbd{border-radius:4px;background:var(--pale);border:0}
+  & header.top .bell{border-radius:50%}
+  & #app>.rail::before{content:"MENU PRINCIPAL";color:var(--arq-ink3);font:700 8.5px var(--arq-mono);letter-spacing:2.5px}
+  & .rail .rb{height:34px;border-radius:7px;font:600 10.5px var(--font-text);letter-spacing:0;text-transform:none;border:1px solid transparent;margin-bottom:3px}
+  & .rail .rb>svg{color:var(--arq-ink2)}
+  & .rail .rb.on{background:var(--blu);color:var(--onblu);border-color:var(--blu)}
+  & .rail .rb.on::before{background:var(--onblu)}
+  & .rail .rb.on>svg{color:var(--onblu)}
+  & .rail .rb.on .n{background:var(--onblu);color:var(--blu)}
+  & .rail .rb .n{font:600 9px var(--font-text)}
+  & .rail .rxh{font:700 8px var(--arq-mono);letter-spacing:2px}
+  & .rail .rbot{border-top:1px solid var(--arq-line)}
+  & .rail .rbot .bell,& .rail .rbot .rb{font:600 10px var(--font-text);letter-spacing:0;text-transform:none}
+  & .rail .rbot .pavbtn{border:1px solid var(--arq-line);border-radius:8px;background:var(--pale);padding:8px 10px;height:50px;margin-top:10px}
+  & .rail .rbot .pav{border-radius:50%;background:var(--blu);color:var(--onblu);border:0}
+  & .rail .rbot::after{content:"BUS 64 · LATÊNCIA 2 MS"}
+  & .nowg::after{content:"FILA";font:700 8.5px var(--arq-mono);letter-spacing:2.5px;color:var(--arq-ink3)}
+  & .nowg .ncov{border-radius:6px;outline:6px solid var(--arq-pnl2);box-shadow:0 0 0 7px var(--arq-line),0 24px 44px -22px rgba(0,0,0,.85)}
+  & .nowg .nt small{font:600 8.5px var(--arq-mono);letter-spacing:2.5px;text-transform:uppercase;color:var(--blu)}
+  & .nowg .nt b{font:700 clamp(30px,3.6vw,52px)/1 var(--font-disp);letter-spacing:.06em;text-transform:uppercase}
+  & .nowg .pr i{height:5px;border-radius:3px;background:var(--pale)}
+  & .nowg .pr i::after{background:var(--blu);border-radius:3px}
+  & .nowg .nacts .btn{border-radius:8px}
+  & .h1 h2{font:700 12px/1 var(--arq-mono);letter-spacing:3.5px;text-transform:uppercase;color:var(--arq-ink)}
+  & .h1 .cnt{font:500 8.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase;color:var(--arq-ink3)}
+  & .grid:not(.lst) .card .cov{aspect-ratio:3/4!important;height:auto!important}
+
+  /* placas e cartões claros */
+  & .libpanel,& .vpanel,& .nowg,& #homeTop>.now,& .libwrap .gpanel,& .libwrap .fpanel{border-radius:10px;border:1px solid var(--arq-line);background:var(--arq-pnl);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--arq-ink) 8%,transparent)}
+  & .vhead{border-radius:10px 10px 0 0;border-bottom:1px solid var(--arq-line);background:var(--arq-pnlh)}
+  & .h1 h2,& .vhead h2{font:700 17px/1 var(--font-disp);letter-spacing:-.01em;text-transform:none}
+  & .vtile,& .ccard,& .mcard,& .sec,& .frow{border-radius:8px;border:1px solid var(--arq-line);background:var(--pale)}
+  & .vtile:hover,& .ccard:hover{border-color:var(--blu)}
+  & .vtile .sysic{border-radius:6px;border:1px solid var(--arq-line);background:var(--arq-pnl)}
+
+  /* botões: teclas claras */
+  & .btn{border-radius:8px;border:1px solid var(--arq-line);background:var(--pale);color:var(--arq-ink);font:600 11px var(--font-text);letter-spacing:0;text-transform:none;box-shadow:0 1px 0 rgba(0,0,0,.25)}
+  & .btn:hover{border-color:var(--arq-ink2)}
+  & .btn.p,& .btn.p:hover{background:var(--blu);color:var(--onblu);border-color:var(--blu)}
+  & .btn.p svg{color:var(--onblu);fill:var(--onblu)}
+  & .tabs{gap:4px;padding:3px;border-radius:9px;background:var(--pale);width:max-content;max-width:100%}
+  & .tabs button,& .chip,& .vchip,& .seg button{border-radius:6px;border:0;font:600 10.5px var(--font-text);letter-spacing:0;text-transform:none;height:26px}
+  & .tabs button.on,& .chip.on,& .vchip.on{background:var(--arq-pnl);color:var(--arq-ink);box-shadow:0 1px 3px rgba(0,0,0,.35)}
+  & .chip{background:var(--pale)}
+  & .h1>.btn.xs,& .h1 .filt>.btn,& .h1 #sort,& .h1 .dd{height:30px;border-radius:8px;font:600 10.5px var(--font-text);letter-spacing:0;text-transform:none;background:var(--pale);color:var(--arq-ink)}
+  & .h1>.btn.xs.ic{width:30px}
+  & .h1>.btn.xs.addbtn{background:var(--blu);color:var(--onblu);border-color:var(--blu);font-weight:700}
+  & .azbar{font:600 9px var(--font-text);letter-spacing:1px}
+
+  /* azulejos largos em cartão claro */
+  & .grid:not(.lst) .card{padding:6px;border:1px solid var(--arq-line);border-radius:10px;background:var(--pale)}
+  & .grid:not(.lst) .card:hover{border-color:var(--arq-ink2)}
+  & .grid:not(.lst) .card.sel{border-color:var(--blu);box-shadow:0 0 0 1px var(--blu)}
+  & .card .cov{border-radius:6px;outline:0}
+  & .card h4{font:600 11.5px/1.3 var(--font-text);letter-spacing:0;text-transform:none}
+  & .card .sub{font:500 10px var(--font-text);color:var(--arq-ink3)}
+  & .card .qp{border-radius:6px;background:var(--blu);color:var(--onblu)}
+  & .card .qp svg{fill:var(--onblu);color:var(--onblu)}
+  & .vrow .si img{border-radius:6px;outline:1px solid var(--arq-line)}
+  & .vrow .si:hover img{outline-color:var(--blu)}
+  & .vrow .si b{font:600 11px var(--font-text);letter-spacing:0;text-transform:none}
+  & .vrow .si small{font:500 9.5px var(--font-text);text-transform:none}
+
+  & footer.status{font:600 9.5px var(--font-text)}
+  & footer.status .sdot{border-radius:50%;background:var(--blu)}
+  & .modal .box,& .ctx,& .bellpop,& .palbox{border-radius:10px;border:1px solid var(--arq-line)}
+  & .lbl,& .dsec h3,& .reqcol h3,& .kcol h4,& .ctx h5,& .bellpop .bh b{font:700 10px var(--font-text)}
+  & header.top .crumb{white-space:nowrap;height:auto;align-items:center}
+  & header.top .crumb small{align-self:center;padding:0}

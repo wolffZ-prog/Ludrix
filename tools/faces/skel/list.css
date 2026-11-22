@@ -1,0 +1,33 @@
+  /* ESQUELETO LIST — gerenciador: lateral em árvore, "jogando agora" numa linha fina, biblioteca em linhas (nada de pôsteres) */
+  --sidew:240px;
+  & .rail .rb{height:30px;font-size:10px}
+  & .rail .rb.sm{height:26px}
+  /* jogo em destaque: uma linha */
+  & .nowg{min-height:0;padding:10px 14px;grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-rows:auto;grid-template-areas:"cov t next acts";gap:0 16px;align-items:center}
+  & .nowg .ncov{width:40px;height:54px}
+  & .nowg .nt{gap:3px;flex-direction:column}
+  & .nowg .nt b{font-size:18px;line-height:1.1}
+  & .nowg .nt small{font-size:8.5px}
+  & .nowg .pr{display:none}
+  & .nowg .nnext{grid-area:next;display:flex;flex-direction:row;align-items:center;gap:6px;margin:0}
+  & .nowg .nnext small{display:none}
+  & .nowg .nnext img{width:26px;height:36px}
+  & .nowg .nacts{grid-area:acts;align-self:center;margin:0}
+  & .nowg .nacts .btn{height:28px;padding:0 12px}
+  & .nowg .nacts .btn.ic{width:28px}
+  & .nowg>span{display:none}
+  /* biblioteca em linhas */
+  & .grid:not(.lst){display:flex!important;flex-direction:column;gap:0;padding:0}
+  & .grid:not(.lst) .card{display:grid;grid-template-columns:34px minmax(0,1fr) 170px 150px;grid-template-rows:auto;align-items:center;gap:0 14px;padding:4px 10px;border:0;border-bottom:1px solid var(--arq-hair);border-radius:0;height:50px;background:transparent;animation:none;transform:none}
+  & .grid:not(.lst) .card:hover,& .grid:not(.lst) .card.sel,& .grid:not(.lst) .card.msel{background:var(--arq-pnl2);border-color:var(--arq-hair);transform:none}
+  & .grid:not(.lst) .card.sel{background:var(--arq-pnl3)}
+  & .grid:not(.lst) .card .cov{grid-column:1;grid-row:1;width:34px;height:42px!important;aspect-ratio:auto!important;border-radius:var(--arq-r);outline:0;box-shadow:none;overflow:hidden}
+  & .grid:not(.lst) .card .cov .ph{font-size:5px;padding:2px}
+  & .grid:not(.lst) .card .cov .sh,& .grid:not(.lst) .card .cov .info,& .grid:not(.lst) .card .cov .fav,& .grid:not(.lst) .card .cov .rib,& .grid:not(.lst) .card .cov .badge,& .grid:not(.lst) .card .cov .live,& .grid:not(.lst) .card .qp{display:none!important}
+  & .grid:not(.lst) .card h4{grid-column:2;grid-row:1;margin:0;padding:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+  & .grid:not(.lst) .card .sub{grid-column:3;grid-row:1;margin:0;padding:0;justify-content:flex-start;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  & .grid:not(.lst) .card .sub~.sub{grid-column:4}
+  & .grid:not(.lst) .card .sub~.sub~.sub{display:none}
+  & .grid:not(.lst) .card .cprog{grid-column:2/5;grid-row:2;height:2px}
+  & .grid:not(.lst) .ggrp .grid{gap:0}
+  & .azbar{margin-bottom:6px}

@@ -1,0 +1,17 @@
+  /* ESQUELETO RRAIL — lateral à direita (altura inteira), conteúdo à esquerda, cabeçalho só sobre o conteúdo */
+  & #app{grid-template-columns:minmax(0,1fr) var(--sidew)}
+  & .rail{grid-row:2/4;grid-column:2;margin-top:var(--tbh);border-right:0;border-left:1px solid var(--arq-line)}
+  & header.top{grid-column:1;grid-template-columns:auto minmax(0,1fr) auto auto;padding:0 20px 0 var(--gap)!important}
+  & header.top .wctl,&.frameless header.top .wctl{position:fixed;top:var(--tb,0px);right:0;margin:0!important;z-index:80}
+  & .view,&[data-layout=rail] .view,&[data-layout=top] .view{grid-column:1;padding:var(--gap) 20px 0 var(--gap)}
+  & footer.status{grid-column:1}
+  & .rail .rb{flex-direction:row-reverse;text-align:right}
+  & .rail .rb>span{text-align:right}
+  & .rail .rb .n{margin:0 auto 0 0}
+  & .rail .rg .rb::before,& .rail .rg .rb.on::before{order:-1;margin-left:auto;text-align:right}
+  & .rail .rbot .bell,& .rail .rbot .rb{flex-direction:row-reverse;justify-content:flex-end}
+  & .rail .rbot #bellN{right:auto;left:10px}
+  & .rail .rx .rb.sm{flex-direction:row-reverse}
+  & .rail .rxh{text-align:right}
+  & .bellpop,& .helppop{right:calc(var(--sidew) + 20px)}
+  & .libwrap .gpanel,& .libwrap .fpanel{order:-1}

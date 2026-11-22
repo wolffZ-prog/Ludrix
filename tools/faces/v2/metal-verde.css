@@ -1,0 +1,65 @@
+  /* METAL VERDE — chapa de aço escura com rebites e linha neon verde; gerenciador em lista estilo terminal */
+  --hdr:108px;--gap:18px;
+  --grn:var(--arq-acc);--ongrn:#04140a;
+  --riv:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--arq-ink) 28%,transparent) 0 1.5px,color-mix(in srgb,#000 40%,transparent) 2px,transparent 2.6px);
+  --glow:0 0 10px color-mix(in srgb,var(--grn) 70%,transparent);
+
+  & *{font-family:var(--arq-mono)}
+  & .nowg .nt b,& .h1 h2,& .vhead h2,& .vrow .rh h3{font-family:var(--arq-mono)}
+
+  /* painéis: chapas com parafusos nos quatro cantos */
+  & .libpanel,& .vpanel,& .nowg,& #homeTop>.now,& .libwrap .gpanel,& .libwrap .fpanel{border-radius:3px;border:1px solid var(--arq-line);background:var(--arq-pnl);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--arq-ink) 8%,transparent)}
+  & .libpanel::before,& .vpanel::before,& .nowg::before{content:"";position:absolute;inset:0;pointer-events:none;background:var(--riv) 0 0/0 0 no-repeat;background-image:radial-gradient(circle at 7px 7px,color-mix(in srgb,var(--arq-ink) 30%,transparent) 0 1.5px,transparent 2.5px),radial-gradient(circle at calc(100% - 7px) 7px,color-mix(in srgb,var(--arq-ink) 30%,transparent) 0 1.5px,transparent 2.5px),radial-gradient(circle at 7px calc(100% - 7px),color-mix(in srgb,var(--arq-ink) 30%,transparent) 0 1.5px,transparent 2.5px),radial-gradient(circle at calc(100% - 7px) calc(100% - 7px),color-mix(in srgb,var(--arq-ink) 30%,transparent) 0 1.5px,transparent 2.5px);background-size:100% 100%;z-index:4}
+  & .vhead{border-radius:3px 3px 0 0;border-bottom:1px solid var(--arq-line);background:var(--arq-pnlh)}
+  & .h1 h2,& .vhead h2{font:700 14px/1 var(--arq-mono);letter-spacing:3px;text-transform:uppercase}
+  & .h1 h2::before,& .vhead h2::before{content:"> ";color:var(--grn)}
+  & .vtile,& .ccard,& .mcard,& .sec,& .frow{border-radius:3px;border:1px solid var(--arq-line)}
+  & .vtile:hover,& .ccard:hover{border-color:var(--grn)}
+  & .vtile .sysic{border-radius:2px;border:1px solid var(--arq-line);background:transparent}
+
+  /* botões: teclas de metal */
+  & .btn{border-radius:2px;border:1px solid var(--arq-line);background:linear-gradient(180deg,color-mix(in srgb,var(--arq-ink) 6%,transparent),transparent);color:var(--arq-ink);font:400 9px var(--arq-mono);letter-spacing:2px;text-transform:uppercase;box-shadow:0 1px 0 rgba(0,0,0,.4)}
+  & .btn:hover{border-color:var(--arq-ink2)}
+  & .btn.p,& .btn.p:hover{background:var(--grn);color:var(--ongrn);border-color:var(--grn);box-shadow:var(--glow)}
+  & .btn.p svg{color:var(--ongrn);fill:var(--ongrn)}
+  & .tabs button,& .chip,& .vchip,& .seg button{border-radius:2px;border:1px solid transparent;font:400 8.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+  & .tabs button.on,& .chip.on,& .vchip.on{background:transparent;color:var(--grn);border-color:var(--grn);box-shadow:var(--glow)}
+  & .h1>.btn.xs,& .h1 .filt>.btn,& .h1 #sort,& .h1 .dd{border-radius:2px}
+  & .h1>.btn.xs.addbtn{background:var(--grn);color:var(--ongrn);border-color:var(--grn)}
+
+
+  /* estrutura panelbar: chapa de aço com rebites; barra "LUDRIX//04" com leituras CPU/GPU; coluna com caixa LX e itens; herói com contorno neon; "ADVANCED METAL" vertical; placar 05 · 70 · 12 · 47 · 212 */
+  & header.top,& #app>.rail,& .nowg,& .libpanel{border-radius:3px;background-image:var(--riv),var(--riv),var(--riv),var(--riv);background-position:8px 8px,calc(100% - 8px) 8px,8px calc(100% - 8px),calc(100% - 8px) calc(100% - 8px);background-size:6px 6px;background-repeat:no-repeat}
+  & header.top .brandbtn::before{content:"LX";font:800 9px/1 var(--arq-mono);color:var(--ongrn);background:var(--grn);padding:5px 6px;border-radius:2px;box-shadow:var(--glow)}
+  & header.top .brandbtn::after{content:"$BRAND$";font:800 13px/1 var(--arq-mono);letter-spacing:3px;color:var(--arq-ink)}
+  & header.top .crumb{font:500 8.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+  & header.top .crumb::before{content:"ADVANCED METAL SURFACE · "}
+  & header.top::before{content:"CPU 41° · GPU 58° · RAM 6.2G · NET OK";color:var(--grn)}
+  & header.top .search input{border-radius:2px;background:#0a0f0c;color:var(--grn);border-color:var(--arq-line);font:600 9px var(--arq-mono);letter-spacing:1.5px;text-transform:uppercase}
+  & header.top .search input:focus{border-color:var(--grn);box-shadow:var(--glow)}
+  & header.top .search svg{color:var(--grn)}
+  & header.top .search kbd{border:1px solid var(--grn);color:var(--grn);background:transparent;border-radius:2px}
+  & header.top .bell{border-radius:2px}
+  & #app>.rail::before{content:"LX  LUDRIX LAUNCHER\A    BIBLIOTECA · EMULAÇÃO\A    MODS · DOWNLOADS\A    INTERFACE 2026";color:var(--arq-ink3);font:600 7px/1.6 var(--arq-mono);letter-spacing:1px;text-transform:uppercase;padding-bottom:18px}
+  & #app>.rail::after{content:"$BRAND$//04";position:absolute;left:-2px;bottom:150px;transform:rotate(-90deg);transform-origin:0 100%;font:800 11px var(--arq-mono);letter-spacing:4px;color:var(--grn);opacity:.9;white-space:nowrap}
+  & .rail .rb{height:30px;border-radius:2px;font:600 9.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+  & .rail .rb>svg{display:none}
+  & .rail .rb.on{background:transparent;border-color:var(--grn);box-shadow:var(--glow),inset 0 0 0 1px color-mix(in srgb,var(--grn) 40%,transparent);color:var(--grn)}
+  & .rail .rb.on::before{background:var(--grn);box-shadow:var(--glow)}
+  & .rail .rb.on .n{background:var(--grn);color:var(--ongrn);border-radius:2px}
+  & .rail .rbot .pav{border-radius:2px;background:var(--grn);color:var(--ongrn);border:0}
+  & .rail .rbot::after{content:"UNIT 04 · STEEL · 1920"}
+  & .nowg{border-color:color-mix(in srgb,var(--grn) 45%,transparent);box-shadow:var(--glow),inset 0 0 0 1px color-mix(in srgb,var(--grn) 20%,transparent);padding-right:70px}
+  & .nowg::after{content:"ADVANCED METAL";right:-8px;top:50%;transform:translateY(-50%) rotate(90deg);transform-origin:center;font:800 15px var(--font-disp);letter-spacing:.3em;color:var(--arq-ink);opacity:.9}
+  & .nowg .ncov{border-radius:2px;outline:1px solid var(--grn);box-shadow:var(--glow)}
+  & .nowg .nt small{color:var(--grn);font:600 8.5px var(--arq-mono);letter-spacing:2.5px;text-transform:uppercase}
+  & .nowg .nt b{font:800 clamp(30px,3.4vw,48px)/1 var(--font-disp);letter-spacing:.08em;text-transform:uppercase}
+  & .nowg .pr i{height:4px;border-radius:0;background:var(--arq-pnl3)}
+  & .nowg .pr i::after{background:var(--grn);box-shadow:var(--glow)}
+  & .nowg .nacts .btn{border-radius:2px;font:700 9px var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+  & .nowg .nacts .btn.p{background:var(--grn);color:var(--ongrn);box-shadow:var(--glow)}
+  & .h1 h2{font:700 12px/1 var(--arq-mono);letter-spacing:4px;text-transform:uppercase;color:var(--arq-ink)}
+  & .grid:not(.lst) .card .cov{aspect-ratio:3/4!important;height:auto!important;border-radius:2px;outline:1px solid var(--arq-line)}
+  & .card.sel .cov{outline:1px solid var(--grn);box-shadow:var(--glow)}
+  & footer.status{font:600 8.5px var(--arq-mono);letter-spacing:2px}
+  & footer.status::before{content:"05";font:800 22px/1 var(--font-disp);color:var(--arq-ink3);margin-right:18px;letter-spacing:0}

@@ -1,0 +1,138 @@
+  /* CIRCUITO LILÁS — faixa pêssego no topo com menu numerado, corpo lilás com título gigante, faixa preta do jogo com canto cortado, banda preta "LXLB DESIGN BAND" no rodapé */
+  --navh:112px;--hdr:92px;--gap:18px;
+  --lil:#7b63c8;--blk:#0a0a0a;--sand:#efd6cc;--onsand:#17141c;--ink:#17141c;
+  --body:var(--lil);
+  --trail:4px;
+  --cut:polygon(0 0,calc(100% - 40px) 0,100% 40px,100% 100%,0 100%);
+  --cut-s:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%);
+  html[data-light="1"] &{--body:#cdb8f0;--blk:#1b1230}
+
+  & *{font-family:var(--font-text)}
+  & .nowg .nt b,& .h1 h2,& .vhead h2,& header.top .crumb{font-family:var(--font-disp)}
+  & .lbl,& .dsec h3,& .reqcol h3,& .kcol h4,& .hw .k,& .ctx h5,& .bellpop .bh b,& .rail .rxh,& .nowg .nt small,& .nowg .pr,& .nowg .nnext small,& .vrow .rh a,& footer.status,& .card .sub,& header.top .crumb small,& .rail .rb .n,& .tabs button,& .h1 .qchips .chip{font-family:var(--font-text);letter-spacing:1.5px;text-transform:uppercase}
+
+  /* corpo lilás com tinta preta (tokens trocados só dentro do corpo) */
+  & header.top,& .view{--arq-ink:var(--ink);--arq-ink2:#2a2238;--arq-ink3:#4b4060;--arq-line:rgba(23,20,28,.5);--arq-hair:rgba(23,20,28,.2);--arq-pnl:transparent;--arq-pnlh:rgba(0,0,0,.08);--arq-pnl2:rgba(0,0,0,.08);--arq-pnl3:rgba(0,0,0,.14);--arq-in:#fff;--arq-fill:var(--ink);--arq-onfill:var(--sand);background:var(--body);color:var(--ink)}
+  & header.top{margin:0 20px 0 0;padding:10px 40px 0!important;height:var(--hdr);min-height:0;grid-template-columns:auto minmax(0,1fr);align-items:start;gap:0 20px;border-radius:0 34px 0 0}
+  & header.top .crumb{display:flex;flex-direction:row;align-items:flex-end;gap:18px;font:900 40px/1 var(--font-disp);letter-spacing:.01em;text-transform:uppercase;color:var(--ink);white-space:nowrap}
+  & header.top .crumb small{display:grid;font:600 7.5px/1.9 var(--font-text);letter-spacing:2px;color:var(--arq-ink3);padding:0 0 4px;align-self:end}
+  & header.top .crumb small::before{content:"$BRAND$ — LAUNCHER DE JOGOS";display:block;white-space:nowrap}
+  & header.top .crumb small::after{content:"PERFIL LOCAL · PC E EMULAÇÃO";display:block;white-space:nowrap}
+  & header.top .chips{grid-column:2;justify-self:start;align-self:end;margin-bottom:6px}
+  & header.top .chip{border-radius:0;border:2px solid var(--ink);background:transparent;font:800 8px var(--font-text);letter-spacing:1.5px;text-transform:uppercase;color:var(--ink);height:22px}
+  & header.top .chip.on{background:var(--ink);color:var(--sand)}
+  & .view{margin:0 20px 0 0;padding:0 40px 30px!important}
+  & .tbrow{background:var(--blk)}
+
+  /* faixa pêssego: marca, menu numerado, busca posicionada no corpo */
+  & #app>.rail{position:relative;height:var(--navh);background:var(--sand);border:0;border-bottom:12px solid var(--blk);border-radius:0 34px 0 0;margin:0 20px 0 0;padding:0 40px;gap:4px;color:var(--onsand);overflow:visible;z-index:4}
+  & #app>.rail .brandrow{margin-right:92px}
+  & #app>.rail .brand{display:none}
+  & #app>.rail .bname{font:800 10px var(--font-text);letter-spacing:3px;color:var(--onsand);text-transform:uppercase}
+  & #app>.rail .rgs{counter-reset:nav}
+  & #app>.rail .rb{height:30px;padding:0 8px;border-radius:0;font:800 10.5px var(--font-text);letter-spacing:.3px;text-transform:uppercase;color:var(--onsand);gap:6px}
+  & #app>.rail .rb svg{display:none!important}
+  & #app>.rail .rg .rb::before,& #app>.rail .rg .rb.on::before{counter-increment:nav;content:counter(nav,decimal-leading-zero)!important;display:inline!important;position:static;font:600 7px var(--font-text);letter-spacing:1px;color:var(--onsand);opacity:.6;margin-right:2px}
+  & #app>.rail .rb .n{display:inline-block!important;background:var(--onsand);color:var(--sand);font:800 8px/14px var(--font-text);padding:0 4px;letter-spacing:0;border-radius:0;margin-left:2px}
+  & #app>.rail .rb:hover{background:rgba(0,0,0,.08);color:var(--onsand)}
+  & #app>.rail .rb.on{background:var(--onsand);color:var(--sand)}
+  & #app>.rail .rb.on::before{color:var(--sand);opacity:.7}
+  & #app>.rail .rb.on .n{background:var(--sand);color:var(--onsand)}
+  & #app>.rail .rsep{display:none}
+  & #app>.rail .rbot{gap:0}
+  & #app>.rail .rbot .bell,& #app>.rail .rbot .rb{color:var(--onsand);border-radius:0}
+  & #app>.rail .rbot .bell svg,& #app>.rail .rbot .rb svg{display:block!important;color:var(--onsand)}
+  & #app>.rail .rbot .bell:hover,& #app>.rail .rbot .rb:hover{background:rgba(0,0,0,.08);color:var(--onsand)}
+  & #app>.rail .rbot .pavbtn .pav{border-radius:0;border:2px solid var(--onsand);background:transparent;color:var(--onsand);font-weight:800}
+  & #app>.rail .search{position:absolute;right:40px;top:calc(var(--navh) + 8px);width:280px;height:36px;margin:0;z-index:6}
+  & #app>.rail .search input{height:36px;border-radius:0;border:2px solid var(--ink);background:#fff;color:var(--ink);font:600 11px var(--font-text);letter-spacing:0;text-transform:none;padding-left:36px}
+  & #app>.rail .search input::placeholder{color:#4b4060;text-transform:none;letter-spacing:0}
+  & #app>.rail .search input:focus{border-color:var(--ink);box-shadow:4px 4px 0 0 var(--ink)}
+  & #app>.rail .search svg{left:12px;color:var(--ink)}
+  & #app>.rail .search kbd{border:0;background:var(--ink);color:var(--sand);border-radius:0;font-weight:800}
+  & header.top .wctl{display:none}
+  & .tbrow .wctl{display:flex}
+
+  /* herói: faixa preta com canto cortado, tinta pêssego */
+  & .nowg{--arq-ink:var(--sand);--arq-ink2:#cdb8ae;--arq-ink3:#8a7a74;--arq-line:rgba(239,214,204,.3);min-height:0;height:104px;padding:0 24px 0 18px;margin:8px 0 18px;border:0;border-radius:0;background:var(--blk);color:var(--sand);clip-path:var(--cut);grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto;grid-template-areas:"cov t acts";gap:0 20px;align-items:center;position:relative;isolation:isolate}
+  & .nowg .ncov{width:56px;height:76px;border-radius:0;outline:0;filter:none;position:static;inset:auto;max-width:none;transform:none;z-index:0}
+  & .nowg::after{display:none}
+  & .nowg .nt{grid-area:t;gap:3px;align-self:center}
+  & .nowg .nt small{font:700 7.5px var(--font-text);letter-spacing:2px;color:var(--sand)}
+  & .nowg .nt small::before{content:"AGORA · "}
+  & .nowg .nt b{font:900 24px/1 var(--font-disp);letter-spacing:.02em;text-transform:uppercase;color:var(--sand)}
+  & .nowg .pr i{height:4px;max-width:280px;border-radius:0;background:rgba(239,214,204,.18)}
+  & .nowg .pr i::after{background:var(--sand);border-radius:0}
+  & .nowg .nacts{grid-area:acts;align-self:center;margin:0;gap:8px}
+  & .nowg .nacts .btn{border-color:var(--sand);color:var(--sand);height:34px;font:800 10px var(--font-text);letter-spacing:1.5px;text-transform:uppercase}
+  & .nowg .nacts .btn.p{background:var(--sand);color:var(--blk);border-color:var(--sand)}
+  & .nowg .nacts .btn.p svg{color:var(--blk);fill:var(--blk)}
+  & .nowg .nacts .btn:not(.p):hover{background:var(--sand);color:var(--blk)}
+  & .nowg>span{display:none}
+
+  /* biblioteca direto no lilás: abas quadradas, capas 4:3 com moldura preta */
+  & .libpanel{border:0!important;background:transparent!important;padding-left:0;padding-right:0;box-shadow:none!important}
+  & .h1 h2,& .h1 .cnt{display:none}
+  & .tabs{gap:12px}
+  & .tabs button,& .h1 .qchips .chip{border:0;margin:0;padding:0 12px;height:28px;background:transparent;font:800 10.5px var(--font-text);letter-spacing:.3px;text-transform:uppercase;color:var(--ink)}
+  & .tabs button.on,& .h1 .qchips .chip.on{background:var(--ink);color:var(--sand)}
+  & .grid:not(.lst){grid-template-columns:repeat(auto-fill,minmax(124px,1fr))!important;gap:18px 12px}
+  & .grid:not(.lst) .card .cov{aspect-ratio:4/3!important;height:auto!important;border-radius:0;box-shadow:0 0 0 2px var(--ink);clip-path:none}
+  & .grid:not(.lst) .card .cov img{object-fit:cover;object-position:50% 25%}
+  & .grid:not(.lst) .card:hover .cov,& .grid:not(.lst) .card.sel .cov,& .grid:not(.lst) .card.msel .cov{box-shadow:0 0 0 2px var(--ink),5px 5px 0 0 var(--sand)}
+  & .card h4{font:800 9.5px/1.3 var(--font-text);letter-spacing:.3px;text-transform:uppercase;color:var(--ink)}
+  & .card .sub{font:500 8px var(--font-text);letter-spacing:0;text-transform:none;color:#3a3050}
+
+  /* banda preta do rodapé */
+  & #app{grid-template-rows:var(--tb,0px) var(--tbh) var(--navh) var(--hdr) minmax(0,1fr) 72px}
+  & footer.status{height:72px;background:var(--blk);color:var(--sand);padding:0 40px;align-items:center;gap:18px;font:700 7.5px var(--font-text);letter-spacing:2px;text-transform:uppercase;border:0;position:relative;overflow:hidden}
+  & footer.status::before{content:"$BRAND$";font:300 22px/1 var(--font-disp);letter-spacing:5px;color:var(--sand);margin-right:4px}
+  & footer.status::after{content:"";position:absolute;right:140px;top:-1px;width:60%;height:14px;background:var(--body);clip-path:polygon(0 0,100% 0,100% 100%,20px 100%);opacity:.9}
+  & footer.status .sdot{border-radius:0;background:var(--sand);width:8px;height:8px}
+  @media (max-width:1100px){& header.top .crumb{font-size:30px}& #app>.rail .search{width:200px}& #app>.rail .brandrow{margin-right:30px}& #app>.rail .rb{padding:0 5px;font-size:9.5px}}
+
+  /* blocos: fundo chapado, borda preta grossa */
+  & .libpanel,& .vpanel,& .libwrap .gpanel,& .libwrap .fpanel{border-radius:0;border:3px solid var(--arq-ink);background:var(--arq-pnl);clip-path:none}
+  & .vhead{border-radius:0;border-bottom:3px solid var(--arq-ink);background:var(--arq-pnlh);padding:18px 22px 14px}
+  & .h1 h2,& .vhead h2{font:900 18px/1 var(--font-disp);letter-spacing:0;text-transform:uppercase}
+  & .vtile,& .ccard,& .mcard,& .sec,& .frow{border-radius:0;border:2px solid var(--arq-ink);background:transparent;clip-path:var(--cut-s)}
+  & .vtile:hover,& .ccard:hover{background:var(--sand);color:var(--onsand)}
+  & .vtile .sysic{border-radius:0;border:2px solid var(--arq-ink);background:transparent}
+
+  /* botões de cartaz */
+  & .btn{height:34px;border-radius:0;border:2.5px solid var(--arq-ink);background:transparent;color:var(--arq-ink);font:800 10px var(--font-text);letter-spacing:1.5px;text-transform:uppercase;padding:0 16px;clip-path:var(--cut-s)}
+  & .btn:hover{background:var(--sand);color:var(--onsand);border-color:var(--ink)}
+  & .btn.p,& .btn.p:hover{background:var(--arq-ink);color:var(--arq-pnl2);border-color:var(--arq-ink)}
+  & .btn.p svg{color:var(--arq-pnl2);fill:var(--arq-pnl2)}
+  & .tabs{gap:0}
+  & .tabs button,& .h1 .qchips .chip,& .chip,& .vchip,& .seg button{border-radius:0;border:2px solid var(--arq-ink);margin-left:-2px;background:transparent;padding:0 12px;height:28px;color:var(--arq-ink)}
+  & .tabs button:first-child,& .h1 .qchips .chip:first-child{margin-left:0}
+  & .tabs button.on,& .h1 .qchips .chip.on,& .chip.on,& .vchip.on{background:var(--arq-ink);color:var(--arq-pnl2)}
+  & .chip{margin-left:0}
+  & .azbar{letter-spacing:1px}
+
+  /* capas: moldura preta e etiqueta areia */
+  & .grid{gap:22px 14px}
+  & .card .cov{border-radius:0;outline:0;box-shadow:0 0 0 2.5px var(--arq-ink);clip-path:var(--cut-s)}
+  & .card:hover .cov,& .card.sel .cov,& .card.msel .cov{box-shadow:0 0 0 2.5px var(--arq-ink),6px 6px 0 0 var(--sand)}
+  & .card h4{font:800 11px/1.3 var(--font-text);letter-spacing:.5px;text-transform:uppercase}
+  & .card .sub{color:var(--arq-ink2)}
+  & .card .qp{border-radius:0;background:var(--ink)!important;color:var(--sand);box-shadow:none}
+  & .card .qp svg{fill:var(--sand)!important;color:var(--sand)}
+
+  & footer.status{color:var(--arq-ink2)}
+  & footer.status .sdot{border-radius:0;background:var(--arq-ink);width:8px;height:8px}
+  & .modal .box,& .ctx,& .bellpop,& .palbox{border-radius:0;border:3px solid var(--arq-ink);box-shadow:10px 10px 0 0 var(--sand)}
+  & .ctx{border-width:2px}
+  & .lbl,& .dsec h3,& .reqcol h3,& .kcol h4,& .ctx h5,& .bellpop .bh b{color:var(--arq-ink)}
+
+  /* -- ajustes comuns v2 -- */
+  & header.top .crumb{white-space:nowrap;height:auto;align-items:center}
+  & header.top .crumb small{align-self:center;padding:0}
+  & .h1>.btn.xs,& .h1 .filt>.btn,& .h1 #sort,& .h1 .dd{border-radius:0;border:2px solid var(--arq-ink);color:var(--arq-ink);font-weight:800}
+  & .h1>.btn.xs.addbtn{background:var(--arq-ink);color:var(--arq-pnl2);border-color:var(--arq-ink);font-weight:800}
+  & .h1>.btn.xs.addbtn:hover{background:var(--sand);color:var(--onsand)}
+  & .card,& .card:hover,& .card.sel{border:0;padding:0;background:transparent;box-shadow:none}
+  & .card .sub{color:#3a3050!important}
+  & .tabs button,& .h1 .qchips .chip{font-family:var(--font-text)}
+  & .azbar{display:none}

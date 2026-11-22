@@ -1,0 +1,39 @@
+  /* ESQUELETO TOPBAR — navegação horizontal no topo, sem coluna lateral; herói em banner largo */
+  --navh:56px;--hdr:44px;--sidew:0px;
+  & #app{grid-template-columns:minmax(0,1fr);grid-template-rows:var(--tb,0px) var(--tbh) var(--navh) var(--hdr) minmax(0,1fr) 28px}
+  & .tbrow{grid-row:2;height:var(--tbh)}
+@include _wctl
+  & .rail{grid-row:3;grid-column:1;width:auto;height:var(--navh);min-height:0;margin:0;padding:0 20px;display:flex;flex-direction:row;align-items:center;gap:4px;border:0;border-bottom:1px solid var(--arq-line);border-radius:0;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;overflow:visible;box-shadow:none;position:relative}
+@include _hbar
+  & .rail .brandrow{margin-right:22px}
+  & .rail .rb{width:auto;height:34px;padding:0 12px;flex-direction:row;justify-content:center;gap:8px;border:0;border-radius:var(--arq-r);background:transparent;font:400 10px var(--arq-mono);letter-spacing:calc(1.5px * var(--arq-lsk));text-transform:var(--arq-ltt);color:var(--arq-ink2)}
+  & .rail .rb svg{display:block;width:14px;height:14px;flex:none}
+  & .rail .rb>span{display:inline!important;flex:none;font:inherit;letter-spacing:inherit;text-transform:inherit;max-width:none}
+  & .rail .rb:hover{background:var(--arq-pnl2);color:var(--arq-ink)}
+  & .rail .rb.on{background:var(--arq-fill);color:var(--arq-onfill)}
+  & .rail .rsep{display:block;width:1px;height:18px;margin:0 8px;background:var(--arq-line);flex:none}
+  & .rail .sp{display:block;flex:1}
+  /* cabeçalho: só a linha de contexto (aba · categorias) */
+  & header.top{grid-row:4;grid-column:1;height:var(--hdr);min-height:var(--hdr);grid-template-columns:minmax(0,1fr) auto;grid-template-rows:var(--hdr);align-items:center;gap:0 16px;padding:0 20px!important}
+  & header.top .brandbtn,& header.top .search,& header.top .bell{display:none!important}
+  & header.top .crumb{grid-row:1;grid-column:1;justify-content:flex-start;height:auto;align-self:center}
+  & header.top .chips{grid-row:1;grid-column:2;justify-self:end;align-self:center}
+  & header.top::before,& header.top::after{display:none}
+  & .view,&[data-layout=rail] .view,&[data-layout=top] .view{grid-row:5;grid-column:1;padding:0 20px}
+  & footer.status{grid-row:6;grid-column:1}
+  & .libpanel,& .vpanel{min-height:calc(100vh - var(--tb,0px) - var(--tbh) - var(--navh) - var(--hdr) - 70px)}
+  & #view:has(#homeTop .nowg) .libpanel{min-height:calc(100vh - var(--tb,0px) - var(--tbh) - var(--navh) - var(--hdr) - 330px)}
+  & .libwrap .gpanel,& .libwrap .fpanel{max-height:calc(100vh - var(--tb,0px) - var(--tbh) - var(--navh) - var(--hdr) - 40px)}
+  & .bellpop,& .helppop{top:calc(var(--tb,0px) + var(--tbh) + var(--navh) + 6px);right:20px;bottom:auto;left:auto}
+  /* herói: banner com a capa desfocada ao fundo e título grande */
+  & .nowg{min-height:250px;padding:24px 28px;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr);grid-template-areas:"next next" "t acts";gap:0 20px;align-items:end;overflow:hidden;position:relative;isolation:isolate}
+  & .nowg .ncov{position:absolute;inset:-40px;width:calc(100% + 80px);height:calc(100% + 80px);max-width:none;max-height:none;object-fit:cover;object-position:50% 25%;filter:blur(28px) saturate(1.3) brightness(.55);transform:scale(1.12);z-index:-1;border-radius:0;transition:none;aspect-ratio:auto;outline:0;box-shadow:none;cursor:default}
+  & .nowg::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,color-mix(in srgb,var(--arq-pnl) 86%,transparent),color-mix(in srgb,var(--arq-pnl) 30%,transparent) 55%,transparent),linear-gradient(0deg,color-mix(in srgb,var(--arq-pnl) 85%,transparent),transparent 65%);z-index:-1;pointer-events:none}
+  & .nowg .nt{grid-area:t;align-self:end;gap:8px}
+  & .nowg .nt b{font-size:clamp(34px,4.4vw,66px)}
+  & .nowg .pr i{width:min(360px,100%)}
+  & .nowg .nacts{grid-area:acts;align-self:end;margin:0}
+  & .nowg .nnext{grid-area:next;justify-self:end;align-self:start;margin:0 0 10px}
+  & .nowg>span{display:none}
+  @media (max-width:1100px){& .rail .search{width:170px}& .rail .rb{padding:0 9px}& .rail .brandrow .bname{display:none!important}}
+  @media (max-width:860px){& .rail .rb>span{display:none!important}& .rail .rb{width:34px;padding:0}}

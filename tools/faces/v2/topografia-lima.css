@@ -1,0 +1,140 @@
+  /* TOPOGRAFIA LIMA — placa única arredondada com contorno lima (cabeçalho + herói + grade dentro), curvas de nível ao fundo, dock em pílula embaixo com leitura de elevação */
+  --hdr:92px;--gap:22px;--navh:84px;
+  --lime:var(--arq-acc);--onlime:#0c1200;
+  --soft:color-mix(in srgb,var(--arq-ink) 5%,transparent);--soft2:color-mix(in srgb,var(--arq-ink) 9%,transparent);
+  --plate:color-mix(in srgb,var(--arq-ink) 4%,var(--arq-bgc));
+  --edge:color-mix(in srgb,var(--lime) 55%,transparent);
+  --glow:0 0 0 1px color-mix(in srgb,var(--lime) 70%,transparent),0 0 22px -4px color-mix(in srgb,var(--lime) 70%,transparent);
+
+  & *{font-family:var(--font-text)}
+  & .nowg .nt b,& .h1 h2,& .vhead h2,& .vrow .rh h3,& header.top .brandbtn::before,& header.top .crumb{font-family:var(--font-disp)}
+  & .lbl,& .dsec h3,& .reqcol h3,& .kcol h4,& .hw .k,& .ctx h5,& .bellpop .bh b,& .helppop .bh b,& .rail .rxh,& .nowg .nt small,& .nowg .pr .lbl,& .nowg .nnext small,& .vrow .rh a,& footer.status{font-family:var(--font-text);letter-spacing:2px;text-transform:uppercase}
+
+  /* placa: cabeçalho (topo arredondado) + vista (base arredondada) partilham fundo e contorno */
+  & header.top{margin:10px 26px 0;background:var(--plate)!important;border:1px solid var(--edge);border-bottom:0;border-radius:30px 30px 0 0;grid-template-rows:var(--tbh) 44px 10px;padding:0 30px!important;gap:0 18px;align-items:center;box-shadow:0 0 0 6px color-mix(in srgb,var(--lime) 6%,transparent)}
+  & header.top .wctl{display:flex;margin-right:-30px!important}
+  & header.top .brandbtn{display:flex!important;grid-row:2;grid-column:1;align-self:center;flex-direction:row;align-items:center;gap:10px}
+  & header.top .brandbtn::before{content:"";width:16px;height:16px;border-radius:50%;border:3px solid var(--lime);box-shadow:0 0 10px color-mix(in srgb,var(--lime) 60%,transparent)}
+  & header.top .brandbtn::after{content:"$BRAND$";font:700 17px/1 var(--font-disp);letter-spacing:-.3px;color:var(--arq-ink);text-transform:none}
+  & header.top .crumb{grid-row:2;grid-column:2;align-self:center;justify-content:flex-start;font:700 19px var(--font-disp);letter-spacing:-.3px;text-transform:none;color:var(--arq-ink);gap:10px;margin-left:12px}
+  & header.top .crumb small{font:600 9px var(--font-text);letter-spacing:2px;text-transform:uppercase;color:var(--arq-ink3);align-self:center;padding:0}
+  & header.top .search{grid-row:2;grid-column:3;align-self:center;width:290px}
+  & header.top .search input{height:38px;border-radius:999px;border:1px solid var(--edge);background:var(--soft);font:500 12px var(--font-text);letter-spacing:0;text-transform:none;padding-left:40px}
+  & header.top .search input::placeholder{text-transform:none;letter-spacing:0}
+  & header.top .search input:focus{background:var(--soft2);box-shadow:var(--glow)}
+  & header.top .search kbd{border:0;background:var(--lime);color:var(--onlime);border-radius:50%;width:18px;height:18px;justify-content:center;font:700 9px var(--font-text)}
+  & header.top .search svg{left:16px;color:var(--lime)}
+  & header.top .bell{grid-row:2;grid-column:4;align-self:center;border:0;border-radius:50%;background:var(--soft)}
+  & header.top .chips,& header.top::before,& header.top::after{display:none!important}
+  & header.top .wctl button{border-radius:999px;height:24px;width:32px;margin:4px 2px 0;color:var(--arq-ink2)}
+  & .view{margin:0 26px;background:var(--plate);border:1px solid var(--edge);border-top:0;border-radius:0 0 30px 30px;padding:0 30px 30px!important;box-shadow:0 0 0 6px color-mix(in srgb,var(--lime) 6%,transparent)}
+  & #view::after{content:"";display:block;height:30px}
+  & .libpanel,& .vpanel{min-height:0}
+  & #view:has(#homeTop .nowg) .libpanel{min-height:0}
+  & #app{row-gap:0;grid-template-rows:var(--tb,0px) var(--hdr) minmax(0,1fr) 0 var(--navh)}
+  & .libpanel{background:transparent!important;box-shadow:none!important;padding-left:0;padding-right:0}
+
+  /* dock em pílula, centrado; leitura de elevação à esquerda, estado à direita */
+  & footer.status{grid-row:5;grid-column:1;z-index:1;pointer-events:none;height:var(--navh);align-items:center;padding:0 60px;font:600 8.5px var(--font-text);letter-spacing:2.5px;text-transform:uppercase;color:var(--arq-ink3);border:0;background:transparent}
+  & footer.status::before{content:"ELEV. 760 m · 23°41'S 46°33'W";margin-right:auto;color:var(--arq-ink3)}
+  & footer.status .sdot{background:var(--lime);box-shadow:0 0 8px var(--lime)}
+  & #app>.rail{width:max-content;justify-self:center;align-self:center;height:60px;padding:0 12px;border:1px solid var(--edge);border-radius:999px;background:var(--plate);box-shadow:0 0 0 6px color-mix(in srgb,var(--lime) 6%,transparent),0 18px 40px -20px rgba(0,0,0,.8);gap:4px}
+  & #app>.rail .brandrow{display:none!important}
+  & #app>.rail .rbot{position:static;margin-left:6px}
+  & #app>.rail .rb{min-width:0;width:44px;height:44px;padding:0;flex-direction:row;gap:8px;border:0;border-radius:999px;font:700 12px var(--font-text);letter-spacing:0;text-transform:none;color:var(--arq-ink2);position:relative}
+  & #app>.rail .rb>span{display:none!important}
+  & #app>.rail .rb.on{width:auto;padding:0 20px 0 18px;background:var(--lime);color:var(--onlime);box-shadow:0 0 18px -2px color-mix(in srgb,var(--lime) 70%,transparent)}
+  & #app>.rail .rb.on>span{display:inline!important}
+  & #app>.rail .rb.on>svg{color:var(--onlime)}
+  & #app>.rail .rb .n{display:block!important;position:absolute;right:-2px;top:-2px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--lime);color:var(--onlime);font:700 8px/16px var(--font-text);letter-spacing:0;text-align:center}
+  & #app>.rail .rb:not(.on) .n{display:none!important}
+  & #app>.rail .rsep{display:none}
+  & #app>.rail .rbot .bell,& #app>.rail .rbot .rb{width:40px;height:40px;border-radius:999px}
+  & #app>.rail .rbot .pavbtn{width:40px;margin-left:6px}
+  & #app>.rail .rbot .pavbtn .pav{width:34px;height:34px;border:1px solid var(--edge);background:transparent;color:var(--lime);font-weight:700}
+
+  /* herói: cartão "Continuar" com contorno lima e progresso fino */
+  & .nowg{min-height:150px;padding:18px 24px 20px;border:1px solid var(--edge);border-radius:20px;background:var(--soft);margin:12px 0 18px;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;grid-template-areas:"cov t t" "cov acts acts";gap:0 22px}
+  & .nowg::after{display:none}
+  & .nowg .ncov{width:86px;height:116px;border-radius:12px;outline:0}
+  & .nowg .nt{grid-area:t;align-self:end}
+  & .nowg .nt small{font:700 9px var(--font-text);letter-spacing:2.5px;color:var(--lime)}
+  & .nowg .nt small::before{content:"CONTINUAR · "}
+  & .nowg .nt b{font:800 clamp(26px,2.6vw,36px)/1.05 var(--font-disp);letter-spacing:-.6px;text-transform:none}
+  & .nowg .pr i{height:4px;max-width:300px;border-radius:2px;background:var(--soft2)}
+  & .nowg .pr i::after{background:var(--lime);box-shadow:0 0 8px var(--lime)}
+  & .nowg .nacts{grid-area:acts;align-self:start;justify-self:start;margin:10px 0 0}
+  & .nowg>span{display:none}
+
+  /* abas em pílula e grade larga */
+  & .h1{padding-top:0}
+  & .h1 h2,& .h1 .cnt{display:none}
+  & .tabs{gap:6px;background:transparent;border:0;padding:0}
+  & .tabs button,& .h1 .qchips .chip{height:32px;padding:0 16px;border:1px solid var(--arq-line);border-radius:999px;background:transparent;font:600 12px var(--font-text);letter-spacing:0;text-transform:none;color:var(--arq-ink2)}
+  & .tabs button.on,& .h1 .qchips .chip.on{background:var(--lime);color:var(--onlime);border-color:var(--lime)}
+  & .grid:not(.lst){grid-template-columns:repeat(auto-fill,minmax(150px,1fr))!important;gap:14px}
+  & .grid:not(.lst) .card .cov{aspect-ratio:4/3!important;height:auto!important;border-radius:14px}
+  & .card.sel .cov,& .card.msel .cov{box-shadow:var(--glow)}
+  & .card h4{font:700 12px/1.3 var(--font-text);letter-spacing:0;text-transform:none}
+  & .card .sub{font:500 10px var(--font-text);letter-spacing:0;text-transform:none;color:var(--arq-ink3)}
+  @media (max-width:1100px){& header.top .search{width:200px}& header.top .crumb{font-size:15px}& footer.status::before{content:"ELEV. 760 m"}}
+
+  /* painéis macios */
+  & .libpanel,& .vpanel,& #homeTop>.now,& .libwrap .gpanel,& .libwrap .fpanel{border-radius:22px;border:0;background:var(--arq-pnl);box-shadow:0 30px 60px -40px rgba(0,0,0,.8)}
+  & .vhead{border-radius:22px 22px 0 0;border-bottom:1px solid var(--soft2);background:var(--arq-pnlh);padding:16px 18px 14px;margin:0 -20px 22px}
+  & .h1 h2,& .vhead h2{font:800 19px/1 var(--font-disp);letter-spacing:-.5px;text-transform:none}
+  & .vtile,& .ccard,& .mcard,& .sec,& .frow{border-radius:16px;border:0;background:var(--soft)}
+  & .vtile:hover,& .ccard:hover{background:var(--soft2)}
+  & .vtile .sysic{border-radius:12px;border:0;background:var(--arq-pnl3)}
+
+  /* herói: cartão grande, progresso que brilha */
+  & .nowg .pr i{height:6px;border-radius:999px;background:var(--soft2)}
+  & .nowg .pr i::after{background:var(--lime);border-radius:999px;box-shadow:0 0 14px var(--lime)}
+  & .nowg .nnext img{border-radius:8px;outline:0}
+  & .nowg .nnext img:hover{box-shadow:var(--glow)}
+
+  /* botões em pílula */
+  & .btn{height:38px;border-radius:999px;border:0;background:var(--soft);color:var(--arq-ink);font:700 12px var(--font-text);letter-spacing:0;text-transform:none;padding:0 18px}
+  & .btn:hover{background:var(--soft2)}
+  & .btn.p,& .btn.p:hover{background:var(--lime);color:var(--onlime);box-shadow:0 10px 26px -10px var(--lime)}
+  & .btn.p svg{color:var(--onlime);fill:var(--onlime)}
+  & .btn.ic{width:38px;padding:0}
+  & .tabs{gap:4px;padding:3px;border-radius:999px;background:var(--soft);width:max-content;max-width:100%}
+  & .tabs button,& .h1 .qchips .chip,& .chip,& .vchip,& .seg button{border-radius:999px;border:0;font:600 11.5px var(--font-text);letter-spacing:0;text-transform:none;padding:0 14px;height:30px}
+  & .tabs button.on,& .h1 .qchips .chip.on,& .chip.on,& .vchip.on{background:var(--arq-ink);color:var(--arq-pnl2)}
+  & .chip{background:var(--soft)}
+  & .azbar{font:600 9.5px var(--font-text);letter-spacing:1px}
+
+  /* capas arredondadas com anel lima */
+  & .grid{gap:22px 16px}
+  & .card .cov{border-radius:14px;outline:0;box-shadow:0 10px 24px -14px rgba(0,0,0,.9);transition:box-shadow .2s,transform .2s}
+  & .card:hover .cov{transform:translateY(-2px)}
+  & .card.sel .cov,& .card.msel .cov{box-shadow:var(--glow)}
+  & .card h4{font:700 12px/1.3 var(--font-text);letter-spacing:0;text-transform:none}
+  & .card .sub{font:500 10.5px var(--font-text);color:var(--arq-ink3)}
+  & .card .qp{border-radius:50%;background:var(--lime);color:var(--onlime);box-shadow:0 8px 20px -6px var(--lime)}
+  & .card .qp svg{fill:var(--onlime);color:var(--onlime)}
+
+  & footer.status{font:600 10px var(--font-text);color:var(--arq-ink3)}
+  & footer.status .sdot{background:var(--lime);box-shadow:0 0 10px var(--lime)}
+  & .modal .box,& .ctx,& .bellpop,& .palbox{border-radius:20px;border:0;box-shadow:0 30px 80px -30px rgba(0,0,0,.9)}
+  & .ctx{border-radius:16px}
+  & .lbl,& .dsec h3,& .reqcol h3,& .kcol h4,& .ctx h5,& .bellpop .bh b{font:700 10.5px var(--font-text)}
+  &.rm .nowg .pr i::after,&.rm .btn.p,&.rm .card .qp{box-shadow:none}
+
+  /* -- ajustes comuns v2 -- */
+  & header.top .crumb{white-space:nowrap;height:auto;align-items:center}
+  & header.top .crumb small{align-self:center;padding:0}
+
+  & .h1>.btn.xs,& .h1 .filt>.btn,& .h1 #sort,& .h1 .dd{height:30px;font:600 11px var(--font-text);letter-spacing:0;text-transform:none}
+  & .h1>.btn.xs.ic{width:30px}
+  & .rail .rbot .bell,& .rail .rbot .rb{font:600 11px var(--font-text);letter-spacing:0;text-transform:none}
+  & .rail .rbot .bell .hl,& .rail .rbot .rb span{text-transform:none}
+  & .h1>.btn.xs,& .h1 .filt>.btn,& .h1 #sort,& .h1 .dd{border:0;border-radius:999px;background:var(--soft);color:var(--arq-ink)}
+  & .h1>.btn.xs.addbtn{background:var(--lime);color:var(--onlime);border:0;font-weight:700}
+  & .card{border:0;padding:0;background:transparent}
+  & .card:hover,& .card.sel{background:transparent;border-color:transparent}
+  
+  & .grid:not(.lst){grid-template-columns:repeat(auto-fill,minmax(150px,1fr))!important;gap:14px 16px}
+  & .grid:not(.lst) .card .cov{aspect-ratio:4/3!important;height:auto!important;border-radius:14px}
+  & .grid:not(.lst) .card .cov img{object-fit:cover;object-position:50% 25%}

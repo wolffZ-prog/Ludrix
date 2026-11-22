@@ -2514,8 +2514,8 @@ class Backend {
         brasa: { name: 'Brasa', desc: 'Vinho escuro e âmbar', bg: '#130a0b', bg2: '#1e0f12', card: '#2a161a', text: '#fbeeea', muted: '#a98a86', accent: '#ffa63d' },
         mata: { name: 'Mata', desc: 'Verde-musgo e lima', bg: '#090f0a', bg2: '#0f1a11', card: '#152418', text: '#eef6ec', muted: '#8aa08c', accent: '#a6e05a' },
         neve: { name: 'Neve', desc: 'Claro, cinza-gelo e azul', bg: '#eef0f3', bg2: '#ffffff', card: '#f7f8fa', text: '#1b1d24', muted: '#6a7080', accent: '#2f6df6', light: true },
-        arquivo: { name: 'Arquivo', desc: 'Grafite com parede iridescente, linhas finas e rótulos mono', bg: '#1a1d22', bg2: '#22262c', card: '#2a2f36', text: '#eef0f3', muted: '#9aa1ab', accent: '#ff7a3c' },
-        'arquivo-claro': { name: 'Arquivo claro', desc: 'Papel com parede iridescente, linhas finas e rótulos mono', bg: '#e9e6e1', bg2: '#f3f1ed', card: '#ffffff', text: '#15181d', muted: '#5c636d', accent: '#d9602a', light: true },
+        arquivo: { name: 'Padrão', desc: 'Grafite com parede iridescente, linhas finas e rótulos mono', bg: '#1a1d22', bg2: '#22262c', card: '#2a2f36', text: '#eef0f3', muted: '#9aa1ab', accent: '#ff7a3c' },
+        'arquivo-claro': { name: 'Padrão claro', desc: 'Papel com parede iridescente, linhas finas e rótulos mono', bg: '#e9e6e1', bg2: '#f3f1ed', card: '#ffffff', text: '#15181d', muted: '#5c636d', accent: '#d9602a', light: true },
     };
     async consolePayload() {
         const cat: any = await this.catalog();

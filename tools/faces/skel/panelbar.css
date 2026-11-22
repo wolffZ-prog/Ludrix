@@ -1,0 +1,57 @@
+  /* ESQUELETO PANELBAR — barra do topo em placa atravessando as duas colunas (marca · rótulo · estado · busca), módulo lateral em placa com itens de texto e contador, herói em placa, biblioteca em placa, rodapé atravessando */
+  --hdr:80px;--sidew:236px;--gap:14px;
+  & #app{column-gap:var(--gap);row-gap:0;padding:0 var(--gap)}
+  & header.top{grid-column:1/3;grid-template-rows:var(--tbh) 48px 0;grid-template-columns:auto auto minmax(0,1fr) auto auto;align-items:center;gap:0 18px;margin:0;padding:0 18px!important;border:1px solid var(--arq-line);border-radius:var(--arq-rp);background:var(--arq-pnl)!important;position:relative}
+  & header.top .wctl{margin-right:-18px!important}
+  & header.top .brandbtn{grid-row:2;grid-column:1;display:flex!important;flex-direction:row;align-items:center;gap:12px;height:auto}
+  & header.top .brandbtn::after{content:"$BRAND$";font:$BRAND_W$ 13px/1 var(--font-disp);letter-spacing:$BRAND_LS$;color:var(--arq-ink)}
+  & header.top .crumb{grid-row:2;grid-column:2;height:auto;align-items:center;font:400 9px var(--arq-mono);letter-spacing:calc(2.5px * var(--arq-lsk));text-transform:var(--arq-ltt);color:var(--arq-ink3);white-space:nowrap}
+  & header.top .crumb small{align-self:center;padding:0;color:var(--arq-ink3)}
+  & header.top .crumb small::before{content:" · "}
+  & header.top .search{grid-row:2;grid-column:4;width:290px}
+  & header.top .search input{height:34px;border-radius:var(--arq-r);border:1px solid var(--arq-line);background:var(--arq-in);padding-left:34px}
+  & header.top .search svg{left:12px}
+  & header.top .bell{grid-row:2;grid-column:5;border-radius:var(--arq-r);border:1px solid var(--arq-line)}
+  & header.top::before{content:"$STAMP$";grid-row:2;grid-column:3;justify-self:end;align-self:center;font:400 8.5px var(--arq-mono);letter-spacing:calc(2.5px * var(--arq-lsk));color:var(--arq-ink2);white-space:nowrap}
+  & header.top::after{display:none}
+  & header.top .chips{display:none!important}
+  & #app>.rail{grid-row:3;grid-column:1;margin:var(--gap) 0 0;padding:14px 10px 12px;border:1px solid var(--arq-line);border-radius:var(--arq-rp);background:var(--arq-pnl);position:relative;align-self:stretch;height:auto}
+  & #app>.rail::before{display:block;position:static;content:"$BRAND_SUB$";white-space:pre;font:700 9px/1.5 var(--arq-mono);letter-spacing:calc(2.5px * var(--arq-lsk));text-transform:uppercase;color:var(--arq-acc);padding:0 10px 14px;background:none;width:auto;height:auto;inset:auto;border:0}
+  & .rail .brandrow,& .rail .brand,& .rail .bname{display:none!important}
+  & .rail .rgs{gap:2px}
+  & .rail .rg{gap:2px}
+  & .rail .rb{width:100%;height:34px;padding:0 12px 0 8px;border-radius:var(--arq-r);border:1px solid transparent;background:transparent;font:500 9.5px var(--arq-mono);letter-spacing:calc(2px * var(--arq-lsk));text-transform:var(--arq-ltt);color:var(--arq-ink2);gap:10px;justify-content:flex-start;flex-direction:row}
+  & .rail .rg .rb::before,& .rail .rg .rb.on::before{counter-increment:nav;content:"";position:static;display:block;width:6px;height:6px;border-radius:50%;background:var(--arq-line);flex:none;margin:0 4px 0 0}
+  & .rail .rb>svg{display:block;width:13px;height:13px;flex:none;color:var(--arq-ink3)}
+  & .rail .rb>span{display:inline!important;flex:1;text-align:left;font:inherit;letter-spacing:inherit;max-width:none;overflow:hidden;text-overflow:ellipsis}
+  & .rail .rb .n{flex:none;font:400 8.5px var(--arq-mono);letter-spacing:1px;color:var(--arq-ink3);background:transparent;padding:0}
+  & .rail .rb:hover{background:var(--arq-pnl2);color:var(--arq-ink);border-color:transparent}
+  & .rail .rb.on{background:var(--arq-pnl2);border-color:var(--arq-acc);color:var(--arq-ink)}
+  & .rail .rb.on::before{background:var(--arq-acc)}
+  & .rail .rb.on>svg{color:var(--arq-acc)}
+  & .rail .rb.on .n{background:var(--arq-fill);color:var(--arq-onfill);padding:1px 5px;border-radius:var(--arq-rs)}
+  & .rail .rsep{display:none}
+  & .rail .rxh{font:400 8px var(--arq-mono);letter-spacing:calc(2px * var(--arq-lsk));color:var(--arq-ink3)}
+  & .rail .rb.sm{height:28px;font-size:8.5px}
+  & .rail .rbot{border-top:1px dashed var(--arq-line);padding-top:10px}
+  & .rail .rbot .bell,& .rail .rbot .rb{border-radius:var(--arq-r);font:500 8.5px var(--arq-mono);letter-spacing:calc(1.5px * var(--arq-lsk));text-transform:var(--arq-ltt)}
+  & .rail .rbot .pavbtn{margin-top:6px}
+  & .rail .rbot::after{content:"SERIAL $YEAR$ · QUADRO";display:block;font:400 7px var(--arq-mono);letter-spacing:2px;color:var(--arq-ink3);padding:8px 10px 0}
+  & .view,&[data-layout=rail] .view{grid-row:3;grid-column:2;padding:var(--gap) 0 0!important}
+  & footer.status{grid-column:1/3;padding:0 20px;margin-top:4px}
+  & .nowg{margin:0 0 var(--gap);padding:22px 24px 22px 30px;min-height:208px;border:1px solid var(--arq-line);border-radius:var(--arq-rp);background:var(--arq-pnl);grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto minmax(0,1fr);grid-template-areas:"cov t next" "cov acts next";gap:0 24px;align-items:center;position:relative;isolation:isolate}
+  & .nowg::after{content:"$BRAND_SUB$";position:absolute;right:20px;top:12px;font:700 8.5px var(--arq-mono);letter-spacing:calc(2.5px * var(--arq-lsk));text-transform:uppercase;color:var(--arq-acc);background:none;width:auto;height:auto;bottom:auto;left:auto;white-space:nowrap;pointer-events:none}
+  & .nowg .ncov{width:110px;height:150px;grid-area:cov;align-self:center}
+  & .nowg .nt{grid-area:t;align-self:end;gap:5px}
+  & .nowg .nt small{font:400 8.5px var(--arq-mono);letter-spacing:calc(2.5px * var(--arq-lsk));color:var(--arq-acc)}
+  & .nowg .nt small::before{content:"• CONTINUAR · "}
+  & .nowg .nt b{font-size:clamp(32px,3.6vw,52px);line-height:1}
+  & .nowg .pr i{height:4px;max-width:300px}
+  & .nowg .nacts{grid-area:acts;align-self:start;margin:12px 0 0;gap:8px}
+  & .nowg .nacts .btn{height:36px}
+  & .nowg>span{display:none}
+  & .libpanel{border:1px solid var(--arq-line);border-radius:var(--arq-rp);background:var(--arq-pnl);position:relative;padding-top:6px}
+  & .h1 h2{color:var(--arq-acc)}
+  & .libpanel,& .vpanel{min-height:calc(100vh - var(--tb,0px) - var(--hdr) - 70px)}
+  & #view:has(#homeTop .nowg) .libpanel{min-height:calc(100vh - var(--tb,0px) - var(--hdr) - 300px)}
+  @media (max-width:1100px){& header.top::before{display:none}& header.top .search{width:200px}}

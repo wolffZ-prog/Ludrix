@@ -1,0 +1,95 @@
+  /* GARAN — grafite técnico, etiqueta laranja de sinalização "P-137B", cantos cortados, X de reforço e códigos de peça; gerenciador em lista */
+  --sidew:244px;--hdr:112px;--gap:18px;
+  --ora:var(--arq-acc);--onora:#1a0c04;
+  --cut:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));
+  --cut-s:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));
+  --hz:repeating-linear-gradient(-45deg,var(--ora) 0 5px,transparent 5px 10px);
+  --xline:color-mix(in srgb,var(--arq-ink) 14%,transparent);
+
+  & *{font-family:var(--arq-mono)}
+  & .nowg .nt b,& .h1 h2,& .vhead h2{font-family:var(--font-disp)}
+
+  /* cabeçalho: etiqueta laranja cortada com o código, faixa de perigo fina */
+  & header.top{grid-template-rows:var(--tbh) 48px 24px;padding:0 20px 0 var(--gap)!important;gap:0 14px;grid-template-columns:auto minmax(0,1fr) auto auto}
+  & header.top .brandbtn{display:flex!important;grid-row:2;grid-column:1;align-self:center;height:36px;padding:0 14px 0 12px;background:var(--ora);color:var(--onora);clip-path:var(--cut-s);flex-direction:row;align-items:center;gap:10px}
+  & header.top .brandbtn::before{content:"P-137B";font:700 15px/1 var(--arq-mono);letter-spacing:1px;color:var(--onora)}
+  & header.top .brandbtn::after{content:"";width:34px;height:10px;background:repeating-linear-gradient(90deg,var(--onora) 0 2px,transparent 2px 4px)}
+  & header.top .crumb{grid-row:2;grid-column:2;justify-content:flex-start;font:700 11px var(--arq-mono);letter-spacing:3px;text-transform:uppercase;color:var(--arq-ink);white-space:nowrap;height:auto;align-items:center}
+  & header.top .crumb small{align-self:center;padding:0;margin-left:10px;color:var(--arq-ink3);letter-spacing:1px}
+  & header.top .crumb small::before{content:"REF. "}
+  & header.top .search{grid-row:2;grid-column:3;align-self:center;width:270px}
+  & header.top .search input{height:34px;border-radius:0;border:1px solid var(--arq-line);background:var(--arq-in);font:600 9px var(--arq-mono);letter-spacing:1.5px;text-transform:uppercase;clip-path:var(--cut-s)}
+  & header.top .search input:focus{border-color:var(--ora)}
+  & header.top .search kbd{border:1px solid var(--arq-line);border-radius:0}
+  & header.top .bell{grid-row:2;grid-column:4;align-self:center;border:1px solid var(--arq-line);border-radius:0;clip-path:var(--cut-s)}
+  & header.top::before{content:"";grid-row:3;grid-column:1;align-self:center;height:6px;width:100%;background:var(--hz)}
+  & header.top .chips{grid-row:3;grid-column:2/4;align-self:center}
+  & header.top .chip{height:20px;border:1px solid var(--arq-line);border-radius:0;font:700 8px var(--arq-mono);letter-spacing:1.5px}
+  & header.top::after{content:"STUDIO GARAN · ALL RIGHTS RESERVED · 0310";grid-row:3;grid-column:4;justify-self:end;align-self:center;font:700 7.5px var(--arq-mono);letter-spacing:1.5px;color:var(--arq-ink3);white-space:nowrap}
+
+  /* lateral: árvore de peças com cantos cortados */
+  & .rail{margin:0 0 0 var(--gap);padding:12px 8px 10px;border:1px solid var(--arq-line);border-radius:0;background:var(--arq-pnl);clip-path:var(--cut)}
+  & .rail .brand{width:28px;height:28px;border-radius:0;background:var(--ora);color:var(--onora);clip-path:var(--cut-s);display:grid;place-items:center}
+  & .rail .brand svg,& .rail .brand img{width:14px;height:14px;color:var(--onora)}
+  & .rail .bname{font:700 12px var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+  & .rail .bname::after{content:" /GRN";color:var(--ora);font-size:9px}
+  & .rail .rxh{font:700 8px var(--arq-mono);letter-spacing:2px;color:var(--arq-ink3)}
+  & .rail .rb{border-radius:0;font:600 9.5px var(--arq-mono);letter-spacing:1.5px;text-transform:uppercase;color:var(--arq-ink2)}
+  & .rail .rg .rb::before,& .rail .rg .rb.on::before{color:var(--ora);font-weight:700}
+  & .rail .rb svg{display:none}
+  & .rail .rb:hover{background:var(--arq-pnl2);color:var(--arq-ink)}
+  & .rail .rb.on{background:var(--arq-pnl3);color:var(--arq-ink);box-shadow:inset 3px 0 0 var(--ora)}
+  & .rail .rb .n{font:700 8px var(--arq-mono);color:var(--arq-ink3);border:1px solid var(--arq-line);padding:1px 4px;border-radius:0}
+  & .rail .rsep{height:1px;margin:8px 6px;background:var(--arq-line)}
+  & .rail .rb.sm{border-radius:0;font:600 9px var(--arq-mono);letter-spacing:1px;text-transform:uppercase}
+  & .rail .rbot{border-top:1px solid var(--arq-line)}
+  & .rail .rbot .bell,& .rail .rbot .rb{border-radius:0;font:600 9px var(--arq-mono);letter-spacing:1px;text-transform:uppercase}
+  & .rail .rbot .pav{border-radius:0;border:0;background:var(--ora);color:var(--onora);clip-path:var(--cut-s)}
+
+  /* painéis: chapas grafite com canto cortado e código de peça */
+  & .libpanel,& .vpanel,& .nowg,& #homeTop>.now,& .libwrap .gpanel,& .libwrap .fpanel{border-radius:0;border:1px solid var(--arq-line);background:var(--arq-pnl);clip-path:var(--cut);position:relative}
+  & .vhead{border-radius:0;border-bottom:1px solid var(--arq-line);background:var(--arq-pnlh)}
+  & .h1 h2,& .vhead h2{font:700 13px/1 var(--arq-mono);letter-spacing:3px;text-transform:uppercase}
+  & .h1 h2::before,& .vhead h2::before{content:"■ ";color:var(--ora);font-size:10px}
+  & .vtile,& .ccard,& .mcard,& .sec,& .frow{border-radius:0;border:1px solid var(--arq-line);background:var(--arq-pnl2);clip-path:var(--cut-s)}
+  & .vtile:hover,& .ccard:hover{border-color:var(--ora)}
+  & .vtile .sysic{border-radius:0;border:1px solid var(--arq-line);background:var(--arq-pnl);clip-path:var(--cut-s)}
+
+  /* linha do jogo: X de reforço ao fundo, botão laranja cortado */
+  & .nowg{border-left:4px solid var(--ora);overflow:hidden}
+  & .nowg::before{content:"";position:absolute;right:220px;top:-20px;width:120px;height:120px;background:linear-gradient(45deg,transparent calc(50% - 1px),var(--xline) 50%,transparent calc(50% + 1px)),linear-gradient(-45deg,transparent calc(50% - 1px),var(--xline) 50%,transparent calc(50% + 1px));pointer-events:none}
+  & .nowg .ncov{border-radius:0;outline:1px solid var(--arq-line);clip-path:var(--cut-s)}
+  & .nowg .nt small{font:700 8px var(--arq-mono);letter-spacing:2px;color:var(--ora)}
+  & .nowg .nt b{font:700 17px/1.1 var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+
+  /* botões: blocos cortados */
+  & .btn{border-radius:0;border:1px solid var(--arq-line);background:var(--arq-pnl2);color:var(--arq-ink);font:700 8.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase;clip-path:var(--cut-s);box-shadow:none}
+  & .btn:hover{border-color:var(--arq-ink2);background:var(--arq-pnl3)}
+  & .btn.p,& .btn.p:hover{background:var(--ora);color:var(--onora);border-color:var(--ora)}
+  & .btn.p svg{color:var(--onora);fill:var(--onora)}
+  & .tabs{gap:2px;padding:0;border:0;background:transparent}
+  & .tabs button,& .chip,& .vchip,& .seg button{border-radius:0;border:1px solid transparent;font:700 8.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+  & .tabs button.on,& .chip.on,& .vchip.on{background:transparent;color:var(--ora);border-color:var(--ora);clip-path:var(--cut-s)}
+  & .chip{border-color:var(--arq-line)}
+  & .h1>.btn.xs,& .h1 .filt>.btn,& .h1 #sort,& .h1 .dd{border-radius:0;clip-path:var(--cut-s)}
+  & .h1>.btn.xs.addbtn{background:var(--ora);color:var(--onora);border-color:var(--ora)}
+  & .azbar{font:700 8px var(--arq-mono);letter-spacing:1.5px}
+
+  /* lista: linhas com código de peça */
+  & .grid:not(.lst) .card{grid-template-columns:34px 54px minmax(0,1fr) 170px 150px;counter-increment:row}
+  & .grid:not(.lst) .card::before{content:"P-" counter(row,decimal-leading-zero);grid-column:2;grid-row:1;font:700 8px var(--arq-mono);letter-spacing:1px;color:var(--ora)}
+  & .grid:not(.lst) .card .cov{grid-column:1}
+  & .grid:not(.lst) .card h4{grid-column:3;font:600 10.5px var(--arq-mono);letter-spacing:1px;text-transform:uppercase}
+  & .grid:not(.lst) .card .sub{grid-column:4;font:500 8px var(--arq-mono);letter-spacing:1px;text-transform:uppercase}
+  & .grid:not(.lst) .card .sub~.sub{grid-column:5}
+  & .grid:not(.lst) .card .cprog{grid-column:3/6}
+  & .grid:not(.lst) .card:hover,& .grid:not(.lst) .card.sel{box-shadow:inset 3px 0 0 var(--ora)}
+  & .card .cov{border-radius:0}
+  & .vrow .si img{border-radius:0;outline:1px solid var(--arq-line);clip-path:var(--cut-s)}
+  & .vrow .si:hover img{outline-color:var(--ora)}
+  & .vrow .si b{font:600 9.5px var(--arq-mono);letter-spacing:1px;text-transform:uppercase}
+
+  & footer.status{letter-spacing:2px;font-size:8px;font-weight:700}
+  & footer.status .sdot{border-radius:0;background:var(--ora);clip-path:var(--cut-s)}
+  & .modal .box,& .ctx,& .bellpop,& .palbox{border-radius:0;border:1px solid var(--arq-line);clip-path:var(--cut)}
+  & .lbl,& .dsec h3,& .reqcol h3,& .kcol h4,& .ctx h5,& .bellpop .bh b{font:700 8.5px var(--arq-mono);letter-spacing:2px}

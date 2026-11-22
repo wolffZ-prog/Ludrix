@@ -1,0 +1,76 @@
+  /* AÇO ESCOVADO — chapa cinza escovada com chanfros, código de barras, botão giratório; navegação numa régua no topo */
+  --navh:56px;--hdr:44px;
+  --ice:var(--arq-acc);--onice:#08141c;
+  --steel:repeating-linear-gradient(180deg,color-mix(in srgb,var(--arq-ink) 4%,transparent) 0 1px,transparent 1px 3px);
+  --ch:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));
+  --ch-s:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));
+  --bar:repeating-linear-gradient(90deg,var(--arq-ink2) 0 1px,transparent 1px 3px,var(--arq-ink2) 3px 5px,transparent 5px 6px,var(--arq-ink2) 6px 7px,transparent 7px 10px);
+
+  & *{font-family:var(--font-text)}
+  & .nowg .nt b,& .h1 h2,& .vhead h2{font-family:var(--font-disp)}
+
+  /* régua de navegação: chapa escovada, marca com "botão giratório", código de barras */
+  & .rail{background:var(--arq-pnl2);background-image:var(--steel);border-bottom:1px solid var(--arq-line);box-shadow:0 1px 0 color-mix(in srgb,var(--arq-ink) 8%,transparent)}
+  & .rail .brand{width:32px;height:32px;border-radius:50%;background:radial-gradient(circle at 50% 40%,var(--arq-pnl3),var(--arq-pnl) 70%);box-shadow:inset 0 0 0 1px var(--arq-line),0 2px 4px rgba(0,0,0,.4);display:grid;place-items:center}
+  & .rail .brand svg,& .rail .brand img{width:16px;height:16px}
+  & .rail .bname{font:700 12px/1 var(--arq-mono);letter-spacing:3px;text-transform:uppercase}
+  & .rail .bname::after{content:" ·  VISUAL QUE MOVE O FUTURO";font:400 7px var(--arq-mono);letter-spacing:1.5px;color:var(--arq-ink3)}
+  & .rail .rb{height:32px;padding:0 12px;border-radius:0;font:600 9px var(--arq-mono);letter-spacing:2px;text-transform:uppercase;clip-path:var(--ch-s)}
+  & .rail .rb svg{display:none}
+  & .rail .rb.on{background:var(--ice);color:var(--onice)}
+  & .rail .rsep{width:40px;height:10px;margin:0 8px;background:var(--bar);opacity:.5}
+  & .rail .search input{border-radius:0;border:1px solid var(--arq-line);clip-path:var(--ch-s);font-size:9px;letter-spacing:1.5px}
+  & .rail .search input:focus{border-color:var(--ice)}
+  & .rail .rbot .bell,& .rail .rbot .rb{border:1px solid var(--arq-line);border-radius:0;clip-path:var(--ch-s)}
+  & .rail .rbot .rb.on{background:var(--ice);color:var(--onice)}
+  & .rail .rbot .pav{border-radius:50%;border:0;background:var(--ice);color:var(--onice)}
+  & header.top .crumb{font:400 10px var(--arq-mono);letter-spacing:2.5px;text-transform:uppercase}
+  & header.top .crumb::before{content:"PRODUCT WEB: 0015.2000   //   ";color:var(--arq-ink3)}
+  & header.top .chip{border-radius:0;border:1px solid var(--arq-line);font-size:8px;letter-spacing:1.5px;height:20px;clip-path:var(--ch-s)}
+
+  /* placas chanfradas escovadas */
+  & .libpanel,& .vpanel,& .libwrap .gpanel,& .libwrap .fpanel{border-radius:0;border:0;background:var(--arq-pnl);background-image:var(--steel);clip-path:var(--ch);box-shadow:none}
+  & .libpanel::after,& .vpanel::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,var(--arq-ink2),transparent 40%,transparent 60%,var(--arq-ink2));padding:1px;clip-path:var(--ch);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:.35;z-index:4}
+  & .vhead{border-radius:0;border-bottom:1px solid var(--arq-line);background:var(--arq-pnlh);padding-top:18px}
+  & .h1 h2,& .vhead h2{font:700 16px/1 var(--font-disp);letter-spacing:.08em;text-transform:uppercase}
+  & .vtile,& .ccard,& .mcard,& .sec,& .frow{border-radius:0;border:1px solid var(--arq-line);clip-path:var(--ch-s)}
+  & .vtile:hover,& .ccard:hover{border-color:var(--ice)}
+  & .vtile .sysic{border-radius:0;border:1px solid var(--arq-line);background:transparent;clip-path:var(--ch-s)}
+
+  /* banner: chapa com "2044" gravado e K grande */
+  & .nowg{border-radius:0;border:0;clip-path:var(--ch);background:var(--arq-pnl)}
+  & .nowg .ncov{filter:blur(30px) saturate(.3) brightness(.6)}
+  & .nowg .nt::after{content:"2044";position:absolute;right:30px;top:18px;font:800 54px/1 var(--font-disp);letter-spacing:-2px;color:var(--arq-ink);opacity:.08;writing-mode:vertical-rl;transform:rotate(180deg);pointer-events:none}
+  & .nowg .nt{position:static}
+  & .nowg .nt small{font:400 8.5px var(--arq-mono);letter-spacing:2.5px;text-transform:uppercase;color:var(--ice)}
+  & .nowg .nt b{font:700 clamp(30px,3.8vw,56px)/1 var(--font-disp);letter-spacing:.06em;text-transform:uppercase}
+  & .nowg .pr i{height:3px;border-radius:0;background:var(--arq-pnl3)}
+  & .nowg .pr i::after{background:var(--ice);border-radius:0}
+  & .nowg .nnext img{border-radius:0;outline:1px solid var(--arq-line)}
+  & .nowg .nnext img:hover{outline-color:var(--ice)}
+
+  /* botões e abas usinados */
+  & .btn{border-radius:0;border:1px solid var(--arq-line);background:linear-gradient(180deg,color-mix(in srgb,var(--arq-ink) 6%,transparent),transparent);color:var(--arq-ink);font:600 9px var(--arq-mono);letter-spacing:2px;text-transform:uppercase;clip-path:var(--ch-s)}
+  & .btn:hover{border-color:var(--arq-ink2)}
+  & .btn.p,& .btn.p:hover{background:var(--ice);color:var(--onice);border-color:var(--ice)}
+  & .btn.p svg{color:var(--onice);fill:var(--onice)}
+  & .tabs button,& .chip,& .vchip,& .seg button{border-radius:0;border:1px solid transparent;font:600 8.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+  & .tabs button.on,& .chip.on,& .vchip.on{background:transparent;color:var(--arq-ink);border-color:var(--arq-ink);clip-path:var(--ch-s)}
+  & .h1>.btn.xs,& .h1 .filt>.btn,& .h1 #sort,& .h1 .dd{border-radius:0;clip-path:var(--ch-s)}
+  & .h1>.btn.xs.addbtn{background:var(--ice);color:var(--onice);border-color:var(--ice)}
+
+  /* capas chanfradas */
+  & .card .cov{border-radius:0;outline:1px solid var(--arq-line);outline-offset:-1px;clip-path:var(--ch-s)}
+  & .card:hover .cov,& .card.sel .cov,& .card.msel .cov{outline:1.5px solid var(--ice)}
+  & .card h4{font:600 10.5px/1.3 var(--font-text);letter-spacing:.04em;text-transform:uppercase}
+  & .card .sub{font:400 8.5px var(--arq-mono);letter-spacing:1px;text-transform:uppercase}
+  & .card .qp{border-radius:0;background:var(--ice);color:var(--onice);clip-path:var(--ch-s)}
+  & .card .qp svg{fill:var(--onice);color:var(--onice)}
+
+  & footer.status{letter-spacing:2px;font-size:8px}
+  & footer.status::after{content:"";width:70px;height:8px;margin-left:12px;background:var(--bar);opacity:.5}
+  & footer.status .sdot{border-radius:0;background:var(--ice);width:7px;height:7px;transform:rotate(45deg)}
+  & .modal .box,& .ctx,& .bellpop,& .palbox{border-radius:0;border:1px solid var(--arq-line);clip-path:var(--ch)}
+  & .ctx{clip-path:var(--ch-s)}
+  & header.top .crumb{white-space:nowrap;height:auto;align-items:center}
+  & header.top .crumb small{align-self:center;padding:0}

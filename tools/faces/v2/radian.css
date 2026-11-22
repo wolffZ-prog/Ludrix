@@ -1,0 +1,92 @@
+  /* RADIAN — grafite com arcos e escalas circulares gravadas, painéis cinza-aço, botões octogonais; lateral só de ícones */
+  --sidew:96px;--hdr:108px;--gap:20px;
+  --steel:var(--arq-acc);
+  --oct:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);
+  --oct-s:polygon(22% 0,78% 0,100% 22%,100% 78%,78% 100%,22% 100%,0 78%,0 22%);
+  --arcs:repeating-radial-gradient(circle at var(--ax,100%) var(--ay,50%),transparent 0 22px,color-mix(in srgb,var(--arq-ink) 9%,transparent) 22px 23px);
+  --ticks:repeating-linear-gradient(90deg,var(--arq-ink3) 0 1px,transparent 1px 8px);
+  --engr:inset 0 1px 0 color-mix(in srgb,#fff 10%,transparent),inset 0 -1px 0 rgba(0,0,0,.45);
+
+  & *{font-family:var(--font-text)}
+  & .nowg .nt b,& .h1 h2,& .vhead h2,& header.top .crumb{font-family:var(--font-disp)}
+  & .lbl,& .dsec h3,& .reqcol h3,& .kcol h4,& .hw .k,& .ctx h5,& .bellpop .bh b,& .nowg .nt small,& .nowg .pr,& .nowg .nnext small,& .vrow .rh a,& footer.status,& .card .sub,& header.top .crumb small,& header.top .chip,& .tabs button,& .chip,& .vchip{font-family:var(--arq-mono);letter-spacing:2px;text-transform:uppercase;font-size:8px;font-weight:600}
+
+  /* cabeçalho: marca em mostrador, escala de ticks na terceira linha */
+  & header.top{grid-template-rows:var(--tbh) 48px 24px;padding:0 20px 0 var(--gap)!important;gap:0 14px;grid-template-columns:auto minmax(0,1fr) auto auto}
+  & header.top .brandbtn{display:flex!important;grid-row:2;grid-column:1;align-self:center;height:auto;flex-direction:row;align-items:center;gap:10px}
+  & header.top .brandbtn::before{content:"";width:30px;height:30px;clip-path:var(--oct);background:conic-gradient(from 0deg,var(--steel) 0 25%,var(--arq-pnl3) 25% 50%,var(--steel) 50% 75%,var(--arq-pnl3) 75%);}
+  & header.top .brandbtn::after{content:"RADIAN";font:600 13px/1 var(--font-disp);letter-spacing:.3em;color:var(--arq-ink)}
+  & header.top .crumb{grid-row:2;grid-column:2;justify-content:flex-start;font:600 12px var(--font-disp);letter-spacing:.25em;text-transform:uppercase;color:var(--arq-ink2);white-space:nowrap;height:auto;align-items:center}
+  & header.top .crumb small{align-self:center;padding:0;margin-left:10px}
+  & header.top .crumb small::before{content:"∠ "}
+  & header.top .search{grid-row:2;grid-column:3;align-self:center;width:270px}
+  & header.top .search input{height:34px;border-radius:4px;border:1px solid var(--arq-line);background:var(--arq-in);box-shadow:var(--engr);font:600 9px var(--arq-mono);letter-spacing:1.5px;text-transform:uppercase}
+  & header.top .search input:focus{border-color:var(--steel)}
+  & header.top .search kbd{border:1px solid var(--arq-line);border-radius:3px}
+  & header.top .bell{grid-row:2;grid-column:4;align-self:center;border:1px solid var(--arq-line);border-radius:0;clip-path:var(--oct-s);background:var(--arq-pnl2)}
+  & header.top::before{content:"";grid-row:3;grid-column:1/3;align-self:center;height:8px;width:100%;background:var(--ticks);opacity:.6}
+  & header.top .chips{grid-row:3;grid-column:3;align-self:center;justify-self:end}
+  & header.top .chip{height:20px;border:1px solid var(--arq-line);border-radius:3px;background:var(--arq-pnl2)}
+  & header.top::after{content:"0° · 90° · 180° · 270°";grid-row:3;grid-column:4;justify-self:end;align-self:center;font:600 7.5px var(--arq-mono);letter-spacing:2px;color:var(--arq-ink3);white-space:nowrap}
+
+  /* lateral: coluna de octógonos gravados */
+  & .rail{margin:0 0 0 var(--gap);padding:12px 0 10px;border:0;border-radius:0;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;align-items:center}
+  & .rail .brandrow{display:none!important}
+  & .rail .rgs,& .rail .rg{gap:10px;align-items:center;width:auto}
+  & .rail .rb{width:54px;height:54px;border:0;border-radius:0;clip-path:var(--oct);background:var(--arq-pnl2);box-shadow:var(--engr);color:var(--arq-ink2)}
+  & .rail .rb svg{width:20px;height:20px}
+  & .rail .rb:hover{background:var(--arq-pnl3);color:var(--arq-ink)}
+  & .rail .rb.on{background:var(--steel);color:var(--arq-bgc)}
+  & .rail .rsep{width:20px;height:1px;margin:4px 0;background:var(--arq-line)}
+  & .rail .rx{margin-top:10px}
+  & .rail .rb.sm{width:40px;height:40px;clip-path:var(--oct-s);background:var(--arq-pnl2)}
+  & .rail .rbot{border-top:1px solid var(--arq-line);width:54px;padding-top:10px}
+  & .rail .rbot .bell,& .rail .rbot .rb{width:40px;height:40px;border-radius:0;clip-path:var(--oct-s);background:var(--arq-pnl2);box-shadow:var(--engr)}
+  & .rail .rbot .pavbtn{width:40px;height:40px;clip-path:var(--oct-s)}
+  & .rail .rbot .pav{border-radius:0;border:0;background:var(--steel);color:var(--arq-bgc)}
+  & .rail .rbot #bellN{right:2px;top:2px}
+
+  /* painéis de aço com arcos gravados */
+  & .libpanel,& .vpanel,& .nowg,& #homeTop>.now,& .libwrap .gpanel,& .libwrap .fpanel{border-radius:6px;border:1px solid var(--arq-line);background:var(--arq-pnl);box-shadow:var(--engr),0 30px 60px -40px rgba(0,0,0,.8)}
+  & .libpanel{--ax:100%;--ay:0%;background-image:var(--arcs)}
+  & .vhead{border-radius:6px 6px 0 0;border-bottom:1px solid var(--arq-line);background:var(--arq-pnlh)}
+  & .h1 h2,& .vhead h2{font:600 15px/1 var(--font-disp);letter-spacing:.25em;text-transform:uppercase}
+  & .vtile,& .ccard,& .mcard,& .sec,& .frow{border-radius:4px;border:1px solid var(--arq-line);background:var(--arq-pnl2);box-shadow:var(--engr)}
+  & .vtile:hover,& .ccard:hover{border-color:var(--steel)}
+  & .vtile .sysic{border-radius:0;clip-path:var(--oct-s);border:0;background:var(--arq-pnl3)}
+
+  /* herói: mostrador com arcos concêntricos */
+  & .nowg{--ax:92%;--ay:50%;background-image:var(--arcs);min-height:190px}
+  & .nowg::after{background:radial-gradient(circle at 92% 50%,color-mix(in srgb,var(--steel) 20%,transparent),transparent 40%)}
+  & .nowg .ncov{border-radius:4px;outline:1px solid var(--arq-line);box-shadow:0 20px 40px -20px rgba(0,0,0,.9)}
+  & .nowg .nt small{color:var(--steel)}
+  & .nowg .nt b{font:500 clamp(26px,3vw,42px)/1.05 var(--font-disp);letter-spacing:.06em;text-transform:uppercase}
+  & .nowg .pr i{height:4px;border-radius:0;background:var(--arq-pnl3);box-shadow:var(--engr)}
+  & .nowg .pr i::after{background:var(--steel);border-radius:0}
+
+  /* botões: chapas gravadas, primário octogonal nos cantos */
+  & .btn{border-radius:3px;border:1px solid var(--arq-line);background:var(--arq-pnl2);color:var(--arq-ink);font:600 8.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase;box-shadow:var(--engr)}
+  & .btn:hover{border-color:var(--arq-ink3);background:var(--arq-pnl3)}
+  & .btn.p,& .btn.p:hover{background:var(--steel);color:var(--arq-bgc);border-color:var(--steel);clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
+  & .btn.p svg{color:var(--arq-bgc);fill:var(--arq-bgc)}
+  & .tabs{gap:1px;padding:2px;border-radius:4px;background:var(--arq-pnl2);box-shadow:var(--engr);width:max-content;max-width:100%}
+  & .tabs button,& .chip,& .vchip,& .seg button{border-radius:2px;border:0;height:24px}
+  & .tabs button.on,& .chip.on,& .vchip.on{background:var(--arq-pnl);color:var(--arq-ink);box-shadow:inset 0 -2px 0 var(--steel)}
+  & .chip{background:var(--arq-pnl2);box-shadow:var(--engr)}
+  & .h1>.btn.xs,& .h1 .filt>.btn,& .h1 #sort,& .h1 .dd{border-radius:3px}
+  & .h1>.btn.xs.addbtn{background:var(--steel);color:var(--arq-bgc);border-color:var(--steel)}
+  & .azbar{letter-spacing:2px;font-size:8px}
+
+  /* capas: molduras finas, canto octogonal no selecionado */
+  & .card .cov{border-radius:3px;outline:1px solid var(--arq-line);outline-offset:-1px}
+  & .card:hover .cov{outline-color:var(--arq-ink3)}
+  & .card.sel .cov,& .card.msel .cov{outline:2px solid var(--steel)}
+  & .card h4{font:500 11px/1.3 var(--font-text);letter-spacing:.04em;text-transform:uppercase}
+  & .card .qp{border-radius:0;clip-path:var(--oct-s);background:var(--steel);color:var(--arq-bgc)}
+  & .card .qp svg{fill:var(--arq-bgc);color:var(--arq-bgc)}
+  & .vrow .si img{border-radius:3px;outline:1px solid var(--arq-line)}
+  & .vrow .si:hover img{outline-color:var(--steel)}
+  & .vrow .si b{font:500 10.5px var(--font-text);letter-spacing:.04em;text-transform:uppercase}
+
+  & footer.status .sdot{border-radius:0;clip-path:var(--oct-s);background:var(--steel)}
+  & .modal .box,& .ctx,& .bellpop,& .palbox{border-radius:6px;border:1px solid var(--arq-line);box-shadow:var(--engr),0 40px 80px -30px rgba(0,0,0,.9)}

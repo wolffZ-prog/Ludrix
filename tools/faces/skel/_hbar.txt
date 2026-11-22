@@ -1,0 +1,27 @@
+  /* barra horizontal de navegação: itens comuns (topbar/dock) */
+  & #app>.rail .brandrow{display:flex;align-items:center;gap:10px;height:auto;margin:0;padding:0;width:auto;flex:none}
+  & #app>.rail .brand{display:block;width:26px;height:26px;flex:none;filter:none}
+  & #app>.rail .brand svg,& .rail .brand img{width:26px;height:26px;display:block}
+  & #app>.rail .bname{display:block!important;font:$BRAND_W$ 16px/1 var(--font-disp);letter-spacing:$BRAND_LS$;color:var(--arq-ink);white-space:nowrap;opacity:1}
+  & #app>.rail .rgs{display:flex;flex-direction:row;align-items:center;gap:2px;width:auto;flex:none;counter-reset:none}
+  & #app>.rail .rg{display:flex;flex-direction:row;align-items:center;width:auto;gap:2px;margin:0;padding:0}
+  & #app>.rail .rg+.rg{margin:0}
+  & #app>.rail .rg .rb::before,& .rail .rg .rb.on::before{content:none!important;display:none}
+  & #app>.rail .rb .n{display:none!important}
+  & #app>.rail .rb .dot{top:6px;right:8px}
+  & #app>.rail .rx{display:none!important}
+  & #app>.rail .rbot{display:flex;flex-direction:row;align-items:center;gap:2px;width:auto;margin:0;padding:0;border:0;background:transparent}
+  & #app>.rail .rbot .bell,& .rail .rbot .rb{width:34px;height:34px;padding:0;justify-content:center;border:0;border-radius:var(--arq-r);background:transparent;color:var(--arq-ink2);gap:0;font-size:0}
+  & #app>.rail .rbot .bell .hl,& .rail .rbot .rb span{display:none!important}
+  & #app>.rail .rbot .bell svg,& .rail .rbot .rb svg{display:block;width:15px;height:15px;color:inherit}
+  & #app>.rail .rbot .bell:hover,& .rail .rbot .rb:hover{background:var(--arq-pnl3);color:var(--arq-ink)}
+  & #app>.rail .rbot .rb.on{background:var(--arq-fill);color:var(--arq-onfill)}
+  & #app>.rail .rbot #bellN{position:absolute;right:3px;top:3px;left:auto;transform:none;min-width:14px;height:14px;padding:0 3px;border-radius:7px;font:700 8px/14px var(--arq-mono);background:var(--arq-fill);color:var(--arq-onfill);border:0}
+  & #app>.rail .rbot .pavbtn{width:34px}
+  & #app>.rail .rbot .pavbtn .pav{width:22px;height:22px}
+  & #app>.rail .search{position:relative;display:flex;align-items:center;width:240px;height:32px;margin:0 8px 0 0;flex:none;order:0}
+  & #app>.rail .search input{width:100%;height:32px;border-radius:var(--arq-r);border:1px solid var(--arq-br);background:var(--arq-in);box-shadow:none;font:400 9px var(--arq-mono);letter-spacing:calc(2px * var(--arq-lsk));text-transform:var(--arq-ltt);color:var(--arq-ink);padding:0 30px}
+  & #app>.rail .search input::placeholder{color:var(--arq-ink2);text-transform:var(--arq-ltt);letter-spacing:calc(2px * var(--arq-lsk))}
+  & #app>.rail .search input:focus{border-color:var(--arq-ink);outline:0;box-shadow:none}
+  & #app>.rail .search svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:12px;height:12px;color:var(--arq-ink2);pointer-events:none}
+  & #app>.rail .search kbd{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:inline-flex!important;border:1px solid var(--arq-ink);border-radius:var(--arq-r);background:transparent;font:400 8px var(--arq-mono);color:var(--arq-ink);padding:1px 4px;line-height:1}

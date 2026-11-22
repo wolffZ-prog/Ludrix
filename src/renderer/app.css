@@ -133,10 +133,10 @@ body.compact .card .sub{display:none}
 .empty .eic svg{width:26px;height:26px}
 .empty p{max-width:520px;margin:0 auto;line-height:1.5}
 .empty .eacts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
-.kgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 28px}
+.kgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 30px}
 .kcol h4{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin:10px 0 6px}
 .kcol h4:first-child{margin-top:0}
-.krow{display:flex;align-items:center;gap:12px;padding:5px 0;border-bottom:1px solid var(--line2);font-size:13px}
+.krow{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--line2);font-size:13px}
 .krow>span{flex:none;min-width:96px;display:flex;align-items:center;gap:3px}
 .krow i{font-style:normal;color:var(--muted);font-size:11px}
 .krow em{font-style:normal;color:var(--muted);line-height:1.35}
@@ -1271,14 +1271,14 @@ body.idle .cbody{animation:none}
 .sys,.rd,.bundle,.src,.rd.opt{padding:12px 14px;gap:6px;border-radius:var(--r)}
 .bundles,.srcs{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--tile,260px),1fr));gap:10px;align-items:stretch;max-width:none}
 
-.sec{padding:14px 16px;border-radius:var(--r)}
-.sec+.sec,.settings .sec{margin-top:10px}
-.sec h3{font-size:13px;margin-bottom:2px}
-.sec>p{font-size:12px;margin-bottom:8px;line-height:1.45}
-.sec h4{margin:12px 0 4px}
-.frow{padding:8px 0;gap:12px}
+.sec{padding:20px 22px;border-radius:var(--r)}
+.sec+.sec,.settings .sec{margin-top:18px}
+.sec h3{font-size:13px;margin-bottom:10px}
+.sec>p{font-size:12px;margin-bottom:14px;line-height:1.6}
+.sec h4{margin:18px 0 8px}
+.frow{padding:14px 0;gap:16px}
 .frow .l b{font-size:13px}
-.frow .l span{font-size:11.5px;line-height:1.4;display:block}
+.frow .l span{font-size:11.5px;line-height:1.55;display:block}
 .frow .seg{flex:none}
 .frow select.mi,.frow .mi{height:32px;font-size:12.5px}
 .seg button{height:26px;padding:0 10px;font-size:12px}
@@ -1441,7 +1441,7 @@ body.hc .sw{border:1px solid var(--line2)!important}
 .stabs button:hover{background:color-mix(in srgb,var(--text) 5%,transparent);color:var(--text)}
 .stabs button.on{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--text)}
 .stabs button.on svg{color:var(--accent)}
-.stoc{display:flex;flex-direction:column;gap:1px;padding:8px 0 0 12px;border-left:1px solid var(--line);margin-left:14px}
+.stoc{display:flex;flex-direction:column;gap:3px;padding:10px 0 0 12px;border-left:1px solid var(--line);margin-left:14px}
 .stoc:empty{display:none}
 .stoc a{font-size:12px;color:var(--muted2);padding:4px 8px;border-radius:6px;cursor:pointer;position:relative;line-height:1.3}
 .stoc a:hover{color:var(--text)}

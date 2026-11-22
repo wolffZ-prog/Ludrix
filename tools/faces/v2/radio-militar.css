@@ -1,0 +1,83 @@
+  /* RÁDIO MILITAR — rádio de campanha: chassi bege-oliva, visor de fósforo verde (coluna do jogo), botões giratórios, rótulos gravados */
+  --hdr:116px;--gap:18px;
+  --ora:var(--arq-acc);--onora:#1c0a04;
+  --ph:#9fe35a;--phd:#0e1a0a;--phl:#1a2d12;
+  --engr:color-mix(in srgb,var(--arq-ink) 70%,transparent);
+  --slot:repeating-linear-gradient(90deg,var(--arq-ink3) 0 1px,transparent 1px 5px);
+
+  & *{font-family:var(--arq-mono)}
+  & .nowg .nt b,& .h1 h2,& .vhead h2{font-family:var(--arq-mono)}
+
+  /* chassi */
+  & .libpanel,& .vpanel,& .libwrap .gpanel,& .libwrap .fpanel{border-radius:10px;border:1px solid var(--arq-line);background:var(--arq-pnl);box-shadow:inset 0 1px 0 color-mix(in srgb,#fff 30%,transparent),0 2px 6px rgba(0,0,0,.2)}
+  & .vhead{border-radius:10px 10px 0 0;border-bottom:1px solid var(--arq-line);background:var(--arq-pnlh)}
+  & .h1 h2,& .vhead h2{font:700 13px/1 var(--arq-mono);letter-spacing:3px;text-transform:uppercase;color:var(--engr)}
+  & .vtile,& .ccard,& .mcard,& .sec,& .frow{border-radius:8px;border:1px solid var(--arq-line);background:var(--arq-pnl2)}
+  & .vtile:hover,& .ccard:hover{border-color:var(--ora)}
+  & .vtile .sysic{border-radius:6px;border:1px solid var(--arq-line);background:var(--phd)}
+
+  /* botões: teclas do rádio */
+  & .btn{border-radius:5px;border:1px solid var(--arq-line);background:linear-gradient(180deg,color-mix(in srgb,#fff 10%,var(--arq-pnl2)),var(--arq-pnl2));color:var(--arq-ink);font:700 9px var(--arq-mono);letter-spacing:2px;text-transform:uppercase;box-shadow:0 2px 0 color-mix(in srgb,#000 25%,var(--arq-pnl2))}
+  & .btn:hover{border-color:var(--arq-ink2);transform:none}
+  & .btn:active{transform:translateY(1px);box-shadow:0 1px 0 color-mix(in srgb,#000 25%,var(--arq-pnl2))}
+  & .btn.p,& .btn.p:hover{background:var(--ora);color:var(--onora);border-color:var(--ora);box-shadow:0 2px 0 color-mix(in srgb,#000 30%,var(--ora))}
+  & .btn.p svg{color:var(--onora);fill:var(--onora)}
+  & .tabs button,& .chip,& .vchip,& .seg button{border-radius:4px;border:1px solid transparent;font:700 8.5px var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+  & .tabs button.on,& .chip.on,& .vchip.on{background:var(--phd);color:var(--ph);border-color:var(--arq-line);box-shadow:inset 0 2px 6px rgba(0,0,0,.6)}
+  & .h1>.btn.xs,& .h1 .filt>.btn,& .h1 #sort,& .h1 .dd{border-radius:4px;font-weight:700}
+  & .h1>.btn.xs.addbtn{background:var(--ora);color:var(--onora);border-color:var(--ora)}
+
+  /* capas: etiquetas gravadas */
+  & .card .cov{border-radius:4px;outline:1px solid var(--arq-line);outline-offset:-1px}
+  & .card:hover .cov{outline-color:var(--arq-ink2)}
+  & .card.sel .cov,& .card.msel .cov{outline:2px solid var(--ora)}
+  & .card h4{font:700 9.5px/1.4 var(--arq-mono);letter-spacing:1px;text-transform:uppercase;color:var(--engr)}
+  & .card .sub{font:400 8px var(--arq-mono);letter-spacing:1px;text-transform:uppercase}
+  & .card .qp{border-radius:50%;background:var(--ora);color:var(--onora);box-shadow:0 0 8px var(--ora)}
+  & .card .qp svg{fill:var(--onora);color:var(--onora)}
+
+  & footer.status{letter-spacing:2px;font-size:8px;font-weight:700;color:var(--engr)}
+  & footer.status .sdot{border-radius:50%;background:var(--ora);box-shadow:0 0 8px var(--ora)}
+  & .modal .box,& .ctx,& .bellpop,& .palbox{border-radius:10px;border:1px solid var(--arq-line)}
+  & header.top .crumb{white-space:nowrap;height:auto;align-items:center}
+  & header.top .crumb small{align-self:center;padding:0}
+
+
+  /* estrutura panelbar: chassi bege do rádio — barra com marca, busca e botões giratórios; teclas de texto à esquerda; visor de fósforo verde como herói (barras de VU + 3 botões) */
+  --knob:radial-gradient(circle at 50% 35%,#4a4640,#1f1d1a 68%,transparent 71%);
+  & header.top,& #app>.rail,& .libpanel{border-radius:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 2px 0 rgba(0,0,0,.25)}
+  & header.top .brandbtn::before{content:"";width:12px;height:12px;border-radius:50%;background:var(--ora);box-shadow:0 0 0 3px var(--arq-pnl2),0 0 0 4px var(--arq-line)}
+  & header.top .brandbtn::after{font:800 13px/1 var(--font-disp);letter-spacing:.22em;text-transform:uppercase;color:var(--engr)}
+  & header.top .crumb{font:600 8.5px var(--arq-mono);letter-spacing:2.5px;text-transform:uppercase;color:var(--engr)}
+  & header.top .crumb::before{content:"PR 15 · FIELD RADIO · "}
+  & header.top::before{content:"";width:88px;height:30px;background:var(--knob) 0 50%/30px 30px no-repeat,var(--knob) 58px 50%/30px 30px no-repeat}
+  & header.top .search input{border-radius:4px;background:var(--phd);color:var(--ph);border-color:var(--arq-line);font:700 9px var(--arq-mono);letter-spacing:1.5px;text-transform:uppercase;box-shadow:inset 0 2px 6px rgba(0,0,0,.6)}
+  & header.top .search input::placeholder{color:color-mix(in srgb,var(--ph) 60%,transparent)}
+  & header.top .search svg{color:var(--ph)}
+  & header.top .search kbd{border:1px solid var(--phl);background:transparent;color:var(--ph);border-radius:2px}
+  & header.top .bell{border-radius:4px}
+  & #app>.rail::before{content:"CANAL · MENU";color:var(--engr);font:700 8.5px var(--arq-mono);letter-spacing:2.5px}
+  & .rail .rb{height:32px;border-radius:5px;border:1px solid var(--arq-line);background:var(--arq-pnl2);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 1px 0 rgba(0,0,0,.2);font:800 9px var(--arq-mono);letter-spacing:2px;text-transform:uppercase;color:var(--engr);margin-bottom:4px}
+  & .rail .rb>svg{display:none}
+  & .rail .rb::before,& .rail .rg .rb.on::before{background:var(--arq-ink3)}
+  & .rail .rb.on{background:var(--phd);color:var(--ph);border-color:#000;box-shadow:inset 0 2px 6px rgba(0,0,0,.6)}
+  & .rail .rb.on::before{background:var(--ph);box-shadow:0 0 6px var(--ph)}
+  & .rail .rb.on .n{background:transparent;color:var(--ph);padding:0}
+  & .rail .rbot .pav{border-radius:50%;background:var(--phd);color:var(--ph);border:1px solid #000}
+  & .rail .rbot::after{content:"PRC-77 · SN 0415 · OLIVE"}
+  & .rail .rbot::before{content:"";display:block;height:14px;margin:6px 10px 10px;background:var(--slot)}
+  & .nowg{--arq-ink:var(--ph);--arq-ink2:var(--ph);--arq-ink3:color-mix(in srgb,var(--ph) 65%,transparent);--arq-line:var(--phl);--arq-pnl2:var(--phl);border-radius:10px;border:8px solid var(--arq-pnl2);outline:1px solid var(--arq-line);background:var(--phd);color:var(--ph);box-shadow:inset 0 0 40px rgba(0,0,0,.6);padding:18px 150px 36px 22px;min-height:200px}
+  & .nowg::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(0,0,0,.18) 2px 3px);pointer-events:none;z-index:2}
+  & .nowg::after{content:"";right:24px;top:50%;transform:translateY(-50%);width:100px;height:100px;background:var(--knob) 50% 0/44px 44px no-repeat,var(--knob) 0 100%/34px 34px no-repeat,var(--knob) 100% 100%/34px 34px no-repeat;pointer-events:none}
+  & .nowg .ncov{width:92px;height:124px;border-radius:3px;outline:1px solid var(--phl);filter:sepia(1) hue-rotate(60deg) saturate(2.2) brightness(.95) contrast(1.05)}
+  & .nowg .ncov:hover{filter:none}
+  & .nowg .nt small{font:700 8px var(--arq-mono);letter-spacing:2px;text-transform:uppercase;color:var(--ph);opacity:.8}
+  & .nowg .nt b{font:800 clamp(30px,3.4vw,46px)/1 var(--font-disp);letter-spacing:.08em;text-transform:uppercase;color:var(--ph);text-shadow:0 0 10px color-mix(in srgb,var(--ph) 60%,transparent)}
+  & .nowg .pr i{height:6px;border-radius:0;background:var(--phl)}
+  & .nowg .pr i::after{background:var(--ph);border-radius:0;box-shadow:0 0 8px var(--ph)}
+  & .nowg .nacts .btn{border:1px solid var(--phl);background:transparent;color:var(--ph);box-shadow:none;border-radius:3px;font:700 9px var(--arq-mono);letter-spacing:2px;text-transform:uppercase}
+  & .nowg .nacts .btn:hover{background:var(--phl)}
+  & .nowg .nacts .btn.p,& .nowg .nacts .btn.p:hover{background:var(--ph);color:var(--phd);border-color:var(--ph)}
+  & .nowg .nacts .btn.p svg{color:var(--phd);fill:var(--phd)}
+  & .nowg .nacts::after{content:"";position:absolute;left:22px;right:150px;bottom:12px;height:12px;background:repeating-linear-gradient(90deg,var(--ph) 0 10px,transparent 10px 14px) 0 0/60% 100% no-repeat,repeating-linear-gradient(90deg,var(--phl) 0 10px,transparent 10px 14px);opacity:.8}
+  & .h1 h2{color:var(--engr)}
