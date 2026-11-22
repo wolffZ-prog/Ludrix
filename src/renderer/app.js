@@ -181,7 +181,9 @@ const mq = window.matchMedia('(prefers-color-scheme: light)');
 let currentTheme = 'dark';
 const DEFAULT_FACE = 'arquivo';
 function faceInfo(id) { return (S.faces || []).find(f => f.id === id) || { id: id || DEFAULT_FACE, name: 'Ludrix', accent: '', layout: '' }; }
-function fileScheme() { const m = S.config.theme_mode || ''; return m === 'system' ? ((S.config.theme_schedule ? inLightWindow() : mq.matches) ? 'light' : 'dark') : m; }
+function fileDual() { const t = (S.themes || []).find(x => x.id === S.config.theme); return !!(t && (t.face || (t.schemes && t.schemes.length > 1))); }
+function fileScheme() { const m = S.config.theme_mode || ''; if (!m && !fileDual()) return ''; if (m === 'dark' || m === 'light') return m; const s = (S.config.theme_schedule ? inLightWindow() : mq.matches) ? 'light' : 'dark'; S._schedLast = s; return s; }
+function modeIsSystem() { const t = S.config.theme || 'system'; return t === 'system' || (t.startsWith('file:') && (S.config.theme_mode || 'system') === 'system'); }
 function applyTheme() {
   let t = S.config.theme || 'system';
   if (t === 'system') { t = (S.config.theme_schedule ? inLightWindow() : mq.matches) ? 'light' : 'dark'; S._schedLast = t; }
@@ -207,13 +209,13 @@ const LAYOUT_ALIAS = { taskbar: 'bottom', dock: 'bottom' };
 function normLayout(l) { return LAYOUT_ALIAS[l] || l || ''; }
 function setLayout(l) { if (l === themeLayout) return; themeLayout = l; applyChrome(); }
 function themeLay() { const o = S.config.nav_layout; if (['side', 'rail', 'sfloat', 'float', 'top', 'bottom'].includes(o)) return o; const l = normLayout(themeLayout); return ['top', 'rail', 'bottom'].includes(l) ? l : 'side'; }
-mq.addEventListener('change', () => { if ((S.config.theme || 'system') === 'system' || S.config.theme_mode === 'system') applyTheme(); });
+mq.addEventListener('change', () => { if (modeIsSystem()) applyTheme(); });
 function inLightWindow() {
   const [f, t] = [S.config.theme_light_from || '07:00', S.config.theme_light_to || '19:00'].map(x => { const [h, m] = String(x).split(':').map(Number); return (h || 0) * 60 + (m || 0); });
   const d = new Date(), n = d.getHours() * 60 + d.getMinutes();
   return f <= t ? (n >= f && n < t) : (n >= f || n < t);
 }
-setInterval(() => { if (S.config.theme_schedule && (S.config.theme || 'system') === 'system' && (inLightWindow() ? 'light' : 'dark') !== S._schedLast) applyTheme(); }, 30000);
+setInterval(() => { if (S.config.theme_schedule && modeIsSystem() && (inLightWindow() ? 'light' : 'dark') !== S._schedLast) applyTheme(); }, 30000);
 function applyAccent() {
   const mode = S.config.accent_mode || 'theme';
   if (mode === 'system' && S.sysAccent === undefined) { S.sysAccent = ''; api.post('/api/window', { cmd: 'sys_accent' }).then(r => { S.sysAccent = (r && r.hex) || ''; if (S.sysAccent) applyAccent(); }); }
@@ -2175,8 +2177,8 @@ function themesHtml(c) {
   return `
   <div class="sec"><h3>Tema</h3>
     <div class="frow"><div class="l"><b>Claro ou escuro</b><span><b style="display:inline;font-size:12px">Sistema</b> acompanha o ${OSN()}</span></div>
-      ${cfgSel('theme', [['system', 'Sistema'], ['dark', 'Escuro'], ['light', 'Claro']], c.theme || 'system')}</div>
-    ${(c.theme || 'system') === 'system' ? `<div class="frow"><div class="l"><b>Quando "Sistema"</b><span>Seguir o ${OSN()} troca junto com o modo claro/escuro dele; por horário usa as horas abaixo</span></div>
+      ${(c.theme || 'system').startsWith('file:') ? cfgSel('theme_mode', [['system', 'Sistema'], ['dark', 'Escuro'], ['light', 'Claro']], c.theme_mode || 'system') : cfgSel('theme', [['system', 'Sistema'], ['dark', 'Escuro'], ['light', 'Claro']], c.theme || 'system')}</div>
+    ${modeIsSystem() ? `<div class="frow"><div class="l"><b>Quando "Sistema"</b><span>Seguir o ${OSN()} troca junto com o modo claro/escuro dele; por horário usa as horas abaixo</span></div>
       ${cfgSel('theme_schedule', [[false, 'Seguir o ' + OSN()], [true, 'Por horário']], !!c.theme_schedule)}${c.theme_schedule ? `<span class="mut">claro das</span><input class="mi" style="width:70px" value="${esc(c.theme_light_from || '07:00')}" onchange="setCfg({theme_light_from:this.value})"><span class="mut">às</span><input class="mi" style="width:70px" value="${esc(c.theme_light_to || '19:00')}" onchange="setCfg({theme_light_to:this.value})">` : ''}</div>` : ''}
     ${faceRowHtml(c)}
     ${themeListHtml(c)}

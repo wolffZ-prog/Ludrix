@@ -55,7 +55,7 @@ A série 4.0 trocou o motor antigo (Python) por Electron + TypeScript, mantendo 
 - **Uma biblioteca só.** Jogos de PC, ROMs e jogos rápidos (Flash/HTML5) aparecem juntos, em grade alfabética com divisórias por letra, capas, categorias e filtros combináveis. Abas no alto (Biblioteca, Store, Emuladores…), busca ao lado, filtros em uma linha e cada capa com sistema, ano e última vez jogada. Um clique na capa abre o painel lateral com Jogar, tempo, pasta e gêneros; duplo clique abre os detalhes.
 - **Store alimentada por fontes.** Nenhum catálogo vem embutido. A Store só mostra o que as listas `.json`, páginas, coleções do archive.org, repositórios do GitHub ou pastas locais adicionadas pelo usuário oferecem. Download direto, hospedeiros e torrent (sem DHT, UPnP ou NAT-PMP).
 - **Emuladores prontos.** 25 sistemas e 45 emuladores catalogados, instalados do site oficial com um clique e guardados dentro da pasta do Ludrix. As ROMs entram na Biblioteca com capa e são abertas pelo emulador escolhido para aquele sistema.
-- **Uma cara embutida, a Padrão, e 30 caras como pacotes.** O Ludrix vem só com a **Padrão** (escuro e claro): fundo grafite com uma parede iridescente desfocada, painéis de vidro fumê (ou leitoso, no claro), cabeçalho editorial, lateral numerada e rótulos monoespaçados — mais a "Grafite (Legacy)" para quem prefere a antiga. As outras 30 caras (Apex, Sampler, Fatias, Circuito P&B, Hex Azul, Rádio Militar, Pegboard Vidro, Metal Verde…) não ficam dentro do programa: cada uma é um pacote `.lxtheme` assinado, com o seu próprio front end (lateral, barra em painel, dock de pads, fatias…), escuro e claro, que você importa em Ajustes › Aparência › Temas instalados (ou soltando o arquivo na janela). As fontes dos pacotes ficam em `temas/`; prontos, eles são distribuídos no `Ludrix-Temas-<versão>.zip`, separado do programa. Temas externos `.lxtheme` de terceiros continuam funcionando por cima da Padrão.
+- **Uma cara embutida, a Padrão, e 30 caras como pacotes.** O Ludrix vem só com a **Padrão** (escuro e claro): fundo grafite com uma parede iridescente desfocada, painéis de vidro fumê (ou leitoso, no claro), cabeçalho editorial, lateral numerada e rótulos monoespaçados — mais a "Grafite (Legacy)" para quem prefere a antiga. As outras 30 caras (Apex, Sampler, Fatias, Circuito P&B, Hex Azul, Rádio Militar, Pegboard Vidro, Metal Verde…) não ficam dentro do programa: cada uma é um pacote `.lxtheme` assinado, com o seu próprio front end (lateral, barra em painel, dock de pads, fatias…), escuro e claro, que você importa em Ajustes › Aparência › Temas instalados (ou soltando o arquivo na janela). Os pacotes são distribuídos à parte, no `Ludrix-Temas-<versão>.zip` — não fazem parte do código-fonte. Temas externos `.lxtheme` de terceiros continuam funcionando por cima da Padrão.
 - **Movimento leve.** As animações são curtas e independentes das configurações de animação do Windows; "Reduzir movimento" desliga tudo. Trocar de página é instantâneo, sem piscar nem deslocar o conteúdo.
 - **Perfis locais.** Cada pessoa com seu tema, aparência, exibição e preferências; a biblioteca, capas, saves e downloads são os mesmos para todos. Sem senha: ao abrir, o Ludrix pergunta quem vai jogar (opcional) e a troca fica no avatar da barra. Foto opcional (PNG até 64×64); perfis podem ser apagados a qualquer momento.
 - **Barra de navegação a gosto.** No alto (padrão), lateral só ícones, lateral com nomes, embaixo, ou **solta**: separada do conteúdo, com cantos arredondados.
@@ -116,7 +116,7 @@ A série 4.0 trocou o motor antigo (Python) por Electron + TypeScript, mantendo 
 
 O Ludrix vem com duas caras embutidas — **Padrão** (escuro e claro) e **Grafite (Legacy)**. Todo o resto é tema importado, de dois tipos:
 
-- **Pacote de cara** (`.lxtheme` com `theme.json{"face": "<cara>"}` + `face.css` + `dark.css` + `light.css` + `preview.png`): um front end completo, com a própria disposição (lateral, barra em painel, dock, fatias…), escuro e claro. As **30 caras oficiais** saem assim, uma por arquivo ou todas em `Ludrix-Caras-30.lxtheme`, assinadas, no `Ludrix-Temas-<versão>.zip` (separado do programa). Fontes em `temas/`, geradas por `tools/faces/gen.py` e empacotadas por `tools/faces/pack.py`.
+- **Pacote de cara** (`.lxtheme` com `theme.json{"face": "<cara>"}` + `face.css` + `dark.css` + `light.css` + `preview.png`): um front end completo, com a própria disposição (lateral, barra em painel, dock, fatias…), escuro e claro. As **30 caras oficiais** saem assim, uma por arquivo ou todas em `Ludrix-Caras-30.lxtheme`, assinadas, no `Ludrix-Temas-<versão>.zip` (separado do programa).
 - **Tema de cores** (`theme.json` com `vars`, destaque, layout da barra, ícones e, se quiser, `extra.css`, papéis de parede e fontes): o formato clássico, por cima da Padrão. Formato completo em [docs/TEMAS.md](docs/TEMAS.md).
 
 Importa-se em **Ajustes › Aparência › Temas instalados › Importar** (ou soltando o arquivo na janela); tema do sistema e agenda claro/escuro também estão lá.
@@ -127,8 +127,6 @@ Importa-se em **Ajustes › Aparência › Temas instalados › Importar** (ou s
     <td><img src="docs/screenshots/temas/todas-claro.jpg" alt="As 31 caras no claro"><br><sub>As mesmas, claro</sub></td>
   </tr>
 </table>
-
-Pranchas em tamanho de leitura: `docs/screenshots/temas/prancha-{escuro,claro}-1..4.jpg`.
 
 ## Fontes de jogos
 

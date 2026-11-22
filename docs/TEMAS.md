@@ -94,7 +94,7 @@ Antes de distribuir um tema, veja estas telas com ele aplicado: Biblioteca com c
 
 ## Pacotes de cara
 
-Além do tema de cores, um `.lxtheme` pode trazer uma **cara inteira** — o mesmo tipo de front end da Padrão, com outra disposição e outro desenho. É assim que as 30 caras oficiais são distribuídas (`entrega/temas/`, fontes em `temas/<cara>/`).
+Além do tema de cores, um `.lxtheme` pode trazer uma **cara inteira** — o mesmo tipo de front end da Padrão, com outra disposição e outro desenho. É assim que as 30 caras oficiais são distribuídas, no `Ludrix-Temas-<versão>.zip`, separado do programa.
 
 ```
 minha-cara/
@@ -105,7 +105,7 @@ minha-cara/
   preview.png    miniatura (690×440) mostrada em Ajustes
 ```
 
-`theme.json` aceita os mesmos campos do tema de cores (`name`, `description`, `author`, `accent`, `layout`, `swatch`, `tags`, `category`). Com `"face"` presente e `face.css` ao lado, o Ludrix serve `dark.css`/`light.css` + `face.css` em vez de `vars`+`extra.css`, e marca `body[data-face]` com o slug. Claro e escuro seguem o ajuste normal de tema. O jeito prático de produzir um pacote é escrever uma pele em `tools/faces/v2/<cara>.css` (sobre um esqueleto de `tools/faces/skel/`), registrar em `tools/faces/gen.py` e rodar `gen.py` + `pack.py`.
+`theme.json` aceita os mesmos campos do tema de cores (`name`, `description`, `author`, `accent`, `layout`, `swatch`, `tags`, `category`). Com `"face"` presente e `face.css` ao lado, o Ludrix serve `dark.css`/`light.css` + `face.css` em vez de `vars`+`extra.css`, e marca `body[data-face]` com o slug. Claro e escuro seguem o ajuste normal de tema. Um pacote novo pode ser feito copiando a estrutura da Padrão (`src/renderer/themes/arquivo/`) e trocando o slug no seletor raiz do `face.css`.
 
 ## Temas experimentais
 

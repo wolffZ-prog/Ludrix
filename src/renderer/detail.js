@@ -41,21 +41,46 @@ function renderDetail() {
     files = `<div class="dsec"><h3>${mirrors ? 'ESPELHOS — ESCOLHA UM' : 'ARQUIVOS DISPONÍVEIS'}</h3>${mirrors ? '<p class="mut" style="margin:0 0 8px">O mesmo build em hospedagens diferentes; o downloader embutido baixa o escolhido. Google Drive limita arquivos gigantes — prefira Gofile/buzzheavier.</p>' : ''}<div class="files">${d.files.map((f, i) => `<label class="file ${i === 0 ? 'on' : ''}"><input type="${/\.\d{3}$/.test(f.name) ? 'checkbox' : 'radio'}" name="f" value="${esc(f.name)}" ${i === 0 || /\.\d{3}$/.test(f.name) ? 'checked' : ''} onchange="this.closest('.files').querySelectorAll('.file').forEach(x=>x.classList.toggle('on',x.querySelector('input').checked))"><span class="n">${esc(f.basename)}</span><span class="s">${f.size ? fmt(f.size) : ''}</span></label>`).join('')}</div></div>`;
   }
   if (d.patches && d.patches.length) files += `<div class="dsec"><h3>PATCHES E EXTRAS</h3><div class="files">${d.patches.map((f, i) => `<div class="file" style="display:flex;align-items:center;gap:8px"><span style="flex:1;min-width:0"><b>${esc(f.name)}</b>${f.note ? `<br><small class="mut">${esc(f.note)}</small>` : ''}</span>${f.size ? `<small class="mut">${fmt(f.size)}</small>` : ''}<button class="btn s xs" onclick="api.post('/api/patch/download',{key:${jsq(key)},i:${i}}).then(r=>toast(r.error?'err':'ok',${jsq(f.name)},r.error||'Baixando — acompanhe na Fila.'))">${I.dl} Baixar</button></div>`).join('')}</div></div>`;
-  const kv = [
-    d.playtime ? ['Tempo jogado', d.playtime_h] : null, d.last_played ? ['Último jogo', ago(d.last_played)] : null, d.play_count ? ['Vezes jogado', String(d.play_count)] : null, d.last_session ? ['Última sessão', fmtTime(d.last_session)] : null, d.added_at && (d.installed || d.missing) ? ['Adicionado', new Date(d.added_at * 1000).toLocaleDateString('pt-BR')] : null,
-    ['Desenvolvedora', m.developer || d.creator], ['Publicadora', m.publisher], ['Ano', m.year || d.year], ['Gêneros', genres.join(', ')],
-    ['Modos', m.modes], ['Série', m.series], ['Sistema', d.system_name], d.emu && d.emu.emulator_title ? ['Emulador', d.emu.installed ? d.emu.emulator_title : d.emu.emulator_title + ' (não instalado)'] : null, ['Versão', d.version], d.size ? ['Tamanho', fmt(d.size)] : isLocal && d.dir && !d.missing ? ['Tamanho', `<a href="#" onclick="calcSize(${jsq(key)},this);return false" style="color:var(--accent2)">Calcular</a>`] : null,
-    isLocal ? ['Origem', d.source === 'playnite' ? 'Playnite' : 'Manual'] : null, d.meta && [].concat(m.source || []).length ? ['Metadados', [].concat(m.source || []).map(esc).join(', ')] : null,
-    ['Repositório', (S.repos.find(r => r.id === d.repo) || {}).name || d.repo], d.installed && !d.missing && !isUri(d.exe) ? ['Pasta', d.dir] : null, d.installed || d.missing ? [isUri(d.exe) ? 'Abre por' : isRom ? 'Arquivo' : 'Executável', isUri(d.exe) ? `${uriName(d.exe)} (${d.exe})` : d.exe] : null, d.args ? ['Argumentos', d.args] : null, d.workdir ? ['Pasta de trabalho', d.workdir] : null, d.source === 'playnite' ? ['Origem', 'Playnite' + (d.store_src ? ' · ' + d.store_src : '')] : d.store_src ? ['Origem', d.store_src] : null,
-    m.wiki_url ? ['Wikipedia', `<a href="#" onclick="api.post('/api/open_url',{url:${jsq(m.wiki_url)}});return false" style="color:var(--accent2)">${esc(m.wiki_url.replace(/^https?:\/\//, ''))}</a>`] : null,
-    m.gog_url ? ['GOG', `<a href="#" onclick="api.post('/api/open_url',{url:${jsq(m.gog_url)}});return false" style="color:var(--accent2)">${esc(m.gog_name || 'página na GOG')}</a>`] : null,
-    m.steam_appid ? ['Steam', `<a href="#" onclick="api.post('/api/open_url',{url:'https://store.steampowered.com/app/${esc(String(m.steam_appid))}'});return false" style="color:var(--accent2)">${esc(m.steam_name || 'página na Steam')}</a>`] : null,
-    d.title_orig && d.title_orig !== d.title ? ['Nome original', `${esc(d.title_orig)} <small style="color:var(--muted)">(${d.title_locked ? 'renomeado por você' : 'corrigido pelos metadados'})</small>`] : null,
-    m.cover_src ? ['Capa', { steam: 'Steam', gog: 'GOG', libretro: 'boxart oficial (' + esc(S.systems[m.libretro_sys] || m.libretro_sys || d.system_name || '') + ')', wikipedia: 'Wikipedia', steamgriddb: 'SteamGridDB', manual: 'link seu' }[m.cover_src] || esc(m.cover_src)] : null,
-    ...(m.links || []).map(l => ['Link', `<a href="#" onclick="api.post('/api/open_url',{url:${jsq(l.url)}});return false" style="color:var(--accent2)">${esc(l.name || l.url.replace(/^https?:\/\//, ''))}</a>`]),
-    m.status || m.score ? ['Para você', `${m.status ? `<span class="pill">${esc(statusName(m.status))}</span>` : ''}${scoreHtml(m.score, 'big')} <a href="#" onclick="editGame(${jsq(key)},'avancado');return false" style="color:var(--accent2);margin-left:6px">editar</a>`] : null,
-    m.notes ? ['Notas', `<span style="white-space:pre-wrap">${esc(m.notes)}</span> <a href="#" onclick="editGame(${jsq(key)},'avancado');return false" style="color:var(--accent2);margin-left:6px">editar</a>`] : null
+  const link = (url, label) => `<a href="#" class="dlink" onclick="api.post('/api/open_url',{url:${jsq(url)}});return false">${I.ext}<span>${esc(label)}</span></a>`;
+  const act = [
+    d.playtime ? ['Tempo jogado', d.playtime_h, I.clock || ''] : null, d.last_played ? ['Último jogo', ago(d.last_played)] : null, d.play_count ? ['Vezes jogado', String(d.play_count)] : null, d.last_session ? ['Última sessão', fmtTime(d.last_session)] : null,
+    d.added_at && (d.installed || d.missing) ? ['Adicionado', new Date(d.added_at * 1000).toLocaleDateString('pt-BR')] : null
   ].filter(x => x && x[1]);
+  const facts = [
+    ['Desenvolvedora', m.developer || d.creator], ['Publicadora', m.publisher], ['Ano', m.year || d.year], ['Sistema', d.system_name], d.emu && d.emu.emulator_title ? ['Emulador', d.emu.installed ? d.emu.emulator_title : d.emu.emulator_title + ' (não instalado)'] : null,
+    ['Modos', m.modes], ['Série', m.series], ['Versão', d.version], d.size ? ['Tamanho', fmt(d.size)] : isLocal && d.dir && !d.missing ? ['Tamanho', `<a href="#" onclick="calcSize(${jsq(key)},this);return false">Calcular</a>`, 1] : null
+  ].filter(x => x && x[1]);
+  const copyBtn = v => `<button class="ib dcopy" title="Copiar" onclick="navigator.clipboard.writeText(${jsq(v)}).then(()=>toast('ok','Copiado',${jsq(v)}))">${I.copy}</button>`;
+  const tech = [
+    d.installed && !d.missing && !isUri(d.exe) ? ['Pasta', d.dir, 'path'] : null,
+    d.installed || d.missing ? [isUri(d.exe) ? 'Abre por' : isRom ? 'Arquivo' : 'Executável', isUri(d.exe) ? `${uriName(d.exe)} (${d.exe})` : d.exe, 'path'] : null,
+    d.args ? ['Argumentos', d.args, 'path'] : null, d.workdir ? ['Pasta de trabalho', d.workdir, 'path'] : null,
+    isLocal ? ['Origem', d.source === 'playnite' ? 'Playnite' + (d.store_src ? ' · ' + d.store_src : '') : 'Manual'] : d.source === 'playnite' ? ['Origem', 'Playnite' + (d.store_src ? ' · ' + d.store_src : '')] : d.store_src ? ['Origem', d.store_src] : null,
+    ['Repositório', (S.repos.find(r => r.id === d.repo) || {}).name || d.repo],
+    d.meta && [].concat(m.source || []).length ? ['Metadados', [].concat(m.source || []).join(', ')] : null,
+    m.cover_src ? ['Capa', { steam: 'Steam', gog: 'GOG', libretro: 'boxart oficial (' + (S.systems[m.libretro_sys] || m.libretro_sys || d.system_name || '') + ')', wikipedia: 'Wikipedia', steamgriddb: 'SteamGridDB', manual: 'link seu' }[m.cover_src] || m.cover_src] : null,
+    d.title_orig && d.title_orig !== d.title ? ['Nome original', `${esc(d.title_orig)} <small class="mut">(${d.title_locked ? 'renomeado por você' : 'corrigido pelos metadados'})</small>`, 'html'] : null
+  ].filter(x => x && x[1]);
+  const links = [
+    m.wiki_url ? link(m.wiki_url, 'Wikipedia') : '', m.gog_url ? link(m.gog_url, m.gog_name ? 'GOG · ' + m.gog_name : 'GOG') : '',
+    m.steam_appid ? link('https://store.steampowered.com/app/' + String(m.steam_appid), m.steam_name ? 'Steam · ' + m.steam_name : 'Steam') : '',
+    ...(m.links || []).map(l => link(l.url, l.name || l.url.replace(/^https?:\/\//, '')))
+  ].filter(Boolean);
+  const you = (m.status || m.score || m.notes) ? `<div class="dcard dyou"><div class="dch"><h4>Para você</h4><a href="#" onclick="editGame(${jsq(key)},'avancado');return false">${I.edit}<span>editar</span></a></div>${m.status || m.score ? `<div class="row" style="align-items:center;gap:8px;flex-wrap:wrap">${m.status ? `<span class="pill">${esc(statusName(m.status))}</span>` : ''}${scoreHtml(m.score, 'big')}</div>` : ''}${m.notes ? `<p class="dnotes">${esc(m.notes)}</p>` : ''}</div>` : '';
+  const infoHtml = `
+      ${act.length ? `<div class="dstats">${act.map(([k, v]) => `<div class="dstat"><b>${esc(v)}</b><small>${k}</small></div>`).join('')}</div>` : ''}
+      <div class="dcols">
+        <div class="dcol">
+          <div class="desc">${paras(m.summary || d.description || 'Sem descrição. Clique em "Buscar metadados".')}</div>
+          ${genres.length ? `<div class="dgenres">${genres.map(g => `<span class="chip">${esc(g)}</span>`).join('')}</div>` : ''}
+          ${facts.length ? `<div class="dfacts">${facts.map(([k, v, raw]) => `<div class="dfact"><small>${k}</small><b>${raw ? v : esc(v)}</b></div>`).join('')}</div>` : ''}
+        </div>
+        <div class="dcol dside">
+          ${tech.length ? `<div class="dcard"><div class="dch"><h4>${d.installed || isRom ? 'Instalação' : 'Origem'}</h4></div><div class="dtech">${tech.map(([k, v, t]) => `<div class="drow${t === 'path' ? ' path' : ''}"><small>${k}</small><span${t === 'path' ? ' class="mono"' : ''}>${t === 'html' ? v : esc(v)}</span>${t === 'path' ? copyBtn(v) : ''}</div>`).join('')}</div></div>` : ''}
+          ${links.length ? `<div class="dcard"><div class="dch"><h4>Links</h4></div><div class="dlinks">${links.join('')}</div></div>` : ''}
+          ${you}
+        </div>
+      </div>`;
   const lbl = [d.system_name || 'PC', m.developer || d.creator, m.year || d.year].filter(Boolean).map(esc).join(' &nbsp;·&nbsp; ') + (live ? ' &nbsp;·&nbsp; <b>Jogando agora</b>' : d.missing ? ' &nbsp;·&nbsp; <b style="color:var(--amber)">Arquivo não encontrado</b>' : d.installed || isRom ? ' &nbsp;·&nbsp; <b>Instalado</b>' : (S.byKey[d.key] || {}).link_dead ? ' &nbsp;·&nbsp; <b style="color:var(--amber)" title="O link direto não respondeu no último teste da fonte">Link fora do ar</b>' : '');
   $('#detail').classList.toggle('art', !!(m.hero || m.hero_url || m.background_file));
   const dimg = !!((S.byKey[key] || {}).hero_ok || m.hero || m.hero_url || m.background_file) && (S.config.detail_art || 'off') !== 'off';
@@ -69,10 +94,7 @@ function renderDetail() {
       ${d.emu && !d.emu.installed ? `<div class="note"><b>${esc(d.emu.emulator_title)} não instalado.</b> <a href="#" onclick="setView('emulation');return false" style="color:var(--accent2)">Instalar na aba Emuladores</a> para jogar.</div>` : ''}
       ${srcs}
       ${dtabsHtml(d, m)}
-      <div class="dpane ${(S.dtab || 'about') === 'about' ? 'on' : ''}" data-pane="about">
-      <div class="desc" style="margin-top:14px">${paras(m.summary || d.description || 'Sem descrição. Clique em "Buscar metadados".')}</div>
-      <div class="dsec"><h3>INFORMAÇÕES</h3><div class="kv">${kv.map(([k, v]) => `<b>${k}</b><span>${['Wikipedia', 'GOG', 'Steam', 'Nome original', 'Capa', 'Link', 'Notas', 'Tamanho', 'Para você'].includes(k) ? v : esc(v)}</span>`).join('')}</div></div>
-      </div>
+      <div class="dpane ${(S.dtab || 'about') === 'about' ? 'on' : ''}" data-pane="about">${infoHtml}</div>
       <div class="dpane ${S.dtab === 'files' ? 'on' : ''}" data-pane="files">${filesHtml(key, d, files)}</div>
       <div class="dpane ${S.dtab === 'mods' ? 'on' : ''}" data-pane="mods"><div class="dsec" id="dMods"><p class="mut">Procurando ferramentas e sites de mods…</p></div></div>
       <div class="dpane ${S.dtab === 'shots' ? 'on' : ''}" data-pane="shots">${shotsHtml(key, d, m)}</div>
