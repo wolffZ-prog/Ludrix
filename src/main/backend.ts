@@ -5,7 +5,6 @@ import os from 'node:os';
 import v8 from 'node:v8';
 import vm from 'node:vm';
 import * as electron from 'electron';
-import AdmZip from 'adm-zip';
 import * as P from './paths';
 import * as log from './log';
 import * as util from './util';
@@ -1247,11 +1246,26 @@ class Backend {
         return ok;
     }
     updateTold = '';
+    updateChecking: Promise<void> | null = null;
+    /** Checa atualizações se a última checagem tiver mais de `maxAgeSec` (0 = sempre). Nunca roda duas ao mesmo tempo. */
+    async maybeCheckUpdates(maxAgeSec = 600) {
+        const up = require('./server2').frontFor(this).updates;
+        const age = Math.floor(Date.now() / 1000) - Number(up.state.checked_at || 0);
+        if (maxAgeSec > 0 && age < maxAgeSec)
+            return false;
+        if (!this.updateChecking)
+            this.updateChecking = this.autoCheckUpdates().finally(() => { this.updateChecking = null; });
+        await this.updateChecking;
+        return true;
+    }
     async autoCheckUpdates() {
         try {
             const front = require('./server2').frontFor(this);
             const up = front.updates;
+            if (!(await this.online(true)))
+                return;
             await up.check(true);
+            this.push({ type: 'updates_state' });
             const m = up.available || up.remote || {};
             const v = m.version ? String(m.version) + (Number(m.rev || 0) ? '-hf' + Number(m.rev) : '') : '';
             if (v && v !== this.updateTold) {
@@ -1291,18 +1305,20 @@ class Backend {
         const tick = async () => {
             if (this.closing)
                 return;
-            let next = 6 * 3600;
+            // antes: 6 h entre checagens — a atualização demorava a aparecer. Agora: 30 min, e também ao abrir
+            // Ajustes › Sistema e quando a janela volta ao foco (ver /api/updates e updates/poke).
+            let next = 1800;
             if (!this.store.config.update_auto_check)
                 next = 600;
             else if (!(await this.online(true)))
                 next = waits.length ? waits.shift()! : 1800;
             else {
-                await this.autoCheckUpdates();
+                await this.maybeCheckUpdates(0);
                 waits = [60, 300, 900];
             }
             setTimeout(tick, next * 1000).unref?.();
         };
-        setTimeout(tick, 20_000).unref?.();
+        setTimeout(tick, 8_000).unref?.();
     }
     alive(pid) {
         try {
@@ -2336,8 +2352,13 @@ class Backend {
         this.act('');
         return { ok: true, added, fixed, total: Object.keys(data).length };
     }
-    autoBackupDir(): string {
-        return String(this.store.config.auto_backup_dir || '') || path.join(P.BACKUPS, 'auto');
+    /** Pasta dos backups (manual e automático). `backup_dir` escolhido pelo usuário; senão <dados>/backups/auto. */
+    backupDir(): string {
+        return String(this.store.config.backup_dir || this.store.config.auto_backup_dir || '') || path.join(P.BACKUPS, 'auto');
+    }
+    setBackupDir(dir: string) {
+        this.store.setConfig({ backup_dir: String(dir || ''), auto_backup_dir: '' });
+        return this.backupDir();
     }
     private backupBusy = false;
     async autoBackup(force = false) {
@@ -2346,13 +2367,14 @@ class Backend {
             return { skipped: true };
         if (this.backupBusy)
             return { error: 'Já tem um backup em andamento.' };
-        const dir = this.autoBackupDir();
+        const dir = this.backupDir();
         this.backupBusy = true;
         try {
             this.store.flush();
             const t0 = Date.now();
-            const r = await backup.exportData(dir, VERSION);
-            const olds = (await fs.promises.readdir(dir)).filter((n) => /^Ludrix-dados-.*\.zip$/.test(n)).sort();
+            const r = await backup.exportData(dir, VERSION, 'auto');
+            // só os automáticos são podados (ficam 4); os feitos à mão nunca são apagados
+            const olds = (await fs.promises.readdir(dir)).filter((n) => backup.AUTO_NAME.test(n)).sort();
             for (const f of olds.slice(0, Math.max(0, olds.length - 4)))
                 await fs.promises.rm(path.join(dir, f), { force: true });
             this.store.setConfig({ auto_backup_at: util.now(), auto_backup_last: r.path });
@@ -2370,17 +2392,35 @@ class Backend {
             this.backupBusy = false;
         }
     }
-    async dataExport() {
-        const dest = await dialogs.pickFolder(P.ROOT);
-        if (!dest)
-            return { cancel: true };
-        this.store.flush();
-        return await backup.exportData(String(dest), VERSION);
+    /** Backup manual: pergunta a pasta (sugere a última usada) e gera Ludrix-backup-<data>.zip lá. */
+    async dataExport(dest: string | null = null) {
+        if (this.backupBusy)
+            return { error: 'Já tem um backup em andamento.' };
+        let dir = dest ? String(dest) : '';
+        if (!dir) {
+            const picked = await dialogs.pickFolder(String(this.store.config.backup_last_dir || '') || this.backupDir());
+            if (!picked)
+                return { cancel: true };
+            dir = String(picked);
+        }
+        this.backupBusy = true;
+        try {
+            this.store.flush();
+            const r = await backup.exportData(dir, VERSION, 'manual');
+            this.store.setConfig({ backup_last_dir: dir, backup_manual_at: util.now(), backup_manual_last: r.path });
+            return r;
+        }
+        catch (e: any) {
+            return { error: String(e?.message || e) };
+        }
+        finally {
+            this.backupBusy = false;
+        }
     }
     async dataInspect(file: string | null) {
         let p = file;
         if (!p) {
-            p = await dialogs.pickFile('backup', P.ROOT);
+            p = await dialogs.pickFile('backup', String(this.store.config.backup_last_dir || '') || this.backupDir());
             if (!p)
                 return { cancel: true };
         }
@@ -2565,95 +2605,6 @@ class Backend {
         setTimeout(() => this.windowHooks?.quit?.(), 1200);
         return { ok: true };
     }
-    BACKUP_DIRS = ['data', 'themes'];
-    BACKUP_EXTRA = ['data/cache/covers', 'data/cache/meta'];
-    BACKUP_SKIP = ['data/cache/', 'data/tools/', 'data/bin/', 'data/updates/', 'data/pfx/'];
-    backupExport(dest: string | null = null) {
-        const st = backup.stamp('compact');
-        let out: string;
-        if (dest) {
-            const d = String(dest);
-            out = d.toLowerCase().endsWith('.zip') ? d : path.join(d, `ludrix-backup-${st}.zip`);
-        }
-        else
-            out = path.join(P.UPDATES, 'backup', `ludrix-backup-${st}.zip`);
-        fs.mkdirSync(path.dirname(out), { recursive: true });
-        let n = 0;
-        const zip = new AdmZip();
-        const walk = (d: string, fn: (f: string) => void) => {
-            let ents: fs.Dirent[] = [];
-            try {
-                ents = fs.readdirSync(d, { withFileTypes: true });
-            }
-            catch {
-                return;
-            }
-            for (const e of ents) {
-                const f = path.join(d, e.name);
-                if (e.isDirectory())
-                    walk(f, fn);
-                else if (e.isFile())
-                    fn(f);
-            }
-        };
-        for (const rel of [...this.BACKUP_DIRS, ...this.BACKUP_EXTRA]) {
-            const base = path.join(P.ROOT, rel);
-            if (!fs.existsSync(base))
-                continue;
-            walk(base, (f) => {
-                const relp = path.relative(P.ROOT, f).split(path.sep).join('/');
-                const ext = path.extname(f);
-                if (ext === '.tmp' || ext === '.log' || relp.split('/').some((d) => d === 'webview' || d === 'chromium' || d === 'webview-console' || d === 'chromium-console'))
-                    return;
-                if (rel === 'data' && this.BACKUP_SKIP.some((s) => relp.startsWith(s)))
-                    return;
-                zip.addFile(relp, fs.readFileSync(f));
-                n += 1;
-            });
-        }
-        zip.addFile('ludrix-backup.json', Buffer.from(JSON.stringify({ version: VERSION, at: util.now(), files: n }), 'utf8'));
-        zip.writeZip(out);
-        return { ok: true, path: out, size: fs.statSync(out).size, files: n };
-    }
-    async backupImport(file: string | null = null) {
-        let p = file;
-        if (!p) {
-            p = await dialogs.pickFile('archive', path.join(P.UPDATES, 'backup'));
-            if (!p)
-                return { cancel: true };
-        }
-        let zip: AdmZip;
-        try {
-            if (!fs.existsSync(String(p)))
-                throw new Error('x');
-            zip = new AdmZip(String(p));
-        }
-        catch {
-            return { error: 'Isso não é um .zip válido' };
-        }
-        const entries = zip.getEntries();
-        const names = entries.map((e) => e.entryName);
-        if (!names.includes('ludrix-backup.json') && !names.some((x) => x.startsWith('data/')))
-            return { error: 'Esse .zip não parece um backup do Ludrix (não tem data/ nem ludrix-backup.json)' };
-        const okRoots = [...this.BACKUP_DIRS, ...this.BACKUP_EXTRA, 'cache/covers', 'cache/meta'];
-        const root = path.resolve(P.ROOT);
-        let n = 0;
-        for (const e of entries) {
-            const name = e.entryName;
-            if (name.endsWith('/') || name === 'ludrix-backup.json' || !okRoots.some((r) => name.startsWith(r)) || name.includes('..'))
-                continue;
-            const destName = name.startsWith('cache/') ? 'data/' + name : name;
-            const target = path.resolve(P.ROOT, destName);
-            if (!target.startsWith(root + path.sep))
-                continue;
-            fs.mkdirSync(path.dirname(target), { recursive: true });
-            fs.writeFileSync(target, e.getData());
-            n += 1;
-        }
-        this.store.setConfig({ pending_restart: [] });
-        setTimeout(() => this.restartApp(), 1200);
-        return { ok: true, files: n, restart: true };
-    }
     restartApp() {
         this.store.flush();
         try {
@@ -2771,6 +2722,12 @@ class Backend {
     }
     static OPEN_DOC_EXTS = new Set(['.txt', '.log', '.json', '.md', '.csv', '.ini', '.cfg', '.yaml', '.yml', '.png', '.jpg', '.jpeg', '.webp']);
     openPath(target: any, key = '') {
+        // nomes das pastas do Ludrix (data, themes, …) valem mesmo com os dados fora da pasta do programa
+        const NAMED: Record<string, string> = { data: P.DATA, themes: P.THEMES, downloads: P.DOWNLOADS, games: this.store.gamesDir() || P.GAMES, emulation: P.EMU, backups: P.BACKUPS, updates: P.UPDATES, cache: P.CACHE, '.': P.ROOT };
+        const tn = String(target || '').trim().replace(/[\\/]+$/, '');
+        const m = /^([a-z.]+)(?:[\\/](.+))?$/.exec(tn);
+        if (m && NAMED[m[1]])
+            target = m[2] ? path.join(NAMED[m[1]], m[2]) : NAMED[m[1]]; // 'data/ludrix.log' → <dados>/ludrix.log
         const cands: any[] = [target];
         const info = key ? this.store.lib(key) : null;
         if (info) {

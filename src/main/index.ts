@@ -466,6 +466,80 @@ function updateGuard() {
     electron.app.exit(0);
     return true;
 }
+/**
+ * 4.4.0 — migração única: dados saem da pasta do programa (data\, themes\) para %APPDATA%\.ludrixdata e os restos de
+ * versões antigas são apagados. Roda antes de tudo (ensureDirs/log/boot). Devolve linhas para o log.
+ * TODO(4.6): remover esta função e o arquivo migrated-4.4.json — todo mundo já terá passado pela 4.4.
+ */
+function migrateData44(): string[] {
+    const out: string[] = [];
+    if (!P.FROZEN || !P.DATA_EXTERNAL)
+        return out;
+    const marker = path.join(P.DATA, 'migrated-4.4.json');
+    if (fs.existsSync(marker))
+        return out;
+    const cur = String(backendMod.VERSION || '');
+    const oldData = path.join(P.ROOT, 'data'), oldThemes = path.join(P.ROOT, 'themes');
+    const rm = (p: string) => { try { if (fs.existsSync(p)) { fs.rmSync(p, { recursive: true, force: true }); return true; } } catch (e: any) { out.push(`não apaguei ${p}: ${e?.message || e}`); } return false; };
+    const move = (src: string, dst: string) => {
+        fs.mkdirSync(path.dirname(dst), { recursive: true });
+        try { fs.renameSync(src, dst); }
+        catch { fs.cpSync(src, dst, { recursive: true, force: true }); fs.rmSync(src, { recursive: true, force: true }); }
+    };
+    // o que não vale levar: cache (refeito sozinho), arquivos de instância/boot/log e os restos do atualizador
+    const skipMove = new Set(['cache', 'instance.json', 'boot.json', 'ludrix.log', 'ludrix.log.1', 'integrity-state.json']);
+    let n = 0;
+    try {
+        const hadOld = fs.existsSync(path.join(oldData, 'config.json'));
+        const hasNew = fs.existsSync(path.join(P.DATA, 'config.json'));
+        if (hadOld && !hasNew) {
+            fs.mkdirSync(P.DATA, { recursive: true });
+            let moved = 0;
+            for (const e of fs.readdirSync(oldData)) {
+                if (skipMove.has(e))
+                    continue;
+                const src = path.join(oldData, e), dst = path.join(P.DATA, e);
+                if (e === 'updates') {
+                    // só pacotes .lxup ainda não aplicados e o resultado da última atualização; backup/seed/tmp antigos ficam para trás
+                    fs.mkdirSync(dst, { recursive: true });
+                    for (const u of fs.readdirSync(src)) {
+                        const m = /(\d+\.\d+\.\d+)/.exec(u);
+                        const applied = m && require('./updater').vcmp(m[1], cur) <= 0;
+                        if ((/\.lxup$/i.test(u) && !/^seed-/i.test(u) && !applied) || u === 'last_result.json' || u === 'theme.json')
+                            try { move(path.join(src, u), path.join(dst, u)); moved++; } catch { }
+                    }
+                    continue;
+                }
+                if (fs.existsSync(dst))
+                    continue;
+                try { move(src, dst); moved++; }
+                catch (err: any) { out.push(`não movi ${e}: ${err?.message || err}`); }
+            }
+            out.push(`dados movidos de ${oldData} para ${P.DATA} (${moved} itens)`);
+            if (fs.existsSync(oldThemes) && !fs.existsSync(P.THEMES)) {
+                try { move(oldThemes, P.THEMES); out.push('temas movidos para ' + P.THEMES); }
+                catch (err: any) { out.push(`temas: ${err?.message || err}`); }
+            }
+            // limpeza do que sobrou na pasta do programa (cache, backups do atualizador, versões antigas)
+            for (const p of [oldData, oldThemes])
+                if (rm(p))
+                    n++;
+        }
+        else if (hadOld && hasNew)
+            out.push(`aviso: existem dados em ${oldData} e em ${P.DATA}; usando ${P.DATA} (a pasta antiga não foi tocada)`);
+        for (const p of [path.join(P.ROOT, 'app.old'), path.join(P.ROOT, 'runtime.old'), path.join(P.ROOT, 'app.bak'), path.join(P.ROOT, 'runtime.bak'), path.join(P.ROOT, 'python'), path.join(P.ROOT, 'engine'), path.join(P.ROOT, 'ludrix.log'), path.join(P.ROOT, 'updater.log')])
+            if (rm(p))
+                n++;
+        if (n)
+            out.push(`restos de versões antigas removidos (${n})`);
+        fs.mkdirSync(P.DATA, { recursive: true });
+        fs.writeFileSync(marker, JSON.stringify({ at: Date.now() / 1000, from: hadOld ? oldData : '', version: cur }), 'utf8');
+    }
+    catch (e: any) {
+        out.push(`migração 4.4 falhou: ${e?.message || e}`);
+    }
+    return out;
+}
 function migrateLegacy() {
     if (!P.FROZEN)
         return;
@@ -509,10 +583,13 @@ function hardenWebContents() {
     electron.session.defaultSession.setPermissionCheckHandler((_wc, permission) => ALLOWED.has(permission));
 }
 async function main() {
+    const mig = migrateData44();
     P.ensureDirs();
     log.initLog();
     hardenWebContents();
-    log.info('Ludrix (Electron) iniciando em %s', P.ROOT);
+    log.info('Ludrix (Electron) iniciando em %s · dados em %s', P.ROOT, P.DATA);
+    for (const m of mig)
+        log.info('4.4: %s', m);
     if (updateGuard())
         return;
     const safe = CONSOLE ? false : P.bootBegin();

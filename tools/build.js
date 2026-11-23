@@ -142,12 +142,31 @@ function electronDist() {
         die('node_modules/electron/dist não encontrado — rode npm ci');
     return d;
 }
-async function cmdRuntime(dst = path.join(OUT, 'stage', 'runtime')) {
-    const src = electronDist();
+/** Pasta do Electron win32-x64; fora do Windows x64 baixa (e guarda em cache) o zip oficial. Só 64 bits: o suporte a x86 foi descartado na 4.4. */
+async function electronDistFor(arch) {
+    if (!arch || (arch === 'x64' && process.arch === 'x64' && WIN))
+        return electronDist();
+    if (arch !== 'x64')
+        die('só x64 é suportado (x86 descartado na 4.4)');
+    const ver = JSON.parse(fs.readFileSync(path.join(ROOT, 'node_modules', 'electron', 'package.json'), 'utf8')).version;
+    const dir = path.join(CACHE, `electron-${ver}-win32-${arch}`);
+    if (fs.existsSync(path.join(dir, 'electron.exe')))
+        return dir;
+    const { downloadArtifact } = require(path.join(ROOT, 'node_modules', '@electron', 'get'));
+    log(`baixando Electron ${ver} win32-${arch}…`);
+    const zip = await downloadArtifact({ version: ver, platform: 'win32', arch, artifactName: 'electron' });
+    rmrf(dir);
+    fs.mkdirSync(dir, { recursive: true });
+    new (AdmZip())(zip).extractAllTo(dir, true);
+    return dir;
+}
+async function cmdRuntime(dst = path.join(OUT, 'stage', 'runtime'), arch = '') {
+    const src = await electronDistFor(arch);
     rmrf(dst);
     copyTree(src, dst, (p, e) => !(e.isFile() && e.name === 'default_app.asar'));
-    const exe = path.join(dst, WIN ? 'electron.exe' : 'electron');
-    const target = path.join(dst, WIN ? 'Ludrix.exe' : 'Ludrix');
+    const winOut = WIN || !!arch;
+    const exe = path.join(dst, winOut ? 'electron.exe' : 'electron');
+    const target = path.join(dst, winOut ? 'Ludrix.exe' : 'Ludrix');
     fs.renameSync(exe, target);
     const shim = path.join(dst, 'resources', 'app');
     fs.mkdirSync(shim, { recursive: true });
@@ -197,16 +216,50 @@ async function cmdFolder() {
     rmrf(folder);
     fs.mkdirSync(folder, { recursive: true });
     cmdApp(path.join(folder, 'app'));
-    await cmdRuntime(path.join(folder, 'runtime'));
+    await cmdRuntime(path.join(folder, 'runtime'), 'x64');
     const bin = path.join(ROOT, 'src', 'main', 'assets', 'bin');
     for (const f of ['Ludrix.exe', 'LudrixConsole.exe'])
         fs.copyFileSync(path.join(bin, f), path.join(folder, f));
-    for (const d of ['data', 'games', 'emulation', 'downloads'])
+    for (const d of ['games', 'emulation', 'downloads'])
         fs.mkdirSync(path.join(folder, d), { recursive: true });
-    fs.writeFileSync(path.join(folder, 'LEIA-ME.txt'), `LudrixHub ${v}\r\n\r\nAbra Ludrix.exe. Tudo fica nesta pasta (jogos, configurações, emuladores).\r\nLudrixConsole.exe abre o modo console (controle).\r\nAtualizações: dentro do Ludrix, em Ajustes > Checar atualizações.\r\n`);
+    fs.writeFileSync(path.join(folder, 'LEIA-ME.txt'), `LudrixHub ${v}\r\n\r\nAbra Ludrix.exe. Jogos, emuladores e downloads ficam nesta pasta; ajustes, biblioteca, saves copiados e backups ficam em %APPDATA%\\.ludrixdata.\r\nQuer tudo dentro desta pasta (pendrive, HD externo)? Crie um arquivo vazio chamado portable.txt ao lado de Ludrix.exe antes de abrir.\r\nLudrixConsole.exe abre o modo console (controle).\r\nAtualizações: dentro do Ludrix, em Ajustes > Sistema > Checar atualizações.\r\n`);
     rmrf(path.join(OUT, 'stage'));
     log('pasta pronta:', folder);
     return folder;
+}
+
+/* ------------------------------ setup (NSIS) ------------------------------ */
+function makensis() {
+    const cands = WIN
+        ? ['makensis.exe', path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'NSIS', 'makensis.exe'), path.join(process.env.ProgramFiles || 'C:\\Program Files', 'NSIS', 'makensis.exe'), path.join(process.env.LOCALAPPDATA || '', 'Programs', 'NSIS', 'makensis.exe')]
+        : ['makensis'];
+    for (const c of cands) {
+        const r = cp.spawnSync(c, ['-VERSION'], { encoding: 'utf8', shell: false });
+        if (!r.error && r.status === 0)
+            return c;
+    }
+    return '';
+}
+/** LudrixHub-Setup-<v>-x64.exe: instalador simples (pasta à escolha, sem admin, atalhos, desinstalador que preserva jogos). */
+async function cmdSetup() {
+    const arch = 'x64';
+    const nsis = makensis();
+    if (!nsis)
+        die('setup: NSIS não encontrado. Instale com  winget install NSIS.NSIS  (Windows) ou  apt install nsis  (Linux) e rode de novo.', 6);
+    const v = vtag();
+    const folder = path.join(rel(), 'Ludrix');
+    if (!fs.existsSync(path.join(folder, 'runtime')))
+        await cmdFolder();
+    const out = path.join(rel(), `LudrixHub-Setup-${v}-${arch}.exe`);
+    const script = path.join(ROOT, 'tools', 'setup.nsi');
+    const icon = path.join(ROOT, 'src', 'main', 'assets', 'icons', 'icon.ico');
+    const defs = [`-DVERSION=${version()}`, `-DARCH=${arch}`, `-DSRC=${folder}`, `-DOUT=${out}`, `-DICON=${icon}`];
+    const opts = ['-V2', '-NOCD', ...defs].map((o) => (WIN ? '/' + o.slice(1) : o)); // makensis.exe usa /D, no Linux -D
+    const r = cp.spawnSync(nsis, [...opts, script], { stdio: 'inherit', cwd: ROOT });
+    if (r.error || r.status !== 0)
+        die('setup: makensis falhou' + (r.error ? ' (' + r.error.message + ')' : ' (código ' + r.status + ')'), 6);
+    log('setup:', out, `(${Math.round(fs.statSync(out).size / 1024 / 1024)} MB)`);
+    return out;
 }
 
 /* ------------------------------ zip (streaming) ------------------------------ */
@@ -303,7 +356,7 @@ async function cmdZip() {
 function srcEntries() {
     const z = new ZipOut('');
     const skip = (p, e) => !(e.isDirectory() && ['node_modules', 'dist', 'release', 'build-cache', '.git'].includes(e.name));
-    for (const d of ['src', 'tools', 'docs'])
+    for (const d of ['src', 'tools', 'docs', '.github'])
         if (fs.existsSync(path.join(ROOT, d)))
             z.tree(path.join(ROOT, d), d, skip);
     for (const f of ['package.json', 'package-lock.json', 'tsconfig.json', 'version.json', 'electron-builder.yml', 'build.bat', 'README.md', 'README.en.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md', 'LICENSE', '.gitignore'])
@@ -357,7 +410,7 @@ async function cmdSrc() {
     const out = path.join(rel(), `Ludrix-${v}-src.zip`);
     const z = new ZipOut(out);
     const skip = (p, e) => !(e.isDirectory() && ['node_modules', 'dist', 'release', 'build-cache', '.git'].includes(e.name));
-    for (const d of ['src', 'tools', 'docs'])
+    for (const d of ['src', 'tools', 'docs', '.github'])
         if (fs.existsSync(path.join(ROOT, d)))
             z.tree(path.join(ROOT, d), `Ludrix-src/${d}`, skip);
     for (const f of ['package.json', 'package-lock.json', 'tsconfig.json', 'version.json', 'electron-builder.yml', 'build.bat', 'README.md', 'README.en.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'SECURITY.md', 'LICENSE', '.gitignore'])
@@ -511,7 +564,9 @@ function cmdCheck() {
 }
 function cmdPublish() {
     const v = vtag();
-    const files = [`ludrix-${v}-patch.lxup`, `ludrix-${v}-full.lxup`, 'ludrix-updates.json', `Ludrix-${v}.zip`, `Ludrix-${v}-src.zip`].map((f) => path.join(rel(), f)).filter((f) => fs.existsSync(f));
+    // anexos da release: portátil (zip), setup x64, .lxup (patch/full) e o feed. O AppImage é anexado pelo CI.
+    // O código-fonte fica só no repositório (Ludrix-<v>-src.zip continua sendo gerado para o Ludrix-Dev, mas não sobe).
+    const files = [`ludrix-${v}-patch.lxup`, `ludrix-${v}-full.lxup`, 'ludrix-updates.json', `Ludrix-${v}.zip`, `LudrixHub-Setup-${v}-x64.exe`].map((f) => path.join(rel(), f)).filter((f) => fs.existsSync(f));
     if (!files.some((f) => f.endsWith('.lxup')))
         die('publish: gere o patch antes (build.js patch)', 5);
     const c = mod('crypto.js');
@@ -547,6 +602,10 @@ async function cmdAll(minVersion) {
     if (!hot) {
         await cmdFolder();
         await cmdZip();
+        if (makensis())
+            await cmdSetup();
+        else
+            log('aviso: NSIS não encontrado — setup .exe pulado (winget install NSIS.NSIS)');
     }
     await cmdPatch(minVersion);
     if (!hot)
@@ -564,10 +623,12 @@ const HELP = `uso: node tools/build.js <comando>
   check            compila e valida json/changelog/binários
   hotfix <base>    Ludrix-<v>-hotfix.zip: só os arquivos que mudaram desde a versão <base> publicada (para o Ludrix-Dev aplicar sobre o código)
   all              tudo; version.json "release": "hotfix" gera só patch + código + feed (LUDRIX_RELEASE=full força completa)
+                   release completa = pasta, zip portátil, setup x64, patch, full, código, feed
   app              monta release/stage/app (código + ui + node_modules de produção + integrity.json)
   runtime          monta release/stage/runtime (Electron renomeado + shim)
   folder           pasta Ludrix/ completa em release/<versão>/
-  zip              Ludrix-<v>.zip
+  zip              Ludrix-<v>.zip (portátil)
+  setup            LudrixHub-Setup-<v>-x64.exe (NSIS; pasta à escolha, sem admin)
   patch [min]      ludrix-<v>-patch.lxup (só app/), assinado
   full             ludrix-<v>-full.lxup (app/ + runtime/ + exes), assinado
   src              Ludrix-<v>-src.zip
@@ -585,6 +646,7 @@ const HELP = `uso: node tools/build.js <comando>
         case 'runtime': return void await cmdRuntime();
         case 'folder': return void await cmdFolder();
         case 'zip': return cmdZip();
+        case 'setup': return void await cmdSetup();
         case 'patch': return cmdPatch(args[0]);
         case 'full': return cmdFull();
         case 'src': return cmdSrc();

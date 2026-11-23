@@ -6,12 +6,12 @@ function settingsData(fresh) {
       const nt = Array.isArray(t) ? t : [], nr = Array.isArray(r) ? r : [];
       const changed = JSON.stringify(nt) !== JSON.stringify(S.themes || []) || JSON.stringify(nr) !== JSON.stringify(S.repos || []);
       S.themes = nt; S.repos = nr;
-      if (changed && S.view === 'settings') renderSettings();
+      if (changed && S.view === 'settings' && ['appearance', 'store'].includes(S.tab.settings || 'general')) renderSettings();
     }).catch(() => { S._setReq = null; });
   }
   const tab = S.tab.settings || 'general';
   if (tab === 'tools' && !S._cache && !S._cacheReq) S._cacheReq = api.get('/api/cache').then(d => { S._cacheReq = null; S._cache = d || {}; settingsCacheFill(); }).catch(() => { S._cacheReq = null; });
-  if (tab === 'system' && !S.hw && !S._hwReq) S._hwReq = api.get('/api/hardware').then(d => { S._hwReq = null; S.hw = d || { error: 'sem resposta' }; if (S.view === 'settings' && (S.tab.settings || 'general') === 'system') renderSettings(); }).catch(() => { S._hwReq = null; });
+  if (tab === 'system' && !S.hw && !S._hwReq) S._hwReq = api.get('/api/hardware').then(d => { S._hwReq = null; S.hw = d || { error: 'sem resposta' }; if (S.view === 'settings' && (S.tab.settings || 'general') === 'system') { const el = $('#s-pc'); if (el) el.outerHTML = hwHtml(S.hw); else renderSettings(); } }).catch(() => { S._hwReq = null; });
   return { themes: S.themes || [], repos: S.repos || [], cache: S._cache || null, hw: S.hw || null };
 }
 function settingsCacheFill() {
@@ -33,8 +33,8 @@ async function renderSettings(fresh) {
     ['library', 'Biblioteca', 'home', ['cartoes', 'capas', 'pastas']],
     ['play', 'Ao jogar', 'play', ['ao_abrir', 'discord', 'linux', 'saves', 'emuladores', 'controle', 'console']],
     ['store', 'Store e downloads', 'dl', ['fontes', 'store', 'instalacao', 'torrent']],
-    ['tools', 'Ferramentas', 'wrench', ['verificar', 'importar', 'exportar', 'dados', 'diagnostico', 'limpeza']],
-    ['system', 'Sistema', 'cpu', ['pc', 'segundo_plano', 'atualizacoes', 'perigo', 'sobre']],
+    ['tools', 'Ferramentas', 'wrench', ['verificar', 'importar', 'exportar', 'diagnostico', 'limpeza']],
+    ['system', 'Sistema', 'cpu', ['pc', 'segundo_plano', 'atualizacoes', 'dados', 'perigo', 'sobre']],
   ];
   S._settingsTabs = TABS;
   const TAB_MAP = { updates: 'system', about: 'system', downloads: 'store' }; if (TAB_MAP[S.tab.settings]) { S._settingsJump = S._settingsJump || (S.tab.settings === 'updates' ? 'Atualizações' : S.tab.settings === 'about' ? 'Sobre' : ''); S.tab.settings = TAB_MAP[S.tab.settings]; }
@@ -134,7 +134,7 @@ async function renderSettings(fresh) {
     saves: () => sec('saves', 'Saves', [`
     ${sw('crash_watch', 'Avisar quando um jogo fechar sozinho', `Se o jogo morrer nos primeiros segundos, mostra o motivo provável e oferece instalar o que falta (Visual C++, DirectX, .NET).`)}
     ${(c.crash_mute || []).length ? `<div class="frow"><div class="l"><b>Jogos sem esse aviso</b><span>${esc((c.crash_mute || []).map(k => (S.byKey[k] || {}).title || k).join(', '))}</span></div><button class="btn s sm" onclick="setCfg({crash_mute:[]}).then(()=>settingsTab('play'))">Voltar a avisar</button></div>` : ''}
-    ${sw('save_auto_backup', 'Guardar cópia dos saves ao fechar o jogo', `Depois de cada sessão, copia a pasta de saves do jogo para data${SEP()}save_backups (até 5 cópias por jogo, só quando algo mudou; pastas acima de 512 MB são puladas). Restaure em Saves, no menu do jogo`)}`]),
+    ${sw('save_auto_backup', 'Guardar cópia dos saves ao fechar o jogo', `Depois de cada sessão, copia a pasta de saves do jogo para ${DL()}${SEP()}save_backups (até 5 cópias por jogo, só quando algo mudou; pastas acima de 512 MB são puladas). Restaure em Saves, no menu do jogo`)}`]),
     emuladores: () => sec('emuladores', 'Emuladores', [`
     ${sw('emu_no_ask', 'Não perguntar qual emulador', 'Em consoles com mais de um emulador instalado, usa sempre o padrão em vez de perguntar ao jogar')}`]),
     discord: () => sec('discord', 'Discord', [`
@@ -173,18 +173,19 @@ async function renderSettings(fresh) {
     verificar: () => sec('verificar', 'Verificar jogos', [`
     <div class="frow"><div class="l"><b>Procurar jogos que sumiram</b><span>Confere se a pasta, o executável ou a ROM de cada jogo ainda existem. Para os que mudaram de lugar, dá para apontar a pasta nova sem perder capa, tempo jogado e saves${S.config.last_lib_check ? ` · última verificação ${ago(S.config.last_lib_check)}` : ''}</span></div><button class="btn s sm" onclick="libraryCheck()">${I.search} Verificar</button></div>
     <div class="frow"><div class="l"><b>Jogos duplicados</b><span>Procura entradas com o mesmo nome ou o mesmo executável, comum depois de importar de dois lugares. A remoção não apaga arquivos do disco</span></div><button class="btn s sm" onclick="libraryDupes()">${I.search} Procurar</button></div>
-    <div class="frow"><div class="l"><b>Cópias da biblioteca</b><span>A lista de jogos (library.json) é copiada uma vez por dia em <span class="code">data${SEP()}backups</span>; ficam as últimas 7 diárias e as 10 últimas feitas à mão. Restaurar traz de volta o que sumiu e recupera tempo de jogo zerado, sem apagar o que existe hoje</span></div><button class="btn s sm" onclick="libraryBackups()">${I.doc} Ver cópias</button></div>
     <div class="frow"><div class="l"><b>Avisar ao abrir</b><span>Mostra um aviso ao iniciar quando algum jogo da biblioteca está com arquivo não encontrado</span></div><button class="sw ${S.config.warn_missing !== false ? 'on' : ''}" onclick="setCfg({warn_missing:!(S.config.warn_missing!==false)})"></button></div>`]),
     importar: () => sec('importar', 'Importar de outro launcher', [`
     <button class="btn p sm" onclick="importWizard()">${I.import} Importar biblioteca…</button>`], { p: 'Traz sua biblioteca do Playnite (pasta ou backup .zip), Heroic, Steam, Epic, GOG Galaxy, RetroBat / EmulationStation, LaunchBox, Pegasus ou atalhos da área de trabalho. Você confere a lista antes de adicionar.' }),
     exportar: () => sec('exportar', 'Exportar biblioteca', [`
     <button class="btn s sm" onclick="exportLibrary()">${I.doc} Exportar agora</button>
-    <div class="frow"><div class="l"><b>Enviar para a Steam</b><span>Cria os atalhos "não-Steam" com capa; os jogos aparecem na Steam e no Big Picture. A Steam precisa estar fechada. Rodar de novo atualiza os atalhos do Ludrix e não mexe nos outros</span></div><button class="btn s sm" onclick="exportSteam()">${I.ext} Enviar…</button></div>`], { p: 'Gera uma pasta em <span class="code">downloads\\</span> com a lista de jogos, metadados e capas em quatro formatos: pacote para o Playnite (<span class="code">playnite\\LudrixImport.pext</span>: dois cliques nele, depois menu Extensões › Ludrix › Importar), JSON completo do Ludrix, planilha CSV (Excel) e o <span class="code">library.json</span> de jogos avulsos do Heroic Games Launcher.', help: 'Para voltar a biblioteca inteira num Ludrix novo, use "Meus dados › Exportar meus dados" (zip com tudo). "Exportar biblioteca" serve para levar os jogos a outro programa: o pacote do Playnite leva nome, capa, pasta, executável, tempo jogado, favoritos, gênero, ano e desenvolvedora; jogos já importados são atualizados, não duplicados. ROMs entram com o arquivo preenchido e o emulador é escolhido no Playnite. Playnite 11 em diante não aceita o pacote (sem PowerShell): aí vale o CSV.' }),
-    dados: () => sec('dados', 'Meus dados', [`
-    <div class="frow"><div class="l"><b>Exportar meus dados</b><span>Gera Ludrix-dados-&lt;data&gt;.zip. Guarde antes de formatar, trocar de PC ou mexer em algo delicado</span></div><button class="btn s sm" onclick="dataExport()">${I.dl} Exportar…</button></div>
-    ${sw('auto_backup', 'Backup automático semanal', `Uma vez por semana, ao abrir, gera o Ludrix-dados-&lt;data&gt;.zip sozinho (biblioteca, ajustes, fontes, capas, temas). Guarda os 4 últimos.${c.auto_backup_at ? ' Último: ' + ago(c.auto_backup_at) : ''}`)}
-    ${c.auto_backup !== false ? `<div class="frow"><div class="l"><b>Pasta dos backups automáticos</b><span><code>${esc(c.auto_backup_dir || 'data\\backups\\auto')}</code>${c.auto_backup_dir ? '' : ' — o padrão fica dentro do Ludrix; para sobreviver a um disco morto, aponte outro disco ou uma pasta sincronizada'}</span></div><div class="ta"><button class="btn s sm" onclick="autoBackupDir('pick')">${I.folder} Escolher…</button>${c.auto_backup_dir ? `<button class="btn s sm" onclick="autoBackupDir('reset')">Padrão</button>` : ''}<button class="btn s sm" onclick="autoBackupNow(this)">Fazer agora</button></div></div>` : ''}
-    <div class="frow"><div class="l"><b>Importar um backup</b><span>Escolha um Ludrix-dados-*.zip. O conteúdo é listado antes de aplicar</span></div><button class="btn s sm" onclick="dataImport()">${I.folder} Importar…</button></div>`], { help: 'O backup é um zip com configurações, biblioteca (com tempo jogado e favoritos), capas personalizadas, fontes, temas importados, cópias de saves e jogos rápidos adicionados por você. Não inclui os jogos em si nem caches. Importar substitui o que existe hoje pelo que está no zip e reabre o Ludrix — antes disso, o estado atual é guardado em data/updates.' }),
+    <div class="frow"><div class="l"><b>Enviar para a Steam</b><span>Cria os atalhos "não-Steam" com capa; os jogos aparecem na Steam e no Big Picture. A Steam precisa estar fechada. Rodar de novo atualiza os atalhos do Ludrix e não mexe nos outros</span></div><button class="btn s sm" onclick="exportSteam()">${I.ext} Enviar…</button></div>`], { p: 'Gera uma pasta em <span class="code">downloads\\</span> com a lista de jogos, metadados e capas em quatro formatos: pacote para o Playnite (<span class="code">playnite\\LudrixImport.pext</span>: dois cliques nele, depois menu Extensões › Ludrix › Importar), JSON completo do Ludrix, planilha CSV (Excel) e o <span class="code">library.json</span> de jogos avulsos do Heroic Games Launcher.', help: 'Para voltar a biblioteca inteira num Ludrix novo, use Sistema › Backup › "Fazer backup" (zip com tudo). "Exportar biblioteca" serve para levar os jogos a outro programa: o pacote do Playnite leva nome, capa, pasta, executável, tempo jogado, favoritos, gênero, ano e desenvolvedora; jogos já importados são atualizados, não duplicados. ROMs entram com o arquivo preenchido e o emulador é escolhido no Playnite. Playnite 11 em diante não aceita o pacote (sem PowerShell): aí vale o CSV.' }),
+    dados: () => sec('dados', 'Backup', [`
+    <div class="frow"><div class="l"><b>Fazer backup agora</b><span>Um zip com tudo que é seu: ajustes, biblioteca (tempo jogado, favoritos, anotações), fontes, capas, temas, perfis e cópias de saves — sem os jogos. Você escolhe a pasta: pendrive, outro disco ou pasta sincronizada${c.backup_manual_at ? ' · último ' + ago(c.backup_manual_at) : ''}</span></div><button class="btn p sm" onclick="dataExport(this)">${I.dl} Fazer backup…</button></div>
+    <div class="frow"><div class="l"><b>Restaurar um backup</b><span>Aponte um zip feito aqui (de qualquer versão). O conteúdo é listado antes de aplicar e o Ludrix reabre em seguida</span></div><button class="btn s sm" onclick="dataImport()">${I.folder} Restaurar…</button></div>
+    <div class="frow"><div class="l"><b>Pasta dos backups</b><span>Onde o automático grava e o manual sugere.<br><code>${esc(c.backup_dir || c.auto_backup_dir || DL() + SEP() + 'backups' + SEP() + 'auto')}</code>${c.backup_dir || c.auto_backup_dir ? '' : '<br>Para sobreviver a um disco morto, aponte outro disco ou uma pasta sincronizada (OneDrive, Drive)'}</span></div><div class="ta"><button class="btn s sm" onclick="backupDir('pick')">${I.folder} Escolher…</button>${c.backup_dir || c.auto_backup_dir ? `<button class="btn s sm" onclick="backupDir('reset')">Padrão</button>` : ''}</div></div>
+    ${sw('auto_backup', 'Backup automático semanal', `Uma vez por semana, ao abrir, grava um zip na pasta acima e guarda os 4 últimos. Os feitos à mão nunca são apagados${c.auto_backup_at ? ' · último ' + ago(c.auto_backup_at) : ''}`)}
+    ${c.auto_backup !== false ? `<div class="frow"><div class="l"><b>Rodar o automático agora</b><span>Sem esperar a semana</span></div><button class="btn s sm" onclick="autoBackupNow(this)">${I.refresh} Fazer agora</button></div>` : ''}
+    <div class="frow"><div class="l"><b>Histórico da biblioteca</b><span>A lista de jogos é copiada uma vez por dia (7 diárias + 10 manuais). Restaurar traz de volta o que sumiu e recupera tempo de jogo zerado, sem apagar o que existe hoje</span></div><button class="btn s sm" onclick="libraryBackups()">${I.doc} Ver cópias</button></div>`], { help: `Seus dados ficam em ${esc(c.data_dir || (c.root || '') + SEP() + 'data')}${c.data_external ? ' — fora da pasta do programa, longe do antivírus e de pastas sem permissão' : ''}. O backup é um zip com configurações, biblioteca, capas personalizadas, fontes, temas importados, perfis, cópias de saves e jogos rápidos adicionados por você — sem jogos nem caches. Restaurar substitui o que existe hoje pelo que está no zip e reabre o Ludrix; antes disso, o estado atual é guardado em ${esc(DL())}${SEP()}updates. Os Ludrix-dados-*.zip de versões anteriores também são aceitos.` }),
     diagnostico: () => sec('diagnostico', 'Diagnóstico', [`
     <div class="frow"><div class="l"><b>Diagnóstico</b><span>Confere pasta, espaço em disco, ferramentas e mostra o fim do log — copie e cole quando algo der errado</span></div><button class="btn s sm" onclick="showDiag()">Ver diagnóstico</button></div>`]),
     limpeza: () => sec('limpeza', 'Limpeza', [`
@@ -212,10 +213,22 @@ async function renderSettings(fresh) {
   S._settingsBody = buildBody;
   const body = buildBody(tab);
   const tabBtn = ([id, n, ic]) => `<button class="${tab === id ? 'on' : ''}" data-tab="${id}" onclick="settingsTab('${id}')">${I[ic] || ''}<span>${n}</span></button>`;
-  $('#view').innerHTML = `<div class="h1 seth"><h2>Ajustes</h2><span title="${esc(c.root)}">${esc(c.root)}</span></div>
-    ${restartBanner()}<div class="setwrap"><aside class="setnav"><div class="stabs">${TABS.map(tabBtn).join('')}</div><div class="stoc" id="stoc"></div>
+  const asideHtml = `<aside class="setnav"><div class="stabs">${TABS.map(tabBtn).join('')}</div><div class="stoc" id="stoc"></div>
       <div class="setfoot"><div class="sadvbox ${c.settings_adv ? 'on' : ''}"><div class="l"><b>Opções avançadas</b><span id="sadvN">${c.settings_adv ? 'Visíveis em todas as abas' : 'Ocultas — mostra as opções marcadas como avançado'}</span></div><button class="sw ${c.settings_adv ? 'on' : ''}" onclick="toggleAdv()" title="${c.settings_adv ? 'Ocultar opções avançadas' : 'Mostrar opções avançadas'}"></button></div>
-      ${(TAB_KEYS[tab] || []).length ? `<button class="lnk" onclick="settingsReset('${tab}')">Redefinir esta aba</button>` : ''}<button class="lnk" onclick="openPath('data')" title="Pasta data (config, biblioteca, log)">Abrir pasta data</button></div></aside>
+      ${(TAB_KEYS[tab] || []).length ? `<button class="lnk" onclick="settingsReset('${tab}')">Redefinir esta aba</button>` : ''}<button class="lnk" onclick="openPath('data')" title="Pasta data (config, biblioteca, log)">Abrir pasta de dados</button></div></aside>`;
+  const oldBody = $('#setBody'), oldAside = $('#view .setwrap > aside.setnav');
+  if (oldBody && oldAside && oldBody.dataset.tab === tab && !S._settingsJump) {
+    // mesma aba já na tela: atualiza no lugar, sem piscar nem perder a rolagem
+    if (oldAside.outerHTML !== asideHtml) oldAside.outerHTML = asideHtml;
+    if (S._setBodyHtml !== body) { oldBody.innerHTML = body; S._setBodyHtml = body; }
+    const rb = $('#view > .rqbar'); const nb = restartBanner(); if ((rb ? rb.outerHTML : '') !== nb) { if (rb) rb.remove(); if (nb) $('#view .setwrap').insertAdjacentHTML('beforebegin', nb); }
+    settingsToc(); viewFilter();
+    if (tab === 'system' && !S.upd) loadUpdates();
+    return;
+  }
+  S._setBodyHtml = body;
+  $('#view').innerHTML = `<div class="h1 seth"><h2>Ajustes</h2><span title="${esc(c.root)}">${esc(c.root)}</span></div>
+    ${restartBanner()}<div class="setwrap">${asideHtml}
     <div class="settings" id="setBody" data-tab="${tab}">${body}</div></div>`;
   settingsToc();
   if (S._settingsJump) { const j = S._settingsJump; S._settingsJump = ''; requestAnimationFrame(() => settingsGo(j, false)); } else $('#view').scrollTop = keepScroll;
@@ -238,7 +251,7 @@ const TAB_KEYS = {
   library: ['home_spot', 'fav_first', 'game_backdrop', 'backdrop_blur', 'backdrop_dim', 'cover_slideshow', 'cover_slideshow_secs', 'view_mode', 'group_by', 'card_ribbons', 'card_origin', 'card_playtime', 'detail_art', 'auto_metadata', 'web_covers', 'auto_rename', 'watch_dirs', 'auto_scan_dirs'],
   play: ['discord_enabled', 'after_launch', 'launch_splash', 'pause_downloads_playing', 'nav_hide_playing', 'crash_watch', 'crash_mute', 'save_auto_backup', 'emu_no_ask', 'gamepad_enabled', 'gamepad_speed', 'gamepad_wake'],
   store: ['hero_enabled', 'store_hide_installed', 'store_auto_refresh', 'store_notify_new', 'taskbar_progress', 'keep_archive', 'concurrent_downloads', 'dl_max_down', 'dl_schedule', 'dl_from', 'dl_to', 'shortcut_ask', 'repack_auto_open', 'torrent_max_down', 'torrent_max_up', 'torrent_seed_after'],
-  system: ['bg_warmup', 'update_auto_check', 'auto_backup', 'auto_backup_dir'],
+  system: ['bg_warmup', 'update_auto_check', 'auto_backup', 'auto_backup_dir', 'backup_dir'],
 };
 function settingsReset(tab) {
   const name = ((S._settingsTabs || []).find(t => t[0] === tab) || [])[1] || tab;
@@ -313,18 +326,18 @@ function updatesHtml() {
   const applyLabel = remote ? 'Baixar' : 'Instalar';
   const canApply = ready || (remote && !job);
   return `<div id="updBox">
-  <div class="sec"><h3>Atualizações <span class="ver">v${esc(cur.version || '?')}${cur.rev ? ' · correção ' + cur.rev : ''}</span> ${help('O Ludrix confere o endereço de atualizações (https) ao abrir e ao clicar em Checar. Um arquivo .lxup recebido por fora entra por "Instalar de arquivo". Só pacotes assinados pelo projeto são instalados. Jogos, configurações, temas e emuladores nunca são tocados numa atualização.')}</h3>
+  <div class="sec"><h3>Atualizações <span class="ver">v${esc(cur.version || '?')}${cur.rev ? ' · correção ' + cur.rev : ''}</span> ${help('O Ludrix confere o endereço de atualizações (https) ao abrir, a cada 30 minutos, quando a janela volta ao foco, ao entrar nesta tela e ao clicar em Checar. Um arquivo .lxup recebido por fora entra por "Instalar de arquivo". Só pacotes assinados pelo projeto são instalados. Jogos, configurações, temas e emuladores nunca são tocados numa atualização.')}</h3>
     ${card}
     <div class="updbtns"><button class="btn s sm" onclick="checkUpdates()" ${st.busy ? 'disabled' : ''}>${I.refresh} Checar</button>
     <button class="btn p sm" onclick="${remote ? 'downloadUpdate()' : 'applyUpdate()'}" ${canApply ? '' : 'disabled'} title="${canApply ? '' : 'Fica ativo quando houver uma atualização'}">${I.dl} ${applyLabel}</button>
     <button class="btn s sm" onclick="updateFromFile()" title="Escolher um arquivo .lxup que você recebeu">Instalar de arquivo…</button>
     <button class="btn s sm" onclick="restoreVersion()" title="Voltar para uma versão anterior a partir do código-fonte dela (Ludrix-<versão>-src.zip)">${I.import} Voltar de versão…</button></div>
     ${u && !u.updater_present ? `<p class="mut warn">O atualizador (updater) não está na pasta do launcher, então a atualização não consegue se instalar sozinha. Extraia o pacote completo de novo por cima.</p>` : ''}
-    <div class="frow"><div class="l"><b>Checar ao abrir</b><span>Procura novidades quando o launcher inicia (só se tiver internet)</span></div><button class="sw ${S.config.update_auto_check !== false ? 'on' : ''}" onclick="setCfg({update_auto_check:!(S.config.update_auto_check!==false)})"></button></div>
+    <div class="frow"><div class="l"><b>Checar sozinho</b><span>Procura novidades ao abrir, a cada 30 minutos e quando você volta para a janela (só se tiver internet). Desligado, só o botão Checar consulta</span></div><button class="sw ${S.config.update_auto_check !== false ? 'on' : ''}" onclick="setCfg({update_auto_check:!(S.config.update_auto_check!==false)})"></button></div>
     <div class="frow"><div class="l"><b>Endereço de atualizações</b><span>Em branco usa o endereço do projeto (GitHub). Preencha só para testar outro feed https.</span></div><input class="mi" id="updFeed" value="${esc(S.config.update_feed || '')}" placeholder="github.com/wolffZ-prog/Ludrix" style="width:200px;min-width:120px;flex:1"><button class="btn s sm" onclick="setCfg({update_feed:$('#updFeed').value.trim()}).then(()=>toast('ok','Endereço salvo'))">Salvar</button></div>
   </div></div>`;
 }
-async function checkUpdates() { toast('info', 'Procurando atualizações…'); const u = await loadUpdates(true); if (u && (u.available || u.remote)) toast('ok', 'Atualização encontrada', 'v' + (u.available || u.remote).version, [{ label: 'Ver', fn: () => { setView('settings'); S.tab.settings = 'system'; S._settingsJump = 'Atualizações'; renderSettings(true); } }]); else if (u && u.state && u.state.error) toast('err', 'Não foi possível verificar', u.state.error); else toast('ok', 'Tudo em dia', 'Você já está na versão mais recente'); }
+async function checkUpdates() { toast('info', 'Procurando atualizações…'); const u = await loadUpdates(true); if (u && (u.available || u.remote)) toast('ok', 'Atualização encontrada', 'v' + (u.available || u.remote).version, [{ label: 'Ver', fn: () => { openSettings('system', 'Atualizações'); } }]); else if (u && u.state && u.state.error) toast('err', 'Não foi possível verificar', u.state.error); else toast('ok', 'Tudo em dia', 'Você já está na versão mais recente'); }
 async function downloadUpdate() { const r = await api.post('/api/updates/download', {}); if (r && r.error) toast('err', 'Download', r.error); }
 function applyUpdate() {
   const av = S.upd && S.upd.available; if (!av) return;

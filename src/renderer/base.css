@@ -552,6 +552,10 @@ html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .toast .x{width
 html body.bs[data-face]:is([data-layout=rail],[data-layout=top]) .toasts{top:calc(var(--tb,0px) + 82px);right:14px}
 html body.bs[data-face][data-detart=off] .dhero::before{display:none}
 html body.bs[data-face][data-detart=off] .dhero .dcov{margin:14px 24px 0 36px;width:150px}
+/* sem arte: capa e cabeçalho lado a lado (sem float) — a capa não invade mais as abas/Sobre */
+html body.bs[data-face][data-detart=off] .dhero{display:flex;align-items:flex-start}
+html body.bs[data-face][data-detart=off] .dhero .dcov{float:none}
+html body.bs[data-face][data-detart=off] .dhead{flex:1;min-width:0;justify-content:center;min-height:200px;padding-top:14px}
 html body.bs[data-face][data-detart=off] .dcov img,html body.bs[data-face][data-detart=off] .dcov .dph{outline:0;border:1px solid var(--line)}
 html body.bs[data-face][data-detart=off] .dhead{padding-top:16px;min-height:0;gap:10px}
 html body.bs[data-face][data-detart=off] .dhead h1{font-size:clamp(20px,2.4vw,26px)}
@@ -723,7 +727,7 @@ html body.bs[data-face] .dclose{top:calc(var(--tb,0px) + var(--toph,0px) + 16px)
 html body.bs[data-face] .dhead{gap:14px;padding-top:20px}
 html body.bs[data-face] .dhead .acts{margin-top:6px}
 html body.bs[data-face] .dmain{margin:36px 40px 0 36px}
-html body.bs[data-face] .dmain .dtabs{margin:0 0 22px}
+html body.bs.bs[data-face][data-face] .dmain .dtabs{margin:0 0 22px}
 html body.bs[data-face] .dpane .desc p{margin:0 0 12px}
 html body.bs[data-face] .dpane .desc p:last-child{margin-bottom:0}
 html body.bs[data-face] .dsec{margin-top:26px}

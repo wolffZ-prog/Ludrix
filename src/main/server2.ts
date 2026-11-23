@@ -50,8 +50,12 @@ async function routeGet2(res, p, q, be, port) {
         return server.sendJson(res, await front.siteSearch(String(q.get('q') || ''))), true;
     if (p === '/api/integrity')
         return server.sendJson(res, front.integrityStatus()), true;
-    if (p === '/api/updates')
+    if (p === '/api/updates') {
+        // abrir a tela de atualizações já dispara uma checagem se a última tem mais de 5 min (sem travar a resposta)
+        if (be.store.config.update_auto_check !== false)
+            be.maybeCheckUpdates(300).catch(() => undefined);
         return server.sendJson(res, front.updateStatus()), true;
+    }
     if (p === '/api/console')
         return server.sendJson(res, await be.consolePayload()), true;
     if (p === '/api/linux')
@@ -226,6 +230,12 @@ async function routePost2(res, p, b, be, getWindow, port) {
         return server.sendJson(res, be.imp.scanIgnore(Array.isArray(b?.exes) ? b.exes : [])), true;
     if (p === '/api/updates/check')
         return server.sendJson(res, await front.updateCheck()), true;
+    if (p === '/api/updates/poke') {
+        // janela voltou ao foco: checa se a última checagem tem mais de 10 min
+        if (be.store.config.update_auto_check !== false)
+            be.maybeCheckUpdates(600).catch(() => undefined);
+        return server.sendJson(res, { ok: true }), true;
+    }
     if (p === '/api/updates/download')
         return server.sendJson(res, front.updateDownload()), true;
     if (p === '/api/updates/apply')

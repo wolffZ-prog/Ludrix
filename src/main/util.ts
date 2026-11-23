@@ -70,7 +70,7 @@ function restoreFromZip(file) {
     let zips = [];
     for (const d of [path.join(dir, 'auto'), dir]) {
         try {
-            zips.push(...fs.readdirSync(d).filter((f) => /^Ludrix-dados-.*\.zip$/i.test(f)).map((f) => path.join(d, f)));
+            zips.push(...fs.readdirSync(d).filter((f) => /^Ludrix-(backup|dados)-.*\.zip$/i.test(f)).map((f) => path.join(d, f)));
         }
         catch { }
     }

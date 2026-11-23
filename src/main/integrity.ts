@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import * as crypto from './crypto';
+import { dataDirOf } from './dataDir';
 
 export const MANIFEST = 'integrity.json';
 const SKIP_DIRS = new Set(['__pycache__', '.git', 'node_modules']);
@@ -150,7 +151,7 @@ export function isCritical(bad: any[]) {
 }
 
 export function seedDir(root: string) {
-    return path.join(root, 'data', 'updates');
+    return path.join(dataDirOf(root, true), 'updates');
 }
 
 export function keepSeed(pkg: string, root: string, version: string, move: boolean): string | null {
@@ -272,7 +273,7 @@ export function repair(app: string, root: string, result: any, seed: string) {
 }
 
 export function stateFile(root: string) {
-    return path.join(root, 'data', 'integrity-state.json');
+    return path.join(dataDirOf(root, true), 'integrity-state.json');
 }
 
 export async function bootCheckDeferred(app: string, root: string) {

@@ -112,6 +112,10 @@ window.lxu.send('ready');
 export function main() {
     const here = path.resolve(__dirname, '..', '..');
     const root = path.resolve(argvOpt('--root', here) as string);
+    // pasta de dados (updates/, boot.json): vem do processo principal; sem ela, o mesmo cálculo de dataDir.ts
+    const dataArg = argvOpt('--data', '');
+    if (dataArg && !dataArg.startsWith('--'))
+        process.env.LUDRIX_DATA = path.resolve(dataArg);
     let restore = process.argv.includes('--restore');
     let pkg: string | null = restore ? argvOpt('--restore') : argvOpt('--apply');
     pkg = pkg && !pkg.startsWith('--') ? path.resolve(pkg) : null;

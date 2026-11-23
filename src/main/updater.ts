@@ -3,6 +3,7 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import nodeCrypto from 'node:crypto';
 import * as cp from 'node:child_process';
+import { dataDirOf } from './dataDir';
 
 const PROTECTED = ['data', 'cache', 'games', 'emulation', 'downloads', 'themes', 'flash', 'bin', 'tools', 'updates'];
 const PUBLIC_KEY = '0271846c4fa9e6b47bd2b2fc89dd282e30531abe9ce1b8d522b44836761a1131';
@@ -198,8 +199,11 @@ export function zipSignatureStatus(z: Zip): 'ok' | 'none' | 'bad' {
     }
 }
 
+export function dataDir(root: string) {
+    return dataDirOf(root, true);
+}
 export function updatesDir(root: string) {
-    return path.join(root, 'data', 'updates');
+    return path.join(dataDir(root), 'updates');
 }
 function pidAlive(pid: number) {
     if (!pid)
@@ -468,8 +472,8 @@ export class Apply {
             fs.writeFileSync(path.join(updatesDir(this.root), 'pending_verify.json'), JSON.stringify({
                 version: ver, from: prevVersion(this.root, this.backup), kind: m.kind || '', backup: this.backup, dirs, files: Object.keys(files), at: Date.now() / 1000,
             }), 'utf8');
-            fs.mkdirSync(path.join(this.root, 'data'), { recursive: true });
-            fs.writeFileSync(path.join(this.root, 'data', 'boot.json'), JSON.stringify({ tries: 0 }), 'utf8');
+            fs.mkdirSync(dataDir(this.root), { recursive: true });
+            fs.writeFileSync(path.join(dataDir(this.root), 'boot.json'), JSON.stringify({ tries: 0 }), 'utf8');
         }
         catch { }
         this.keepSeed(ver);
@@ -628,6 +632,10 @@ function relocateAndReexec(root: string): boolean {
 export function main() {
     const here = path.resolve(__dirname, '..', '..');
     const root = path.resolve(argvOpt('--root', here) as string);
+    // pasta de dados (updates/, boot.json): vem do processo principal; sem ela, o mesmo cálculo de dataDir.ts
+    const dataArg = argvOpt('--data', '');
+    if (dataArg && !dataArg.startsWith('--'))
+        process.env.LUDRIX_DATA = path.resolve(dataArg);
     const restore = process.argv.includes('--restore');
     let pkg = restore ? argvOpt('--restore') : argvOpt('--apply');
     pkg = pkg && !pkg.startsWith('--') ? path.resolve(pkg) : null;

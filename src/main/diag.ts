@@ -252,6 +252,7 @@ export async function report(be: any, apiOk: boolean | null = null): Promise<any
         online = false;
     }
     add('online', 'Internet', true, online ? 'conectado' : 'sem conexão (o Ludrix funciona offline; Store e capas ficam indisponíveis)', !online);
+    add('datadir', 'Pasta de dados', true, `${P.DATA}${P.DATA_EXTERNAL ? ' (AppData, fora da pasta do programa)' : ' (dentro da pasta do programa)'}`);
     add('safe', 'Modo seguro', true, be.safeMode ? 'ativo nesta sessão' : 'não', Boolean(be.safeMode));
     {
         const rec = require('./util').recovered() as any[];

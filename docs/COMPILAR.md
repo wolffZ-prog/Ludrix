@@ -15,13 +15,14 @@ npm start                        abre o Ludrix pelo código (desenvolvimento)
 | `hotfix <base>` | `Ludrix-<v>-hotfix.zip`: só os arquivos que mudaram desde a versão `<base>` publicada no GitHub (+ `hotfix.json` com a lista e o que remover). O Ludrix-Dev aplica sobre o código que já tem |
 | `bump X.Y.Z [full\|hotfix]` | grava a versão em `version.json`, `package.json`, shim e recurso do exe; `hotfix` marca a versão como correção rápida (só patch + código + feed) |
 | `folder` | `release/<v>/Ludrix/` (app, runtime, Ludrix.exe, LudrixConsole.exe, pastas vazias) |
-| `zip` | `Ludrix-<v>.zip` |
+| `zip` | `Ludrix-<v>.zip` (portátil) |
+| `setup` | `LudrixHub-Setup-<v>-x64.exe` via NSIS (`winget install NSIS.NSIS`). Só 64 bits |
 | `patch [min]` | `ludrix-<v>-patch.lxup` (só `app/`), assinado |
 | `full` | `ludrix-<v>-full.lxup` (`app/` + `runtime/` + executáveis), assinado |
-| `src` | `Ludrix-<v>-src.zip` |
+| `src` | `Ludrix-<v>-src.zip` (uso local/Ludrix-Dev; não vai para a release) |
 | `feed [url-base]` | `ludrix-updates.json` (herda os pacotes anteriores do feed publicado) |
-| `all [min]` | check + folder + zip + patch + full + src + feed; apaga `release/stage` e `dist` ao final |
-| `publish` | cria a release `v<versão>` no GitHub com os arquivos de `release/<v>/` |
+| `all [min]` | check + folder + zip + setup (se houver NSIS) + patch + full + src + feed; apaga `release/stage` e `dist` ao final |
+| `publish` | cria a release `v<versão>` no GitHub com zip portátil, setups, `.lxup` e feed (o AppImage é anexado pelo CI; o código-fonte fica só no repositório) |
 
 ## `tools/check.js`
 Roda sozinho antes de qualquer `build`/`all` (pule com `LUDRIX_SKIP_CHECK=1`). Confere: TypeScript sem erros; sintaxe de cada `.js` do renderer; `package.json` e `lang/en.json` válidos; todo id do menu de contexto do backend tem um `case` em `ctxDo`; todo `I.xxx` usado existe no mapa de ícones; toda chave gravada por `setCfg`/`sw`/`cfgSel` tem default em `store.ts` (sem default a chave é descartada ao salvar); rotas chamadas pelo renderer existem no servidor. Com `--boot` ainda sobe o app numa pasta temporária e confere se `/api/config` responde (no Linux precisa de `DISPLAY`).

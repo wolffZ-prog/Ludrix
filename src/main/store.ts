@@ -109,7 +109,12 @@ const DEFAULT_CONFIG = {
     keymap: {},
     auto_backup: true,
     auto_backup_dir: '',
+    backup_dir: '',
+    backup_last_dir: '',
+    backup_manual_at: 0,
+    backup_manual_last: '',
     auto_backup_at: 0,
+    auto_backup_last: '',
     img_gc_at: 0,
     sweep_ver: '',
     sweep_at: 0,
@@ -647,6 +652,9 @@ class Store {
         c.games_dir_effective = this.gamesDir();
         c.downloads_dir = P.DOWNLOADS;
         c.root = P.ROOT;
+        c.data_dir = P.DATA;
+        c.data_label = require('./dataDir').dataDirLabel(P.ROOT, P.DATA); // 'data' ou '%APPDATA%\\.ludrixdata'
+        c.data_external = P.DATA_EXTERNAL;
         c.engine = `Electron ${process.versions.electron} · Chromium ${(process.versions.chrome || '').split('.')[0]}`;
         c.discord_status = (this as any).discordStatus ? (this as any).discordStatus() : { connected: false, error: '' };
         try {

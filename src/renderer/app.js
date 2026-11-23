@@ -45,8 +45,8 @@ const api = (() => {
       'app.url': url => A.post('/api/open_url', { url }),
       'window': cmd => winCmd(cmd),
       'theme.set': id => setCfg({ theme: id }),
-      'backup.export': () => A.post('/api/backup/export', {}),
-      'backup.import': path => A.post('/api/backup/import', { path }),
+      'backup.export': dest => A.post('/api/data/export', { dest: dest || null }),
+      'backup.import': path => A.post('/api/data/import', { path }),
       'search': q => { S.q = q || ''; const i = $('#q'); if (i) i.value = S.q; if (!['home', 'store'].includes(S.view)) setView('home'); else renderLibrary(); return Promise.resolve({ ok: true, count: visible().length }); },
     },
     call: (name, ...args) => { const fn = A.routes[name]; return fn ? Promise.resolve(fn(...args)) : Promise.resolve({ error: 'chamada desconhecida: ' + name }); },
@@ -56,6 +56,7 @@ const api = (() => {
 const fmt = n => { if (!n) return ''; const u = ['B', 'KB', 'MB', 'GB', 'TB']; let i = 0; while (n >= 1024 && i < 4) { n /= 1024; i++; } return (i ? n.toFixed(1) : n) + ' ' + u[i]; };
 const jsq = s => esc(JSON.stringify(String(s ?? '')));
 const SEP = () => S.config.os === 'windows' ? '\\' : '/';
+const DL = () => (S.config.data_label || 'data'); // rótulo da pasta de dados ('data' ou %APPDATA%\.ludrixdata)
 const STATUS = [['plan', 'Planejo jogar'], ['playing', 'Jogando'], ['played', 'Jogado'], ['beaten', 'Zerado'], ['completed', 'Completado 100%'], ['on_hold', 'Em espera'], ['abandoned', 'Abandonado']];
 const statusName = id => (STATUS.find(x => x[0] === id) || [])[1] || '';
 const scoreHtml = (n, cls) => n ? `<span class="score ${cls || ''}" title="Sua nota">${'★'}${n}</span>` : '';
@@ -390,12 +391,13 @@ function winState(ev) { if (ev && ev.max !== undefined) document.body.classList.
 api.post('/api/window', { cmd: 'state' }).then(winState).catch(() => { });
 let ONLINE = true;
 window.addEventListener('online', () => setOnline(true)); window.addEventListener('offline', () => setOnline(false));
+let _pokeAt = 0; window.addEventListener('focus', () => { const t = Date.now(); if (t - _pokeAt < 60_000) return; _pokeAt = t; api.post('/api/updates/poke', {}).catch(() => { }); });
 function setOnline(v) { if (v === ONLINE) return; ONLINE = v; document.body.classList.toggle('offline', !v); if (S.view === 'store') renderView(); if (!v) toast('', 'Sem internet', 'Baixar jogos, capas e emuladores fica indisponível até reconectar.'); }
 
 function appMenu(x, y) { showCtx(appMenuItems(), x, y); }
 function appMenuItems() {
-  const go = (v, tab) => () => { setView(v); if (tab) { S.tab[v] = tab; renderView(); } };
-  const set = (tab) => () => { setView('settings'); S.tab.settings = tab; renderSettings(true); };
+  const go = (v, tab) => () => { if (tab) S.tab[v] = tab; if (S.view === v) renderView(); else setView(v); };
+  const set = (tab) => () => openSettings(tab);
   const items = [
     { label: 'Biblioteca', icon: 'home', sub: [
       { label: 'Biblioteca', icon: 'home', fn: go('home') }, { label: 'Adicionar jogo instalado…', icon: 'plus', fn: addLocal }, { label: 'Baixar de link…', icon: 'dl', fn: linkDownload }, { label: 'Escanear pastas…', icon: 'search', fn: scanWizard }, { label: 'Importar de outro launcher…', icon: 'import', fn: importWizard },
@@ -412,7 +414,7 @@ function appMenuItems() {
       { label: 'Abrir o Modo Console', icon: 'gamepad', hint: 'fecha esta janela', fn: () => openConsole() }] },
     { label: 'Pastas', icon: 'folder', sub: [
       { label: 'Pasta do launcher', icon: 'folder', fn: () => openPath(S.config.root || '.') }, { label: 'games' + SEP() + ' (jogos instalados)', icon: 'folder', fn: () => openPath(S.config.games_dir || 'games') },
-      { label: 'downloads\\', icon: 'folder', fn: () => openPath('downloads') }, { label: 'themes\\', icon: 'folder', fn: () => openPath('themes') }, { label: 'data\\ (config, biblioteca, fontes)', icon: 'folder', fn: () => openPath('data') }, { label: 'Log (ludrix.log)', icon: 'doc', fn: () => openPath('data/ludrix.log') }] },
+      { label: 'downloads\\', icon: 'folder', fn: () => openPath('downloads') }, { label: 'themes\\', icon: 'folder', fn: () => openPath('themes') }, { label: DL() + SEP() + ' (config, biblioteca, fontes)', icon: 'folder', fn: () => openPath('data') }, { label: 'Log (ludrix.log)', icon: 'doc', fn: () => openPath('data/ludrix.log') }] },
     { sep: true },
     { label: 'Ajustes', icon: 'cog', fn: set('general') },
     { label: 'Sobre o Ludrix', icon: 'info', fn: () => { S._settingsJump = 'Sobre'; set('system')(); } },
@@ -425,7 +427,7 @@ function palActions() {
   const out = [];
   const walk = (items, path) => { for (const it of items) { if (it.sep || !it.label) continue; if (it.sub) walk(it.sub, path.concat(it.label)); else if (it.fn && !it.disabled) out.push({ kind: 'act', label: it.label.replace(/…$/, ''), path: path.join(' › '), icon: it.icon || 'dots', danger: !!it.danger, fn: it.fn }); } };
   walk(appMenuItems(), []);
-  for (const [id, name] of (S._settingsTabs || []).map(t => [t[0], t[1]])) out.push({ kind: 'act', label: name, path: 'Ajustes', icon: 'cog', fn: () => { setView('settings'); settingsTab(id); } });
+  for (const [id, name] of (S._settingsTabs || []).map(t => [t[0], t[1]])) out.push({ kind: 'act', label: name, path: 'Ajustes', icon: 'cog', fn: () => openSettings(id) });
   out.push({ kind: 'act', label: 'Testar controle', path: 'Ajustes › Controle', icon: 'gamepad', fn: () => gpTester() });
   out.push({ kind: 'act', label: S.config.reduce_motion ? 'Ligar animações' : 'Reduzir movimento', path: 'Aparência', icon: 'spark', fn: () => setCfg({ reduce_motion: !S.config.reduce_motion }) });
   out.push({ kind: 'act', label: 'Checar atualizações', path: 'Sistema', icon: 'refresh', fn: () => checkUpdates() });
@@ -459,13 +461,13 @@ function palKey(e) {
 }
 function viewMenu(view, x, y) {
   const m = {
-    home: [{ label: 'Adicionar jogo instalado…', icon: 'plus', fn: addLocal }, { label: 'Selecionar todos da página', icon: 'check', fn: msAll }, { label: 'Baixar de link…', icon: 'dl', fn: linkDownload }, { label: 'Escanear pastas…', icon: 'search', fn: scanWizard }, { label: 'Importar de outro launcher…', icon: 'import', fn: importWizard }, { sep: true }, { label: 'Tamanho das capas…', icon: 'image', fn: () => { setView('settings'); S.tab.settings = 'appearance'; renderSettings(); } }],
+    home: [{ label: 'Adicionar jogo instalado…', icon: 'plus', fn: addLocal }, { label: 'Selecionar todos da página', icon: 'check', fn: msAll }, { label: 'Baixar de link…', icon: 'dl', fn: linkDownload }, { label: 'Escanear pastas…', icon: 'search', fn: scanWizard }, { label: 'Importar de outro launcher…', icon: 'import', fn: importWizard }, { sep: true }, { label: 'Tamanho das capas…', icon: 'image', fn: () => { openSettings('appearance'); } }],
     store: [{ label: 'Fontes de jogos…', icon: 'cog', fn: () => { S.tab.store = 'sources'; renderView(); } }, { label: 'Atualizar catálogo', icon: 'refresh', fn: () => loadCatalog(true) }],
     emulation: [{ label: 'Meu próprio emulador…', icon: 'plus', fn: () => addCustomEmu() }, { label: 'Pasta emulation', icon: 'folder', fn: () => openPath(S.emu?.games_root) }],
     flash: [{ label: 'Adicionar jogo rápido…', icon: 'plus', fn: () => setTimeout(() => addFlashMenu({ clientX: x, clientY: y }), 30) }, { label: 'Baixar mais', icon: 'dl', fn: () => { S.tab.flash = 'more'; S.flashF = 'all'; renderFlash(); } }],
     downloads: [{ label: 'Baixar de link…', icon: 'dl', fn: linkDownload }, { label: 'Abrir pasta downloads', icon: 'folder', fn: () => openPath('downloads') }],
     central: [{ label: 'Abrir pasta redists', icon: 'folder', fn: () => api.post('/api/redist/open', {}) }, { label: 'Re-checar instalados', icon: 'refresh', fn: () => renderCentral() }],
-    settings: [{ label: 'Abrir pasta data', icon: 'folder', fn: () => openPath('data') }, { label: 'Abrir log', icon: 'ext', fn: () => openPath('data/ludrix.log') }],
+    settings: [{ label: 'Abrir pasta de dados', icon: 'folder', fn: () => openPath('data') }, { label: 'Abrir log', icon: 'ext', fn: () => openPath('data/ludrix.log') }],
   }[view] || [];
   const base = [{ label: 'Atualizar esta tela', icon: 'refresh', fn: renderView }];
   showCtx(m.length ? [...m, { sep: true }, ...base] : base, x, y);
@@ -1465,7 +1467,7 @@ async function play(key, after, emulator, _unused, force) {
   if (r.missing) return missingDialog(key, r);
   if (r.running) return toast('warn', 'Já está aberto', (S.byKey[key] || {}).title || '', [{ label: 'Encerrar o jogo', fn: () => stopGame(key) }, { label: 'OK', fn: () => {} }]);
   if (r.need_mc_launcher) return mcNeedLauncher(r); if (r.mc_missing === 'bedrock') return mcNeedBedrock(r);
-  if (r.choose_emulator) { return chooseEmulator(key, r.choose_emulator, r.default, r.missing_default); } if (r.error === 'emu_missing') { modal({ title: 'Emulador necessário', text: r.message, ok: 'Ir para Emuladores', cancel: 'Não fazer nada', onOk: () => setView('emulation') }); } else if (r.error === 'needs_setup') { modal({ title: 'Falta configurar o emulador', text: r.message, ok: 'Abrir guia', cancel: 'Não fazer nada', onOk: () => emuGuide(r.system, () => {}), buttons: [{ label: 'Abrir mesmo assim', fn: () => play(key, after, emulator, optimize, true) }] }); } else if (r.error && r.linux_runner) { modal({ title: 'Falta um componente do sistema', text: r.error, ok: 'Ajustes', cancel: 'Fechar', onOk: () => { setView('settings'); S.tab.settings = 'play'; renderSettings(true); } }); } else if (r.error) toast('err', 'Não foi possível abrir', r.error); else if (r.preparing) { toast('info', 'Preparando o Proton', r.hint, [{ label: 'Ver fila', fn: () => setView('queue') }]); } else { toast('ok', 'Jogo aberto', r.hint || (r.tracked ? 'Contando o tempo de jogo…' : '')); S.sessions = S.sessions || {}; S.sessions[key] = { since: Date.now() / 1000 }; applyPlaying(); if (S.det && S.det.key === key) renderDetail(); pollSoon(); } }
+  if (r.choose_emulator) { return chooseEmulator(key, r.choose_emulator, r.default, r.missing_default); } if (r.error === 'emu_missing') { modal({ title: 'Emulador necessário', text: r.message, ok: 'Ir para Emuladores', cancel: 'Não fazer nada', onOk: () => setView('emulation') }); } else if (r.error === 'needs_setup') { modal({ title: 'Falta configurar o emulador', text: r.message, ok: 'Abrir guia', cancel: 'Não fazer nada', onOk: () => emuGuide(r.system, () => {}), buttons: [{ label: 'Abrir mesmo assim', fn: () => play(key, after, emulator, optimize, true) }] }); } else if (r.error && r.linux_runner) { modal({ title: 'Falta um componente do sistema', text: r.error, ok: 'Ajustes', cancel: 'Fechar', onOk: () => { openSettings('play'); } }); } else if (r.error) toast('err', 'Não foi possível abrir', r.error); else if (r.preparing) { toast('info', 'Preparando o Proton', r.hint, [{ label: 'Ver fila', fn: () => setView('queue') }]); } else { toast('ok', 'Jogo aberto', r.hint || (r.tracked ? 'Contando o tempo de jogo…' : '')); S.sessions = S.sessions || {}; S.sessions[key] = { since: Date.now() / 1000 }; applyPlaying(); if (S.det && S.det.key === key) renderDetail(); pollSoon(); } }
 
 async function linuxStatus() {
   const el = $('#lxst'); if (!el) return; const st = await api.get('/api/linux'); if (!st || !st.linux) return;
@@ -1562,7 +1564,7 @@ function edRender() {
         <span class="gsub">aparece atrás da página do jogo e no palco</span>
         <div class="row">${i.native ? `<button class="btn s xs" onclick="edPick('image','background_file')">${I.image} Escolher imagem…</button>` : ''}<button class="btn s xs" onclick="edWebCovers('hero')" title="Procura imagens largas (wallpaper, screenshot) com o nome do jogo e deixa você escolher o fundo">${I.search} Procurar fundo na web…</button>${f.background_file || f.hero_url ? `<button class="btn s xs" onclick="edSet('background_file','');edSet('hero_url','');edRender()">${I.x} Tirar</button>` : ''}</div>
         <label class="gr"><span>${f.background_file ? 'arquivo: ' + esc(f.background_file.split(/[\\/]/).pop()) : 'ou link da imagem'}</span>${inp('hero_url', 'https://…/fundo.jpg')}</label></div>
-    </div><p class="ghelp">Imagens suas ficam na pasta data${SEP()}covers do Ludrix e nunca são trocadas pela busca automática. Se colar um link, ele é baixado uma vez e guardado.</p>`;
+    </div><p class="ghelp">Imagens suas ficam na pasta ${DL()}${SEP()}covers do Ludrix e nunca são trocadas pela busca automática. Se colar um link, ele é baixado uma vez e guardado.</p>`;
   } else if (ED.tab === 'links') {
     h = `<div class="glinks">${f.links.map((l, n) => `<div class="glk"><input class="mi" value="${esc(l.name)}" placeholder="Nome" oninput="ED.form.links[${n}].name=this.value"><input class="mi" value="${esc(l.url)}" placeholder="https://…" oninput="ED.form.links[${n}].url=this.value"><button class="btn s xs" title="Abrir" onclick="api.post('/api/open_url',{url:ED.form.links[${n}].url})">${I.ext}</button><button class="btn s xs" title="Remover" onclick="ED.form.links.splice(${n},1);edRender()">${I.x}</button></div>`).join('')}
       <button class="btn s sm" onclick="ED.form.links.push({name:'',url:''});edRender()">${I.plus} Adicionar link</button></div>
@@ -1784,7 +1786,7 @@ async function crashDialog(key, title) {
 }
 function confirmUninstall(key) { const d = (S.det && S.det.key === key) ? S.det : (S.byKey[key] || {}); const local = d.kind === 'local', rom = key.startsWith('rom:'), repoRom = d.kind === 'rom' && !rom; modal({ title: local || rom ? `Remover ${d.title} da biblioteca?` : `Remover ${d.title}?`, text: local || rom ? 'Os arquivos do jogo NÃO serão apagados — só a entrada no launcher (o tempo jogado se perde).' : repoRom ? `A ROM baixada será apagada e o jogo volta a aparecer na Store:\n${d.exe || d.dir || ''}` : `A pasta será apagada e o jogo volta a aparecer na Store:\n${d.dir || ''}`, ok: 'Remover', danger: true, onOk: async () => { await api.post('/api/uninstall', { key }); const g = S.byKey[key]; if (g) g.installed = false; if (local || rom) toast('', 'Removido da biblioteca', d.title, [{ label: 'Desfazer', fn: undoRemove }, { label: 'OK', fn: () => {} }]); else toast('', 'Removido', d.title); closeDetail(); await loadCatalog(false); } }); }
 async function calcSize(key, el) { if (el) el.textContent = 'Calculando…'; const r = await api.post('/api/game/size', { key }); if (r.error) { if (el) el.textContent = r.error; return; } const g = S.byKey[key]; if (g) g.size = r.size; if (el) el.outerHTML = esc(fmt(r.size)) + (r.partial ? ' <small style="color:var(--muted)">(parcial — pasta muito grande)</small>' : ` <small style="color:var(--muted)">(${pl(r.files, 'arquivo', 'arquivos')})</small>`); }
-function whatsNew() { const txt = S.config.version_changelog || ''; const items = txt.split('\n').map(l => l.replace(/^[-*]\s*/, '').trim()).filter(Boolean); modal({ title: `Novidades da ${S.config.version}`, wide: true, html: items.length ? `<ul class="wnew">${items.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="mut">Sem registro de mudanças para esta versão.</p>', ok: 'Fechar', noCancel: true, buttons: [{ label: 'Atualizações', fn: () => { closeDetail(); setView('settings'); settingsTab('system', 'Atualizações'); } }] }); }
+function whatsNew() { const txt = S.config.version_changelog || ''; const items = txt.split('\n').map(l => l.replace(/^[-*]\s*/, '').trim()).filter(Boolean); modal({ title: `Novidades da ${S.config.version}`, wide: true, html: items.length ? `<ul class="wnew">${items.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<p class="mut">Sem registro de mudanças para esta versão.</p>', ok: 'Fechar', noCancel: true, buttons: [{ label: 'Atualizações', fn: () => { closeDetail(); openSettings('system', 'Atualizações'); } }] }); }
 async function libraryDupes() {
   const gs = await api.post('/api/library/dupes', {});
   if (!Array.isArray(gs) || !gs.length) return toast('ok', 'Nenhum duplicado', 'Nenhum jogo repete nome ou executável.');
@@ -2203,10 +2205,12 @@ function themeSwatch(t) {
 function selHtml(opts, cur, on, cls) { return `<select class="sel ${cls || ''}" onchange="${on}">${opts.map(([v, l]) => `<option value="${esc(JSON.stringify(v))}" ${v === cur ? 'selected' : ''}>${esc(String(l))}</option>`).join('')}</select>`; }
 function cfgSel(key, opts, cur, after) { return selHtml(opts, cur, `setCfg({${key}:JSON.parse(this.value)})${after || ''}`); }
 function settingsTab(id, jump) { S.tab.settings = id; if (jump) S._settingsJump = jump; renderSettings(); }
+/** Abre Ajustes já na aba certa (uma renderização só, sem passar pela aba anterior). */
+function openSettings(tab, jump) { S.tab.settings = tab; if (jump) S._settingsJump = jump; if (S.view !== 'settings') return setView('settings'); renderSettings(true); }
 async function cset(patch) { const r = await api.post('/api/custom/set', patch); if (r.error) return toast('err', 'Personalizar', r.error); S.custom = r; applyCustom(); if (S.view === 'settings' && S.tab.settings === 'custom') renderSettings(); }
 async function cpick(what, path) { if (!path && !S.config.native) return modal({ title: 'Imagem', text: 'Caminho completo do arquivo de imagem:', input: '', ok: 'Usar', onOk: v => v && cpick(what, v) }); const r = await api.post(path ? '/api/custom/add' : '/api/custom/pick', path ? { what, path } : { what }); if (r.error) return toast('err', 'Personalizar', r.error); if (r.cancel) return; S.custom = r; applyCustom(); renderSettings(); }
 async function cremove(what, name) { const r = await api.post('/api/custom/remove', { what, name }); if (r.error) return toast('err', 'Personalizar', r.error); S.custom = r; applyCustom(); renderSettings(); }
-function creset() { modal({ title: 'Redefinir o Personalizar?', text: 'Volta tudo ao que o tema define. Suas imagens de fundo e ícones enviados continuam na pasta data\\custom.', ok: 'Redefinir', danger: true, onOk: async () => { const r = await api.post('/api/custom/reset', {}); S.custom = r; applyCustom(); renderSettings(); } }); }
+function creset() { modal({ title: 'Redefinir o Personalizar?', text: 'Volta tudo ao que o tema define. Suas imagens de fundo e ícones enviados continuam na pasta ' + DL() + SEP() + 'custom.', ok: 'Redefinir', danger: true, onOk: async () => { const r = await api.post('/api/custom/reset', {}); S.custom = r; applyCustom(); renderSettings(); } }); }
 function cexport() { modal({ title: 'Exportar como tema', text: 'Nome do tema. O arquivo .lxtheme vai para a pasta themes\\exportados e pode ser importado em qualquer Ludrix.', input: 'Meu tema', ok: 'Exportar', onOk: async name => { if (!name) return false; const r = await api.post('/api/custom/export', { name }); if (r.error) return toast('err', 'Exportar', r.error); toast('ok', 'Tema exportado', r.path, [{ label: 'Abrir pasta', fn: () => openPath(r.path.replace(/[\\/][^\\/]*$/, '')) }]); } }); }
 let customV = 0;
 function applyCustom() {
@@ -2242,7 +2246,7 @@ function customHtml(k) {
     <div class="frow"><div class="l"><b>Desfoque atrás dos painéis</b><span>Efeito de vidro. 0 usa o padrão</span></div>${range('blur', 0, 30, 1, k.blur ?? 0, 'px')}</div>
   </div>
   <div class="sec"><h3>Fundo</h3>
-    <div class="frow"><div class="l"><b>Imagem de fundo</b><span>PNG, JPG ou WEBP. O Ludrix reduz para até 1920 px e guarda em data\\custom</span></div><div class="ta">${k.wallpaper ? `<img src="/api/custom/file/${enc(k.wallpaper)}" style="height:40px;width:70px;object-fit:cover;border-radius:6px;border:1px solid var(--line)">` : ''}<button class="btn s sm" onclick="cpick('wallpaper')">${I.image} Escolher imagem</button>${k.wallpaper ? `<button class="btn s sm" onclick="cremove('wallpaper')">${I.x}</button>` : ''}</div></div>
+    <div class="frow"><div class="l"><b>Imagem de fundo</b><span>PNG, JPG ou WEBP. O Ludrix reduz para até 1920 px e guarda em ${DL()}${SEP()}custom</span></div><div class="ta">${k.wallpaper ? `<img src="/api/custom/file/${enc(k.wallpaper)}" style="height:40px;width:70px;object-fit:cover;border-radius:6px;border:1px solid var(--line)">` : ''}<button class="btn s sm" onclick="cpick('wallpaper')">${I.image} Escolher imagem</button>${k.wallpaper ? `<button class="btn s sm" onclick="cremove('wallpaper')">${I.x}</button>` : ''}</div></div>
     ${k.wallpaper ? `<div class="frow"><div class="l"><b>Opacidade</b></div>${range('wallpaper_opacity', 5, 100, 5, k.wallpaper_opacity ?? 35, 'pct')}</div>
     <div class="frow"><div class="l"><b>Desfoque</b></div>${range('wallpaper_blur', 0, 40, 1, k.wallpaper_blur ?? 0, 'px')}</div>
     <div class="frow"><div class="l"><b>Escurecer</b><span>Ajuda a ler o texto sobre fotos claras</span></div>${range('wallpaper_dim', 0, 90, 5, k.wallpaper_dim ?? 0, 'pct')}</div>` : ''}
@@ -2326,7 +2330,7 @@ async function sweepCheck(btn) {
   const rows = Object.entries(r.groups).filter(([, g]) => g.files).map(([k, g]) => `<div class="frow"><div class="l"><b>${SWEEP_NAMES[k] || k}</b></div><span class="dim">${pl(g.files, 'item', 'itens')} · ${fmt(g.bytes)}</span></div>`).join('');
   modal({ title: 'Limpar restos?', html: `${rows}<p class="dim" style="margin-top:8px">Total: ${fmt(r.bytes)}. Nada disso afeta jogos, saves, capas ou ajustes.</p>`, ok: 'Limpar', danger: true, onOk: async () => { const x = await api.post('/api/sweep', {}); if (!x || x.error) return toast('err', 'Limpeza falhou', (x && x.error) || ''); toast('ok', 'Pasta limpa', `${pl(x.removed, 'item', 'itens')} · ${fmt(x.bytes)}${x.failed ? ' · ' + pl(x.failed, 'arquivo em uso', 'arquivos em uso') : ''}`); if (S.view === 'settings') renderSettings(true); } });
 }
-async function autoBackupDir(what) { const r = await api.post('/api/data/auto_backup', { [what]: true }); if (r && !r.error) { S.config = await api.get('/api/config'); renderSettings(true); } }
+async function backupDir(what) { const r = await api.post('/api/data/backup_dir', { [what]: true }); if (r && !r.error) { S.config = await api.get('/api/config'); renderSettings(true); } }
 async function autoBackupNow(btn) { if (btn) btn.disabled = true; const r = await api.post('/api/data/auto_backup', { now: true }); if (btn) btn.disabled = false; if (!r || r.error) return toast('err', 'Backup não feito', (r && r.error) || ''); toast('ok', 'Backup pronto', r.path || '', r.path ? [{ label: 'Abrir pasta', fn: () => openPath(r.path) }] : undefined); S.config = await api.get('/api/config'); renderSettings(true); }
 async function clearCache() { const what = [...document.querySelectorAll('#cacheBox input:checked')].map(i => i.value); await api.post('/api/cache/clear', { what }); toast('ok', 'Limpeza concluída', what.join(', ')); renderSettings(true); if (what.includes('web')) loadCatalog(false); }
 const REPO_FIELDS = {
@@ -2460,10 +2464,11 @@ async function exportLibrary(fmt, keys) {
 }
 async function handleEvent(ev) {
   if (ev.type === 'flash_cover') { if (S.view === 'flash') { const c = document.querySelector(`.fcard[data-fid="${CSS.escape(ev.id)}"] .fart`); if (c && !c.querySelector('img')) c.insertAdjacentHTML('afterbegin', `<img src="/flash/cover/${esc(ev.id)}?t=${Date.now()}" onload="this.classList.add('ld')" onerror="this.remove()">`); } return; }
-  if (ev.type === 'update_available') { toast('info', 'Tem atualização nova', 'Versão ' + ev.version + (ev.rev ? ' (correção ' + ev.rev + ')' : '') + ' — veja em Ajustes › Sistema › Atualizações', [{ label: 'Abrir', fn: () => { setView('settings'); S.tab.settings = 'system'; S._settingsJump = 'Atualizações'; renderSettings(true); } }]); return; }
+  if (ev.type === 'updates_state') { if (S.view === 'settings' && S.tab.settings === 'system') loadUpdates(); return; }
+  if (ev.type === 'update_available') { toast('info', 'Tem atualização nova', 'Versão ' + ev.version + (ev.rev ? ' (correção ' + ev.rev + ')' : '') + ' — veja em Ajustes › Sistema › Atualizações', [{ label: 'Abrir', fn: () => { openSettings('system', 'Atualizações'); } }]); return; }
   if (ev.type === 'after_queue') { afterQueueSync({ action: ev.action, at: ev.at }); return; }
   if (ev.type === 'done') {
-    if (ev.kind === 'update') { toast('ok', 'Atualização baixada', 'Pronta para aplicar', [{ label: 'Ver', fn: () => { setView('settings'); S.tab.settings = 'system'; S._settingsJump = 'Atualizações'; renderSettings(true); } }]); S.upd = null; if (S.view === 'settings' && S.tab.settings === 'system') loadUpdates(false); return; }
+    if (ev.kind === 'update') { toast('ok', 'Atualização baixada', 'Pronta para aplicar', [{ label: 'Ver', fn: () => { openSettings('system', 'Atualizações'); } }]); S.upd = null; if (S.view === 'settings' && S.tab.settings === 'system') loadUpdates(false); return; }
     if (ev.kind === 'emulator') { toast('ok', 'Emulador instalado', ev.title); if (S.view === 'emulation') renderEmulation(); return; }
     if (ev.kind === 'tool') { toast('ok', ev.key && ev.key.startsWith('mod:') ? 'Mod instalado' : 'Ferramenta instalada', ev.title); if (S.view === 'mods') renderMods(); return; }
     if (ev.kind === 'source') { toast('ok', 'Fonte criada', `${ev.count || 0} jogo(s)`); sourceMade(ev.out); return; }
@@ -2632,20 +2637,24 @@ async function relocateGame(key, btn, path) {
   if (r.need_exe) { toast('', 'Pasta atualizada', 'Executável não encontrado dentro dela — escolha qual abre o jogo.'); return chooseExe(key); }
   toast('ok', 'Jogo relocalizado', r.exe || r.dir, [{ label: 'Jogar agora', fn: () => play(key) }, { label: 'OK', fn: () => {} }]);
 }
-async function dataExport() {
-  const r = await api.post('/api/data/export', {});
+async function dataExport(btn, dest) {
+  if (!dest && !S.config.native) return modal({ title: 'Fazer backup', text: 'Pasta onde salvar o Ludrix-backup-<data>.zip:', input: S.config.backup_last_dir || '', ok: 'Salvar', onOk: v => v && dataExport(null, v) });
+  if (btn) btn.disabled = true;
+  const r = await api.post('/api/data/export', { dest: dest || null });
+  if (btn) btn.disabled = false;
   if (r.cancel) return;
-  if (r.error) return toast('err', 'Não foi possível exportar', r.error);
-  toast('ok', 'Backup pronto', `${pl(r.files, 'arquivo', 'arquivos')} · ${fmt(r.size)}`, [{ label: 'Abrir pasta', fn: () => openPath(r.path.replace(/[\\/][^\\/]*$/, '')) }, { label: 'OK', fn: () => {} }]);
+  if (r.error) return toast('err', 'Backup não feito', r.error);
+  toast('ok', 'Backup pronto', `${pl(r.files, 'arquivo', 'arquivos')} · ${fmt(r.size)}${r.skipped ? ' · ' + r.skipped + ' grandes demais ficaram de fora' : ''}`, [{ label: 'Abrir pasta', fn: () => openPath(r.path.replace(/[\\/][^\\/]*$/, '')) }, { label: 'OK', fn: () => {} }]);
+  S.config = await api.get('/api/config'); if (S.view === 'settings') renderSettings(true);
 }
 async function dataImport(path) {
-  if (!path && !S.config.native) return modal({ title: 'Importar um backup', text: 'Caminho completo do Ludrix-dados-*.zip:', input: '', ok: 'Continuar', onOk: v => v && dataImport(v) });
+  if (!path && !S.config.native) return modal({ title: 'Restaurar um backup', text: 'Caminho completo do Ludrix-backup-*.zip:', input: '', ok: 'Continuar', onOk: v => v && dataImport(v) });
   const r = await api.post('/api/data/inspect', { path: path || '' });
   if (r.cancel) return;
   if (r.error) return toast('err', 'Não foi possível ler o backup', r.error);
   const when = r.at ? new Date(r.at * 1000).toLocaleString() : '?';
   const parts = [`${pl(r.games, 'jogo', 'jogos')} na biblioteca`, `${pl(r.themes, 'tema importado', 'temas importados')}`, r.saves ? 'cópias de saves' : null, r.has_config ? 'configurações' : null].filter(Boolean).join(' · ');
-  modal({ title: 'Aplicar este backup?', text: `Feito em ${when} com a versão ${r.version}. Contém: ${parts}. O que existe hoje será substituído (uma cópia do estado atual fica em data${SEP()}updates) e o Ludrix reabre em seguida.`, ok: 'Aplicar e reabrir', cancel: 'Não fazer nada', danger: true, onOk: async () => {
+  modal({ title: 'Aplicar este backup?', text: `Feito em ${when} com a versão ${r.version}. Contém: ${parts}. O que existe hoje será substituído (uma cópia do estado atual fica em ${S.config.data_label || 'data'}${SEP()}updates) e o Ludrix reabre em seguida.`, ok: 'Aplicar e reabrir', cancel: 'Não fazer nada', danger: true, onOk: async () => {
     const x = await api.post('/api/data/import', { path: r.path });
     if (x.error) return toast('err', 'Não foi possível importar', x.error);
     toast('ok', 'Backup aplicado', 'Reabrindo o Ludrix…'); setTimeout(() => api.post('/api/restart', {}), 900);
@@ -3611,7 +3620,7 @@ function profMenu(e) {
   if (e) e.stopPropagation();
   const r = e && e.currentTarget ? e.currentTarget.getBoundingClientRect() : { right: 80, top: 80 };
   const items = PROF.list.map(p => ({ label: p.name, icon: p.id === PROF.active ? 'check' : 'user', hint: p.id === PROF.active ? 'ativo' : '', fn: () => profSwitch(p.id) }));
-  items.push({ sep: true }, { label: 'Novo perfil…', icon: 'plus', fn: () => profNew() }, { label: 'Gerenciar perfis…', icon: 'cog', fn: () => { setView('settings'); S.tab.settings = 'general'; S._settingsJump = 'Perfis'; renderSettings(true); } });
+  items.push({ sep: true }, { label: 'Novo perfil…', icon: 'plus', fn: () => profNew() }, { label: 'Gerenciar perfis…', icon: 'cog', fn: () => { openSettings('general', 'Perfis'); } });
   showCtxLocal(items, r.right + 6, r.top, 'Perfis');
 }
 async function profSwitch(id) {
@@ -3690,12 +3699,12 @@ const GB = n => n ? (n / 2 ** 30).toFixed(n > 2 ** 30 * 100 ? 0 : 1) + ' GB' : '
 const MB = n => !n ? '—' : n >= 2 ** 30 ? (n / 2 ** 30).toFixed(1) + ' GB' : Math.round(n / 2 ** 20) + ' MB';
 function hwHtml(hw) {
   if (!hw) return `<div class="sec" id="s-pc"><h3>Seu PC</h3><p>Lendo o hardware…</p></div>`;
-  if (hw.error) return `<div class="sec"><h3>Seu PC</h3><p>Não consegui ler o hardware${hw && hw.error ? ': ' + esc(hw.error) : ''}.</p></div>`;
+  if (hw.error) return `<div class="sec" id="s-pc"><h3>Seu PC</h3><p>Não consegui ler o hardware${hw && hw.error ? ': ' + esc(hw.error) : ''}.</p></div>`;
   const t = hw.tier || {}; const lvl = { high: ['ALTO', 'green'], mid: ['MÉDIO', 'amber'], low: ['BÁSICO', 'muted'] }[t.level] || ['?', 'muted'];
   const gpus = hw.gpus && hw.gpus.length ? hw.gpus : [{ name: 'Não identificada', vram: 0 }];
   const ramUse = hw.ram.total ? Math.round((1 - hw.ram.available / hw.ram.total) * 100) : 0;
   const bar = (f, col) => `<div class="hwbar"><i style="width:${Math.max(2, Math.min(100, f))}%;background:var(--${col || 'accent'})"></i></div>`;
-  return `<div class="sec"><div class="hwhead"><h3>Seu PC</h3><span class="pill ${lvl[1] === 'green' ? 'ok' : lvl[1] === 'amber' ? 'warn' : ''}">Perfil ${lvl[0]}</span><span style="flex:1"></span><button class="btn s sm" onclick="S.hw=null;renderSettings()">${I.refresh} Atualizar</button></div>
+  return `<div class="sec" id="s-pc"><div class="hwhead"><h3>Seu PC</h3><span class="pill ${lvl[1] === 'green' ? 'ok' : lvl[1] === 'amber' ? 'warn' : ''}">Perfil ${lvl[0]}</span><span style="flex:1"></span><button class="btn s sm" onclick="S.hw=null;renderSettings()">${I.refresh} Atualizar</button></div>
     <p>${esc(t.hint || '')}</p>
     <div class="hwgrid">
       <div class="hw"><span class="k">${I.cpu} Processador</span><b>${esc(hw.cpu.name)}</b><small>${hw.cpu.cores} núcleos · ${hw.cpu.threads} threads${hw.cpu.mhz ? ' · ' + (hw.cpu.mhz / 1000).toFixed(1) + ' GHz' : ''}</small></div>
@@ -3738,7 +3747,7 @@ function toggleHelp(e) {
 function helpOut(e) { const p = $('#helppop'); if (!p.contains(e.target) && !$('#helpBtn').contains(e.target)) p.classList.remove('on'); else if (p.classList.contains('on')) setTimeout(() => document.addEventListener('click', helpOut, { once: true }), 0); }
 function toggleBell() { $('#helppop').classList.remove('on'); const p = $('#bellpop'); const on = p.classList.toggle('on'); if (on) { loadNotifs(); setTimeout(() => document.addEventListener('click', bellOut, { once: true }), 0); } }
 function bellOut(e) { const p = $('#bellpop'); if (!p.contains(e.target) && !$('#bell').contains(e.target)) p.classList.remove('on'); else if (p.classList.contains('on')) setTimeout(() => document.addEventListener('click', bellOut, { once: true }), 0); }
-async function notifOpen(id) { const n = NOTIFS.find(x => x.id === id); if (!n) return; await api.post('/api/notifications/ack', { id }); n.read = true; renderBell(); if (n.action && n.action.startsWith('scan-dir:')) { $('#bellpop').classList.remove('on'); scanRun('windows', n.action.slice(9)); return; } if (n.action === 'store-new') { $('#bellpop').classList.remove('on'); S.tab.store = 'games'; flagOnly('fresh'); const rid = String(n.key || '').replace(/^store:/, ''); if (rid && S.repos.some(r => r.id === rid)) { S.flt.repos.add(rid); renderLibrary(); } return; } if (n.key === 'integrity') { $('#bellpop').classList.remove('on'); integrityCheck(); return; } if (n.action === 'updates') { $('#bellpop').classList.remove('on'); checkUpdates(); return; } if (n.action && n.action.startsWith('settings:')) { $('#bellpop').classList.remove('on'); closeDetail(); setView('settings'); settingsTab(n.action.slice(9)); return; } if (n.key && !n.key.startsWith('flash:') && S.byKey[n.key]) { $('#bellpop').classList.remove('on'); openGame(n.key); } }
+async function notifOpen(id) { const n = NOTIFS.find(x => x.id === id); if (!n) return; await api.post('/api/notifications/ack', { id }); n.read = true; renderBell(); if (n.action && n.action.startsWith('scan-dir:')) { $('#bellpop').classList.remove('on'); scanRun('windows', n.action.slice(9)); return; } if (n.action === 'store-new') { $('#bellpop').classList.remove('on'); S.tab.store = 'games'; flagOnly('fresh'); const rid = String(n.key || '').replace(/^store:/, ''); if (rid && S.repos.some(r => r.id === rid)) { S.flt.repos.add(rid); renderLibrary(); } return; } if (n.key === 'integrity') { $('#bellpop').classList.remove('on'); integrityCheck(); return; } if (n.action === 'updates') { $('#bellpop').classList.remove('on'); checkUpdates(); return; } if (n.action && n.action.startsWith('settings:')) { $('#bellpop').classList.remove('on'); closeDetail(); openSettings(n.action.slice(9)); return; } if (n.key && !n.key.startsWith('flash:') && S.byKey[n.key]) { $('#bellpop').classList.remove('on'); openGame(n.key); } }
 function discToolAsk(key, r) {
   modal({ title: r.tool_only ? 'Formato de disco não suportado' : 'Disco com faixas de áudio', text: r.message + '\n\nO WinCDEmu é gratuito e de código aberto; instala um driver (pede permissão de administrador uma vez). Depois de montar o disco com ele, abra o instalador e, no fim, use "Procurar instalação agora" nos detalhes do jogo.', ok: 'Baixar WinCDEmu', onOk: async () => { const t = await api.get('/api/disc/tool'); api.post('/api/open_url', { url: t.url }); }, extra: r.tool_only ? null : 'Montar sem o áudio', onExtra: () => api.post('/api/repack/run', { key, force: true }).then(x => x.error ? toast('err', 'Disco', x.error) : toast('', 'Disco montado', 'O instalador vai abrir em seguida.')), cancel: 'Depois' });
 }
@@ -4120,7 +4129,7 @@ async function setCover(key, path) {
   if (!path && !S.config.native) return modal({ title: 'Trocar capa', text: 'Caminho completo da imagem (PNG, JPG ou WEBP):', input: '', ok: 'Usar', onOk: v => v && setCover(key, v) });
   const r = await api.post('/api/cover/set', { key, path });
   if (r.error) return toast('err', 'Capa', r.error);
-  if (r.ok) { toast('ok', 'Capa trocada', 'Guardada em data\\covers — vale para sempre, mesmo atualizando metadados.'); afterCoverChange(key); }
+  if (r.ok) { toast('ok', 'Capa trocada', 'Guardada em ' + DL() + SEP() + 'covers — vale para sempre, mesmo atualizando metadados.'); afterCoverChange(key); }
 }
 async function resetCover(key) { await api.post('/api/cover/reset', { key }); toast('', 'Capa original restaurada', ''); afterCoverChange(key); }
 

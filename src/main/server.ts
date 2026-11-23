@@ -545,29 +545,24 @@ async function routePost(req, res, p, _q, be, getWindow) {
         return sendJson(res, await be.pickPath(b.kind || 'exe', b.initial || ''));
     if (p === '/api/choose_folder')
         return sendJson(res, await be.chooseFolder(b.what || 'games', b.system || '', b.initial || ''));
-    if (p === '/api/data/auto_backup') {
+    if (p === '/api/data/backup_dir') {
         if (b.pick) {
-            const d = await require('./dialogs').pickFolder(be.autoBackupDir());
+            const d = await require('./dialogs').pickFolder(be.backupDir());
             if (d)
-                be.store.setConfig({ auto_backup_dir: d });
-            return sendJson(res, { ok: true, dir: be.autoBackupDir() });
+                be.setBackupDir(String(d));
         }
-        if (b.reset) {
-            be.store.setConfig({ auto_backup_dir: '' });
-            return sendJson(res, { ok: true, dir: be.autoBackupDir() });
-        }
-        return sendJson(res, b.now ? await be.autoBackup(true) : { ok: true, dir: be.autoBackupDir() });
+        else if (b.reset)
+            be.setBackupDir('');
+        return sendJson(res, { ok: true, dir: be.backupDir() });
     }
+    if (p === '/api/data/auto_backup')
+        return sendJson(res, b.now ? await be.autoBackup(true) : { ok: true, dir: be.backupDir() });
     if (p === '/api/data/export')
-        return sendJson(res, await be.dataExport());
+        return sendJson(res, await be.dataExport(b?.dest || null));
     if (p === '/api/data/inspect')
         return sendJson(res, await be.dataInspect(b?.path || null));
     if (p === '/api/data/import')
         return sendJson(res, await be.dataImport(String(b?.path || '')));
-    if (p === '/api/backup/export')
-        return sendJson(res, be.backupExport(b?.dest || null));
-    if (p === '/api/backup/import')
-        return sendJson(res, await be.backupImport(b?.path || null));
     if (await server2.routePost2(res, p, b, be, getWindow, LOCAL_PORT))
         return;
     return sendJson(res, { error: 'not found' }, 404);

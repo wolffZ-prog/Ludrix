@@ -5,8 +5,11 @@ import stream from 'node:stream';
 import zlib from 'node:zlib';
 import * as P from './paths';
 
-export const DATA_FILES = ['config.json', 'library.json', 'repos.json', 'downloads.json'];
-export const DATA_DIRS = ['covers', 'custom', 'save_backups'];
+export const DATA_FILES = ['config.json', 'library.json', 'repos.json', 'downloads.json', 'sources_state.json', 'profiles.json'];
+/** nomes gerados: Ludrix-backup-<data>.zip (manual) e Ludrix-backup-auto-<data>.zip; os antigos Ludrix-dados-*.zip continuam sendo aceitos */
+export const ANY_NAME = /^Ludrix-(backup|dados)-.*\.zip$/i;
+export const AUTO_NAME = /^Ludrix-(backup-auto|dados)-.*\.zip$/i;
+export const DATA_DIRS = ['covers', 'custom', 'save_backups', 'profiles'];
 export const MANIFEST = 'ludrix-backup.json';
 const MAX_IMPORT = 4 * 1024 ** 3;
 const BAD_EXT = ['.exe', '.dll', '.bat', '.cmd', '.ps1', '.sh', '.py', '.js', '.html', '.htm'];
@@ -218,9 +221,9 @@ function isFile(p: string) {
     }
 }
 
-export async function exportData(destDir: string, version: string) {
+export async function exportData(destDir: string, version: string, kind: 'manual' | 'auto' = 'manual') {
     await fs.promises.mkdir(destDir, { recursive: true });
-    const out = path.join(destDir, `Ludrix-dados-${stamp('dash')}.zip`);
+    const out = path.join(destDir, `Ludrix-backup-${kind === 'auto' ? 'auto-' : ''}${stamp('dash')}.zip`);
     const tmp = out + '.part';
     const z = new ZipWriter(tmp);
     try {
@@ -308,7 +311,7 @@ export async function importData(file: string, version: string): Promise<any> {
     const pre = await exportData(P.UPDATES, version);
     let olds: string[] = [];
     try {
-        olds = fs.readdirSync(P.UPDATES).filter((n) => /^Ludrix-dados-.*\.zip$/.test(n)).sort();
+        olds = fs.readdirSync(P.UPDATES).filter((n) => ANY_NAME.test(n)).sort();
     }
     catch { }
     for (const old of olds.slice(0, Math.max(0, olds.length - 2)))
@@ -319,13 +322,18 @@ export async function importData(file: string, version: string): Promise<any> {
     for (const d of DATA_DIRS)
         if (names.some((n) => n.startsWith(`data/${d}/`)))
             fs.rmSync(path.join(P.DATA, d), { recursive: true, force: true });
-    const root = path.resolve(P.ROOT);
+    // cada prefixo do zip cai na pasta real correspondente (data/ pode estar em %APPDATA%\.ludrixdata desde a 4.4)
+    const BASES: [string, string][] = [['data/', P.DATA], ['themes/', P.THEMES], ['games/rapidos/', P.FLASH]];
     for (const e of entries) {
         const n = e.entryName;
         if (!restorable(n))
             continue;
-        const target = path.resolve(P.ROOT, n);
-        if (!target.startsWith(root + path.sep))
+        const base = BASES.find(([pre]) => n.startsWith(pre));
+        if (!base)
+            continue;
+        const dir = path.resolve(base[1]);
+        const target = path.resolve(dir, n.slice(base[0].length));
+        if (!target.startsWith(dir + path.sep))
             continue;
         fs.mkdirSync(path.dirname(target), { recursive: true });
         fs.writeFileSync(target, e.getData());

@@ -38,10 +38,10 @@
 
 | Arquivo | Para quem |
 |---|---|
-| **`Ludrix-<versão>.zip`** | Programa pronto. Extrai em qualquer pasta (pode ser pendrive ou HD externo) e abre `Ludrix.exe`. Nada é instalado no sistema. |
+| **`LudrixHub-Setup-<versão>-x64.exe`** | Instalador simples para Windows 64 bits: escolhe a pasta (padrão `C:\Users\<você>\Ludrix`), cria atalhos, sem pedir administrador. Jogos ficam dentro da pasta escolhida; ajustes, biblioteca e backups em `%APPDATA%\.ludrixdata`. |
+| **`Ludrix-<versão>.zip`** | Portátil. Extrai em qualquer pasta e abre `Ludrix.exe`. Nada é instalado no sistema. Para pendrive/HD externo, crie um `portable.txt` vazio ao lado do exe e tudo fica dentro da pasta. |
 | `ludrix-<versão>-patch.lxup` | Atualização. O Ludrix baixa e aplica sozinho em **Ajustes → Sistema → Checar atualizações**; também pode ser arrastado para a janela. |
 | `ludrix-<versão>-full.lxup` | Atualização completa (programa + runtime). Só aparece quando o runtime muda. |
-| `Ludrix-<versão>-src.zip` | Código-fonte desta mesma versão, para compilar com `build.bat`. |
 | `LudrixHub-<versão>-x86_64.AppImage` | Linux (experimental). Dados em `~/.local/share/Ludrix`. |
 
 Última versão: **[Releases](https://github.com/wolffZ-prog/Ludrix/releases/latest)**. Histórico completo em [CHANGELOG.md](CHANGELOG.md). Só as duas releases mais recentes ficam publicadas; versões antigas são removidas.
@@ -60,7 +60,7 @@ A série 4.0 trocou o motor antigo (Python) por Electron + TypeScript, mantendo 
 - **Perfis locais.** Cada pessoa com seu tema, aparência, exibição e preferências; a biblioteca, capas, saves e downloads são os mesmos para todos. Sem senha: ao abrir, o Ludrix pergunta quem vai jogar (opcional) e a troca fica no avatar da barra. Foto opcional (PNG até 64×64); perfis podem ser apagados a qualquer momento.
 - **Barra de navegação a gosto.** No alto (padrão), lateral só ícones, lateral com nomes, embaixo, ou **solta**: separada do conteúdo, com cantos arredondados.
 - **Rápido em HDD.** A biblioteca abre de um cache frio enquanto o disco acorda; a verificação de integridade roda depois, sem segurar a tela. Um script opcional (`Ludrix-HDD.ps1`) ajusta o Windows para HDs mecânicos sem tocar nos dados.
-- **Portátil e previsível.** Tudo fica na pasta (`data/`, `games/`, `emulation/`, `downloads/`). Nada é gravado fora dela, nada roda depois de Sair, e cada atualização substitui o programa inteiro mantendo só os dados do usuário.
+- **Previsível.** Jogos, emuladores e downloads ficam na pasta do programa; ajustes, biblioteca, saves copiados, temas e backups ficam em `%APPDATA%\.ludrixdata` (ou em `data/` dentro da pasta, se existir um `portable.txt` — pendrive, HD externo). Nada no registro, nada roda depois de Sair, e cada atualização substitui o programa inteiro mantendo só os dados do usuário. **Backup em um clique**: Ajustes › Sistema › Backup gera um zip com tudo que é seu, na pasta que você escolher, e restaura de volta.
 - **Em português do Brasil e inglês**, com tudo que é adicionado chegando nos dois idiomas ao mesmo tempo.
 
 ## O que ele faz

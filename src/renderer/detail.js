@@ -185,5 +185,5 @@ function reqCompare(r, d) {
   if (wantsGpu && gpu) items.push([dedicated, dedicated ? 'Placa de vídeo dedicada' : 'Sem placa de vídeo dedicada (o jogo pede uma)']);
   if (!items.length) return '';
   const bad = items.filter(x => !x[0]).length;
-  return `<div class="reqcmp ${bad ? 'warn' : 'ok'}"><b>${bad ? (bad === 1 ? '1 item abaixo do mínimo' : bad + ' itens abaixo do mínimo') : 'Seu PC atende ao mínimo'}</b>${items.map(([ok, t]) => `<span class="${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✕'} ${esc(t)}</span>`).join('')}<a href="#" class="more" onclick="closeDetail();setView('settings');settingsTab('system','Seu PC');return false">Ver meu PC</a></div>`;
+  return `<div class="reqcmp ${bad ? 'warn' : 'ok'}"><b>${bad ? (bad === 1 ? '1 item abaixo do mínimo' : bad + ' itens abaixo do mínimo') : 'Seu PC atende ao mínimo'}</b>${items.map(([ok, t]) => `<span class="${ok ? 'ok' : 'bad'}">${ok ? '✓' : '✕'} ${esc(t)}</span>`).join('')}<a href="#" class="more" onclick="closeDetail();openSettings('system','Seu PC');return false">Ver meu PC</a></div>`;
 }

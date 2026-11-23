@@ -1,6 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import os from 'node:os';
+import { dataDirOf } from './dataDir';
 let eapp: any = null;
 try {
     eapp = (require('electron') as any).app || null;
@@ -42,7 +43,11 @@ function writable(dir: string): boolean {
     try { fs.accessSync(dir, fs.constants.W_OK); return true; } catch { return false; }
 }
 const ROOT = appRoot()
-const DATA = path.join(ROOT, 'data')
+const DATA = dataDirOf(ROOT, FROZEN)
+/** true quando os dados moram fora da pasta do programa (%APPDATA%\.ludrixdata) */
+const DATA_EXTERNAL = path.resolve(DATA) !== path.resolve(path.join(ROOT, 'data'))
+// filhos (atualizador, console) e módulos sem electron enxergam a mesma pasta
+process.env.LUDRIX_DATA = DATA
 const CACHE = path.join(DATA, 'cache')
 const CACHE_WEB = path.join(CACHE, 'web')
 const CACHE_THUMBS = path.join(CACHE, 'thumbs')
@@ -56,7 +61,7 @@ const EMU_EMULATORS = path.join(EMU, 'emulators')
 const EMU_GAMES = path.join(EMU, 'games')
 const EMU_BIOS = path.join(EMU, 'bios')
 const TOOLS = path.join(DATA, 'tools')
-const THEMES = path.join(ROOT, 'themes')
+const THEMES = DATA_EXTERNAL ? path.join(DATA, 'themes') : path.join(ROOT, 'themes')
 const FLASH = path.join(GAMES, 'rapidos')
 const REDISTS = path.join(DOWNLOADS, 'redists')
 const UPDATES = path.join(DATA, 'updates')
@@ -122,7 +127,7 @@ function bootOk() {
 function ensureDirs() {
     for (const d of [
         DATA, CACHE_WEB, CACHE_THUMBS, CACHE_COVERS, CACHE_META, CACHE_SHOTS,
-        DOWNLOADS, GAMES, EMU_EMULATORS, EMU_GAMES, EMU_BIOS, UPDATES, BACKUPS,
+        DOWNLOADS, GAMES, EMU_EMULATORS, EMU_GAMES, EMU_BIOS, UPDATES, BACKUPS, THEMES,
     ]) {
         try {
             fs.mkdirSync(d, { recursive: true });
@@ -185,4 +190,4 @@ async function dirSizeAsync(p) {
     return total;
 }
 
-export { APP_DIR, bootTries, bootBegin, bootOk, bootRead, bootWrite, ensureDirs, dirSize, dirSizeAsync, FROZEN, ROOT, DATA, CACHE, CACHE_WEB, CACHE_THUMBS, CACHE_COVERS, CACHE_META, CACHE_SHOTS, DOWNLOADS, GAMES, EMU, EMU_EMULATORS, EMU_GAMES, EMU_BIOS, TOOLS, THEMES, FLASH, REDISTS, UPDATES, BIN, BACKUPS, UI, ASSETS, CONFIG_FILE, LIBRARY_FILE, LOG_FILE, INSTANCE_FILE, BOOT_FILE, PENDING_VERIFY };
+export { APP_DIR, bootTries, bootBegin, bootOk, bootRead, bootWrite, ensureDirs, dirSize, dirSizeAsync, FROZEN, ROOT, DATA, DATA_EXTERNAL, CACHE, CACHE_WEB, CACHE_THUMBS, CACHE_COVERS, CACHE_META, CACHE_SHOTS, DOWNLOADS, GAMES, EMU, EMU_EMULATORS, EMU_GAMES, EMU_BIOS, TOOLS, THEMES, FLASH, REDISTS, UPDATES, BIN, BACKUPS, UI, ASSETS, CONFIG_FILE, LIBRARY_FILE, LOG_FILE, INSTANCE_FILE, BOOT_FILE, PENDING_VERIFY };

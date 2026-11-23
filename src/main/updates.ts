@@ -116,7 +116,9 @@ export class UpdateManager {
         }
         if (feed && online) {
             try {
-                const r = await this.http.request(feed, { timeout: 12_000, headers: { 'Cache-Control': 'no-cache' } });
+                // cache-buster: o CDN do GitHub (releases/latest/download) segura o JSON por vários minutos
+                const url = feed + (feed.includes('?') ? '&' : '?') + 'ts=' + Math.floor(Date.now() / 60_000);
+                const r = await this.http.request(url, { timeout: 12_000, headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' } });
                 if (r.status >= 400)
                     throw new Error(`HTTP ${r.status}`);
                 const data = (await r.json()) || {};
@@ -295,7 +297,7 @@ export class UpdateManager {
         const cmd = this.updaterCmd();
         if (!cmd)
             return { error: 'O atualizador (updater) não está na pasta do launcher — extraia o pacote completo de novo por cima' };
-        const args = [...cmd.slice(1), restore ? '--restore' : '--apply', pkg, '--root', P.ROOT, '--wait-pid', String(process.pid), '--from', String(currentVersion().version || '?')];
+        const args = [...cmd.slice(1), restore ? '--restore' : '--apply', pkg, '--root', P.ROOT, '--data', P.DATA, '--wait-pid', String(process.pid), '--from', String(currentVersion().version || '?')];
         if (relaunch)
             args.push('--relaunch', JSON.stringify(this.launcherCmd()));
         try {
