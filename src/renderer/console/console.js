@@ -166,7 +166,9 @@ function card(g, i) {
   const live = S.data.sessions[g.key];
   const k = encodeURIComponent(g.key);
   return `<div class="card${i === S.sel ? ' sel' : ''}" data-i="${i}" data-key="${esc(g.key)}">
-    <img src="/hero/${k}" loading="lazy" alt="" onerror="if(!this.dataset.f){this.dataset.f=1;this.className='cv';this.src='/cover/${k}'}else this.remove()">
+    ${document.body.dataset.layout === 'cinema'
+      ? `<img src="/hero/${k}" loading="lazy" alt="" onerror="if(!this.dataset.f){this.dataset.f=1;this.className='cv';this.src='/cover/${k}'}else this.remove()">`
+      : `<img class="cv" src="/cover/${k}" loading="lazy" alt="" onerror="if(!this.dataset.f){this.dataset.f=1;this.className='';this.src='/hero/${k}'}else this.remove()">`}
     <div class="ph">${esc(g.title)}</div><div class="n">${esc(g.title)}</div>${g.fav ? `<i class="fav">${IC.star}</i>` : ''}${live ? '<i class="live">Jogando</i>' : isStore(g) && g.job ? '<i class="live">Na fila</i>' : isStore(g) && g.size ? `<i class="live sz">${fmtSize(g.size)}</i>` : ''}</div>`;
 }
 
@@ -175,10 +177,11 @@ function fitCards() {
   const h = m.clientHeight, w = m.clientWidth;
   const u = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
   const cs = document.body.dataset.cards || 'normal', f = cs === 'small' ? 0.78 : cs === 'large' ? 1.3 : 1;
-  const sq = document.body.dataset.layout !== 'cinema', ar = sq ? 1 : 1.6;
-  let th = Math.round(Math.min(Math.max(h * (sq ? 0.19 : 0.135), 76), sq ? 190 : 150) * Math.max(0.9, Math.min(u, 1.4)) * f);
+  // Console: capas em retrato 2:3 (a arte inteira, sem recorte quadrado); Cinema: faixas 16:10.
+  const sq = document.body.dataset.layout !== 'cinema', ar = sq ? 2 / 3 : 1.6;
+  let th = Math.round(Math.min(Math.max(h * (sq ? 0.36 : 0.135), sq ? 120 : 76), sq ? 330 : 150) * Math.max(0.9, Math.min(u, 1.4)) * f);
   let tw = Math.round(th * ar);
-  tw = Math.min(tw, Math.floor((w - 80 * u) / (cs === 'small' ? (sq ? 10 : 8) : cs === 'large' ? (sq ? 6 : 4.6) : (sq ? 7.6 : 6.2)))); th = Math.round(tw / ar);
+  tw = Math.min(tw, Math.floor((w - 80 * u) / (cs === 'small' ? (sq ? 11 : 8) : cs === 'large' ? (sq ? 6.4 : 4.6) : (sq ? 8.4 : 6.2)))); th = Math.round(tw / ar);
   document.documentElement.style.setProperty('--tw', tw + 'px');
   document.documentElement.style.setProperty('--th', th + 'px');
 }

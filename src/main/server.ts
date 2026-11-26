@@ -61,8 +61,16 @@ function startSandbox() {
         catch { }
         const t = path.resolve(root, p.replace(/^\/+/, ''));
         const ok = p.startsWith('/html/') && t.startsWith(path.resolve(root) + path.sep) && fs.existsSync(t) && fs.statSync(t).isFile();
+        // sem cache cego: o jogo pode ser reinstalado com o mesmo id (zip novo) e o Chromium servia
+        // engine.js/game.js velhos por 24 h. Agora valida por ETag (tamanho+mtime) → 304 quando não mudou.
+        const st = ok ? fs.statSync(t) : null;
+        const etag = st ? `"${st.size.toString(16)}-${Math.floor(st.mtimeMs).toString(16)}"` : '';
+        if (ok && req.headers['if-none-match'] === etag) {
+            res.writeHead(304, { ETag: etag, 'Cache-Control': 'no-cache' });
+            return res.end();
+        }
         const body = ok ? fs.readFileSync(t) : Buffer.alloc(0);
-        res.writeHead(ok ? 200 : 404, { 'Content-Type': ok ? ctypeOf(t) : 'text/plain', 'Content-Length': String(body.length), 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'public, max-age=86400' });
+        res.writeHead(ok ? 200 : 404, { 'Content-Type': ok ? ctypeOf(t) : 'text/plain', 'Content-Length': String(body.length), 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'no-cache', ...(ok ? { ETag: etag } : {}) });
         if (req.method !== 'HEAD')
             res.end(body);
         else

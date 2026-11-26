@@ -588,7 +588,7 @@ body:has(.gpind.on) .top,body:has(.gpind.on)[data-layout=top] .rail{padding-righ
 .welcome .wface:hover{border-color:var(--line2);color:var(--text)}
 .welcome .wface.on{border-color:var(--accent);color:var(--text)}
 .welcome .wface .pv{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:8px;background:var(--card);margin-bottom:5px}
-.welcome .wscheme{align-self:center}
+.welcome .wscheme{align-self:center}.welcome .wschemel{font-size:11.5px;color:var(--muted);margin:10px 0 6px;text-align:center}
 .welcome .wbox.last .wart{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 34%,var(--card)),color-mix(in srgb,var(--accent) 8%,var(--card)))}
 .welcome .wbox.last h2{font-size:30px;color:var(--accent)}
 @media (max-width:720px){.welcome .wbox{grid-template-columns:1fr;min-height:0}.welcome .wart{padding:20px}.welcome .wart svg{max-width:220px}}

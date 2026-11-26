@@ -1,9 +1,9 @@
 :root{
-  --bg:#1a1d22;
-  --bg2:#25282d;
-  --panel:#23262b;
-  --card:#2c2f34;
-  --card2:#35383d;
+  --bg:#0e1013;
+  --bg2:#15181d;
+  --panel:#14171b;
+  --card:#1d2026;
+  --card2:#262a30;
   --line:rgba(255,255,255,.1);
   --line2:rgba(255,255,255,.22);
   --text:#eef0f3;
@@ -17,9 +17,9 @@
   --glow1:transparent;
   --glow2:transparent;
   --glow3:transparent;
-  --ph-from:#2c2f34;
-  --ph-to:#35383d;
-  --img-fade:#1a1d22;
+  --ph-from:#1d2026;
+  --ph-to:#262a30;
+  --img-fade:#0e1013;
   --logo-bg:#eef0f3;
   --mono:#eef0f3;
   --mono2:#b9bbbf;

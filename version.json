@@ -1,9 +1,9 @@
 {
-  "version": "4.4.0",
+  "version": "4.4.1",
   "channel": "stable",
-  "date": "2026-11-23",
+  "date": "2026-11-26",
   "name": "LudrixHub",
-  "changelog": "",
+  "changelog": "Polimento da interface: cara Padrão mais escura e com cantos suaves, assistente inicial redesenhado (discos, temas), detalhes do jogo com faixa de capa, telas vazias ilustradas, Modo Console com capas inteiras em retrato, janelas estreitas sem textos cortados.",
   "patch_min": "4.0.19",
   "release": "full"
 }

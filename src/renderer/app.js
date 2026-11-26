@@ -3145,7 +3145,8 @@ function setupRender() {
     <p class="mut">São 4 passos rápidos: onde guardar os jogos, a aparência e o que fazer quando um jogo abre.</p>`;
   else if (st.id === 'folder') h = `<h2>Pasta dos jogos</h2><p class="lead">Os jogos baixados pelo Ludrix são extraídos e instalados nesta pasta. Escolha um disco com espaço — dá para mover depois, jogo por jogo.</p>
     <div class="sfolder"><div class="code" id="swDir">${esc(c.games_dir_effective || c.games_dir || 'games')}</div><button class="btn p sm" onclick="setupPickDir()">${I.folder} Escolher pasta…</button>${c.games_dir ? `<button class="btn s sm" onclick="setCfg({games_dir:''}).then(setupRender)">Usar a padrão</button>` : ''}</div>
-    <div class="shint"><b>Dica</b> A pasta padrão fica junto do launcher, em <span class="code">games${SEP()}</span>. Jogos que você já tem instalados não são movidos — eles só entram na biblioteca.</div>`;
+    <div class="shint"><b>Dica</b> A pasta padrão fica junto do launcher, em <span class="code">games${SEP()}</span>. Jogos que você já tem instalados não são movidos — eles só entram na biblioteca.</div>
+    <div class="sdisks" id="swDisks">${setupDisksHtml()}</div>`;
   else if (st.id === 'look') h = `<h2>Tema</h2><p class="lead">Cada tema muda cor, formas e a organização da Biblioteca. Clique em um para aplicar na hora.</p>${welcomePicker()}`;
   else if (st.id === 'play') { const cur = c.after_launch || 'ask'; h = `<h2>Ao abrir um jogo</h2><p class="lead">Vale para todo jogo aberto pelo launcher. Dá para trocar em Ajustes › Ao jogar.</p>
     <div class="sopts">${[['ask', I.help, 'Perguntar sempre', 'Antes de abrir, mostra as três opções abaixo (com "lembrar").'], ['minimize', I.tray, 'Minimizar para a bandeja', 'Some da barra de tarefas e volta quando o jogo fechar. Conta o tempo jogado.'], ['none', I.play, 'Só abrir o jogo', 'O launcher continua aberto normalmente.'], ['close', I.power, 'Fechar o launcher', 'Sai da memória por completo; o tempo da sessão não é contado.']].map(([v, ic, t, d]) => `<button class="sopt ${cur === v ? 'on' : ''}" onclick="setCfg({after_launch:'${v}'}).then(setupRender)">${ic}<div><b>${t}</b><span>${d}</span></div></button>`).join('')}</div>`; }
@@ -3156,6 +3157,19 @@ function setupRender() {
   $('#swBack').style.visibility = SW_I ? '' : 'hidden'; $('#swSkip').style.display = st.id === 'done' ? 'none' : '';
   $('#swNext').textContent = st.id === 'done' ? 'Começar a usar' : 'Continuar';
   const b = $('#swBody'); b.style.animation = 'none'; b.offsetHeight; b.style.animation = '';
+}
+function setupDisksHtml() {
+  const d = S.disk, c = S.config, sep = SEP(), cur = String(c.games_dir_effective || c.games_dir || '');
+  if (!d) { if (!S._diskReq) { S._diskReq = true; api.post('/api/disk/space', {}).then(r => { if (r && !r.error) S.disk = r; const el = $('#swDisks'); if (el) el.innerHTML = setupDisksHtml(); }); } return '<div class="sdh"><span>Discos</span></div><p class="mut">Lendo os discos…</p>'; }
+  const disks = (d.disks || []).filter(k => k.total > 0).slice(0, 6);
+  if (!disks.length) return '';
+  const norm = v => c.os === 'windows' ? String(v).toUpperCase() : String(v);
+  const onDisk = k => { let best = ''; for (const x of disks) if (norm(cur).startsWith(norm(x.mount)) && x.mount.length > best.length) best = x.mount; return best === k.mount; };
+  return `<div class="sdh"><span>Discos</span><small>onde a pasta cabe melhor</small></div><div class="sdlist">${disks.map(k => {
+    const used = k.total - k.free, pu = Math.min(100, used / k.total * 100), here = onDisk(k), low = k.free < 20 * 1024 ** 3;
+    const target = k.mount.endsWith(sep) ? `${k.mount}Ludrix${sep}games` : `${k.mount}${sep}Ludrix${sep}games`;
+    return `<div class="sdisk ${here ? 'on' : ''} ${low ? 'low' : ''}"><div class="sdt"><b>${esc(k.mount)}</b>${k.launcher ? '<em>launcher</em>' : ''}${here ? '<em class="h">pasta atual</em>' : ''}<span class="sp"></span><small>${fmt(k.free)} livres de ${fmt(k.total)}</small></div><i class="sdbar"><u style="width:${pu.toFixed(1)}%"></u></i>${here ? '' : `<button class="btn s xs" onclick="setCfg({games_dir:${jsq(target)}}).then(setupRender)" title="${esc(target)}">Usar este disco</button>`}</div>`;
+  }).join('')}</div>`;
 }
 async function setupPickDir() { const r = await api.post('/api/choose_folder', { what: 'games' }); if (r.native) { if (r.folder) { S._tourDir = r.folder; await loadCatalog(false); setupRender(); } return; } modal({ title: 'Pasta dos jogos', text: 'Digite o caminho completo (modo navegador não tem diálogo nativo).', input: S.config.games_dir || '', ok: 'Salvar', onOk: v => setCfg({ games_dir: v }).then(setupRender) }); }
 function setupGo(d) { const n = SW_I + d; if (n >= SETUP_STEPS.length) return setupDone(); if (n < 0) return; SW_I = n; setupRender(); }
@@ -3181,7 +3195,7 @@ function welcomeRender() {
 function welcomePicker() {
   const c = S.config, cur = c.face || DEFAULT_FACE, th = c.theme || 'system';
   return `<div class="wfaces">${(S.faces || []).map(f => `<div class="wface ${cur === f.id ? 'on' : ''}" onclick="welcomePick(${jsq(f.id)})" title="${esc(f.description || '')}"><img class="pv" src="/api/theme/${enc(f.id)}/preview" alt=""><span>${esc(f.name)}</span></div>`).join('')}</div>
-    <div class="seg wscheme">${[['system', 'Sistema'], ['dark', 'Escuro'], ['light', 'Claro']].map(([v, l]) => `<button class="${th === v ? 'on' : ''}" onclick="welcomeScheme('${v}')">${l}</button>`).join('')}</div>`;
+    <div class="wschemel">Claro ou escuro</div><div class="seg wscheme">${[['system', 'Sistema'], ['dark', 'Escuro'], ['light', 'Claro']].map(([v, l]) => `<button class="${th === v ? 'on' : ''}" onclick="welcomeScheme('${v}')">${l}</button>`).join('')}</div>`;
 }
 async function welcomePick(id) { await pickFace(id); if ($('#welcome .wbox.pick')) $('#wArt').innerHTML = welcomePicker(); else if ($('#swBody')) setupRender(); }
 async function welcomeScheme(v) { await setCfg({ theme: v }); if ($('#welcome .wbox.pick')) $('#wArt').innerHTML = welcomePicker(); else if ($('#swBody')) setupRender(); }
@@ -4113,7 +4127,11 @@ async function playFlash(id) {
   if (g.type === 'web') { const r = await api.post('/api/flash/play_web', { id }); if (r.error) toast('err', 'Não foi possível abrir', r.error); else if (r.browser) toast('info', 'Aberto no navegador', g.title); return; }
   if (g.type !== 'html5' && !S.flash.ruffle) return modal({ title: 'Falta o player', text: 'Instala o Ruffle (10 MB, uma vez só) para rodar os jogos Flash.', ok: 'Instalar', cancel: 'Não fazer nada', onOk: () => installFlash('ruffle') });
   $('#ftitle').textContent = g.title; $('#fhint').textContent = `${g.controls} · ${g.tip}`;
-  $('#fframe').src = '/flash/play/' + id; $('#flashwin').classList.add('on');
+  const fr = $('#fframe'); fr.src = '/flash/play/' + id; $('#flashwin').classList.add('on');
+  // o teclado só chega ao jogo se o iframe tiver foco (senão as setas ficam presas no launcher)
+  const focusGame = () => { try { fr.focus(); fr.contentWindow && fr.contentWindow.focus(); } catch (e) { } };
+  fr.onload = focusGame; focusGame(); setTimeout(focusGame, 400);
+  $('#flashwin').onmousemove = focusGame;
   api.post('/api/flash/played', { id });
 }
 function closeFlash() { $('#flashwin').classList.remove('on'); $('#fframe').src = 'about:blank'; if (S.view === 'flash') renderFlash(); }
