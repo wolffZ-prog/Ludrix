@@ -1,9 +1,9 @@
 {
-  "version": "4.4.2",
+  "version": "4.4.3",
   "channel": "stable",
   "date": "2026-11-26",
   "name": "LudrixHub",
-  "changelog": "Backend mais seguro e metadados mais confiáveis: proteção anti-SSRF em toda a camada HTTP, limite de pedidos por site, repetição automática em falhas de rede, teto de tamanho nas respostas, metadados que falharam sem internet voltam a ser buscados sozinhos, cache com escrita atômica e linha \"Rede\" no diagnóstico.",
+  "changelog": "Downloads que caem no meio retomam sozinhos (até 6 vezes, com Range) e o Cancelar responde mesmo com a rede travada; importadores pulam arquivos ilegíveis em vez de abortar e avisam quantos ficaram de fora; varredura de atalhos não trava mais em pastas gigantes; updater com checagem de caminho também nos arquivos soltos.",
   "patch_min": "4.0.19",
   "release": "full"
 }

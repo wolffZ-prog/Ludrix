@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.4.3 — 2026-11-26 (backend, parte 2: downloads, importadores, updater)
+
+- **Downloads que caem no meio retomam sozinhos.** Emuladores, cores e jogos da Store usavam um `fetch` próprio sem as proteções da casa e sem detecção de travamento: conexão parada ficava eternamente em "x %", e o **Cancelar não respondia** durante o travamento (o sinal só valia até os cabeçalhos chegarem). Agora o downloader passa pela camada HTTP (anti-SSRF, redirecionamentos verificados, fila por host), corta conexões sem dados por 90 s, **retoma com `Range` até 6 vezes** com recuo progressivo (a barra mostra "Conexão caiu em 12 MB — retomando (2/6)…") e o Cancelar responde em menos de meio segundo mesmo com a rede travada. Testado com um servidor que derruba a conexão três vezes: arquivo final idêntico byte a byte.
+- **Importadores não morrem por um arquivo ruim.** Um único `appmanifest_*.acf` ilegível (Steam), um JSON quebrado do Heroic/Epic ou uma pasta sem permissão abortava a importação inteira com erro genérico. Agora o item é pulado e o painel de importação mostra "N avisos de leitura" (passe o mouse para ver quais). Varredura de atalhos (`.lnk`) pula `node_modules`, `$Recycle.Bin`, `Windows`, `temp`/`cache` e para em 20 mil subpastas com aviso, em vez de travar a interface ao apontar para `C:\`.
+- **Updater**: além da assinatura Ed25519, do `sha256` por arquivo e do teto de tamanho que já existiam, os arquivos soltos do pacote também passam pela checagem de caminho (não podem sair da pasta do programa nem tocar `data/`, `games/`, `emulation/`…), igual às pastas.
+- Auditoria sem alteração: Playnite (LiteDB lido documento a documento, com tolerância a blocos corrompidos), extração de zips de emulador (já protegida contra `../`), feed de atualização (só `https`, sem downgrade).
+
 ## 4.4.2 — 2026-11-26 (backend)
 
 - **Camada HTTP única com as proteções da casa** (`http.ts`, por onde passam metadados, capas, Wikipedia, Steam, PCGamingWiki, busca web, updater e repositórios):

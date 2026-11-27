@@ -256,6 +256,8 @@ class Session {
     private async once(url, method, opts: any, attempt: number) {
         const ctl = new AbortController();
         const onAbort = () => ctl.abort();
+        // o sinal do chamador precisa valer durante o corpo inteiro (cancelar um download travado), não só até os cabeçalhos
+        const unhook = () => { if (opts.signal) opts.signal.removeEventListener('abort', onAbort); };
         if (opts.signal) {
             if (opts.signal.aborted)
                 ctl.abort();
@@ -375,9 +377,12 @@ class Session {
                         },
                         flush() {
                             disarm();
+                            unhook();
                         },
                     }));
                 }
+                else
+                    unhook();
                 const host = parsed.hostname;
                 // a vaga do host cobre conexão + espera pelos cabeçalhos (é aí que os sites limitam); o corpo pode escoar em paralelo
                 bump(hostKey).ms += Date.now() - t0;
@@ -417,6 +422,7 @@ class Session {
                     }
                     finally {
                         disarm();
+                        unhook();
                     }
                 };
                 return {
@@ -439,6 +445,7 @@ class Session {
             }
         }
         catch (e) {
+            unhook();
             if (release) {
                 release();
                 release = null;
@@ -453,8 +460,6 @@ class Session {
             clearTimeout(timer);
             if (connectTimer)
                 clearTimeout(connectTimer);
-            if (opts.signal)
-                opts.signal.removeEventListener('abort', onAbort);
         }
     }
     get(url, opts: any = {}) {

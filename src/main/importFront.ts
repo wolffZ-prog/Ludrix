@@ -441,7 +441,7 @@ export class ImportFront {
             }
         }
         const dropped = launcherId === 'playnite' ? importers.playniteDropped() : [];
-        return { games, count: games.length, dropped: dropped.slice(0, 300) };
+        return { games, count: games.length, dropped: dropped.slice(0, 300), warnings: importers.WARNINGS.slice() };
     }
 
     importApply(games: any[]): any {

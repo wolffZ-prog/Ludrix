@@ -414,7 +414,9 @@ export class Apply {
             }
             for (const [f, digest] of Object.entries(files)) {
                 this.log(`Trocando ${f}`);
-                const target = path.join(this.root, f);
+                const target = path.resolve(this.root, f);
+                if (!target.startsWith(rootRes) || PROTECTED.some((d) => f === d || f.startsWith(d + '/')))
+                    throw new Error(`caminho suspeito no pacote: ${f}`);
                 const tmp = target + '.new';
                 fs.mkdirSync(path.dirname(target), { recursive: true });
                 z.extractTo(this.prefix + f, tmp);

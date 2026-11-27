@@ -57,8 +57,20 @@ function isFile(p: string): boolean {
         return false;
     }
 }
+/** Avisos da última varredura (arquivo ilegível, JSON quebrado, pasta grande demais…) — um item ruim não derruba a importação inteira. */
+export let WARNINGS: string[] = [];
+function warn(msg: string) {
+    if (WARNINGS.length < 50)
+        WARNINGS.push(msg);
+}
 function readText(p: string): string {
-    return fs.readFileSync(p, 'utf8');
+    try {
+        return fs.readFileSync(p, 'utf8');
+    }
+    catch (e: any) {
+        warn(`${path.basename(p)}: não consegui ler (${e?.code || e?.message || e})`);
+        return '';
+    }
 }
 function listDir(p: string): string[] {
     try {
@@ -262,7 +274,16 @@ function readPlaynite(p: string): any[] {
 }
 
 function readJson(p: string): any {
-    return JSON.parse(readText(p));
+    const t = readText(p);
+    if (!t.trim())
+        return {};
+    try {
+        return JSON.parse(t.replace(/^\uFEFF/, ''));
+    }
+    catch {
+        warn(`${path.basename(p)}: JSON inválido, ignorado`);
+        return {};
+    }
 }
 
 function readHeroic(p: string): any[] {
@@ -696,9 +717,18 @@ function readUbisoft(p: string): any[] {
     return out;
 }
 
-function rglob(root: string, ext: string, out: string[] = [], depth = 0): string[] {
+const RGLOB_SKIP = /^(node_modules|\$recycle\.bin|windows|system volume information|\.git|temp|tmp|cache|__pycache__)$/i;
+const RGLOB_MAX_DIRS = 20_000;
+function rglob(root: string, ext: string, out: string[] = [], depth = 0, budget = { dirs: 0, warned: false }): string[] {
     if (depth > 12)
         return out;
+    if (++budget.dirs > RGLOB_MAX_DIRS) {
+        if (!budget.warned) {
+            budget.warned = true;
+            warn(`pasta grande demais: parei depois de ${RGLOB_MAX_DIRS} subpastas — aponte uma pasta mais específica`);
+        }
+        return out;
+    }
     let ents: fs.Dirent[];
     try {
         ents = fs.readdirSync(root, { withFileTypes: true });
@@ -708,8 +738,10 @@ function rglob(root: string, ext: string, out: string[] = [], depth = 0): string
     }
     for (const e of ents) {
         const p = path.join(root, e.name);
-        if (e.isDirectory())
-            rglob(p, ext, out, depth + 1);
+        if (e.isDirectory()) {
+            if (!RGLOB_SKIP.test(e.name))
+                rglob(p, ext, out, depth + 1, budget);
+        }
         else if (e.name.toLowerCase().endsWith(ext))
             out.push(p);
     }
@@ -770,5 +802,10 @@ export function scan(launcherId: string, p: string, opts: any = null): any[] {
         throw new Error('Launcher desconhecido');
     if (!exists(p))
         throw new Error('Caminho não existe');
-    return fn(p);
+    WARNINGS = [];
+    const t0 = Date.now();
+    const out = fn(p).filter((g) => g && typeof g === 'object' && String(g.title || '').trim());
+    if (Date.now() - t0 > 2000 || WARNINGS.length)
+        log.info('importar %s: %d jogos em %ss%s', launcherId, out.length, ((Date.now() - t0) / 1000).toFixed(1), WARNINGS.length ? ` · ${WARNINGS.length} avisos: ${WARNINGS.slice(0, 3).join(' | ')}` : '');
+    return out;
 }
