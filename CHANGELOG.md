@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.4.2 — 2026-11-26 (backend)
+
+- **Camada HTTP única com as proteções da casa** (`http.ts`, por onde passam metadados, capas, Wikipedia, Steam, PCGamingWiki, busca web, updater e repositórios):
+  - **Anti-SSRF em todo pedido**: o host — e cada salto de redirecionamento — precisa ser público; `127.0.0.1`, `10.x`, `192.168.x`, `.local`, `fe80::` etc. são recusados antes de conectar. Antes a checagem só existia em dois pontos (hosts de download e a via Chromium das imagens); um link malicioso num repositório ou numa capa podia fazer o Ludrix bater em serviços da rede local.
+  - **Redirecionamentos seguidos à mão** (máx. 10 saltos, cookies por salto, `303`/`301`+`POST` viram `GET`); `redirect: 'manual'` continua devolvendo o `Location` para quem precisa dele.
+  - **Fila por host**: no máximo 4 pedidos simultâneos ao mesmo site (24 no total), em vez de 6 workers × 3 fontes disparando de uma vez — menos `429` da Wikipedia/Steam e capas chegando em ordem.
+  - **Repetição com recuo exponencial** em `GET`/`HEAD`: falhas de rede, `429` e `500–504` tentam até 3 vezes (0,4 s → 0,8 s → 1,6 s, mais jitter), respeitando `Retry-After` até 15 s; timeouts só repetem quando o limite do pedido é curto (≤ 30 s). `retries: 0` desliga.
+  - **Teto de tamanho ao ler o corpo** (32 MB para texto/JSON, 25 MB para imagens, 1 GB para pacotes baixados inteiros como emuladores e cores) com corte pelo `Content-Length` ou no meio do stream — uma resposta gigante não derruba mais o processo por memória; downloads em stream (instalador, updater) seguem sem limite.
+  - Quem usa um repositório ou servidor de ROMs na própria rede liga `allow_lan_http` em `config.json` (ou `LUDRIX_ALLOW_PRIVATE_HTTP=1` no ambiente) para liberar os hosts locais.
+  - **Contadores no diagnóstico**: Ajustes › Sistema › Diagnóstico ganha a linha "Rede (esta sessão)" — pedidos, repetidos, bloqueados, MB e os hosts com mais erro.
+- **Metadados que falharam por rede voltam sozinhos.** Um jogo adicionado sem internet (ou com a Wikipedia fora do ar) ficava gravado como "sem nada" e nunca mais era consultado até um "Buscar de novo" manual. Agora o resultado vazio por falha de rede é marcado como transitório e o worker tenta de novo em 10 min, depois 20, 40… até 6 h, sem apagar o que já existia.
+- **Cache de metadados com escrita atômica** (`.tmp` + `rename`), igual a `library.json`/`config.json`: um fechamento no meio da gravação não deixa JSON pela metade.
+
 ## 4.4.1 — 2026-11-26 (polimento da interface)
 
 - **Assistente inicial no mesmo tom da cara Padrão.** A janela de boas-vindas era a única tela com visual genérico (cantos arredondados, cartões cinza, fonte pesada) e, em janelas de 790 px de altura, o primeiro passo estourava e ganhava barra de rolagem. Agora segue o sistema editorial: títulos leves em caixa alta espaçada, rótulos monoespaçados, hairlines, passos numerados quadrados, botões e seletor Sistema/Escuro/Claro no mesmo desenho, cartões de tema em grade fluida. Cabe inteira em 88 vh.

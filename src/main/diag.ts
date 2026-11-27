@@ -263,6 +263,12 @@ export async function report(be: any, apiOk: boolean | null = null): Promise<any
         else
             add('data', 'Arquivos de dados', true, `íntegros · ${withBak} de ${guarded.length} com cópia anterior (.bak)`);
     }
+    {
+        const h = require('./http').stats();
+        const worst = h.hosts.filter((x: any) => x.errors).sort((a: any, b: any) => b.errors - a.errors).slice(0, 3).map((x: any) => `${x.host} ${x.errors}/${x.requests}`);
+        const mins = Math.max(1, Math.round((Date.now() - h.since) / 60000));
+        add('net', 'Rede (esta sessão)', true, `${h.requests} pedidos em ${mins} min · ${h.retries} repetidos · ${h.blocked} bloqueados · ${h.mb} MB` + (worst.length ? ` · erros: ${worst.join(', ')}` : ''), h.blocked > 0 || h.retries > h.requests / 4);
+    }
     const tail = logTail(30);
     const ok = checks.every((c) => c.ok);
     const lines = [`LudrixHub ${ver} — diagnóstico ${fmtNow()}`];

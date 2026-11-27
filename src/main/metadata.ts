@@ -388,6 +388,12 @@ export class MetadataService {
         timing.total = Date.now() - t0;
         if (timing.total > 4000)
             log.info('metadados %s em %ss: %s', key, (timing.total / 1000).toFixed(1), Object.entries(timing).filter(([k, v]) => k !== 'total' && v >= 300).map(([k, v]) => `${k}=${(v / 1000).toFixed(1)}s`).join(' '));
+        // nada encontrado E alguma fonte caiu por rede/limite: guarda como transitório para o worker tentar de novo mais tarde
+        // (antes um jogo adicionado sem internet ficava sem capa e sem texto para sempre, até um "buscar de novo" manual)
+        const found = (meta.source || []).length > 0 || Boolean(meta.cover_url || meta.summary || meta.year);
+        const netFail = ['cover_error', 'wiki_error', 'web_error', 'steam_error', 'extras_error', 'pcgw_error'].some((k) => MetadataService.transientError(meta[k]));
+        if (!found && netFail)
+            meta.transient = Math.min(8, Number(prev.transient || 0) + 1);
         MetadataService.pickCanonical(meta, clean, system);
         for (const k of ['background_file', 'imported', 'edited_at'])
             if (prev[k])
@@ -404,6 +410,19 @@ export class MetadataService {
         return meta;
     }
 
+    static transientError(msg: any): boolean {
+        return /Tempo esgotado|Sem resposta|Conexao interrompida|resolver|ECONN|ENOTFOUND|EAI_AGAIN|ETIMEDOUT|HTTP (429|50[0-4])|fetch failed|network/i.test(String(msg || ''));
+    }
+    /** Metadado guardado como transitório (falha de rede sem nenhum resultado) cujo prazo de nova tentativa já venceu: 10 min, 20, 40… até 6 h. */
+    stale(key: string): boolean {
+        const m = this.get(key);
+        if (!m || !m.transient)
+            return false;
+        const n = Math.max(1, Number(m.transient) || 1);
+        const wait = Math.min(6 * 3600, 600 * 2 ** (n - 1));
+        return Date.now() / 1000 - Number(m.fetched_at || 0) > wait;
+    }
+
     patch(key: string, fields: any): any | null {
         const meta = this.get(key);
         if (!meta)
@@ -417,7 +436,16 @@ export class MetadataService {
     private write(key: string, meta: any) {
         const p = this.path(key);
         fs.mkdirSync(path.dirname(p), { recursive: true });
-        fs.writeFileSync(p, JSON.stringify(MetadataService.slim(meta)), 'utf8');
+        // escrita atômica: um fechamento no meio do write não deixa JSON pela metade (que viraria "sem metadados" para sempre)
+        const tmp = `${p}.${process.pid}.tmp`;
+        fs.writeFileSync(tmp, JSON.stringify(MetadataService.slim(meta)), 'utf8');
+        try {
+            fs.renameSync(tmp, p);
+        }
+        catch {
+            fs.copyFileSync(tmp, p);
+            fs.rmSync(tmp, { force: true });
+        }
         this.mem.delete(key);
         try {
             this.names[this.fname(key)] = fs.statSync(p).mtimeMs / 1000;

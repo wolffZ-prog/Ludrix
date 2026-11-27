@@ -31,7 +31,7 @@ function hostOf(u: string): string {
 
 async function viaSession(s: http.Session, url: string, headers: Record<string, string>): Promise<{ data?: Buffer; why: string }> {
     try {
-        const r = await s.get(url, { headers, timeout: T });
+        const r = await s.get(url, { headers, timeout: T, maxBytes: MAX });
         if (!r.ok)
             return { why: `HTTP ${r.status}` };
         const ct = String(r.headers.get('content-type') || '').toLowerCase();

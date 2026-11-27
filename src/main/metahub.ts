@@ -136,14 +136,14 @@ export class MetaHub {
             let p = await this.images.thumb(key, url);
             if (!p && m && e.cover && e.cover !== url)
                 p = await this.images.thumb(key, e.cover);
-            if (!p && !m)
+            if (!p && (!m || this.meta.stale(key)))
                 this.prefetch(key);
             else if (!p)
                 this.deepCover(key, e);
             return p;
         }
         const p = m ? await this.images.thumb(key, this.metaCoverUrl(m, true)) : null;
-        if (!m)
+        if (!m || this.meta.stale(key))
             this.prefetch(key);
         return p;
     }
@@ -358,8 +358,9 @@ export class MetaHub {
             if (total > 3)
                 this.be.act(`Baixando capas e informações (${Math.min(done + 1, total)}/${total})…`);
             try {
-                if (this.meta.get(key) === null)
-                    await this.fetchMetadata(key, false);
+                const retry = this.meta.stale(key);
+                if (this.meta.get(key) === null || retry)
+                    await this.fetchMetadata(key, retry);
                 if (this.mine(key))
                     await this.warmShots(key);
             }

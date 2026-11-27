@@ -19,6 +19,7 @@ const DEFAULT_CONFIG = {
     dl_speed: 0,
     auto_metadata: true,
     web_covers: true,
+    allow_lan_http: false, // deixa o backend falar com hosts da rede local (repositório num NAS, p. ex.); desligado = anti-SSRF estrito
     bg_warmup: false,
     auto_rename: true,
     title_overrides: {},
@@ -269,6 +270,7 @@ class Store {
     constructor() {
         this.base = { ...DEFAULT_CONFIG, ...sanitizeConfig(util.readJson(P.CONFIG_FILE, {}), this.configFixed) };
         this.config = this.base;
+        this.syncHttpEnv();
         this.migrateLook();
         this.library = util.readJson(P.LIBRARY_FILE, {});
         this.migrateSchema();
@@ -542,6 +544,17 @@ class Store {
     get(key) {
         return this.config[key];
     }
+    httpEnvSeen = false;
+    /** A camada HTTP (http.ts) não conhece a config; ela lê esta variável de ambiente. */
+    syncHttpEnv() {
+        if (process.env.LUDRIX_ALLOW_PRIVATE_HTTP === '1' && !this.httpEnvSeen)
+            process.env.LUDRIX_ALLOW_PRIVATE_HTTP_FORCED = '1';
+        this.httpEnvSeen = true;
+        if (this.config.allow_lan_http)
+            process.env.LUDRIX_ALLOW_PRIVATE_HTTP = '1';
+        else if (process.env.LUDRIX_ALLOW_PRIVATE_HTTP === '1' && !process.env.LUDRIX_ALLOW_PRIVATE_HTTP_FORCED)
+            delete process.env.LUDRIX_ALLOW_PRIVATE_HTTP;
+    }
     setConfig(patch) {
         const changed = [];
         for (const [k, v] of Object.entries(patch || {})) {
@@ -561,6 +574,8 @@ class Store {
         }
         if (changed.length)
             this.markDirty('config');
+        if (changed.includes('allow_lan_http'))
+            this.syncHttpEnv();
         return { ok: true, changed };
     }
     resetConfig(keys) {
